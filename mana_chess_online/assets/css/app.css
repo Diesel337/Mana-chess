@@ -1235,6 +1235,262 @@ body {
   cursor: not-allowed;
 }
 
+/* Visual polish layer */
+:root {
+  --mc-bg: #0b120e;
+  --mc-surface: #141e16;
+  --mc-surface-2: #1a261c;
+  --mc-line: #354631;
+  --mc-gold: #e8bd63;
+  --mc-gold-2: #ffd982;
+  --mc-cream: #fff7e4;
+  --mc-muted: #aebda7;
+  --mc-purple: #8e68ea;
+  --mc-teal: #8bd9bd;
+}
+
+body {
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px) 0 0 / 36px 36px,
+    linear-gradient(0deg, rgba(255,255,255,.018) 1px, transparent 1px) 0 0 / 36px 36px,
+    linear-gradient(135deg, #090f0c 0%, var(--mc-bg) 46%, #101811 100%);
+  color: var(--mc-cream);
+}
+
+.mc-shell {
+  color: var(--mc-cream);
+}
+
+.mc-header h1,
+.mc-menu-hero h2 {
+  color: var(--mc-cream);
+  text-shadow: 0 3px 0 rgba(0, 0, 0, .35), 0 16px 36px rgba(0, 0, 0, .32);
+}
+
+.mc-kicker,
+.mc-lobby-head h2,
+.mc-offline h2,
+.mc-settings h2,
+.mc-panel h2 {
+  color: var(--mc-gold-2);
+}
+
+.mc-badge,
+.mc-menu-stats span,
+.mc-mode span,
+.mc-offline span,
+.mc-local-stats span,
+.mc-seats p,
+.mc-panel ol,
+.mc-panel ul {
+  color: var(--mc-muted);
+}
+
+.mc-menu-hero,
+.mc-offline,
+.mc-local-stats,
+.mc-lobby-game,
+.mc-seat,
+.mc-settings,
+.mc-final-panel,
+.mc-promotion,
+.mc-practice-banner,
+.mc-spectator-banner,
+.mc-reconnect-banner {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.012)),
+    var(--mc-surface);
+  border-color: rgba(232, 189, 99, .16);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, .24), inset 0 1px rgba(255,255,255,.04);
+}
+
+.mc-menu-hero {
+  position: relative;
+  overflow: hidden;
+}
+
+.mc-menu-hero::after {
+  content: "";
+  position: absolute;
+  inset: auto 16px 12px 16px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(232, 189, 99, .65), transparent);
+}
+
+.mc-mode,
+.mc-lobby-seats button,
+.mc-lobby-head button,
+.mc-actions button,
+.mc-seat-actions a,
+.mc-seat-actions button,
+.mc-local-stats button,
+.mc-settings button,
+.mc-promotion button,
+.mc-final-panel button {
+  border-radius: 8px;
+  transition: transform .14s ease, filter .14s ease, border-color .14s ease, box-shadow .14s ease;
+}
+
+.mc-mode {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.012)),
+    var(--mc-surface-2);
+  border-color: rgba(255,255,255,.08);
+  box-shadow: inset 0 1px rgba(255,255,255,.04);
+}
+
+.mc-mode:hover,
+.mc-lobby-seats button:not(:disabled):hover,
+.mc-lobby-head button:hover,
+.mc-actions button:not(:disabled):hover,
+.mc-seat-actions a:hover,
+.mc-seat-actions button:not(:disabled):hover,
+.mc-local-stats button:hover,
+.mc-settings button:not(:disabled):hover,
+.mc-promotion button:hover,
+.mc-final-panel button:not(:disabled):hover {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, .22), inset 0 1px rgba(255,255,255,.08);
+}
+
+.mc-mode-primary,
+.mc-lobby-seats button,
+.mc-lobby-head button,
+.mc-actions button:first-child,
+.mc-seat-actions button {
+  background: linear-gradient(180deg, #f0cb75, var(--mc-gold));
+  color: #211704;
+  box-shadow: 0 8px 18px rgba(232, 189, 99, .18), inset 0 1px rgba(255,255,255,.38);
+}
+
+.mc-actions button + button,
+.mc-seat-actions a,
+.mc-local-stats button,
+.mc-settings button,
+.mc-promotion button {
+  background: linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.018)), #253326;
+  border-color: rgba(255,255,255,.08);
+}
+
+.mc-local-stats dl div {
+  background: #0d150f;
+  border-color: rgba(255,255,255,.07);
+  box-shadow: inset 0 1px rgba(255,255,255,.03);
+}
+
+.mc-local-stats dd {
+  color: var(--mc-cream);
+  text-shadow: 0 2px 10px rgba(232, 189, 99, .18);
+}
+
+.mc-board-stack {
+  padding: 10px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.01)),
+    #10180f;
+  border: 1px solid rgba(232, 189, 99, .14);
+  border-radius: 10px;
+  box-shadow: 0 18px 44px rgba(0,0,0,.34);
+}
+
+.mc-board {
+  overflow: hidden;
+  border: 2px solid rgba(11, 18, 14, .95);
+  border-radius: 6px;
+  box-shadow: 0 16px 28px rgba(0,0,0,.28);
+}
+
+.mc-light {
+  background: #d9c58f;
+}
+
+.mc-dark {
+  background: #557544;
+}
+
+.mc-square {
+  transition: filter .12s ease, box-shadow .12s ease;
+}
+
+.mc-square:hover {
+  filter: brightness(1.06);
+}
+
+.mc-selected {
+  outline: 0;
+  box-shadow: inset 0 0 0 5px var(--mc-gold), inset 0 0 28px rgba(255, 217, 130, .42);
+}
+
+.mc-valid {
+  box-shadow: inset 0 0 0 999px rgba(84, 177, 111, .32), inset 0 0 0 3px rgba(139, 217, 189, .35);
+}
+
+.mc-valid::after {
+  background: rgba(19, 93, 54, .82);
+  box-shadow: 0 0 0 7px rgba(139, 217, 189, .15);
+}
+
+.mc-check {
+  background: #bc4e4b !important;
+  box-shadow: inset 0 0 30px rgba(255, 224, 163, .32);
+}
+
+.mc-piece {
+  box-shadow: inset 0 1px rgba(255,255,255,.2);
+}
+
+.mc-white {
+  background: radial-gradient(circle at 35% 26%, #fff9e6, #f2e3bb 68%, #caae69 100%);
+}
+
+.mc-black {
+  background: radial-gradient(circle at 36% 25%, #253026, #111713 62%, #050806 100%);
+  color: var(--mc-purple);
+}
+
+.mc-elixir-bottom-row {
+  background: linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.012)), #162116;
+  border-color: rgba(255,255,255,.08);
+  box-shadow: inset 0 1px rgba(255,255,255,.04);
+}
+
+.mc-elixir-bottom-track,
+.mc-elixir-track {
+  background: #08100b;
+  border-color: rgba(255,255,255,.09);
+  box-shadow: inset 0 2px 10px rgba(0,0,0,.34);
+}
+
+.mc-elixir-black .mc-elixir-bottom-track span,
+.mc-elixir-black .mc-elixir-track span {
+  background: linear-gradient(90deg, #6a45d6, #a884ff);
+  box-shadow: 0 0 18px rgba(142, 104, 234, .44);
+}
+
+.mc-elixir-white .mc-elixir-bottom-track span,
+.mc-elixir-white .mc-elixir-track span {
+  background: linear-gradient(90deg, #e3b85f, #fff2c9);
+  box-shadow: 0 0 18px rgba(232, 189, 99, .36);
+}
+
+.mc-panel {
+  border-left-color: rgba(232, 189, 99, .18);
+}
+
+.mc-panel li {
+  padding: 3px 0;
+}
+
+.mc-countdown,
+.mc-turn-message,
+.mc-alert-message,
+.mc-reset-message,
+.mc-check-message {
+  border-radius: 8px;
+  box-shadow: 0 12px 30px rgba(0,0,0,.22);
+}
+
 @media (min-width: 901px) {
   .mc-shell {
     grid-template-columns: minmax(0, 1fr) 240px;
