@@ -402,6 +402,21 @@ defmodule ManaChessOnlineWeb.GameLive do
 
   defp stats_outcome(_game, _player_color), do: nil
 
+  defp sound_status_key(nil), do: ""
+  defp sound_status_key(%{status: status}), do: inspect(status)
+
+  defp sound_log_count(%{log: log}) when is_list(log), do: length(log)
+  defp sound_log_count(_game), do: 0
+
+  defp sound_alert_key(nil, _local_alert), do: ""
+
+  defp sound_alert_key(game, local_alert) do
+    [check_message(game), visible_alert(game, local_alert), reset_message(game)]
+    |> Enum.reject(&is_nil/1)
+    |> Enum.reject(&(&1 == ""))
+    |> Enum.join(" | ")
+  end
+
   defp stats_winner_outcome(%{practice?: true}, :white, _player_color), do: "win"
   defp stats_winner_outcome(%{practice?: true}, :black, _player_color), do: "loss"
   defp stats_winner_outcome(_game, winner, winner), do: "win"
@@ -579,6 +594,10 @@ defmodule ManaChessOnlineWeb.GameLive do
       phx-hook="LocalStats"
       data-result-key={stats_result_key(@game, @color)}
       data-result-outcome={stats_outcome(@game, @color) || ""}
+      data-sound-game-id={(@game && @game.id) || ""}
+      data-sound-status={sound_status_key(@game)}
+      data-sound-log-count={sound_log_count(@game)}
+      data-sound-alert={sound_alert_key(@game, @local_alert)}
     >
       <section class="mc-game">
         <div class="mc-header">
@@ -590,6 +609,9 @@ defmodule ManaChessOnlineWeb.GameLive do
           <div class="mc-badge">
             <span>{color_label(@color)}</span>
             <strong>{status_label(@game && @game.status)}</strong>
+            <button type="button" class="mc-sound-toggle" data-sound-toggle aria-pressed="false">
+              Sonido Off
+            </button>
           </div>
         </div>
 

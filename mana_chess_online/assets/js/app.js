@@ -31,6 +31,9 @@ const Hooks = {
     mounted() {
       this.lastResultKey = null
       this.storageKey = "mana-chess-local-stats"
+      this.soundKey = "mana-chess-sound-enabled"
+      this.audioContext = null
+      this.lastSoundState = this.soundState()
       this.handleReset = event => {
         if (!event.target.closest("[data-stats-reset]")) return
         localStorage.removeItem(this.storageKey)
@@ -43,20 +46,34 @@ const Hooks = {
         event.preventDefault()
         this.copyInvite(button)
       }
+      this.handleSoundToggle = event => {
+        const button = event.target.closest("[data-sound-toggle]")
+        if (!button) return
+        event.preventDefault()
+        const enabled = !this.soundEnabled()
+        this.setSoundEnabled(enabled)
+        this.renderSoundToggle()
+        if (enabled) this.playSound("ready")
+      }
       this.el.addEventListener("click", this.handleReset)
       this.el.addEventListener("click", this.handleInviteCopy)
+      this.el.addEventListener("click", this.handleSoundToggle)
       this.recordResult()
       this.renderStats()
+      this.renderSoundToggle()
     },
 
     updated() {
       this.recordResult()
       this.renderStats()
+      this.renderSoundToggle()
+      this.playChangedSound()
     },
 
     destroyed() {
       this.el.removeEventListener("click", this.handleReset)
       this.el.removeEventListener("click", this.handleInviteCopy)
+      this.el.removeEventListener("click", this.handleSoundToggle)
     },
 
     readStats() {
@@ -118,6 +135,106 @@ const Hooks = {
           node.textContent = value
         })
       }
+    },
+
+    soundEnabled() {
+      return localStorage.getItem(this.soundKey) === "on"
+    },
+
+    setSoundEnabled(enabled) {
+      if (enabled) {
+        localStorage.setItem(this.soundKey, "on")
+      } else {
+        localStorage.removeItem(this.soundKey)
+      }
+    },
+
+    renderSoundToggle() {
+      const enabled = this.soundEnabled()
+      this.el.querySelectorAll("[data-sound-toggle]").forEach(button => {
+        button.textContent = enabled ? "Sonido On" : "Sonido Off"
+        button.setAttribute("aria-pressed", enabled ? "true" : "false")
+        button.classList.toggle("mc-sound-toggle-on", enabled)
+      })
+    },
+
+    soundState() {
+      return {
+        gameId: this.el.dataset.soundGameId || "",
+        status: this.el.dataset.soundStatus || "",
+        logCount: Number.parseInt(this.el.dataset.soundLogCount || "0", 10),
+        alert: this.el.dataset.soundAlert || "",
+        resultKey: this.el.dataset.resultKey || "",
+        result: this.el.dataset.resultOutcome || "",
+      }
+    },
+
+    playChangedSound() {
+      const current = this.soundState()
+      const previous = this.lastSoundState
+      this.lastSoundState = current
+
+      if (!previous || !this.soundEnabled()) return
+
+      if (current.result && current.resultKey && current.resultKey !== previous.resultKey) {
+        this.playSound("final")
+        return
+      }
+
+      if (current.alert && current.alert !== previous.alert) {
+        this.playSound("alert")
+        return
+      }
+
+      if (current.gameId && current.gameId === previous.gameId && current.logCount > previous.logCount) {
+        this.playSound("move")
+        return
+      }
+
+      if (current.status && current.status !== previous.status) {
+        this.playSound("state")
+      }
+    },
+
+    playSound(kind) {
+      const AudioContext = window.AudioContext || window.webkitAudioContext
+      if (!AudioContext) return
+
+      try {
+        this.audioContext = this.audioContext || new AudioContext()
+        if (this.audioContext.state === "suspended") this.audioContext.resume()
+
+        const tones = {
+          ready: [[660, 0, .06, "sine"], [880, .07, .08, "sine"]],
+          move: [[360, 0, .045, "triangle"], [520, .045, .065, "triangle"]],
+          alert: [[220, 0, .08, "sawtooth"], [180, .075, .09, "sawtooth"]],
+          state: [[440, 0, .07, "sine"], [660, .07, .08, "sine"]],
+          final: [[523, 0, .08, "triangle"], [659, .08, .08, "triangle"], [784, .16, .12, "triangle"]],
+        }
+
+        for (const tone of tones[kind] || tones.move) {
+          this.playTone(...tone)
+        }
+      } catch (_error) {
+      }
+    },
+
+    playTone(frequency, delay, duration, type) {
+      const context = this.audioContext
+      const start = context.currentTime + delay
+      const oscillator = context.createOscillator()
+      const gain = context.createGain()
+
+      oscillator.type = type
+      oscillator.frequency.setValueAtTime(frequency, start)
+      gain.gain.setValueAtTime(0.0001, start)
+      gain.gain.linearRampToValueAtTime(0.035, start + 0.01)
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + duration)
+
+      oscillator.connect(gain)
+      gain.connect(context.destination)
+      oscillator.start(start)
+      oscillator.stop(start + duration + 0.03)
     },
 
     copyInvite(button) {
