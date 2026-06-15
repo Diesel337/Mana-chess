@@ -4181,3 +4181,135 @@ html[data-desktop="true"] .mc-panel ul {
     grid-template-columns: repeat(4, minmax(56px, 1fr));
   }
 }
+
+/* Game screen focus pass */
+.mc-game {
+  display: flex;
+  flex-direction: column;
+}
+
+.mc-match-status {
+  position: relative;
+  overflow: hidden;
+}
+
+.mc-match-status::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 4px;
+  background: linear-gradient(180deg, var(--mc-gold-2), var(--mc-teal));
+  opacity: .86;
+}
+
+.mc-match-status small {
+  white-space: nowrap;
+}
+
+.mc-feedback-zone:not(:has(*)) {
+  min-height: 0;
+  margin-bottom: 8px;
+}
+
+@media (max-width: 900px) {
+  .mc-game > .mc-header {
+    order: 1;
+  }
+
+  .mc-game > .mc-practice-banner {
+    order: 2;
+  }
+
+  .mc-game > .mc-tutorial {
+    order: 3;
+  }
+
+  .mc-game > .mc-spectator-banner {
+    order: 4;
+  }
+
+  .mc-game > .mc-reconnect-banner {
+    order: 5;
+  }
+
+  .mc-game > .mc-match-status {
+    order: 6;
+  }
+
+  .mc-game > .mc-feedback-zone {
+    order: 7;
+  }
+
+  .mc-game > .mc-final-panel,
+  .mc-game > .mc-promotion,
+  .mc-game > .mc-check-message {
+    order: 8;
+  }
+
+  .mc-game > .mc-play-area {
+    order: 9;
+    margin-bottom: 12px;
+  }
+
+  .mc-game > .mc-actions {
+    order: 10;
+  }
+
+  .mc-game > .mc-seats {
+    order: 11;
+  }
+
+  .mc-game > .mc-menu {
+    order: 12;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-match-status {
+    gap: 7px;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-feedback-zone {
+    min-height: 0;
+    margin-bottom: 8px;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-seats {
+    margin-bottom: 10px;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-actions {
+    margin-bottom: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .mc-game:has(.mc-play-area) .mc-spectator-banner,
+  .mc-game:has(.mc-play-area) .mc-practice-banner,
+  .mc-game:has(.mc-play-area) .mc-reconnect-banner,
+  .mc-game:has(.mc-play-area) .mc-match-status {
+    margin-bottom: 8px;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-match-status p {
+    font-size: .84rem;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mc-game:has(.mc-play-area) .mc-action-quiet {
+    grid-column: auto;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-seats {
+    gap: 8px;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-invite-strip {
+    padding: 8px;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-invite-strip span {
+    font-size: .78rem;
+  }
+}
