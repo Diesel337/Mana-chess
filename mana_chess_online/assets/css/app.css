@@ -2638,3 +2638,101 @@ html[data-desktop="true"] .mc-elixir-bottom-row {
     font-size: .86rem;
   }
 }
+
+/* Desktop app game layout pass */
+html[data-desktop="true"] .mc-game:has(.mc-play-area) {
+  display: grid;
+  grid-template-columns: minmax(390px, 430px) minmax(0, 1fr);
+  grid-auto-rows: min-content;
+  column-gap: 10px;
+  row-gap: 6px;
+  align-items: start;
+  height: calc(100vh - 12px);
+  overflow: hidden;
+}
+
+html[data-desktop="true"] .mc-game:has(.mc-play-area)::before,
+html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-header {
+  grid-column: 1 / -1;
+}
+
+html[data-desktop="true"] .mc-game:has(.mc-play-area)::before {
+  width: 56px;
+  height: 4px;
+  margin-bottom: 0;
+}
+
+html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-header {
+  margin-bottom: 0;
+  padding: 6px 0 0;
+}
+
+html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-play-area {
+  grid-column: 1;
+  grid-row: 3 / span 12;
+  justify-self: center;
+  width: 100%;
+}
+
+html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-practice-banner,
+html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-tutorial,
+html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-spectator-banner,
+html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-reconnect-banner,
+html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-match-status,
+html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-seats,
+html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-feedback-zone,
+html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-final-panel,
+html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-promotion,
+html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-check-message,
+html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-actions {
+  grid-column: 2;
+}
+
+html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-feedback-zone:not(:has(*)) {
+  min-height: 0;
+  margin-bottom: 0;
+}
+
+html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-match-status {
+  min-height: 48px;
+  grid-template-columns: minmax(0, .9fr) minmax(0, 1fr) auto;
+  gap: 8px;
+  padding: 8px 10px 8px 12px;
+}
+
+html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-match-status strong {
+  font-size: .98rem;
+}
+
+html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-match-status p {
+  font-size: .78rem;
+}
+
+html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-invite-strip {
+  gap: 8px;
+  padding: 7px 8px;
+}
+
+html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-invite-strip span {
+  font-size: .72rem;
+}
+
+html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-invite-strip a,
+html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-invite-strip button {
+  min-height: 30px;
+  padding: 0 10px;
+}
+
+html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-seat-actions {
+  gap: 6px;
+}
+
+html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-bottom: 0;
+}
+
+html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-action-quiet {
+  margin-left: 0;
+}
