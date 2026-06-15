@@ -1491,6 +1491,185 @@ body {
   box-shadow: 0 12px 30px rgba(0,0,0,.22);
 }
 
+/* Bolder identity pass */
+body {
+  background:
+    radial-gradient(circle at 50% -18%, rgba(255, 217, 130, .18), transparent 36rem),
+    radial-gradient(circle at 86% 20%, rgba(142, 104, 234, .12), transparent 24rem),
+    linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px) 0 0 / 34px 34px,
+    linear-gradient(0deg, rgba(255,255,255,.025) 1px, transparent 1px) 0 0 / 34px 34px,
+    linear-gradient(135deg, #060a08 0%, #0c1510 54%, #121b12 100%);
+}
+
+.mc-game {
+  position: relative;
+}
+
+.mc-game::before {
+  content: "";
+  display: block;
+  width: 76px;
+  height: 5px;
+  margin: 0 0 12px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--mc-gold-2), var(--mc-purple));
+  box-shadow: 0 0 24px rgba(255, 217, 130, .35);
+}
+
+.mc-header {
+  padding: 10px 0 2px;
+}
+
+.mc-header h1 {
+  color: #fff7e4;
+  letter-spacing: .01em;
+}
+
+.mc-badge {
+  min-width: 112px;
+  padding: 10px 12px;
+  background: rgba(20, 30, 22, .82);
+  border: 1px solid rgba(255, 217, 130, .2);
+  border-radius: 8px;
+  box-shadow: inset 0 1px rgba(255,255,255,.05), 0 10px 26px rgba(0,0,0,.22);
+}
+
+.mc-menu-hero {
+  border-color: rgba(255, 217, 130, .34);
+  background:
+    linear-gradient(135deg, rgba(255, 217, 130, .16), transparent 38%),
+    linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.015)),
+    #141f16;
+}
+
+.mc-menu-hero h2 {
+  color: #fff3cf;
+}
+
+.mc-menu-stats span {
+  background: rgba(6, 10, 8, .72);
+  border-color: rgba(255, 217, 130, .24);
+  color: #f8e5b3;
+}
+
+.mc-offline,
+.mc-local-stats,
+.mc-lobby-game,
+.mc-seat,
+.mc-settings {
+  border-color: rgba(255, 217, 130, .24);
+}
+
+.mc-offline {
+  background:
+    linear-gradient(90deg, rgba(142, 104, 234, .14), transparent 42%),
+    linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.015)),
+    #142017;
+}
+
+.mc-local-stats {
+  background:
+    linear-gradient(90deg, rgba(255, 217, 130, .12), transparent 34%),
+    #111a13;
+}
+
+.mc-lobby-game {
+  background:
+    linear-gradient(90deg, rgba(255, 217, 130, .08), transparent 52%),
+    #132017;
+}
+
+.mc-mode {
+  border-color: rgba(255,255,255,.12);
+  box-shadow: 0 10px 22px rgba(0,0,0,.18), inset 0 1px rgba(255,255,255,.06);
+}
+
+.mc-mode strong,
+.mc-lobby-game strong {
+  color: #fff5d7;
+}
+
+.mc-lobby-head button,
+.mc-lobby-seats button,
+.mc-actions button:first-child,
+.mc-seat-actions button {
+  background:
+    linear-gradient(180deg, #ffe191 0%, #e8bd63 58%, #c88f34 100%);
+  border: 1px solid rgba(255, 243, 207, .28);
+  color: #191000;
+  text-shadow: 0 1px rgba(255,255,255,.35);
+  box-shadow: 0 10px 26px rgba(232, 189, 99, .26), inset 0 1px rgba(255,255,255,.45);
+}
+
+.mc-actions button + button,
+.mc-seat-actions a,
+.mc-local-stats button,
+.mc-settings button,
+.mc-promotion button,
+.mc-bot-toggle {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.025)),
+    #263929;
+  border-color: rgba(255, 217, 130, .16);
+}
+
+.mc-board-stack {
+  padding: 14px;
+  border: 1px solid rgba(255, 217, 130, .28);
+  background:
+    linear-gradient(135deg, rgba(255, 217, 130, .12), transparent 32%),
+    linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.012)),
+    #0d150e;
+  box-shadow: 0 24px 54px rgba(0,0,0,.42), inset 0 1px rgba(255,255,255,.06);
+}
+
+.mc-board {
+  border: 4px solid #080d09;
+  border-radius: 8px;
+  box-shadow:
+    0 0 0 1px rgba(255, 217, 130, .18),
+    0 20px 34px rgba(0,0,0,.38);
+}
+
+.mc-light {
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.22), transparent 44%),
+    #d7c185;
+}
+
+.mc-dark {
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.06), transparent 45%),
+    #4f7042;
+}
+
+.mc-piece {
+  filter: drop-shadow(0 10px 6px rgba(0,0,0,.5));
+}
+
+.mc-white {
+  border: 1px solid rgba(86, 67, 20, .14);
+}
+
+.mc-black {
+  color: #9a75ff;
+  border: 1px solid rgba(154, 117, 255, .18);
+}
+
+.mc-elixir-bottom-row {
+  border-color: rgba(255, 217, 130, .22);
+}
+
+.mc-panel {
+  padding-left: 18px;
+  background: linear-gradient(90deg, rgba(255, 217, 130, .055), transparent 18%);
+}
+
+.mc-panel h2 {
+  padding-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 217, 130, .2);
+}
+
 @media (min-width: 901px) {
   .mc-shell {
     grid-template-columns: minmax(0, 1fr) 240px;
