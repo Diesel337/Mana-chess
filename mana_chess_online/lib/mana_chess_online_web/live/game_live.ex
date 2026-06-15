@@ -675,7 +675,9 @@ defmodule ManaChessOnlineWeb.GameLive do
             <div class="mc-invite-strip">
               <div>
                 <strong>Link privado</strong>
-                <span>Comparte esta sala para jugar o mirar.</span>
+                <span>
+                  Rival o espectador entra aqui: <code>{~p"/game/#{@game.id}"}</code>
+                </span>
               </div>
               <div>
                 <button type="button" data-copy-invite={~p"/game/#{@game.id}"}>Copiar link</button>
@@ -869,10 +871,13 @@ defmodule ManaChessOnlineWeb.GameLive do
 
               <div :for={game <- @lobby} class="mc-lobby-game">
                 <div>
-                  <strong>{lobby_room_name(game.id)}</strong>
+                  <div class="mc-lobby-title">
+                    <strong>{lobby_room_name(game.id)}</strong>
+                    <small>{~p"/game/#{game.id}"}</small>
+                  </div>
                   <div class="mc-lobby-meta">
                     <a href={~p"/game/#{game.id}"}>Observar</a>
-                    <a href={~p"/game/#{game.id}"}>Link</a>
+                    <button type="button" data-copy-invite={~p"/game/#{game.id}"}>Copiar link</button>
                     <button :if={clearable_room?(game)} type="button" phx-click="clear_room" phx-value-game={game.id}>Limpiar</button>
                     <span>{lobby_status(game.status)}</span>
                   </div>
