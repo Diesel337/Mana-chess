@@ -274,6 +274,44 @@ defmodule ManaChessOnlineWeb.GameLive do
   defp status_label(:draw), do: "Empate"
   defp status_label(_), do: "Sin lugar"
 
+  defp match_phase(%{status: :waiting}), do: %{title: "Esperando rival", detail: "Comparte el link o toma el asiento libre.", tone: :waiting}
+  defp match_phase(%{status: :ready}), do: %{title: "Listos para empezar", detail: "Cualquiera puede iniciar la cuenta regresiva.", tone: :ready}
+  defp match_phase(%{status: {:starting, _starts_at}, countdown_seconds: seconds}), do: %{title: "Inicia en #{seconds}", detail: "Ambos pueden marcar listo para saltar la espera.", tone: :starting}
+  defp match_phase(%{status: :promotion}), do: %{title: "Promocion pendiente", detail: "Elige pieza para continuar.", tone: :alert}
+  defp match_phase(%{status: {:checkmate, winner, _loser}}), do: %{title: "Jaque mate", detail: "Ganan #{color_label(winner)}.", tone: :final}
+  defp match_phase(%{status: {:winner, winner}}), do: %{title: "Partida terminada", detail: "Ganan #{color_label(winner)}.", tone: :final}
+  defp match_phase(%{status: :draw}), do: %{title: "Empate", detail: "La partida termino sin ganador.", tone: :final}
+
+  defp match_phase(%{status: :playing, first_move_pending: :white}) do
+    %{title: "Blancas abren", detail: "Elixir pausado hasta el primer movimiento blanco.", tone: :ready}
+  end
+
+  defp match_phase(%{practice?: true, bot_enabled?: true, queue: []}) do
+    %{title: "Tiempo real contra BOT", detail: "Mueve cuando tengas elixir; el BOT controla Negras.", tone: :bot}
+  end
+
+  defp match_phase(%{practice?: true, bot_enabled?: true}) do
+    %{title: "BOT pensando", detail: "La cola esta procesando una accion.", tone: :bot}
+  end
+
+  defp match_phase(%{status: :playing}) do
+    %{title: "Tiempo real", detail: "No hay turnos: mueve cuando tengas elixir y cooldown libre.", tone: :playing}
+  end
+
+  defp match_phase(_game), do: %{title: "Mana Chess", detail: "Elixir, cooldown y movimientos en tiempo real.", tone: :ready}
+
+  defp match_phase_class(%{tone: tone}), do: "mc-match-status-#{tone}"
+
+  defp player_role(%{practice?: true}, _color), do: "Practica"
+  defp player_role(_game, :white), do: "Tu lado: Blancas"
+  defp player_role(_game, :black), do: "Tu lado: Negras"
+  defp player_role(_game, _color), do: "Modo espectador"
+
+  defp player_role_hint(%{practice?: true, bot_enabled?: true}, _color), do: "BOT ON"
+  defp player_role_hint(%{practice?: true}, _color), do: "BOT OFF"
+  defp player_role_hint(_game, color) when color in [:white, :black], do: "Sentado"
+  defp player_role_hint(_game, _color), do: "Observando"
+
   defp start_label(%{practice?: true}), do: "Empezar practica"
   defp start_label(_game), do: "Empezar partida"
 
@@ -589,6 +627,16 @@ defmodule ManaChessOnlineWeb.GameLive do
             <span>Recuperaste tu asiento como {color_label(@color)}.</span>
           </div>
 
+          <% phase = match_phase(@game) %>
+          <section class={["mc-match-status", match_phase_class(phase)]}>
+            <div>
+              <span>{player_role(@game, @color)}</span>
+              <strong>{phase.title}</strong>
+            </div>
+            <p>{phase.detail}</p>
+            <small>{player_role_hint(@game, @color)}</small>
+          </section>
+
           <div :if={!@game.practice?} class="mc-seats">
             <div class={["mc-seat", @color == :white && "mc-seat-current"]}>
               <strong>Blancas</strong>
@@ -670,14 +718,14 @@ defmodule ManaChessOnlineWeb.GameLive do
           </div>
 
           <div class="mc-actions">
-            <button :if={@game.status == :ready} type="button" phx-click="start_game">{start_label(@game)}</button>
-            <button :if={starting?(@game) and seated_in?(@game, @player_id)} type="button" phx-click="ready_to_start" disabled={ready_to_start_disabled?(@game, @player_id)}>
+            <button :if={@game.status == :ready} class="mc-action-primary" type="button" phx-click="start_game">{start_label(@game)}</button>
+            <button :if={starting?(@game) and seated_in?(@game, @player_id)} class="mc-action-primary" type="button" phx-click="ready_to_start" disabled={ready_to_start_disabled?(@game, @player_id)}>
               {ready_to_start_label(@game, @player_id)}
             </button>
-            <button type="button" phx-click="reset" disabled={reset_disabled?(@game, @player_id)}>
+            <button class="mc-action-secondary" type="button" phx-click="reset" disabled={reset_disabled?(@game, @player_id)}>
               {reset_label(@game, @player_id)}
             </button>
-            <button type="button" phx-click="leave">
+            <button class="mc-action-quiet" type="button" phx-click="leave">
               {if seated_in?(@game, @player_id), do: "Liberar mi asiento", else: "Volver al lobby"}
             </button>
           </div>
