@@ -2047,3 +2047,334 @@ html[data-desktop="true"] .mc-panel ul {
     padding-top: 0;
   }
 }
+
+/* In-game UX and mobile fit pass */
+.mc-invite-strip {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  padding: 10px;
+  background:
+    linear-gradient(90deg, rgba(139, 217, 189, .1), transparent 42%),
+    rgba(9, 16, 11, .58);
+  border: 1px solid rgba(139, 217, 189, .22);
+  border-radius: 8px;
+}
+
+.mc-invite-strip > div:first-child {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.mc-invite-strip > div:last-child {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: end;
+  gap: 8px;
+}
+
+.mc-invite-strip strong {
+  color: var(--mc-teal);
+  line-height: 1;
+}
+
+.mc-invite-strip span {
+  color: var(--mc-muted);
+  font-size: .84rem;
+  line-height: 1.25;
+}
+
+.mc-invite-strip a,
+.mc-invite-strip button {
+  display: inline-grid;
+  place-items: center;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 900;
+  line-height: 1.1;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform .14s ease, filter .14s ease, box-shadow .14s ease;
+}
+
+.mc-invite-strip button {
+  border: 1px solid rgba(255, 243, 207, .28);
+  background: linear-gradient(180deg, #ffe191 0%, #e8bd63 58%, #c88f34 100%);
+  color: #191000;
+}
+
+.mc-invite-strip a {
+  border: 1px solid rgba(255, 217, 130, .16);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.025)),
+    #263929;
+  color: var(--mc-cream);
+}
+
+.mc-invite-strip a:hover,
+.mc-invite-strip button:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, .22), inset 0 1px rgba(255,255,255,.08);
+}
+
+.mc-seat-actions button,
+.mc-actions button,
+.mc-invite-strip a,
+.mc-invite-strip button {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.mc-game-id {
+  display: inline-grid;
+  max-width: min(46rem, 100%);
+  margin: 8px 0 0;
+  padding: 6px 10px;
+  background: rgba(9, 16, 11, .66);
+  border: 1px solid rgba(255, 217, 130, .2);
+  border-radius: 8px;
+  color: var(--mc-muted);
+  font-size: .82rem;
+  font-weight: 900;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.mc-play-area {
+  justify-items: center;
+}
+
+.mc-board-stack {
+  width: 100%;
+}
+
+.mc-board {
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  container-type: inline-size;
+}
+
+.mc-piece {
+  font-size: clamp(1.15rem, 7.2cqw, 3.75rem);
+}
+
+.mc-cooldown-ring {
+  right: clamp(3px, 1.2cqw, 6px);
+  bottom: clamp(3px, 1.2cqw, 6px);
+  width: clamp(16px, 5.5cqw, 26px);
+  height: clamp(16px, 5.5cqw, 26px);
+}
+
+.mc-elixir-bottom-row {
+  grid-template-columns: 72px minmax(0, 1fr) 64px;
+}
+
+.mc-elixir-bottom-row strong {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+html[data-desktop="true"] .mc-piece {
+  font-size: clamp(.95rem, 7.1cqw, 2.7rem);
+}
+
+html[data-desktop="true"] .mc-elixir-bottom-row {
+  grid-template-columns: 52px minmax(0, 1fr) 48px;
+}
+
+@media (max-width: 900px) {
+  .mc-shell {
+    width: min(740px, calc(100vw - 32px));
+    gap: 14px;
+    padding: 10px 0 18px;
+  }
+
+  .mc-header {
+    align-items: start;
+  }
+
+  .mc-header h1 {
+    font-size: clamp(1.65rem, 9vw, 2.7rem);
+  }
+
+  .mc-badge {
+    min-width: 0;
+    padding: 8px 10px;
+  }
+
+  .mc-practice-banner,
+  .mc-spectator-banner,
+  .mc-reconnect-banner {
+    display: grid;
+    align-items: start;
+  }
+
+  .mc-bot-control {
+    width: 100%;
+    justify-content: space-between;
+    margin-left: 0;
+  }
+
+  .mc-seats {
+    grid-template-columns: 1fr;
+  }
+
+  .mc-invite-strip {
+    display: grid;
+  }
+
+  .mc-invite-strip > div:last-child {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    justify-content: stretch;
+  }
+
+  .mc-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mc-actions button {
+    width: 100%;
+    min-height: 42px;
+  }
+
+  .mc-action-primary,
+  .mc-action-secondary {
+    min-width: 0;
+  }
+
+  .mc-action-quiet {
+    grid-column: 1 / -1;
+  }
+
+  .mc-board-stack {
+    width: 100%;
+    padding: 10px;
+    gap: 7px;
+  }
+
+  .mc-board {
+    border-width: 2px;
+  }
+
+  .mc-elixir-bottom-row {
+    grid-template-columns: 58px minmax(0, 1fr) 56px;
+    min-height: 40px;
+    padding: 7px 8px;
+  }
+
+  .mc-elixir-bottom-track {
+    height: 18px;
+  }
+
+  .mc-panel {
+    max-height: 260px;
+    overflow: auto;
+    padding: 12px;
+    background: rgba(9, 16, 11, .62);
+    border: 1px solid rgba(255, 217, 130, .18);
+    border-radius: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .mc-shell {
+    width: min(100%, calc(100vw - 12px));
+    padding-top: 6px;
+  }
+
+  .mc-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    gap: 8px;
+  }
+
+  .mc-header > div:first-child {
+    min-width: 0;
+  }
+
+  .mc-game-id {
+    margin-top: 4px;
+  }
+
+  .mc-badge {
+    flex: 0 0 auto;
+    justify-items: end;
+  }
+
+  .mc-practice-banner,
+  .mc-spectator-banner,
+  .mc-reconnect-banner,
+  .mc-match-status {
+    padding: 9px 10px;
+  }
+
+  .mc-match-status strong {
+    font-size: 1.1rem;
+  }
+
+  .mc-seat-actions,
+  .mc-invite-strip > div:last-child,
+  .mc-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .mc-elixir-bottom-row {
+    grid-template-columns: 52px minmax(0, 1fr) 52px;
+    gap: 6px;
+    padding: 6px;
+  }
+
+  .mc-elixir-bottom-row > span {
+    font-size: .62rem;
+  }
+
+  .mc-elixir-bottom-row strong {
+    font-size: .74rem;
+  }
+
+  .mc-board-stack {
+    padding: 6px;
+  }
+
+  .mc-piece {
+    width: 78%;
+  }
+}
+
+@media (min-width: 721px) and (max-width: 900px) {
+  .mc-menu-hero {
+    display: flex;
+    align-items: end;
+  }
+
+  .mc-menu-stats {
+    justify-content: end;
+  }
+
+  .mc-mode-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mc-offline > div:first-child {
+    display: flex;
+    align-items: end;
+  }
+
+  .mc-local-stats {
+    grid-template-columns: minmax(0, 160px) minmax(0, 1fr) auto;
+  }
+
+  .mc-local-stats dl {
+    grid-template-columns: repeat(4, minmax(56px, 1fr));
+  }
+}

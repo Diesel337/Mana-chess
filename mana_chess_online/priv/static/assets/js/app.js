@@ -10,7 +10,14 @@ const Hooks = {
         this.lastResultKey = null;
         this.renderStats();
       };
+      this.handleInviteCopy = event => {
+        const button = event.target.closest("[data-copy-invite]");
+        if (!button) return;
+        event.preventDefault();
+        this.copyInvite(button);
+      };
       this.el.addEventListener("click", this.handleReset);
+      this.el.addEventListener("click", this.handleInviteCopy);
       this.recordResult();
       this.renderStats();
     },
@@ -22,6 +29,7 @@ const Hooks = {
 
     destroyed() {
       this.el.removeEventListener("click", this.handleReset);
+      this.el.removeEventListener("click", this.handleInviteCopy);
     },
 
     readStats() {
@@ -82,6 +90,44 @@ const Hooks = {
         this.el.querySelectorAll(`[data-stat="${name}"]`).forEach(node => {
           node.textContent = value;
         });
+      }
+    },
+
+    copyInvite(button) {
+      const inviteUrl = new URL(button.dataset.copyInvite, window.location.origin).toString();
+      const originalText = button.textContent;
+      const markCopied = () => {
+        button.textContent = "Copiado";
+        window.clearTimeout(button.copyInviteTimer);
+        button.copyInviteTimer = window.setTimeout(() => {
+          button.textContent = originalText;
+        }, 1400);
+      };
+
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(inviteUrl).then(markCopied).catch(() => {
+          this.fallbackCopy(inviteUrl, markCopied);
+        });
+      } else {
+        this.fallbackCopy(inviteUrl, markCopied);
+      }
+    },
+
+    fallbackCopy(text, callback) {
+      const field = document.createElement("textarea");
+      field.value = text;
+      field.setAttribute("readonly", "");
+      field.style.position = "fixed";
+      field.style.top = "-1000px";
+      field.style.opacity = "0";
+      document.body.appendChild(field);
+      field.select();
+
+      try {
+        document.execCommand("copy");
+        callback();
+      } finally {
+        field.remove();
       }
     }
   },

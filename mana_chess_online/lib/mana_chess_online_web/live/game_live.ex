@@ -584,7 +584,8 @@ defmodule ManaChessOnlineWeb.GameLive do
         <div class="mc-header">
           <div>
             <p class="mc-kicker">Mana Chess Online</p>
-            <h1>{if @game_id, do: "Partida #{@game_id}", else: "Lobby"}</h1>
+            <h1>{if @game_id, do: "Partida", else: "Lobby"}</h1>
+            <p :if={@game_id} class="mc-game-id">{@game_id}</p>
           </div>
           <div class="mc-badge">
             <span>{color_label(@color)}</span>
@@ -649,8 +650,17 @@ defmodule ManaChessOnlineWeb.GameLive do
             <p :if={@game.status == :waiting}>
               Blancas no puede iniciar hasta que Negras se siente. Para jugar solo usa Modo practica.
             </p>
+            <div class="mc-invite-strip">
+              <div>
+                <strong>Link privado</strong>
+                <span>Comparte esta sala para jugar o mirar.</span>
+              </div>
+              <div>
+                <button type="button" data-copy-invite={~p"/game/#{@game.id}"}>Copiar link</button>
+                <a href={~p"/game/#{@game.id}"}>Abrir</a>
+              </div>
+            </div>
             <div class="mc-seat-actions">
-              <a href={~p"/game/#{@game.id}"}>Link de invitacion</a>
               <button
                 :if={!seated_in?(@game, @player_id) && seat_open?(@game, :white)}
                 type="button"
@@ -740,7 +750,7 @@ defmodule ManaChessOnlineWeb.GameLive do
                   <div class="mc-elixir-bottom-track">
                     <span style={elixir_width(@game, top_elixir)}></span>
                   </div>
-                  <strong>{@game.elixir[top_elixir]}</strong>
+                  <strong>{@game.elixir[top_elixir]}/{@game.settings.max_elixir}</strong>
                 </div>
               </div>
 
@@ -766,7 +776,7 @@ defmodule ManaChessOnlineWeb.GameLive do
                   <div class="mc-elixir-bottom-track">
                     <span style={elixir_width(@game, bottom_elixir)}></span>
                   </div>
-                  <strong>{@game.elixir[bottom_elixir]}</strong>
+                  <strong>{@game.elixir[bottom_elixir]}/{@game.settings.max_elixir}</strong>
                 </div>
               </div>
             </div>

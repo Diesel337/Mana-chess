@@ -13,11 +13,15 @@ defmodule ManaChessOnlineWeb.PageControllerTest do
 
   test "GET /game/game_1", %{conn: conn} do
     conn = get(conn, ~p"/game/game_1")
-    assert html_response(conn, 200) =~ "Partida game_1"
+    response = html_response(conn, 200)
+    assert response =~ "Partida"
+    assert response =~ "game_1"
   end
 
   test "GET /game/game_4", %{conn: conn} do
     conn = get(conn, ~p"/game/game_4")
-    assert html_response(conn, 200) =~ "Partida game_4"
+    response = html_response(conn, 200)
+    assert response =~ "Partida"
+    assert response =~ "game_4"
   end
 end
