@@ -1201,6 +1201,67 @@ body {
   cursor: not-allowed;
 }
 
+@media (min-width: 901px) {
+  .mc-shell {
+    grid-template-columns: minmax(0, 1fr) 240px;
+    gap: 18px;
+    width: min(980px, calc(100vw - 32px));
+    padding: 14px 0;
+    font-size: 86%;
+  }
+
+  .mc-header {
+    margin-bottom: 10px;
+  }
+
+  .mc-header h1 {
+    font-size: clamp(2.2rem, 4vw, 3.6rem);
+  }
+
+  .mc-menu {
+    gap: 10px;
+  }
+
+  .mc-menu-hero {
+    padding: 14px;
+  }
+
+  .mc-menu-hero h2 {
+    font-size: clamp(1.8rem, 3.6vw, 3rem);
+  }
+
+  .mc-mode {
+    min-height: 78px;
+    padding: 12px;
+  }
+
+  .mc-local-stats {
+    padding: 10px;
+  }
+
+  .mc-local-stats dl div {
+    padding: 7px;
+  }
+
+  .mc-local-stats dd {
+    font-size: 1.15rem;
+  }
+
+  .mc-lobby {
+    gap: 9px;
+  }
+
+  .mc-lobby-game {
+    gap: 9px;
+    padding: 11px;
+  }
+
+  .mc-lobby-head button,
+  .mc-lobby-seats button {
+    min-height: 34px;
+  }
+}
+
 html[data-desktop="true"],
 html[data-desktop="true"] body {
   overflow: hidden;
