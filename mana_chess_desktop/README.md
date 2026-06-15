@@ -9,7 +9,7 @@ This is the first Steam-oriented desktop build path. It opens the current online
 Current game URL:
 
 ```text
-https://control-piezas-production-59aa.up.railway.app/
+https://mana-chess-production.up.railway.app/
 ```
 
 ## Commands

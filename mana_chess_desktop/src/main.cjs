@@ -1,6 +1,7 @@
 const {app, BrowserWindow, Menu, screen, shell} = require("electron")
 
-const GAME_URL = desktopUrl(process.env.MANA_CHESS_URL || "https://control-piezas-production-59aa.up.railway.app/")
+const GAME_URL = desktopUrl(process.env.MANA_CHESS_URL || "https://mana-chess-production.up.railway.app/")
+const GAME_ORIGIN = new URL(GAME_URL).origin
 
 let mainWindow = null
 
@@ -27,7 +28,7 @@ function createWindow() {
   mainWindow.maximize()
 
   mainWindow.webContents.setWindowOpenHandler(({url}) => {
-    if (url.startsWith(GAME_URL)) {
+    if (new URL(url).origin === GAME_ORIGIN) {
       return {action: "allow"}
     }
 
