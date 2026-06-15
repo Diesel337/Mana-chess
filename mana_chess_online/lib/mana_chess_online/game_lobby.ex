@@ -907,8 +907,10 @@ defmodule ManaChessOnline.GameLobby do
       new_game(id, settings)
       | players: %{white: player_id, black: player_id},
         practice?: true,
+        bot_enabled?: true,
+        bot_ready_at: now_ms() + bot_move_ms(settings),
         status: :playing,
-        log: ["Practica iniciada. Blancas abren."]
+        log: ["BOT encendido.", "Practica iniciada. Blancas abren."]
     }
   end
 

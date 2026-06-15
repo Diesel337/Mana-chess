@@ -2739,6 +2739,9 @@ body {
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
+.mc-mode-grid-offline {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
 .mc-mode {
   display: grid;
   gap: 6px;
@@ -2770,12 +2773,35 @@ body {
 .mc-mode:hover {
   filter: brightness(1.06);
 }
+.mc-offline {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  background: #172019;
+  border: 1px solid #344032;
+  border-radius: 8px;
+}
+.mc-offline > div:first-child {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: end;
+}
+.mc-offline h2 {
+  margin: 0;
+  color: #e6bd68;
+  font-size: 1.1rem;
+}
+.mc-offline span {
+  color: #b7c3b3;
+  font-size: .86rem;
+}
 .mc-local-stats {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 12px;
+  grid-template-columns: minmax(0, 160px) minmax(0, 1fr) auto;
+  gap: 8px;
   align-items: center;
-  padding: 12px;
+  padding: 9px 10px;
   background: #172019;
   border: 1px solid #344032;
   border-radius: 8px;
@@ -2789,38 +2815,37 @@ body {
 }
 .mc-local-stats span {
   color: #b7c3b3;
-  font-size: .86rem;
+  font-size: .78rem;
 }
 .mc-local-stats dl {
   display: grid;
-  grid-template-columns: repeat(4, minmax(72px, 1fr));
-  gap: 8px;
-  grid-column: 1 / -1;
+  grid-template-columns: repeat(4, minmax(56px, 1fr));
+  gap: 6px;
   margin: 0;
 }
 .mc-local-stats dl div {
   display: grid;
   gap: 3px;
-  padding: 9px;
+  padding: 6px 8px;
   background: #10170f;
   border: 1px solid #344032;
   border-radius: 8px;
 }
 .mc-local-stats dt {
   color: #8f998b;
-  font-size: .72rem;
+  font-size: .62rem;
   font-weight: 900;
   text-transform: uppercase;
 }
 .mc-local-stats dd {
   margin: 0;
   color: #f7f2e8;
-  font-size: 1.35rem;
+  font-size: 1.05rem;
   font-weight: 900;
   line-height: 1;
 }
 .mc-local-stats button {
-  min-height: 34px;
+  min-height: 30px;
   padding: 0 10px;
   background: #283528;
   color: #f7f2e8;
@@ -2860,6 +2885,9 @@ body {
   color: #171207;
   font-weight: 800;
   cursor: pointer;
+}
+.mc-online-quick {
+  min-width: 148px;
 }
 .mc-lobby-game {
   display: grid;

@@ -728,28 +728,13 @@ defmodule ManaChessOnlineWeb.GameLive do
             <section class="mc-menu-hero">
               <div>
                 <p class="mc-kicker">Ajedrez en tiempo real con elixir</p>
-                <h2>Elige modo</h2>
+                <h2>Mana Chess</h2>
               </div>
               <div class="mc-menu-stats">
                 <span>{@lobby |> lobby_count(:playing)} en juego</span>
                 <span>{open_seats_count(@lobby)} asientos libres</span>
               </div>
             </section>
-
-            <div class="mc-mode-grid">
-              <button type="button" class="mc-mode mc-mode-primary" phx-click="sit_anywhere">
-                <strong>Online rapido</strong>
-                <span>Entra a la primera sala con espacio.</span>
-              </button>
-              <button type="button" class="mc-mode" phx-click="start_practice">
-                <strong>Practica</strong>
-                <span>Prueba elixir, cooldown y bot.</span>
-              </button>
-              <button type="button" class="mc-mode" phx-click="start_tutorial">
-                <strong>Tutorial rapido</strong>
-                <span>Aprende el modo en menos de un minuto.</span>
-              </button>
-            </div>
 
             <section class="mc-local-stats">
               <div>
@@ -777,9 +762,29 @@ defmodule ManaChessOnlineWeb.GameLive do
               <button type="button" data-stats-reset>Reiniciar stats</button>
             </section>
 
+            <section class="mc-offline">
+              <div>
+                <h2>Offline</h2>
+                <span>Practica solo con BOT encendido por default.</span>
+              </div>
+              <div class="mc-mode-grid mc-mode-grid-offline">
+                <button type="button" class="mc-mode" phx-click="start_practice">
+                  <strong>Practica</strong>
+                  <span>Prueba elixir, cooldown y BOT.</span>
+                </button>
+                <button type="button" class="mc-mode" phx-click="start_tutorial">
+                  <strong>Tutorial rapido</strong>
+                  <span>Aprende el modo en menos de un minuto.</span>
+                </button>
+              </div>
+            </section>
+
             <div class="mc-lobby">
               <div class="mc-lobby-head">
                 <h2>Salas online</h2>
+                <button type="button" class="mc-online-quick" phx-click="sit_anywhere">
+                  Online rapido
+                </button>
               </div>
 
               <div :for={game <- @lobby} class="mc-lobby-game">
