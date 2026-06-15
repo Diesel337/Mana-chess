@@ -1,0 +1,36 @@
+{
+  "name": "mana-chess-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Desktop wrapper for Mana Chess Online.",
+  "main": "src/main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "pack:win": "electron-builder --dir --win --x64",
+    "dist:win": "electron-builder --win nsis --x64"
+  },
+  "devDependencies": {
+    "electron": "^33.4.11",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.manachess.desktop",
+    "productName": "Mana Chess",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}
