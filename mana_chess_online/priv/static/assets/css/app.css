@@ -4944,3 +4944,53 @@ html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-elixir-bottom-track::a
     height: 3px;
   }
 }
+
+/* Lobby viewport fit pass */
+.mc-shell:not(:has(.mc-play-area)) {
+  min-height: 100dvh;
+}
+
+@media (min-width: 721px) and (max-width: 1024px) {
+  .mc-shell:not(:has(.mc-play-area)) {
+    width: min(820px, calc(100vw - 44px));
+    gap: 12px;
+    padding-top: clamp(18px, 3vh, 32px);
+    padding-bottom: clamp(14px, 2vh, 24px);
+  }
+
+  .mc-shell:not(:has(.mc-play-area)) .mc-header {
+    margin-bottom: 12px;
+  }
+
+  .mc-shell:not(:has(.mc-play-area)) .mc-menu {
+    gap: 10px;
+  }
+
+  .mc-shell:not(:has(.mc-play-area)) .mc-menu-hero {
+    padding: 14px 16px;
+  }
+
+  .mc-shell:not(:has(.mc-play-area)) .mc-menu-hero h2 {
+    font-size: clamp(2.2rem, 5.4vw, 3.3rem);
+  }
+
+  .mc-shell:not(:has(.mc-play-area)) .mc-offline,
+  .mc-shell:not(:has(.mc-play-area)) .mc-local-stats,
+  .mc-shell:not(:has(.mc-play-area)) .mc-lobby-game {
+    padding: 10px 12px;
+  }
+
+  .mc-shell:not(:has(.mc-play-area)) .mc-lobby-game {
+    gap: 10px;
+  }
+
+  .mc-shell:not(:has(.mc-play-area)) .mc-lobby-head {
+    padding-top: 0;
+  }
+}
+
+@media (min-width: 1025px) {
+  .mc-shell:not(:has(.mc-play-area)) {
+    padding-top: 24px;
+  }
+}

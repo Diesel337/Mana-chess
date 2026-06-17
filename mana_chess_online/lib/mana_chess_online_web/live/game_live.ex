@@ -876,11 +876,10 @@ defmodule ManaChessOnlineWeb.GameLive do
                 <div>
                   <div class="mc-lobby-title">
                     <strong>{lobby_room_name(game.id)}</strong>
-                    <small>{~p"/game/#{game.id}"}</small>
                   </div>
                   <div class="mc-lobby-meta">
                     <a href={~p"/game/#{game.id}"}>Observar</a>
-                    <button type="button" data-copy-invite={~p"/game/#{game.id}"}>Copiar link</button>
+                    <button type="button" title="Copiar link privado" data-copy-invite={~p"/game/#{game.id}"}>Link</button>
                     <button :if={clearable_room?(game)} type="button" phx-click="clear_room" phx-value-game={game.id}>Limpiar</button>
                     <span>{lobby_status(game.status)}</span>
                   </div>
