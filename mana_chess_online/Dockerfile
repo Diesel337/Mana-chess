@@ -54,7 +54,7 @@ COPY lib lib
 RUN mix assets.deploy
 
 # Compile the release
-RUN mix compile
+RUN mix compile --force
 
 # Changes to config/runtime.exs don't require recompiling the code
 COPY config/runtime.exs config/
