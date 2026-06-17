@@ -184,6 +184,12 @@ defmodule ManaChessOnlineWeb.GameLive do
     {:noreply, assign_view(socket, view)}
   end
 
+  def handle_event("create_private", _params, socket) do
+    view = GameLobby.create_private(socket.assigns.player_id)
+
+    {:noreply, push_navigate(socket, to: ~p"/game/#{view.game_id}")}
+  end
+
   @impl true
   def handle_info({:game_update, %{id: game_id} = game}, %{assigns: %{game_id: game_id}} = socket) do
     {:noreply, assign(socket, :game, game)}
@@ -677,7 +683,7 @@ defmodule ManaChessOnlineWeb.GameLive do
             </p>
             <div class="mc-invite-strip">
               <div>
-                <strong>Link privado</strong>
+                <strong>{if @game.private?, do: "Link privado", else: "Link de sala"}</strong>
                 <span>
                   Rival o espectador entra aqui: <code>{~p"/game/#{@game.id}"}</code>
                 </span>
@@ -864,6 +870,14 @@ defmodule ManaChessOnlineWeb.GameLive do
               </div>
             </section>
 
+            <section class="mc-private-match">
+              <div>
+                <h2>Match privado</h2>
+                <span>Crear sala por link</span>
+              </div>
+              <button type="button" phx-click="create_private">Crear link</button>
+            </section>
+
             <div class="mc-lobby">
               <div class="mc-lobby-head">
                 <h2>Salas online</h2>
@@ -879,7 +893,7 @@ defmodule ManaChessOnlineWeb.GameLive do
                   </div>
                   <div class="mc-lobby-meta">
                     <a href={~p"/game/#{game.id}"}>Observar</a>
-                    <button type="button" title="Copiar link privado" data-copy-invite={~p"/game/#{game.id}"}>Link</button>
+                    <button type="button" title="Copiar link de sala" data-copy-invite={~p"/game/#{game.id}"}>Link</button>
                     <button :if={clearable_room?(game)} type="button" phx-click="clear_room" phx-value-game={game.id}>Limpiar</button>
                     <span>{lobby_status(game.status)}</span>
                   </div>

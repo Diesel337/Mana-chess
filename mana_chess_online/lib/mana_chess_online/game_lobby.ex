@@ -47,6 +47,7 @@ defmodule ManaChessOnline.GameLobby do
   def join(player_id), do: GenServer.call(__MODULE__, {:join, player_id})
   def sit(player_id, game_id, color), do: GenServer.call(__MODULE__, {:sit, player_id, game_id, color})
   def sit_anywhere(player_id), do: GenServer.call(__MODULE__, {:sit_anywhere, player_id})
+  def create_private(player_id), do: GenServer.call(__MODULE__, {:create_private, player_id})
   def watch(player_id, game_id), do: GenServer.call(__MODULE__, {:watch, player_id, game_id})
   def snapshot(game_id), do: GenServer.call(__MODULE__, {:snapshot, game_id})
   def lobby, do: GenServer.call(__MODULE__, :lobby)
@@ -108,7 +109,22 @@ defmodule ManaChessOnline.GameLobby do
     {:reply, player_view(state, player_id), state}
   end
 
+  def handle_call({:create_private, player_id}, _from, state) do
+    game_id = unique_private_game_id(state.games)
+
+    state =
+      state
+      |> remove_player(player_id)
+      |> put_in([:games, game_id], private_game(game_id, state.global_settings))
+      |> assign_player(player_id, game_id, :white)
+
+    broadcast_lobby(state)
+    {:reply, player_view(state, player_id), state}
+  end
+
   def handle_call({:watch, player_id, game_id}, _from, state) do
+    state = ensure_private_game(state, game_id)
+
     {:reply, player_view(state, player_id, game_id), state}
   end
 
@@ -472,6 +488,7 @@ defmodule ManaChessOnline.GameLobby do
                   log: ["#{label(color)} dejo la partida." | game.log]
               }
             end)
+            |> maybe_drop_empty_private_game(game_id)
         end
 
       _ ->
@@ -525,7 +542,7 @@ defmodule ManaChessOnline.GameLobby do
 
   defp find_slot(games) do
     games
-    |> Enum.reject(fn {_game_id, game} -> game.practice? end)
+    |> Enum.reject(fn {_game_id, game} -> game.practice? or Map.get(game, :private?, false) end)
     |> Enum.find_value(fn {game_id, game} ->
       cond do
         is_nil(game.players.white) -> {game_id, :white}
@@ -880,6 +897,7 @@ defmodule ManaChessOnline.GameLobby do
       board: GameRules.initial_board(),
       players: %{white: nil, black: nil},
       practice?: false,
+      private?: false,
       settings: settings,
       elixir: full_elixir(settings),
       castling_rights: %{
@@ -914,6 +932,14 @@ defmodule ManaChessOnline.GameLobby do
     }
   end
 
+  defp private_game(id, settings) do
+    %{
+      new_game(id, settings)
+      | private?: true,
+        log: ["Sala privada creada. Comparte el link para invitar."]
+    }
+  end
+
   defp refresh_status(%{players: %{white: white, black: black}} = game)
        when is_binary(white) and is_binary(black),
        do: %{game | status: :ready, queue: [], log: ["Ambos jugadores sentados." | game.log]}
@@ -937,6 +963,7 @@ defmodule ManaChessOnline.GameLobby do
       board: game.board,
       players: game.players,
       practice?: game.practice?,
+      private?: Map.get(game, :private?, false),
       elixir: game.elixir,
       settings: game.settings,
       bot_enabled?: game.bot_enabled?,
@@ -957,7 +984,7 @@ defmodule ManaChessOnline.GameLobby do
 
   defp public_lobby(state) do
     state.games
-    |> Enum.reject(fn {_game_id, game} -> game.practice? end)
+    |> Enum.reject(fn {_game_id, game} -> game.practice? or Map.get(game, :private?, false) end)
     |> Enum.sort_by(fn {game_id, _game} -> game_id end)
     |> Enum.map(fn {_game_id, game} ->
       %{
@@ -1166,6 +1193,37 @@ defmodule ManaChessOnline.GameLobby do
   defp valid_square?(_square), do: false
 
   defp practice_game_id(player_id), do: "practice_" <> Integer.to_string(:erlang.phash2(player_id))
+
+  defp ensure_private_game(state, game_id) do
+    if private_game_id?(game_id) and is_nil(state.games[game_id]) do
+      put_in(state.games[game_id], private_game(game_id, state.global_settings))
+    else
+      state
+    end
+  end
+
+  defp private_game_id?("private_" <> rest), do: byte_size(rest) >= 6
+  defp private_game_id?(_game_id), do: false
+
+  defp maybe_drop_empty_private_game(state, game_id) do
+    case state.games[game_id] do
+      %{private?: true, players: %{white: nil, black: nil}} ->
+        update_in(state.games, &Map.delete(&1, game_id))
+
+      _game ->
+        state
+    end
+  end
+
+  defp unique_private_game_id(games) do
+    game_id =
+      "private_" <>
+        (6
+         |> :crypto.strong_rand_bytes()
+         |> Base.url_encode64(padding: false))
+
+    if Map.has_key?(games, game_id), do: unique_private_game_id(games), else: game_id
+  end
 
   defp clear_first_move(:white, :white), do: nil
   defp clear_first_move(first_move_pending, _color), do: first_move_pending
