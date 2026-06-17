@@ -175,11 +175,11 @@ const Hooks = {
 
     boardSkin() {
       const skin = localStorage.getItem(this.skinKey);
-      return ["mana", "arcane"].includes(skin) ? skin : "mana";
+      return ["mana", "arcane", "gilded"].includes(skin) ? skin : "mana";
     },
 
     setBoardSkin(skin) {
-      if (!["mana", "arcane"].includes(skin)) return;
+      if (!["mana", "arcane", "gilded"].includes(skin)) return;
       localStorage.setItem(this.skinKey, skin);
     },
 
@@ -199,11 +199,11 @@ const Hooks = {
 
     pieceSkin() {
       const skin = localStorage.getItem(this.pieceSkinKey);
-      return ["classic", "runes"].includes(skin) ? skin : "classic";
+      return ["classic", "runes", "crystal"].includes(skin) ? skin : "classic";
     },
 
     setPieceSkin(skin) {
-      if (!["classic", "runes"].includes(skin)) return;
+      if (!["classic", "runes", "crystal"].includes(skin)) return;
       localStorage.setItem(this.pieceSkinKey, skin);
     },
 
@@ -212,6 +212,7 @@ const Hooks = {
       this.el.dataset.pieceSkin = skin;
       this.el.classList.toggle("mc-piece-skin-classic", skin === "classic");
       this.el.classList.toggle("mc-piece-skin-runes", skin === "runes");
+      this.el.classList.toggle("mc-piece-skin-crystal", skin === "crystal");
       document.documentElement.dataset.pieceSkin = skin;
 
       this.el.querySelectorAll("[data-piece-skin-choice]").forEach(button => {

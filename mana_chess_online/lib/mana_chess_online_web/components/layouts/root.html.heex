@@ -34,16 +34,35 @@
     <meta name="twitter:image" content="https://mana-chess-production.up.railway.app/images/logo.svg" />
     <link rel="icon" href={~p"/images/logo.svg"} type="image/svg+xml" />
     <link rel="manifest" href={~p"/site.webmanifest"} />
-    <link phx-track-static rel="stylesheet" href={~p"/assets/css/app.css?v=piece-shop-fit7-20260617"} />
+    <link phx-track-static rel="stylesheet" href={~p"/assets/css/app.css?v=local-unlocks-fit8-20260617"} />
     <style>
-      .mc-cosmetic-groups{display:grid;gap:8px}.mc-cosmetic-group{display:grid;gap:8px}.mc-menu .mc-cosmetic-groups{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.mc-menu .mc-cosmetic-group{gap:5px}.mc-piece-skin-preview{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));place-items:center;width:46px;aspect-ratio:1;gap:2px;padding:4px;overflow:hidden;border:2px solid var(--piece-frame,#e6bd68);border-radius:7px;background:radial-gradient(circle at 30% 20%,rgba(255,243,207,.14),transparent 42%),#08100b;box-shadow:0 8px 16px rgba(0,0,0,.22)}.mc-menu .mc-piece-skin-preview{width:22px;padding:2px;border-radius:5px}.mc-play-area>.mc-piece-strip{right:auto!important;left:6px!important}.mc-shell.mc-piece-skin-runes .mc-board .mc-white{background:radial-gradient(circle at 34% 23%,#ffffff,#bff5de 60%,#4f9e84 100%);color:#07110d;text-shadow:0 1px rgba(255,255,255,.46),0 0 11px rgba(139,217,189,.28)}.mc-shell.mc-piece-skin-runes .mc-board .mc-black{background:radial-gradient(circle at 35% 24%,#3b2670,#140d28 62%,#030207 100%);color:#c7b3ff;text-shadow:0 0 16px rgba(168,132,255,.58),0 0 4px rgba(139,217,189,.32)}@media (max-width:480px){.mc-menu .mc-cosmetic-groups{grid-template-columns:minmax(0,1fr)}.mc-menu .mc-piece-skin-preview{width:20px}}
+      .mc-cosmetic-groups{display:grid;gap:8px}.mc-cosmetic-group{display:grid;gap:8px}.mc-menu .mc-cosmetic-groups{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.mc-menu .mc-cosmetic-group{gap:5px}.mc-piece-skin-preview{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));place-items:center;width:46px;aspect-ratio:1;gap:2px;padding:4px;overflow:hidden;border:2px solid var(--piece-frame,#e6bd68);border-radius:7px;background:radial-gradient(circle at 30% 20%,rgba(255,243,207,.14),transparent 42%),#08100b;box-shadow:0 8px 16px rgba(0,0,0,.22)}.mc-menu .mc-piece-skin-preview{width:22px;padding:2px;border-radius:5px}.mc-skin-locked{border-style:dashed;filter:saturate(.72);opacity:.74}.mc-skin-unlocked{filter:none;opacity:1}.mc-skin-locked[data-cosmetic-premium]:not(.mc-skin-unlocked){box-shadow:inset 0 0 0 1px rgba(255,217,130,.1)}.mc-play-area>.mc-piece-strip{right:auto!important;left:6px!important}.mc-board-stack[data-board-skin="gilded"]{background:linear-gradient(135deg,rgba(255,240,182,.28),transparent 32%),linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.018)),#211408;border-color:rgba(255,240,182,.62)}.mc-board-stack[data-board-skin="gilded"] .mc-light{background:#f4d477}.mc-board-stack[data-board-skin="gilded"] .mc-dark{background:#6e3b1f}.mc-shell.mc-piece-skin-runes .mc-board .mc-white{background:radial-gradient(circle at 34% 23%,#ffffff,#bff5de 60%,#4f9e84 100%);color:#07110d;text-shadow:0 1px rgba(255,255,255,.46),0 0 11px rgba(139,217,189,.28)}.mc-shell.mc-piece-skin-runes .mc-board .mc-black{background:radial-gradient(circle at 35% 24%,#3b2670,#140d28 62%,#030207 100%);color:#c7b3ff;text-shadow:0 0 16px rgba(168,132,255,.58),0 0 4px rgba(139,217,189,.32)}.mc-shell.mc-piece-skin-crystal .mc-board .mc-white{background:radial-gradient(circle at 34% 23%,#fff,#f8f2ff 55%,#9fb4ff 100%);color:#101629;text-shadow:0 1px rgba(255,255,255,.55),0 0 12px rgba(109,143,255,.32)}.mc-shell.mc-piece-skin-crystal .mc-board .mc-black{background:radial-gradient(circle at 35% 24%,#283d80,#101623 66%,#05070d 100%);color:#fff0b6;text-shadow:0 0 15px rgba(255,240,182,.52),0 0 5px rgba(109,143,255,.34)}@media (max-width:480px){.mc-menu .mc-cosmetic-groups{grid-template-columns:minmax(0,1fr)}.mc-menu .mc-piece-skin-preview{width:20px}}
     </style>
     <script>
       (() => {
         const boardKey = "mana-chess-board-skin";
         const pieceKey = "mana-chess-piece-skin";
-        const boards = ["mana", "arcane"];
-        const pieces = ["classic", "runes"];
+        const unlockKey = "mana-chess-cosmetic-unlocks";
+        const boards = ["mana", "arcane", "gilded"];
+        const pieces = ["classic", "runes", "crystal"];
+        const included = new Set(["board:mana", "board:arcane", "piece:classic", "piece:runes"]);
+        const unlockId = (kind, skin) => `${kind}:${skin}`;
+        const readUnlocks = () => {
+          try {
+            return new Set(JSON.parse(localStorage.getItem(unlockKey) || "[]"));
+          } catch (_error) {
+            return new Set();
+          }
+        };
+        const isUnlocked = (kind, skin) => included.has(unlockId(kind, skin)) || readUnlocks().has(unlockId(kind, skin));
+        const unlock = (kind, skin) => {
+          if (isUnlocked(kind, skin)) return;
+          const unlocks = readUnlocks();
+          unlocks.add(unlockId(kind, skin));
+          try {
+            localStorage.setItem(unlockKey, JSON.stringify([...unlocks]));
+          } catch (_error) {}
+        };
         const read = (key, fallback, valid) => {
           try {
             const value = localStorage.getItem(key);
@@ -59,32 +78,55 @@
           } catch (_error) {}
         };
         const render = () => {
-          const board = read(boardKey, "mana", boards);
-          const piece = read(pieceKey, "classic", pieces);
+          const storedBoard = read(boardKey, "mana", boards);
+          const storedPiece = read(pieceKey, "classic", pieces);
+          const board = isUnlocked("board", storedBoard) ? storedBoard : "mana";
+          const piece = isUnlocked("piece", storedPiece) ? storedPiece : "classic";
+          if (board !== storedBoard) write(boardKey, board, boards);
+          if (piece !== storedPiece) write(pieceKey, piece, pieces);
           document.documentElement.dataset.pieceSkin = piece;
           document.querySelectorAll(".mc-board-stack").forEach((stack) => stack.dataset.boardSkin = board);
           document.querySelectorAll(".mc-shell").forEach((shell) => {
             shell.dataset.pieceSkin = piece;
             shell.classList.toggle("mc-piece-skin-classic", piece === "classic");
             shell.classList.toggle("mc-piece-skin-runes", piece === "runes");
+            shell.classList.toggle("mc-piece-skin-crystal", piece === "crystal");
           });
           document.querySelectorAll("[data-board-skin-choice]").forEach((button) => {
-            const selected = button.dataset.boardSkinChoice === board;
+            const skin = button.dataset.boardSkinChoice;
+            const unlocked = isUnlocked("board", skin);
+            const selected = skin === board && unlocked;
             button.classList.toggle("mc-skin-selected", selected);
+            button.classList.toggle("mc-skin-locked", !unlocked);
+            button.classList.toggle("mc-skin-unlocked", unlocked && !included.has(unlockId("board", skin)));
+            button.setAttribute("aria-disabled", unlocked ? "false" : "true");
             button.setAttribute("aria-pressed", selected ? "true" : "false");
+            button.querySelectorAll("[data-cosmetic-status]").forEach((status) => {
+              status.textContent = unlocked ? "Desbloqueado local" : "Premium bloqueado";
+            });
           });
           document.querySelectorAll("[data-piece-skin-choice]").forEach((button) => {
-            const selected = button.dataset.pieceSkinChoice === piece;
+            const skin = button.dataset.pieceSkinChoice;
+            const unlocked = isUnlocked("piece", skin);
+            const selected = skin === piece && unlocked;
             button.classList.toggle("mc-skin-selected", selected);
+            button.classList.toggle("mc-skin-locked", !unlocked);
+            button.classList.toggle("mc-skin-unlocked", unlocked && !included.has(unlockId("piece", skin)));
+            button.setAttribute("aria-disabled", unlocked ? "false" : "true");
             button.setAttribute("aria-pressed", selected ? "true" : "false");
+            button.querySelectorAll("[data-cosmetic-status]").forEach((status) => {
+              status.textContent = unlocked ? "Desbloqueado local" : "Premium bloqueado";
+            });
           });
         };
         window.ManaChessCosmetics = {
           chooseBoard: (skin) => {
+            unlock("board", skin);
             write(boardKey, skin, boards);
             render();
           },
           choosePiece: (skin) => {
+            unlock("piece", skin);
             write(pieceKey, skin, pieces);
             render();
           },
@@ -116,9 +158,9 @@
         }).observe(document.documentElement, {childList: true, subtree: true});
       })();
     </script>
-    <script defer phx-track-static type="text/javascript" src={~p"/assets/js/phoenix.js?v=piece-shop-fit7-20260617"}></script>
-    <script defer phx-track-static type="text/javascript" src={~p"/assets/js/phoenix_live_view.js?v=piece-shop-fit7-20260617"}></script>
-    <script defer phx-track-static type="text/javascript" src={~p"/assets/js/app.js?v=piece-shop-fit7-20260617"}></script>
+    <script defer phx-track-static type="text/javascript" src={~p"/assets/js/phoenix.js?v=local-unlocks-fit8-20260617"}></script>
+    <script defer phx-track-static type="text/javascript" src={~p"/assets/js/phoenix_live_view.js?v=local-unlocks-fit8-20260617"}></script>
+    <script defer phx-track-static type="text/javascript" src={~p"/assets/js/app.js?v=local-unlocks-fit8-20260617"}></script>
     <script>
       (() => {
         const setTheme = (theme) => {

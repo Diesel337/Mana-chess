@@ -786,10 +786,10 @@ defmodule ManaChessOnlineWeb.GameLive do
                 <i class="mc-skin-dot mc-skin-dot-arcane"></i>
                 Arcano
               </button>
-              <button type="button" disabled title="Tablero Dorado premium proximamente" aria-label="Tablero Dorado premium proximamente">
+              <button type="button" class="mc-skin-locked" data-board-skin-choice="gilded" data-cosmetic-premium="board:gilded" data-sound-action="skin" title="Desbloquear Dorado premium localmente" aria-label="Desbloquear Dorado premium localmente" aria-disabled="true" aria-pressed="false">
                 <i class="mc-skin-dot mc-skin-dot-gilded"></i>
                 Dorado
-                <small>Premium</small>
+                <small data-cosmetic-status>Premium bloqueado</small>
               </button>
             </div>
             <div class="mc-skin-strip mc-piece-strip" aria-label="Skins de piezas">
@@ -798,14 +798,14 @@ defmodule ManaChessOnlineWeb.GameLive do
                 <i class="mc-piece-dot mc-piece-dot-classic"></i>
                 Clasicas
               </button>
-              <button type="button" data-piece-skin-choice="runes" data-sound-action="skin" title="Piezas Runas" aria-label="Piezas Runas" aria-pressed="false">
+              <button type="button" data-piece-skin-choice="runes" data-sound-action="skin" title="Piezas Arcano" aria-label="Piezas Arcano" aria-pressed="false">
                 <i class="mc-piece-dot mc-piece-dot-runes"></i>
-                Runas
+                Arcano
               </button>
-              <button type="button" disabled title="Piezas Cristal premium proximamente" aria-label="Piezas Cristal premium proximamente">
+              <button type="button" class="mc-skin-locked" data-piece-skin-choice="crystal" data-cosmetic-premium="piece:crystal" data-sound-action="skin" title="Desbloquear piezas Premium localmente" aria-label="Desbloquear piezas Premium localmente" aria-disabled="true" aria-pressed="false">
                 <i class="mc-piece-dot mc-piece-dot-crystal"></i>
-                Cristal
-                <small>Premium</small>
+                Premium
+                <small data-cosmetic-status>Bloqueado</small>
               </button>
             </div>
             <div class="mc-board-stack" data-board-skin-target>
@@ -893,7 +893,7 @@ defmodule ManaChessOnlineWeb.GameLive do
                   <h2>Tienda</h2>
                   <span>Cosmeticos visuales</span>
                 </div>
-                <small>Preview local</small>
+                <small>Desbloqueo local</small>
               </div>
               <div class="mc-cosmetic-groups">
                 <div class="mc-cosmetic-group">
@@ -913,12 +913,12 @@ defmodule ManaChessOnlineWeb.GameLive do
                       <strong>Arcano oscuro</strong>
                       <small>Incluido</small>
                     </button>
-                    <button type="button" class="mc-skin-option mc-skin-locked" disabled title="Premium proximamente">
+                    <button type="button" class="mc-skin-option mc-skin-locked" data-board-skin-choice="gilded" data-cosmetic-premium="board:gilded" data-sound-action="skin" title="Desbloquear premium localmente" aria-disabled="true" aria-pressed="false">
                       <span class="mc-skin-preview mc-skin-preview-gilded" aria-hidden="true">
                         <i></i><i></i><i></i><i></i>
                       </span>
                       <strong>Dorado premium</strong>
-                      <small>Premium</small>
+                      <small data-cosmetic-status>Premium bloqueado</small>
                     </button>
                   </div>
                 </div>
@@ -938,16 +938,16 @@ defmodule ManaChessOnlineWeb.GameLive do
                         <b class="mc-piece-sample mc-piece-sample-white">{@symbols["K"]}</b>
                         <b class="mc-piece-sample mc-piece-sample-black">{@symbols["q"]}</b>
                       </span>
-                      <strong>Runas arcanas</strong>
+                      <strong>Arcano</strong>
                       <small>Incluido</small>
                     </button>
-                    <button type="button" class="mc-skin-option mc-skin-locked" disabled title="Premium proximamente">
+                    <button type="button" class="mc-skin-option mc-skin-locked" data-piece-skin-choice="crystal" data-cosmetic-premium="piece:crystal" data-sound-action="skin" title="Desbloquear premium localmente" aria-disabled="true" aria-pressed="false">
                       <span class="mc-piece-skin-preview mc-piece-skin-preview-crystal" aria-hidden="true">
                         <b class="mc-piece-sample mc-piece-sample-white">{@symbols["K"]}</b>
                         <b class="mc-piece-sample mc-piece-sample-black">{@symbols["q"]}</b>
                       </span>
-                      <strong>Cristal real</strong>
-                      <small>Premium</small>
+                      <strong>Cristal premium</strong>
+                      <small data-cosmetic-status>Click para unlock local</small>
                     </button>
                   </div>
                 </div>
