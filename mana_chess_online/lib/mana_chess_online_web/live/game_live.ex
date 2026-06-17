@@ -669,23 +669,6 @@ defmodule ManaChessOnlineWeb.GameLive do
             <small>{player_role_hint(@game, @color)}</small>
           </section>
 
-          <div class="mc-skin-strip" aria-label="Skins de tablero">
-            <span>Skins</span>
-            <button type="button" data-board-skin-choice="mana" data-sound-action="skin" aria-pressed="false">
-              <i class="mc-skin-dot mc-skin-dot-mana"></i>
-              Mana
-            </button>
-            <button type="button" data-board-skin-choice="arcane" data-sound-action="skin" aria-pressed="false">
-              <i class="mc-skin-dot mc-skin-dot-arcane"></i>
-              Arcano
-            </button>
-            <button type="button" disabled title="Premium proximamente">
-              <i class="mc-skin-dot mc-skin-dot-gilded"></i>
-              Dorado
-              <small>Premium</small>
-            </button>
-          </div>
-
           <div :if={!@game.practice?} class="mc-seats">
             <div class={["mc-seat", @color == :white && "mc-seat-current"]}>
               <strong>Blancas</strong>
@@ -793,6 +776,22 @@ defmodule ManaChessOnlineWeb.GameLive do
           </div>
 
           <div class="mc-play-area">
+            <div class="mc-skin-strip" aria-label="Skins de tablero">
+              <span>Skins</span>
+              <button type="button" data-board-skin-choice="mana" data-sound-action="skin" aria-pressed="false">
+                <i class="mc-skin-dot mc-skin-dot-mana"></i>
+                Mana
+              </button>
+              <button type="button" data-board-skin-choice="arcane" data-sound-action="skin" aria-pressed="false">
+                <i class="mc-skin-dot mc-skin-dot-arcane"></i>
+                Arcano
+              </button>
+              <button type="button" disabled title="Premium proximamente">
+                <i class="mc-skin-dot mc-skin-dot-gilded"></i>
+                Dorado
+                <small>Premium</small>
+              </button>
+            </div>
             <div class="mc-board-stack" data-board-skin-target>
               <% top_elixir = top_elixir_color(@color) %>
               <% bottom_elixir = bottom_elixir_color(@color) %>

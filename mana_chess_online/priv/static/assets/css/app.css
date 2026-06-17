@@ -3480,6 +3480,7 @@ body {
 
 .mc-play-area {
   justify-items: center;
+  position: relative;
 }
 
 .mc-board-stack {
@@ -4603,6 +4604,128 @@ html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-action-quiet {
   margin-left: 0;
 }
 
+@media (min-width: 760px) and (max-width: 900px) {
+  .mc-shell:has(.mc-play-area) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+    width: min(980px, calc(100vw - 24px));
+    padding: 6px 0 10px;
+    font-size: 76%;
+  }
+
+  .mc-shell:has(.mc-play-area) .mc-panel {
+    display: none;
+  }
+
+  .mc-game:has(.mc-play-area) {
+    display: grid;
+    grid-template-columns: minmax(340px, 420px) minmax(0, 1fr);
+    grid-auto-rows: min-content;
+    column-gap: 10px;
+    row-gap: 6px;
+    align-items: start;
+    overflow: hidden;
+  }
+
+  .mc-game:has(.mc-play-area) > * {
+    order: initial;
+  }
+
+  .mc-game:has(.mc-play-area)::before,
+  .mc-game:has(.mc-play-area) > .mc-header {
+    grid-column: 1 / -1;
+  }
+
+  .mc-game:has(.mc-play-area)::before {
+    width: 56px;
+    height: 4px;
+    margin-bottom: 0;
+  }
+
+  .mc-game:has(.mc-play-area) > .mc-header {
+    align-items: center;
+    margin-bottom: 0;
+    padding: 6px 0 0;
+  }
+
+  .mc-game:has(.mc-play-area) > .mc-play-area {
+    grid-column: 1;
+    grid-row: 3 / span 12;
+    justify-self: center;
+    width: 100%;
+    margin-bottom: 0;
+  }
+
+  .mc-game:has(.mc-play-area) > .mc-practice-banner,
+  .mc-game:has(.mc-play-area) > .mc-tutorial,
+  .mc-game:has(.mc-play-area) > .mc-spectator-banner,
+  .mc-game:has(.mc-play-area) > .mc-reconnect-banner,
+  .mc-game:has(.mc-play-area) > .mc-match-status,
+  .mc-game:has(.mc-play-area) > .mc-seats,
+  .mc-game:has(.mc-play-area) > .mc-feedback-zone,
+  .mc-game:has(.mc-play-area) > .mc-final-panel,
+  .mc-game:has(.mc-play-area) > .mc-promotion,
+  .mc-game:has(.mc-play-area) > .mc-check-message,
+  .mc-game:has(.mc-play-area) > .mc-actions {
+    grid-column: 2;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-match-status {
+    min-height: 46px;
+    grid-template-columns: minmax(0, .9fr) minmax(0, 1fr) auto;
+    gap: 7px;
+    padding: 7px 9px 7px 12px;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-match-status strong {
+    font-size: .96rem;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-match-status p {
+    font-size: .76rem;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-invite-strip {
+    gap: 8px;
+    padding: 7px 8px;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-invite-strip span {
+    font-size: .72rem;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-invite-strip a,
+  .mc-game:has(.mc-play-area) .mc-invite-strip button {
+    min-height: 30px;
+    padding: 0 10px;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-board-stack {
+    gap: 5px;
+    padding: 7px;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-elixir-bottom-row {
+    min-height: 34px;
+    padding: 5px 6px;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-elixir-bottom-track {
+    height: 14px;
+  }
+
+  .mc-game:has(.mc-play-area) > .mc-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-bottom: 0;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-action-quiet {
+    grid-column: auto;
+    margin-left: 0;
+  }
+}
+
 /* Basic sound controls */
 .mc-sound-toggle {
   min-height: 26px;
@@ -5217,6 +5340,71 @@ html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-elixir-bottom-track::a
   box-shadow: 0 0 10px color-mix(in srgb, var(--skin-frame) 36%, transparent);
 }
 
+.mc-shell:has(.mc-menu) .mc-skins {
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+}
+
+.mc-shell:has(.mc-menu) .mc-skins-head {
+  display: none;
+}
+
+.mc-shell:has(.mc-menu) .mc-skin-option small {
+  display: none;
+}
+
+.mc-shell:has(.mc-menu) .mc-skin-options {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.mc-shell:has(.mc-menu) .mc-skin-option {
+  min-height: 34px;
+  padding: 4px 7px;
+}
+
+.mc-shell:has(.mc-menu) .mc-skin-preview {
+  width: 22px;
+  border-radius: 5px;
+}
+
+.mc-shell:has(.mc-menu) .mc-skin-option strong {
+  font-size: .74rem;
+}
+
+.mc-game:has(.mc-play-area) .mc-play-area > .mc-skin-strip {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 6;
+  max-width: calc(100% - 16px);
+  gap: 5px;
+  padding: 5px;
+  background:
+    linear-gradient(90deg, rgba(255, 217, 130, .14), rgba(8, 16, 11, .9)),
+    rgba(8, 16, 11, .88);
+  border-color: rgba(255, 217, 130, .28);
+  box-shadow:
+    0 12px 26px rgba(0, 0, 0, .34),
+    inset 0 1px rgba(255, 255, 255, .08);
+}
+
+.mc-game:has(.mc-play-area) .mc-play-area > .mc-skin-strip > span {
+  display: none;
+}
+
+.mc-game:has(.mc-play-area) .mc-play-area > .mc-skin-strip button {
+  min-height: 28px;
+  padding: 0 8px;
+  font-size: .68rem;
+}
+
+.mc-game:has(.mc-play-area) .mc-play-area > .mc-skin-strip small {
+  display: none;
+}
+
 .mc-board-stack[data-board-skin="arcane"] {
   background:
     linear-gradient(135deg, rgba(139, 217, 189, .16), transparent 28%),
@@ -5420,10 +5608,6 @@ html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-elixir-bottom-track::a
     order: 7;
   }
 
-  .mc-game > .mc-skin-strip {
-    order: 6;
-  }
-
   .mc-game > .mc-final-panel,
   .mc-game > .mc-promotion,
   .mc-game > .mc-check-message {
@@ -5460,19 +5644,24 @@ html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-elixir-bottom-track::a
     margin-bottom: 10px;
   }
 
-  .mc-game:has(.mc-play-area) .mc-skin-strip {
-    gap: 6px;
-    padding: 6px 8px;
+  .mc-game:has(.mc-play-area) .mc-play-area > .mc-skin-strip {
+    top: 6px;
+    right: 6px;
+    gap: 4px;
+    padding: 4px;
   }
 
-  .mc-game:has(.mc-play-area) .mc-skin-strip button {
-    min-height: 30px;
-    padding: 0 8px;
-    font-size: .72rem;
+  .mc-game:has(.mc-play-area) .mc-play-area > .mc-skin-strip button {
+    width: 29px;
+    min-height: 28px;
+    padding: 0;
+    justify-content: center;
+    font-size: 0;
   }
 
-  .mc-game:has(.mc-play-area) .mc-skin-strip small {
-    display: none;
+  .mc-game:has(.mc-play-area) .mc-play-area > .mc-skin-strip .mc-skin-dot {
+    width: 14px;
+    height: 14px;
   }
 
   .mc-game:has(.mc-play-area) .mc-board-stack {
@@ -5504,16 +5693,31 @@ html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-elixir-bottom-track::a
     padding: 10px;
   }
 
-  .mc-skin-options {
-    grid-template-columns: 1fr;
+  .mc-shell:has(.mc-menu) .mc-skins {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 5px;
+    padding: 6px;
   }
 
-  .mc-skin-option {
-    min-height: 64px;
+  .mc-shell:has(.mc-menu) .mc-skin-options {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
-  .mc-skins-head {
-    align-items: start;
+  .mc-shell:has(.mc-menu) .mc-skin-option {
+    grid-template-columns: auto;
+    justify-items: center;
+    min-height: 34px;
+    padding: 5px 3px;
+    text-align: center;
+  }
+
+  .mc-shell:has(.mc-menu) .mc-skin-preview {
+    width: 20px;
+  }
+
+  .mc-shell:has(.mc-menu) .mc-skin-option strong {
+    font-size: .62rem;
+    white-space: normal;
   }
 }
 
