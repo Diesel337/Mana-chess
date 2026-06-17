@@ -870,20 +870,17 @@ defmodule ManaChessOnlineWeb.GameLive do
               </div>
             </section>
 
-            <section class="mc-private-match">
-              <div>
-                <h2>Match privado</h2>
-                <span>Crear sala por link</span>
-              </div>
-              <button type="button" phx-click="create_private">Crear link</button>
-            </section>
-
             <div class="mc-lobby">
               <div class="mc-lobby-head">
                 <h2>Salas online</h2>
-                <button type="button" class="mc-online-quick" phx-click="sit_anywhere">
-                  Online rapido
-                </button>
+                <div class="mc-lobby-actions">
+                  <button type="button" class="mc-private-quick" phx-click="create_private" title="Crear match privado por link">
+                    Privado
+                  </button>
+                  <button type="button" class="mc-online-quick" phx-click="sit_anywhere">
+                    Online rapido
+                  </button>
+                </div>
               </div>
 
               <div :for={game <- @lobby} class="mc-lobby-game">
