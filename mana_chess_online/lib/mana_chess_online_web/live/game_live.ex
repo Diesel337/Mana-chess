@@ -601,10 +601,13 @@ defmodule ManaChessOnlineWeb.GameLive do
     >
       <section class="mc-game">
         <div class="mc-header">
-          <div>
-            <p class="mc-kicker">Mana Chess Online</p>
-            <h1>{if @game_id, do: "Partida", else: "Lobby"}</h1>
-            <p :if={@game_id} class="mc-game-id">{@game_id}</p>
+          <div class="mc-brand-block">
+            <img src={~p"/images/logo.svg"} alt="" class="mc-brand-mark" />
+            <div>
+              <p class="mc-kicker">Mana Chess Online</p>
+              <h1>{if @game_id, do: "Partida", else: "Lobby"}</h1>
+              <p :if={@game_id} class="mc-game-id">{@game_id}</p>
+            </div>
           </div>
           <div class="mc-badge">
             <span>{color_label(@color)}</span>

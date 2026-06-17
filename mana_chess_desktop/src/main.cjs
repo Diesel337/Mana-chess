@@ -1,3 +1,4 @@
+const path = require("node:path")
 const {app, BrowserWindow, Menu, screen, shell} = require("electron")
 
 const GAME_URL = desktopUrl(process.env.MANA_CHESS_URL || "https://mana-chess-production.up.railway.app/")
@@ -14,6 +15,7 @@ function createWindow() {
     minWidth: 1024,
     minHeight: 720,
     title: "Mana Chess",
+    icon: path.join(__dirname, "../build/icon.png"),
     backgroundColor: "#111713",
     autoHideMenuBar: true,
     webPreferences: {
