@@ -2847,3 +2847,305 @@ html[data-desktop="true"] .mc-sound-toggle {
     font-size: .62rem;
   }
 }
+
+/* In-game premium polish pass */
+.mc-game:has(.mc-play-area) .mc-match-status {
+  --status-accent: var(--mc-gold-2);
+  --status-accent-soft: rgba(255, 217, 130, .16);
+  isolation: isolate;
+  border-color: color-mix(in srgb, var(--status-accent) 34%, transparent);
+  box-shadow:
+    0 16px 34px rgba(0, 0, 0, .25),
+    inset 0 1px rgba(255, 255, 255, .06),
+    inset 0 0 24px var(--status-accent-soft);
+}
+
+.mc-match-status-playing {
+  --status-accent: var(--mc-teal);
+  --status-accent-soft: rgba(139, 217, 189, .15);
+}
+
+.mc-match-status-bot {
+  --status-accent: var(--mc-purple);
+  --status-accent-soft: rgba(142, 104, 234, .18);
+}
+
+.mc-match-status-alert {
+  --status-accent: #ff9678;
+  --status-accent-soft: rgba(255, 150, 120, .18);
+}
+
+.mc-match-status-final {
+  --status-accent: var(--mc-teal);
+  --status-accent-soft: rgba(139, 217, 189, .18);
+}
+
+.mc-game:has(.mc-play-area) .mc-match-status::before {
+  z-index: 1;
+  width: 5px;
+  background: linear-gradient(180deg, var(--status-accent), rgba(255, 255, 255, .18));
+  box-shadow: 0 0 24px var(--status-accent);
+}
+
+.mc-game:has(.mc-play-area) .mc-match-status::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    linear-gradient(90deg, var(--status-accent-soft), transparent 56%),
+    linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.012));
+  pointer-events: none;
+}
+
+.mc-game:has(.mc-play-area) .mc-match-status > * {
+  position: relative;
+  z-index: 2;
+}
+
+.mc-game:has(.mc-play-area) .mc-match-status small {
+  border-color: color-mix(in srgb, var(--status-accent) 34%, transparent);
+  color: var(--status-accent);
+  box-shadow: inset 0 1px rgba(255, 255, 255, .04);
+}
+
+.mc-game:has(.mc-play-area) .mc-board-stack {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    linear-gradient(135deg, rgba(255, 217, 130, .13), transparent 30%),
+    linear-gradient(225deg, rgba(142, 104, 234, .1), transparent 38%),
+    linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.014)),
+    #0b130d;
+  border-color: rgba(255, 217, 130, .34);
+  box-shadow:
+    0 26px 62px rgba(0, 0, 0, .48),
+    0 0 0 1px rgba(255, 243, 207, .05),
+    inset 0 1px rgba(255, 255, 255, .08);
+}
+
+.mc-game:has(.mc-play-area) .mc-board-stack::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  z-index: 0;
+  border: 1px solid rgba(255, 243, 207, .08);
+  border-radius: 9px;
+  pointer-events: none;
+}
+
+.mc-game:has(.mc-play-area) .mc-board-stack > * {
+  position: relative;
+  z-index: 1;
+}
+
+.mc-game:has(.mc-play-area) .mc-board {
+  background: #080d09;
+  border-color: rgba(4, 8, 5, .98);
+  box-shadow:
+    0 0 0 1px rgba(255, 217, 130, .24),
+    0 18px 38px rgba(0, 0, 0, .42),
+    inset 0 0 0 1px rgba(255, 255, 255, .045);
+}
+
+.mc-game:has(.mc-play-area) .mc-square {
+  overflow: hidden;
+}
+
+.mc-game:has(.mc-play-area) .mc-square::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,.17), transparent 42%);
+  opacity: .24;
+  pointer-events: none;
+}
+
+.mc-game:has(.mc-play-area) .mc-dark::before {
+  opacity: .13;
+}
+
+.mc-game:has(.mc-play-area) .mc-square .mc-piece,
+.mc-game:has(.mc-play-area) .mc-cooldown-ring {
+  position: relative;
+  z-index: 1;
+}
+
+.mc-game:has(.mc-play-area) .mc-piece {
+  width: 74%;
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, .24),
+    inset 0 -10px 18px rgba(0, 0, 0, .16);
+  transition: transform .14s ease, filter .14s ease, box-shadow .14s ease, opacity .14s ease;
+}
+
+.mc-game:has(.mc-play-area) .mc-square:hover .mc-piece {
+  transform: translateY(-1px) scale(1.02);
+  filter: drop-shadow(0 12px 8px rgba(0, 0, 0, .56));
+}
+
+.mc-game:has(.mc-play-area) .mc-square:active .mc-piece {
+  transform: translateY(1px) scale(.98);
+}
+
+.mc-game:has(.mc-play-area) .mc-white {
+  color: #171207;
+  text-shadow: 0 1px rgba(255, 255, 255, .42);
+}
+
+.mc-game:has(.mc-play-area) .mc-black {
+  color: #a884ff;
+  text-shadow: 0 0 14px rgba(142, 104, 234, .36);
+}
+
+.mc-game:has(.mc-play-area) .mc-valid {
+  box-shadow:
+    inset 0 0 0 999px rgba(67, 169, 99, .26),
+    inset 0 0 0 3px rgba(139, 217, 189, .42);
+}
+
+.mc-game:has(.mc-play-area) .mc-valid::after {
+  z-index: 2;
+  background: rgba(13, 92, 49, .78);
+  box-shadow:
+    0 0 0 7px rgba(139, 217, 189, .15),
+    0 0 18px rgba(139, 217, 189, .4);
+}
+
+.mc-game:has(.mc-play-area) .mc-valid:has(.mc-piece:not(:empty)) .mc-piece {
+  box-shadow:
+    0 0 0 4px rgba(139, 217, 189, .34),
+    0 0 26px rgba(139, 217, 189, .42),
+    inset 0 1px rgba(255, 255, 255, .22);
+}
+
+.mc-game:has(.mc-play-area) .mc-selected {
+  box-shadow:
+    inset 0 0 0 5px var(--mc-gold-2),
+    inset 0 0 34px rgba(255, 217, 130, .46),
+    0 0 0 1px rgba(255, 243, 207, .18);
+}
+
+.mc-game:has(.mc-play-area) .mc-check {
+  box-shadow:
+    inset 0 0 0 999px rgba(188, 78, 75, .2),
+    inset 0 0 38px rgba(255, 224, 163, .4);
+}
+
+.mc-game:has(.mc-play-area) .mc-cooldown-ring {
+  background: rgba(8, 16, 11, .88);
+  border-color: rgba(255, 243, 207, .72);
+  box-shadow: 0 5px 14px rgba(0, 0, 0, .42), 0 0 16px rgba(232, 189, 99, .18);
+}
+
+.mc-game:has(.mc-play-area) .mc-elixir-bottom-row {
+  position: relative;
+  overflow: hidden;
+  border-color: rgba(255, 217, 130, .26);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.015)),
+    #111b13;
+}
+
+.mc-game:has(.mc-play-area) .mc-elixir-bottom-row::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 243, 207, .08), transparent);
+  pointer-events: none;
+}
+
+.mc-game:has(.mc-play-area) .mc-elixir-bottom-row > * {
+  position: relative;
+  z-index: 1;
+}
+
+.mc-game:has(.mc-play-area) .mc-elixir-bottom-track {
+  height: 20px;
+  border-color: rgba(255, 243, 207, .12);
+}
+
+.mc-game:has(.mc-play-area) .mc-elixir-bottom-track::after {
+  content: "";
+  position: absolute;
+  inset: 2px 3px auto;
+  height: 5px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(255,255,255,.18), rgba(255,255,255,.04));
+  pointer-events: none;
+}
+
+.mc-game:has(.mc-play-area) .mc-elixir-bottom-track span {
+  overflow: hidden;
+}
+
+.mc-game:has(.mc-play-area) .mc-elixir-bottom-track span::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  width: 46%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.38), transparent);
+  transform: translateX(-120%);
+  animation: mc-mana-sheen 2.4s ease-in-out infinite;
+}
+
+@keyframes mc-mana-sheen {
+  58%, 100% {
+    transform: translateX(240%);
+  }
+}
+
+html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-board-stack {
+  padding: 8px;
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, .44),
+    0 0 0 1px rgba(255, 243, 207, .045),
+    inset 0 1px rgba(255, 255, 255, .06);
+}
+
+html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-piece {
+  width: 73%;
+}
+
+html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-elixir-bottom-track {
+  height: 15px;
+}
+
+html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-elixir-bottom-track::after {
+  height: 3px;
+}
+
+@media (max-width: 900px) {
+  .mc-game:has(.mc-play-area) .mc-board-stack {
+    padding: 9px;
+  }
+}
+
+@media (max-width: 480px) {
+  .mc-game:has(.mc-play-area) .mc-board-stack {
+    padding: 6px;
+    border-radius: 8px;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-board-stack::before {
+    inset: 5px;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-board {
+    border-width: 2px;
+    border-radius: 6px;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-piece {
+    width: 76%;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-elixir-bottom-track {
+    height: 16px;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-elixir-bottom-track::after {
+    height: 3px;
+  }
+}
