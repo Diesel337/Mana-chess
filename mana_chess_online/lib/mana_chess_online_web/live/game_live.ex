@@ -874,17 +874,17 @@ defmodule ManaChessOnlineWeb.GameLive do
           <div class="mc-play-area">
             <div class="mc-skin-strip" aria-label="Skins de tablero">
               <span>Tablero</span>
-              <button type="button" data-board-skin-choice="mana" data-sound-action="skin" title="Tablero Mana" aria-label="Tablero Mana" aria-pressed="false">
-                <i class="mc-skin-dot mc-skin-dot-mana"></i>
-                Mana
+              <button type="button" data-board-skin-choice="classic" data-sound-action="skin" title="Tablero clasico blanco y negro" aria-label="Tablero clasico blanco y negro" aria-pressed="false">
+                <i class="mc-skin-dot mc-skin-dot-classic"></i>
+                Clasico
               </button>
-              <button type="button" data-board-skin-choice="arcane" data-sound-action="skin" title="Tablero Arcano" aria-label="Tablero Arcano" aria-pressed="false">
-                <i class="mc-skin-dot mc-skin-dot-arcane"></i>
-                Arcano
-              </button>
-              <button type="button" class="mc-skin-locked" data-board-skin-choice="gilded" data-cosmetic-premium="board:gilded" data-sound-action="skin" title="Desbloquear Dorado premium localmente" aria-label="Desbloquear Dorado premium localmente" aria-disabled="true" aria-pressed="false">
+              <button type="button" data-board-skin-choice="gilded" data-sound-action="skin" title="Tablero Dorado" aria-label="Tablero Dorado" aria-pressed="false">
                 <i class="mc-skin-dot mc-skin-dot-gilded"></i>
                 Dorado
+              </button>
+              <button type="button" class="mc-skin-locked" data-board-skin-choice="arcane" data-cosmetic-premium="board:arcane" data-sound-action="skin" title="Desbloquear Arcano premium localmente" aria-label="Desbloquear Arcano premium localmente" aria-disabled="true" aria-pressed="false">
+                <i class="mc-skin-dot mc-skin-dot-arcane"></i>
+                Arcano
                 <small data-cosmetic-status>Premium bloqueado</small>
               </button>
             </div>
@@ -995,25 +995,25 @@ defmodule ManaChessOnlineWeb.GameLive do
                 <div class="mc-cosmetic-group">
                   <span class="mc-cosmetic-group-label">Tableros</span>
                   <div class="mc-skin-options">
-                    <button type="button" class="mc-skin-option" data-board-skin-choice="mana" data-sound-action="skin" aria-pressed="false">
-                      <span class="mc-skin-preview mc-skin-preview-mana" aria-hidden="true">
+                    <button type="button" class="mc-skin-option" data-board-skin-choice="classic" data-sound-action="skin" aria-pressed="false">
+                      <span class="mc-skin-preview mc-skin-preview-classic" aria-hidden="true">
                         <i></i><i></i><i></i><i></i>
                       </span>
-                      <strong>Clasico Mana</strong>
+                      <strong>Clasico B/N</strong>
                       <small>Incluido</small>
                     </button>
-                    <button type="button" class="mc-skin-option" data-board-skin-choice="arcane" data-sound-action="skin" aria-pressed="false">
+                    <button type="button" class="mc-skin-option" data-board-skin-choice="gilded" data-sound-action="skin" aria-pressed="false">
+                      <span class="mc-skin-preview mc-skin-preview-gilded" aria-hidden="true">
+                        <i></i><i></i><i></i><i></i>
+                      </span>
+                      <strong>Dorado</strong>
+                      <small>Incluido</small>
+                    </button>
+                    <button type="button" class="mc-skin-option mc-skin-locked" data-board-skin-choice="arcane" data-cosmetic-premium="board:arcane" data-sound-action="skin" title="Desbloquear premium localmente" aria-disabled="true" aria-pressed="false">
                       <span class="mc-skin-preview mc-skin-preview-arcane" aria-hidden="true">
                         <i></i><i></i><i></i><i></i>
                       </span>
                       <strong>Arcano oscuro</strong>
-                      <small>Incluido</small>
-                    </button>
-                    <button type="button" class="mc-skin-option mc-skin-locked" data-board-skin-choice="gilded" data-cosmetic-premium="board:gilded" data-sound-action="skin" title="Desbloquear premium localmente" aria-disabled="true" aria-pressed="false">
-                      <span class="mc-skin-preview mc-skin-preview-gilded" aria-hidden="true">
-                        <i></i><i></i><i></i><i></i>
-                      </span>
-                      <strong>Dorado premium</strong>
                       <small data-cosmetic-status>Premium bloqueado</small>
                     </button>
                   </div>
