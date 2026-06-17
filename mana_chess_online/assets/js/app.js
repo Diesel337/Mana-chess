@@ -36,6 +36,8 @@ const Hooks = {
       this.pieceSkinKey = "mana-chess-piece-skin"
       this.audioContext = null
       this.lastSoundState = this.soundState()
+      this.lastViewKey = this.viewKey()
+      this.keepInitialViewInFrame()
       this.handleReset = event => {
         if (!event.target.closest("[data-stats-reset]")) return
         localStorage.removeItem(this.storageKey)
@@ -87,12 +89,17 @@ const Hooks = {
         this.renderPieceSkin()
         this.playSound("skin")
       }
+      this.handleViewJump = event => {
+        if (!event.target.closest('[phx-click="start_practice"], [phx-click="start_tutorial"], [phx-click="sit_anywhere"], [phx-click="create_private"], [phx-click="leave"], [phx-click="sit"]')) return
+        this.scrollViewToTop()
+      }
       this.el.addEventListener("click", this.handleReset)
       this.el.addEventListener("click", this.handleInviteCopy)
       this.el.addEventListener("click", this.handleSoundToggle)
       this.el.addEventListener("click", this.handleSoundAction)
       this.el.addEventListener("click", this.handleSkinChoice)
       this.el.addEventListener("click", this.handlePieceSkinChoice)
+      this.el.addEventListener("click", this.handleViewJump, true)
       this.recordResult()
       this.renderStats()
       this.renderSoundToggle()
@@ -106,6 +113,7 @@ const Hooks = {
       this.renderSoundToggle()
       this.renderBoardSkin()
       this.renderPieceSkin()
+      this.keepViewInFrame()
       this.playChangedSound()
     },
 
@@ -116,6 +124,7 @@ const Hooks = {
       this.el.removeEventListener("click", this.handleSoundAction)
       this.el.removeEventListener("click", this.handleSkinChoice)
       this.el.removeEventListener("click", this.handlePieceSkinChoice)
+      this.el.removeEventListener("click", this.handleViewJump, true)
     },
 
     readStats() {
@@ -258,6 +267,28 @@ const Hooks = {
         resultKey: this.el.dataset.resultKey || "",
         result: this.el.dataset.resultOutcome || "",
       }
+    },
+
+    viewKey() {
+      return this.el.dataset.soundGameId || "lobby"
+    },
+
+    keepViewInFrame() {
+      const current = this.viewKey()
+      if (current === this.lastViewKey) return
+
+      this.lastViewKey = current
+      this.scrollViewToTop()
+    },
+
+    keepInitialViewInFrame() {
+      if (this.viewKey() !== "lobby") this.scrollViewToTop()
+    },
+
+    scrollViewToTop() {
+      window.requestAnimationFrame(() => window.scrollTo(0, 0))
+      window.setTimeout(() => window.scrollTo(0, 0), 80)
+      window.setTimeout(() => window.scrollTo(0, 0), 260)
     },
 
     playChangedSound() {

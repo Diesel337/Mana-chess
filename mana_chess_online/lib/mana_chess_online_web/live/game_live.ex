@@ -4,6 +4,8 @@ defmodule ManaChessOnlineWeb.GameLive do
   alias ManaChessOnline.GameLobby
   alias ManaChessOnline.GameRules
 
+  @files ~w(a b c d e f g h)
+
   @symbols %{
     "r" => "♜",
     "n" => "♞",
@@ -96,12 +98,17 @@ defmodule ManaChessOnlineWeb.GameLive do
     from = {String.to_integer(from_r), String.to_integer(from_c)}
     to = {String.to_integer(to_r), String.to_integer(to_c)}
     piece = GameRules.at(socket.assigns.game.board, elem(from, 0), elem(from, 1))
+    piece_color = GameRules.color(piece)
 
-    if manual_control_allowed?(socket.assigns.game, socket.assigns.color, GameRules.color(piece)) do
-      GameLobby.enqueue(socket.assigns.player_id, from, to)
-    end
+    local_alert =
+      if manual_control_allowed?(socket.assigns.game, socket.assigns.color, piece_color) do
+        GameLobby.enqueue(socket.assigns.player_id, from, to)
+        nil
+      else
+        select_alert(socket.assigns.game, socket.assigns.color, piece, piece_color, nil)
+      end
 
-    {:noreply, socket |> refresh_assignment() |> assign(:local_alert, nil)}
+    {:noreply, socket |> refresh_assignment() |> assign(:local_alert, local_alert)}
   end
 
   def handle_event("reset", _params, socket) do
@@ -473,10 +480,10 @@ defmodule ManaChessOnlineWeb.GameLive do
   defp alert_message(%{log: [latest | _rest]}) do
     cond do
       String.starts_with?(latest, "Movimiento rechazado: ") ->
-        latest |> String.replace_prefix("Movimiento rechazado: ", "") |> sentence_case()
+        latest |> String.replace_prefix("Movimiento rechazado: ", "") |> friendly_alert()
 
       String.starts_with?(latest, "Movimiento descartado: ") ->
-        latest |> String.replace_prefix("Movimiento descartado: ", "") |> sentence_case()
+        latest |> String.replace_prefix("Movimiento descartado: ", "") |> friendly_alert()
 
       String.starts_with?(latest, "Sin elixir") ->
         latest
@@ -488,6 +495,24 @@ defmodule ManaChessOnlineWeb.GameLive do
 
   defp alert_message(_game), do: nil
   defp visible_alert(game, local_alert), do: local_alert || alert_message(game)
+
+  defp friendly_alert("casilla invalida."), do: "Suelta la pieza dentro del tablero."
+  defp friendly_alert("la partida no esta jugando."), do: "La partida todavia no esta jugando."
+  defp friendly_alert("hay una promocion pendiente."), do: "Primero termina la promocion."
+  defp friendly_alert("pieza sin color."), do: "Esa pieza no se puede mover."
+  defp friendly_alert("BOT controla Negras."), do: "El BOT controla Negras."
+  defp friendly_alert("Blancas deben abrir."), do: "Blancas deben abrir la partida."
+  defp friendly_alert("la pieza ya no esta ahi."), do: "La pieza ya no esta ahi."
+  defp friendly_alert("ya no es valido."), do: "Ese movimiento ya no es valido."
+
+  defp friendly_alert(message) do
+    cond do
+      String.starts_with?(message, "no hay pieza en origen") -> "No hay pieza en esa casilla."
+      String.starts_with?(message, "no controlas") -> "Esa pieza no es tuya."
+      String.contains?(message, "no es legal") -> "Ese movimiento no es legal."
+      true -> sentence_case(message)
+    end
+  end
 
   defp sentence_case(<<first::utf8, rest::binary>>), do: String.upcase(<<first::utf8>>) <> rest
   defp sentence_case(message), do: message
@@ -542,13 +567,84 @@ defmodule ManaChessOnlineWeb.GameLive do
   defp select_alert(_game, _player_color, ".", _piece_color, nil), do: nil
   defp select_alert(%{status: status}, _player_color, _piece, _piece_color, nil) when status not in [:playing], do: "La partida todavia no esta jugando."
   defp select_alert(game, _player_color, _piece, piece_color, nil) when not is_nil(piece_color) do
-    if not can_move_now?(game, piece_color) do
-      "Blancas deben abrir la partida."
-    else
-      "Esa pieza no es tuya."
+    cond do
+      not can_move_now?(game, piece_color) -> "Blancas deben abrir la partida."
+      game.practice? and game.bot_enabled? and piece_color == :black -> "El BOT controla Negras."
+      true -> "Esa pieza no es tuya."
     end
   end
   defp select_alert(_game, _player_color, _piece, _piece_color, nil), do: "No puedes mover esa pieza."
+
+  defp queued_actions(%{queue: queue}) when is_list(queue), do: queue
+  defp queued_actions(_game), do: []
+
+  defp panel_log(%{log: log}) when is_list(log), do: Enum.take(log, 8)
+  defp panel_log(_game), do: []
+
+  defp queue_count_text(game) do
+    case length(queued_actions(game)) do
+      0 -> "Libre"
+      1 -> "1 accion"
+      count -> "#{count} acciones"
+    end
+  end
+
+  defp panel_log_count_text(game) do
+    case panel_log(game) do
+      [] -> "Sin eventos"
+      [_one] -> "Ultimo evento"
+      entries -> "#{length(entries)} recientes"
+    end
+  end
+
+  defp square_name({row, col}) when row in 0..7 and col in 0..7 do
+    "#{Enum.at(@files, col)}#{8 - row}"
+  end
+
+  defp square_name(square), do: inspect(square)
+
+  defp event_color_class(:white), do: "mc-event-white"
+  defp event_color_class(:black), do: "mc-event-black"
+  defp event_color_class(_color), do: "mc-event-neutral"
+
+  defp log_entry_class(entry), do: "mc-log-" <> log_entry_kind(entry)
+
+  defp log_entry_tag(entry) do
+    case log_entry_kind(entry) do
+      "alert" -> "Alerta"
+      "capture" -> "Captura"
+      "move" -> "Mov"
+      "bot" -> "BOT"
+      "reset" -> "Reset"
+      _kind -> "Info"
+    end
+  end
+
+  defp log_entry_text(entry) do
+    cond do
+      String.starts_with?(entry, "Movimiento rechazado: ") ->
+        entry |> String.replace_prefix("Movimiento rechazado: ", "") |> friendly_alert()
+
+      String.starts_with?(entry, "Movimiento descartado: ") ->
+        entry |> String.replace_prefix("Movimiento descartado: ", "") |> friendly_alert()
+
+      true ->
+        entry
+    end
+  end
+
+  defp log_entry_kind(entry) do
+    cond do
+      String.starts_with?(entry, "Movimiento rechazado: ") -> "alert"
+      String.starts_with?(entry, "Movimiento descartado: ") -> "alert"
+      String.starts_with?(entry, "Sin elixir") -> "alert"
+      String.contains?(entry, "capturo") -> "capture"
+      String.contains?(entry, "movio") -> "move"
+      String.contains?(entry, "Bot") or String.contains?(entry, "BOT") -> "bot"
+      String.contains?(entry, "reinici") -> "reset"
+      true -> "info"
+    end
+  end
 
   defp controls_color?(:practice, color) when color in [:white, :black], do: true
   defp controls_color?(color, color), do: true
@@ -1025,17 +1121,40 @@ defmodule ManaChessOnlineWeb.GameLive do
       </section>
 
       <aside class={["mc-panel", @game && "mc-panel-game"]}>
-        <h2>Cola</h2>
-        <ol>
-          <li :for={action <- (@game && @game.queue) || []}>
-            {color_label(action.color)}: {inspect(action.from)} -> {inspect(action.to)}
-          </li>
-        </ol>
+        <section class="mc-panel-section mc-queue-panel">
+          <div class="mc-panel-heading">
+            <h2>Cola</h2>
+            <span>{queue_count_text(@game)}</span>
+          </div>
+          <ol class="mc-queue-list">
+            <li :for={action <- queued_actions(@game)}>
+              <i class={["mc-event-dot", event_color_class(action.color)]}></i>
+              <span>
+                <strong>{color_label(action.color)}</strong>
+                <small>{square_name(action.from)} -> {square_name(action.to)}</small>
+              </span>
+            </li>
+            <li :if={queued_actions(@game) == []} class="mc-panel-empty">
+              Sin acciones pendientes
+            </li>
+          </ol>
+        </section>
 
-        <h2>Bitacora</h2>
-        <ul>
-          <li :for={entry <- (@game && @game.log) || []}>{entry}</li>
-        </ul>
+        <section class="mc-panel-section mc-log-panel">
+          <div class="mc-panel-heading">
+            <h2>Bitacora</h2>
+            <span>{panel_log_count_text(@game)}</span>
+          </div>
+          <ul class="mc-log-list">
+            <li :for={entry <- panel_log(@game)} class={["mc-log-entry", log_entry_class(entry)]}>
+              <small>{log_entry_tag(entry)}</small>
+              <span>{log_entry_text(entry)}</span>
+            </li>
+            <li :if={panel_log(@game) == []} class="mc-panel-empty">
+              Los eventos apareceran aqui
+            </li>
+          </ul>
+        </section>
       </aside>
     </main>
     """
