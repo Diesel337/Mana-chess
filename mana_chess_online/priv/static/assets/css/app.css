@@ -4372,7 +4372,7 @@ html[data-desktop="true"] .mc-panel ul {
 
 /* Mobile lobby density pass */
 @media (max-width: 480px) {
-  .mc-shell:not(:has(.mc-play-area)) .mc-panel {
+  .mc-shell:has(.mc-menu) .mc-panel {
     display: none;
   }
 
@@ -4946,52 +4946,52 @@ html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-elixir-bottom-track::a
 }
 
 /* Lobby viewport fit pass */
-.mc-shell:not(:has(.mc-play-area)) {
+.mc-shell:has(.mc-menu) {
   min-height: 100dvh;
 }
 
 @media (min-width: 721px) and (max-width: 1024px) {
-  .mc-shell:not(:has(.mc-play-area)) {
+  .mc-shell:has(.mc-menu) {
     width: min(820px, calc(100vw - 44px));
     gap: 12px;
     padding-top: clamp(18px, 3vh, 32px);
     padding-bottom: clamp(14px, 2vh, 24px);
   }
 
-  .mc-shell:not(:has(.mc-play-area)) .mc-header {
+  .mc-shell:has(.mc-menu) .mc-header {
     margin-bottom: 12px;
   }
 
-  .mc-shell:not(:has(.mc-play-area)) .mc-menu {
+  .mc-shell:has(.mc-menu) .mc-menu {
     gap: 10px;
   }
 
-  .mc-shell:not(:has(.mc-play-area)) .mc-menu-hero {
+  .mc-shell:has(.mc-menu) .mc-menu-hero {
     padding: 14px 16px;
   }
 
-  .mc-shell:not(:has(.mc-play-area)) .mc-menu-hero h2 {
+  .mc-shell:has(.mc-menu) .mc-menu-hero h2 {
     font-size: clamp(2.2rem, 5.4vw, 3.3rem);
   }
 
-  .mc-shell:not(:has(.mc-play-area)) .mc-offline,
-  .mc-shell:not(:has(.mc-play-area)) .mc-private-match,
-  .mc-shell:not(:has(.mc-play-area)) .mc-local-stats,
-  .mc-shell:not(:has(.mc-play-area)) .mc-lobby-game {
+  .mc-shell:has(.mc-menu) .mc-offline,
+  .mc-shell:has(.mc-menu) .mc-private-match,
+  .mc-shell:has(.mc-menu) .mc-local-stats,
+  .mc-shell:has(.mc-menu) .mc-lobby-game {
     padding: 10px 12px;
   }
 
-  .mc-shell:not(:has(.mc-play-area)) .mc-lobby-game {
+  .mc-shell:has(.mc-menu) .mc-lobby-game {
     gap: 10px;
   }
 
-  .mc-shell:not(:has(.mc-play-area)) .mc-lobby-head {
+  .mc-shell:has(.mc-menu) .mc-lobby-head {
     padding-top: 0;
   }
 }
 
 @media (min-width: 1025px) {
-  .mc-shell:not(:has(.mc-play-area)) {
+  .mc-shell:has(.mc-menu) {
     padding-top: 24px;
   }
 }
@@ -5051,5 +5051,215 @@ html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-elixir-bottom-track::a
 
   .mc-private-match button {
     width: 100%;
+  }
+}
+
+/* Mobile in-game fit pass */
+@media (max-width: 480px) {
+  .mc-game:has(.mc-play-area)::before {
+    width: 52px;
+    height: 4px;
+    margin-bottom: 6px;
+  }
+
+  .mc-game:has(.mc-play-area) > .mc-header {
+    align-items: center;
+    margin-bottom: 8px;
+    padding-top: 4px;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-brand-mark {
+    width: 32px;
+    border-radius: 9px;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-kicker {
+    margin-bottom: 1px;
+    font-size: .58rem;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-header h1 {
+    font-size: clamp(1.45rem, 8vw, 2rem);
+    line-height: .95;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-game-id {
+    max-width: 10.5rem;
+    margin-top: 3px;
+    padding: 4px 7px;
+    font-size: .68rem;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-badge {
+    gap: 5px;
+    padding: 7px 8px;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-badge span {
+    font-size: .76rem;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-badge strong {
+    font-size: .86rem;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-sound-toggle {
+    min-height: 22px;
+    padding: 0 7px;
+    font-size: .58rem;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-practice-banner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 6px 10px;
+    align-items: center;
+    padding: 9px 10px;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-practice-banner > strong {
+    font-size: .9rem;
+    line-height: 1;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-practice-banner > span {
+    grid-column: 1;
+    max-width: none;
+    font-size: .72rem;
+    line-height: 1.2;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-bot-control {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    display: grid;
+    width: auto;
+    gap: 5px;
+    justify-items: end;
+    margin-left: 0;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-bot-control span {
+    font-size: .62rem;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-bot-toggle {
+    min-width: 56px;
+    min-height: 34px;
+    padding: 0 10px;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-match-status {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 5px;
+    padding: 8px 10px 8px 14px;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-match-status div {
+    gap: 2px;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-match-status span {
+    font-size: .68rem;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-match-status strong {
+    font-size: .96rem;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-match-status p {
+    grid-column: 1 / -1;
+    margin: 0;
+    font-size: .76rem;
+    line-height: 1.2;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-match-status small {
+    align-self: start;
+    padding: 4px 8px;
+    font-size: .62rem;
+  }
+
+  .mc-game > .mc-play-area {
+    order: 7;
+  }
+
+  .mc-game > .mc-final-panel,
+  .mc-game > .mc-promotion,
+  .mc-game > .mc-check-message {
+    order: 8;
+  }
+
+  .mc-game > .mc-actions {
+    order: 9;
+  }
+
+  .mc-game > .mc-feedback-zone {
+    order: 10;
+  }
+
+  .mc-game > .mc-seats {
+    order: 11;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-feedback-zone {
+    margin-bottom: 8px;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-countdown,
+  .mc-game:has(.mc-play-area) .mc-turn-message,
+  .mc-game:has(.mc-play-area) .mc-alert-message,
+  .mc-game:has(.mc-play-area) .mc-reset-message,
+  .mc-game:has(.mc-play-area) .mc-check-message {
+    min-height: 38px;
+    padding: 8px 10px;
+    font-size: .95rem;
+  }
+
+  .mc-game:has(.mc-play-area) > .mc-play-area {
+    margin-bottom: 10px;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-board-stack {
+    gap: 5px;
+    padding: 5px;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-elixir-bottom-row {
+    min-height: 34px;
+    padding: 5px 6px;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-elixir-bottom-track {
+    height: 14px;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-actions {
+    gap: 8px;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-actions button {
+    min-height: 38px;
+    padding: 0 8px;
+    font-size: .82rem;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-panel {
+    max-height: 180px;
+    padding: 10px;
+  }
+}
+
+@media (max-width: 360px) {
+  .mc-game:has(.mc-play-area) .mc-game-id {
+    display: none;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-practice-banner > span {
+    display: none;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-bot-control {
+    grid-row: 1;
   }
 }
