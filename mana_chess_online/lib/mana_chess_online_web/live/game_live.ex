@@ -630,7 +630,7 @@ defmodule ManaChessOnlineWeb.GameLive do
             <span>Controlas ambos lados para probar reglas, elixir y cooldowns.</span>
             <div class="mc-bot-control">
               <span>BOT</span>
-              <button class={["mc-bot-toggle", @game.bot_enabled? && "mc-bot-toggle-on"]} type="button" phx-click="toggle_practice_bot">
+              <button class={["mc-bot-toggle", @game.bot_enabled? && "mc-bot-toggle-on"]} type="button" phx-click="toggle_practice_bot" data-sound-action="tap">
                 {bot_toggle_label(@game)}
               </button>
             </div>
@@ -700,6 +700,7 @@ defmodule ManaChessOnlineWeb.GameLive do
                 phx-click="sit"
                 phx-value-game={@game.id}
                 phx-value-color="white"
+                data-sound-action="mode"
               >
                 Sentarme como Blancas
               </button>
@@ -709,6 +710,7 @@ defmodule ManaChessOnlineWeb.GameLive do
                 phx-click="sit"
                 phx-value-game={@game.id}
                 phx-value-color="black"
+                data-sound-action="mode"
               >
                 Sentarme como Negras
               </button>
@@ -743,17 +745,17 @@ defmodule ManaChessOnlineWeb.GameLive do
               <strong>{result.title}</strong>
               <span>{result.detail}</span>
             </div>
-            <button type="button" phx-click="reset" disabled={reset_disabled?(@game, @player_id)}>
+            <button type="button" phx-click="reset" disabled={reset_disabled?(@game, @player_id)} data-sound-action="reset">
               {if @game.practice?, do: "Jugar otra vez", else: "Pedir revancha"}
             </button>
           </div>
 
           <div :if={@game.promotion_pending && @game.promotion_pending.player_id == @player_id} class="mc-promotion">
             <strong>Promocionar peon</strong>
-            <button phx-click="promote" phx-value-piece="Q">Reina</button>
-            <button phx-click="promote" phx-value-piece="R">Torre</button>
-            <button phx-click="promote" phx-value-piece="B">Alfil</button>
-            <button phx-click="promote" phx-value-piece="N">Caballo</button>
+            <button phx-click="promote" phx-value-piece="Q" data-sound-action="mode">Reina</button>
+            <button phx-click="promote" phx-value-piece="R" data-sound-action="mode">Torre</button>
+            <button phx-click="promote" phx-value-piece="B" data-sound-action="mode">Alfil</button>
+            <button phx-click="promote" phx-value-piece="N" data-sound-action="mode">Caballo</button>
           </div>
 
           <div :if={@game.promotion_pending && @game.promotion_pending.player_id != @player_id} class="mc-check-message">
@@ -761,14 +763,14 @@ defmodule ManaChessOnlineWeb.GameLive do
           </div>
 
           <div class="mc-actions">
-            <button :if={@game.status == :ready} class="mc-action-primary" type="button" phx-click="start_game">{start_label(@game)}</button>
-            <button :if={starting?(@game) and seated_in?(@game, @player_id)} class="mc-action-primary" type="button" phx-click="ready_to_start" disabled={ready_to_start_disabled?(@game, @player_id)}>
+            <button :if={@game.status == :ready} class="mc-action-primary" type="button" phx-click="start_game" data-sound-action="mode">{start_label(@game)}</button>
+            <button :if={starting?(@game) and seated_in?(@game, @player_id)} class="mc-action-primary" type="button" phx-click="ready_to_start" disabled={ready_to_start_disabled?(@game, @player_id)} data-sound-action="mode">
               {ready_to_start_label(@game, @player_id)}
             </button>
-            <button class="mc-action-secondary" type="button" phx-click="reset" disabled={reset_disabled?(@game, @player_id)}>
+            <button class="mc-action-secondary" type="button" phx-click="reset" disabled={reset_disabled?(@game, @player_id)} data-sound-action="reset">
               {reset_label(@game, @player_id)}
             </button>
-            <button class="mc-action-quiet" type="button" phx-click="leave">
+            <button class="mc-action-quiet" type="button" phx-click="leave" data-sound-action="tap">
               {if seated_in?(@game, @player_id), do: "Liberar mi asiento", else: "Volver al lobby"}
             </button>
           </div>
@@ -850,7 +852,7 @@ defmodule ManaChessOnlineWeb.GameLive do
                   <dd data-stat="draws">0</dd>
                 </div>
               </dl>
-              <button type="button" data-stats-reset>Reiniciar stats</button>
+              <button type="button" data-stats-reset data-sound-action="reset">Reiniciar stats</button>
             </section>
 
             <section class="mc-offline">
@@ -859,11 +861,11 @@ defmodule ManaChessOnlineWeb.GameLive do
                 <span>Practica solo con BOT encendido por default.</span>
               </div>
               <div class="mc-mode-grid mc-mode-grid-offline">
-                <button type="button" class="mc-mode" phx-click="start_practice">
+                <button type="button" class="mc-mode" phx-click="start_practice" data-sound-action="mode">
                   <strong>Practica</strong>
                   <span>Prueba elixir, cooldown y BOT.</span>
                 </button>
-                <button type="button" class="mc-mode" phx-click="start_tutorial">
+                <button type="button" class="mc-mode" phx-click="start_tutorial" data-sound-action="mode">
                   <strong>Tutorial rapido</strong>
                   <span>Aprende el modo en menos de un minuto.</span>
                 </button>
@@ -874,10 +876,10 @@ defmodule ManaChessOnlineWeb.GameLive do
               <div class="mc-lobby-head">
                 <h2>Salas online</h2>
                 <div class="mc-lobby-actions">
-                  <button type="button" class="mc-private-quick" phx-click="create_private" title="Crear match privado por link">
+                  <button type="button" class="mc-private-quick" phx-click="create_private" title="Crear match privado por link" data-sound-action="private">
                     Privado
                   </button>
-                  <button type="button" class="mc-online-quick" phx-click="sit_anywhere">
+                  <button type="button" class="mc-online-quick" phx-click="sit_anywhere" data-sound-action="mode">
                     Online rapido
                   </button>
                 </div>
@@ -891,7 +893,7 @@ defmodule ManaChessOnlineWeb.GameLive do
                   <div class="mc-lobby-meta">
                     <a href={~p"/game/#{game.id}"}>Observar</a>
                     <button type="button" title="Copiar link de sala" data-copy-invite={~p"/game/#{game.id}"}>Link</button>
-                    <button :if={clearable_room?(game)} type="button" phx-click="clear_room" phx-value-game={game.id}>Limpiar</button>
+                    <button :if={clearable_room?(game)} type="button" phx-click="clear_room" phx-value-game={game.id} data-sound-action="reset">Limpiar</button>
                     <span>{lobby_status(game.status)}</span>
                   </div>
                 </div>
@@ -901,6 +903,7 @@ defmodule ManaChessOnlineWeb.GameLive do
                     phx-click="sit"
                     phx-value-game={game.id}
                     phx-value-color="white"
+                    data-sound-action="mode"
                     disabled={!seat_open?(game, :white) && !seated_in?(game, @player_id)}
                   >
                     Blancas: {seat_label(game.players.white, @player_id)}
@@ -910,6 +913,7 @@ defmodule ManaChessOnlineWeb.GameLive do
                     phx-click="sit"
                     phx-value-game={game.id}
                     phx-value-color="black"
+                    data-sound-action="mode"
                     disabled={!seat_open?(game, :black) && !seated_in?(game, @player_id)}
                   >
                     Negras: {seat_label(game.players.black, @player_id)}

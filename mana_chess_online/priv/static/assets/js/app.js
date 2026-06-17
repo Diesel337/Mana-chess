@@ -28,9 +28,15 @@ const Hooks = {
         this.renderSoundToggle();
         if (enabled) this.playSound("ready");
       };
+      this.handleSoundAction = event => {
+        const control = event.target.closest("[data-sound-action]");
+        if (!control || control.disabled || !this.soundEnabled()) return;
+        this.playSound(control.dataset.soundAction || "tap");
+      };
       this.el.addEventListener("click", this.handleReset);
       this.el.addEventListener("click", this.handleInviteCopy);
       this.el.addEventListener("click", this.handleSoundToggle);
+      this.el.addEventListener("click", this.handleSoundAction);
       this.recordResult();
       this.renderStats();
       this.renderSoundToggle();
@@ -47,6 +53,7 @@ const Hooks = {
       this.el.removeEventListener("click", this.handleReset);
       this.el.removeEventListener("click", this.handleInviteCopy);
       this.el.removeEventListener("click", this.handleSoundToggle);
+      this.el.removeEventListener("click", this.handleSoundAction);
     },
 
     readStats() {
@@ -170,6 +177,8 @@ const Hooks = {
     },
 
     playSound(kind) {
+      if (!this.soundEnabled()) return;
+
       const AudioContext = window.AudioContext || window.webkitAudioContext;
       if (!AudioContext) return;
 
@@ -179,6 +188,11 @@ const Hooks = {
 
         const tones = {
           ready: [[660, 0, .06, "sine"], [880, .07, .08, "sine"]],
+          tap: [[480, 0, .035, "triangle"]],
+          mode: [[520, 0, .045, "sine"], [720, .045, .055, "sine"]],
+          private: [[620, 0, .045, "triangle"], [880, .05, .07, "sine"]],
+          copy: [[760, 0, .04, "sine"], [980, .045, .055, "sine"]],
+          reset: [[280, 0, .05, "triangle"], [210, .05, .06, "triangle"]],
           move: [[360, 0, .045, "triangle"], [520, .045, .065, "triangle"]],
           alert: [[220, 0, .08, "sawtooth"], [180, .075, .09, "sawtooth"]],
           state: [[440, 0, .07, "sine"], [660, .07, .08, "sine"]],
@@ -215,6 +229,7 @@ const Hooks = {
       const originalText = button.textContent;
       const markCopied = () => {
         button.textContent = "Copiado";
+        this.playSound("copy");
         window.clearTimeout(button.copyInviteTimer);
         button.copyInviteTimer = window.setTimeout(() => {
           button.textContent = originalText;
