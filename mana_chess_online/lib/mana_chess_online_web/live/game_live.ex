@@ -669,6 +669,23 @@ defmodule ManaChessOnlineWeb.GameLive do
             <small>{player_role_hint(@game, @color)}</small>
           </section>
 
+          <div class="mc-skin-strip" aria-label="Skins de tablero">
+            <span>Skins</span>
+            <button type="button" data-board-skin-choice="mana" data-sound-action="skin" aria-pressed="false">
+              <i class="mc-skin-dot mc-skin-dot-mana"></i>
+              Mana
+            </button>
+            <button type="button" data-board-skin-choice="arcane" data-sound-action="skin" aria-pressed="false">
+              <i class="mc-skin-dot mc-skin-dot-arcane"></i>
+              Arcano
+            </button>
+            <button type="button" disabled title="Premium proximamente">
+              <i class="mc-skin-dot mc-skin-dot-gilded"></i>
+              Dorado
+              <small>Premium</small>
+            </button>
+          </div>
+
           <div :if={!@game.practice?} class="mc-seats">
             <div class={["mc-seat", @color == :white && "mc-seat-current"]}>
               <strong>Blancas</strong>
@@ -776,7 +793,7 @@ defmodule ManaChessOnlineWeb.GameLive do
           </div>
 
           <div class="mc-play-area">
-            <div class="mc-board-stack">
+            <div class="mc-board-stack" data-board-skin-target>
               <% top_elixir = top_elixir_color(@color) %>
               <% bottom_elixir = bottom_elixir_color(@color) %>
               <div class="mc-elixir-bottom">
@@ -853,6 +870,39 @@ defmodule ManaChessOnlineWeb.GameLive do
                 </div>
               </dl>
               <button type="button" data-stats-reset data-sound-action="reset">Reiniciar stats</button>
+            </section>
+
+            <section class="mc-skins" aria-label="Skins de tablero">
+              <div class="mc-skins-head">
+                <div>
+                  <h2>Skins</h2>
+                  <span>Tableros cosmeticos</span>
+                </div>
+                <small>Premium listo para tienda</small>
+              </div>
+              <div class="mc-skin-options">
+                <button type="button" class="mc-skin-option" data-board-skin-choice="mana" data-sound-action="skin" aria-pressed="false">
+                  <span class="mc-skin-preview mc-skin-preview-mana" aria-hidden="true">
+                    <i></i><i></i><i></i><i></i>
+                  </span>
+                  <strong>Clasico Mana</strong>
+                  <small>Incluido</small>
+                </button>
+                <button type="button" class="mc-skin-option" data-board-skin-choice="arcane" data-sound-action="skin" aria-pressed="false">
+                  <span class="mc-skin-preview mc-skin-preview-arcane" aria-hidden="true">
+                    <i></i><i></i><i></i><i></i>
+                  </span>
+                  <strong>Arcano oscuro</strong>
+                  <small>Incluido</small>
+                </button>
+                <button type="button" class="mc-skin-option mc-skin-locked" disabled title="Premium proximamente">
+                  <span class="mc-skin-preview mc-skin-preview-gilded" aria-hidden="true">
+                    <i></i><i></i><i></i><i></i>
+                  </span>
+                  <strong>Dorado premium</strong>
+                  <small>Premium</small>
+                </button>
+              </div>
             </section>
 
             <section class="mc-offline">

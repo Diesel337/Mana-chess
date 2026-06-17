@@ -32,6 +32,7 @@ const Hooks = {
       this.lastResultKey = null
       this.storageKey = "mana-chess-local-stats"
       this.soundKey = "mana-chess-sound-enabled"
+      this.skinKey = "mana-chess-board-skin"
       this.audioContext = null
       this.lastSoundState = this.soundState()
       this.handleReset = event => {
@@ -60,19 +61,30 @@ const Hooks = {
         if (!control || control.disabled || !this.soundEnabled()) return
         this.playSound(control.dataset.soundAction || "tap")
       }
+      this.handleSkinChoice = event => {
+        const control = event.target.closest("[data-board-skin-choice]")
+        if (!control || control.disabled) return
+        event.preventDefault()
+        this.setBoardSkin(control.dataset.boardSkinChoice)
+        this.renderBoardSkin()
+        this.playSound("skin")
+      }
       this.el.addEventListener("click", this.handleReset)
       this.el.addEventListener("click", this.handleInviteCopy)
       this.el.addEventListener("click", this.handleSoundToggle)
       this.el.addEventListener("click", this.handleSoundAction)
+      this.el.addEventListener("click", this.handleSkinChoice)
       this.recordResult()
       this.renderStats()
       this.renderSoundToggle()
+      this.renderBoardSkin()
     },
 
     updated() {
       this.recordResult()
       this.renderStats()
       this.renderSoundToggle()
+      this.renderBoardSkin()
       this.playChangedSound()
     },
 
@@ -81,6 +93,7 @@ const Hooks = {
       this.el.removeEventListener("click", this.handleInviteCopy)
       this.el.removeEventListener("click", this.handleSoundToggle)
       this.el.removeEventListener("click", this.handleSoundAction)
+      this.el.removeEventListener("click", this.handleSkinChoice)
     },
 
     readStats() {
@@ -165,6 +178,30 @@ const Hooks = {
       })
     },
 
+    boardSkin() {
+      const skin = localStorage.getItem(this.skinKey)
+      return ["mana", "arcane"].includes(skin) ? skin : "mana"
+    },
+
+    setBoardSkin(skin) {
+      if (!["mana", "arcane"].includes(skin)) return
+      localStorage.setItem(this.skinKey, skin)
+    },
+
+    renderBoardSkin() {
+      const skin = this.boardSkin()
+
+      this.el.querySelectorAll("[data-board-skin-target]").forEach(node => {
+        node.dataset.boardSkin = skin
+      })
+
+      this.el.querySelectorAll("[data-board-skin-choice]").forEach(button => {
+        const selected = button.dataset.boardSkinChoice === skin
+        button.classList.toggle("mc-skin-selected", selected)
+        button.setAttribute("aria-pressed", selected ? "true" : "false")
+      })
+    },
+
     soundState() {
       return {
         gameId: this.el.dataset.soundGameId || "",
@@ -218,6 +255,7 @@ const Hooks = {
           tap: [[480, 0, .035, "triangle"]],
           mode: [[520, 0, .045, "sine"], [720, .045, .055, "sine"]],
           private: [[620, 0, .045, "triangle"], [880, .05, .07, "sine"]],
+          skin: [[390, 0, .04, "triangle"], [590, .045, .06, "sine"], [780, .095, .06, "sine"]],
           copy: [[760, 0, .04, "sine"], [980, .045, .055, "sine"]],
           reset: [[280, 0, .05, "triangle"], [210, .05, .06, "triangle"]],
           move: [[360, 0, .045, "triangle"], [520, .045, .065, "triangle"]],
