@@ -777,18 +777,34 @@ defmodule ManaChessOnlineWeb.GameLive do
 
           <div class="mc-play-area">
             <div class="mc-skin-strip" aria-label="Skins de tablero">
-              <span>Skins</span>
-              <button type="button" data-board-skin-choice="mana" data-sound-action="skin" aria-pressed="false">
+              <span>Tablero</span>
+              <button type="button" data-board-skin-choice="mana" data-sound-action="skin" title="Tablero Mana" aria-label="Tablero Mana" aria-pressed="false">
                 <i class="mc-skin-dot mc-skin-dot-mana"></i>
                 Mana
               </button>
-              <button type="button" data-board-skin-choice="arcane" data-sound-action="skin" aria-pressed="false">
+              <button type="button" data-board-skin-choice="arcane" data-sound-action="skin" title="Tablero Arcano" aria-label="Tablero Arcano" aria-pressed="false">
                 <i class="mc-skin-dot mc-skin-dot-arcane"></i>
                 Arcano
               </button>
-              <button type="button" disabled title="Premium proximamente">
+              <button type="button" disabled title="Tablero Dorado premium proximamente" aria-label="Tablero Dorado premium proximamente">
                 <i class="mc-skin-dot mc-skin-dot-gilded"></i>
                 Dorado
+                <small>Premium</small>
+              </button>
+            </div>
+            <div class="mc-skin-strip mc-piece-strip" aria-label="Skins de piezas">
+              <span>Piezas</span>
+              <button type="button" data-piece-skin-choice="classic" data-sound-action="skin" title="Piezas clasicas" aria-label="Piezas clasicas" aria-pressed="false">
+                <i class="mc-piece-dot mc-piece-dot-classic"></i>
+                Clasicas
+              </button>
+              <button type="button" data-piece-skin-choice="runes" data-sound-action="skin" title="Piezas Runas" aria-label="Piezas Runas" aria-pressed="false">
+                <i class="mc-piece-dot mc-piece-dot-runes"></i>
+                Runas
+              </button>
+              <button type="button" disabled title="Piezas Cristal premium proximamente" aria-label="Piezas Cristal premium proximamente">
+                <i class="mc-piece-dot mc-piece-dot-crystal"></i>
+                Cristal
                 <small>Premium</small>
               </button>
             </div>
@@ -871,36 +887,70 @@ defmodule ManaChessOnlineWeb.GameLive do
               <button type="button" data-stats-reset data-sound-action="reset">Reiniciar stats</button>
             </section>
 
-            <section class="mc-skins" aria-label="Skins de tablero">
+            <section class="mc-skins" aria-label="Tienda cosmetica">
               <div class="mc-skins-head">
                 <div>
-                  <h2>Skins</h2>
-                  <span>Tableros cosmeticos</span>
+                  <h2>Tienda</h2>
+                  <span>Cosmeticos visuales</span>
                 </div>
-                <small>Premium listo para tienda</small>
+                <small>Preview local</small>
               </div>
-              <div class="mc-skin-options">
-                <button type="button" class="mc-skin-option" data-board-skin-choice="mana" data-sound-action="skin" aria-pressed="false">
-                  <span class="mc-skin-preview mc-skin-preview-mana" aria-hidden="true">
-                    <i></i><i></i><i></i><i></i>
-                  </span>
-                  <strong>Clasico Mana</strong>
-                  <small>Incluido</small>
-                </button>
-                <button type="button" class="mc-skin-option" data-board-skin-choice="arcane" data-sound-action="skin" aria-pressed="false">
-                  <span class="mc-skin-preview mc-skin-preview-arcane" aria-hidden="true">
-                    <i></i><i></i><i></i><i></i>
-                  </span>
-                  <strong>Arcano oscuro</strong>
-                  <small>Incluido</small>
-                </button>
-                <button type="button" class="mc-skin-option mc-skin-locked" disabled title="Premium proximamente">
-                  <span class="mc-skin-preview mc-skin-preview-gilded" aria-hidden="true">
-                    <i></i><i></i><i></i><i></i>
-                  </span>
-                  <strong>Dorado premium</strong>
-                  <small>Premium</small>
-                </button>
+              <div class="mc-cosmetic-groups">
+                <div class="mc-cosmetic-group">
+                  <span class="mc-cosmetic-group-label">Tableros</span>
+                  <div class="mc-skin-options">
+                    <button type="button" class="mc-skin-option" data-board-skin-choice="mana" data-sound-action="skin" aria-pressed="false">
+                      <span class="mc-skin-preview mc-skin-preview-mana" aria-hidden="true">
+                        <i></i><i></i><i></i><i></i>
+                      </span>
+                      <strong>Clasico Mana</strong>
+                      <small>Incluido</small>
+                    </button>
+                    <button type="button" class="mc-skin-option" data-board-skin-choice="arcane" data-sound-action="skin" aria-pressed="false">
+                      <span class="mc-skin-preview mc-skin-preview-arcane" aria-hidden="true">
+                        <i></i><i></i><i></i><i></i>
+                      </span>
+                      <strong>Arcano oscuro</strong>
+                      <small>Incluido</small>
+                    </button>
+                    <button type="button" class="mc-skin-option mc-skin-locked" disabled title="Premium proximamente">
+                      <span class="mc-skin-preview mc-skin-preview-gilded" aria-hidden="true">
+                        <i></i><i></i><i></i><i></i>
+                      </span>
+                      <strong>Dorado premium</strong>
+                      <small>Premium</small>
+                    </button>
+                  </div>
+                </div>
+                <div class="mc-cosmetic-group">
+                  <span class="mc-cosmetic-group-label">Piezas</span>
+                  <div class="mc-skin-options">
+                    <button type="button" class="mc-skin-option" data-piece-skin-choice="classic" data-sound-action="skin" aria-pressed="false">
+                      <span class="mc-piece-skin-preview mc-piece-skin-preview-classic" aria-hidden="true">
+                        <b class="mc-piece-sample mc-piece-sample-white">{@symbols["K"]}</b>
+                        <b class="mc-piece-sample mc-piece-sample-black">{@symbols["q"]}</b>
+                      </span>
+                      <strong>Clasicas</strong>
+                      <small>Incluido</small>
+                    </button>
+                    <button type="button" class="mc-skin-option" data-piece-skin-choice="runes" data-sound-action="skin" aria-pressed="false">
+                      <span class="mc-piece-skin-preview mc-piece-skin-preview-runes" aria-hidden="true">
+                        <b class="mc-piece-sample mc-piece-sample-white">{@symbols["K"]}</b>
+                        <b class="mc-piece-sample mc-piece-sample-black">{@symbols["q"]}</b>
+                      </span>
+                      <strong>Runas arcanas</strong>
+                      <small>Incluido</small>
+                    </button>
+                    <button type="button" class="mc-skin-option mc-skin-locked" disabled title="Premium proximamente">
+                      <span class="mc-piece-skin-preview mc-piece-skin-preview-crystal" aria-hidden="true">
+                        <b class="mc-piece-sample mc-piece-sample-white">{@symbols["K"]}</b>
+                        <b class="mc-piece-sample mc-piece-sample-black">{@symbols["q"]}</b>
+                      </span>
+                      <strong>Cristal real</strong>
+                      <small>Premium</small>
+                    </button>
+                  </div>
+                </div>
               </div>
             </section>
 

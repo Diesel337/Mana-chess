@@ -34,10 +34,91 @@
     <meta name="twitter:image" content="https://mana-chess-production.up.railway.app/images/logo.svg" />
     <link rel="icon" href={~p"/images/logo.svg"} type="image/svg+xml" />
     <link rel="manifest" href={~p"/site.webmanifest"} />
-    <link phx-track-static rel="stylesheet" href={~p"/assets/css/app.css?v=skins-fit-20260617"} />
-    <script defer phx-track-static type="text/javascript" src={~p"/assets/js/phoenix.js?v=skins-fit-20260617"}></script>
-    <script defer phx-track-static type="text/javascript" src={~p"/assets/js/phoenix_live_view.js?v=skins-fit-20260617"}></script>
-    <script defer phx-track-static type="text/javascript" src={~p"/assets/js/app.js?v=skins-fit-20260617"}></script>
+    <link phx-track-static rel="stylesheet" href={~p"/assets/css/app.css?v=piece-shop-fit7-20260617"} />
+    <style>
+      .mc-cosmetic-groups{display:grid;gap:8px}.mc-cosmetic-group{display:grid;gap:8px}.mc-menu .mc-cosmetic-groups{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.mc-menu .mc-cosmetic-group{gap:5px}.mc-piece-skin-preview{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));place-items:center;width:46px;aspect-ratio:1;gap:2px;padding:4px;overflow:hidden;border:2px solid var(--piece-frame,#e6bd68);border-radius:7px;background:radial-gradient(circle at 30% 20%,rgba(255,243,207,.14),transparent 42%),#08100b;box-shadow:0 8px 16px rgba(0,0,0,.22)}.mc-menu .mc-piece-skin-preview{width:22px;padding:2px;border-radius:5px}.mc-play-area>.mc-piece-strip{right:auto!important;left:6px!important}.mc-shell.mc-piece-skin-runes .mc-board .mc-white{background:radial-gradient(circle at 34% 23%,#ffffff,#bff5de 60%,#4f9e84 100%);color:#07110d;text-shadow:0 1px rgba(255,255,255,.46),0 0 11px rgba(139,217,189,.28)}.mc-shell.mc-piece-skin-runes .mc-board .mc-black{background:radial-gradient(circle at 35% 24%,#3b2670,#140d28 62%,#030207 100%);color:#c7b3ff;text-shadow:0 0 16px rgba(168,132,255,.58),0 0 4px rgba(139,217,189,.32)}@media (max-width:480px){.mc-menu .mc-cosmetic-groups{grid-template-columns:minmax(0,1fr)}.mc-menu .mc-piece-skin-preview{width:20px}}
+    </style>
+    <script>
+      (() => {
+        const boardKey = "mana-chess-board-skin";
+        const pieceKey = "mana-chess-piece-skin";
+        const boards = ["mana", "arcane"];
+        const pieces = ["classic", "runes"];
+        const read = (key, fallback, valid) => {
+          try {
+            const value = localStorage.getItem(key);
+            return valid.includes(value) ? value : fallback;
+          } catch (_error) {
+            return fallback;
+          }
+        };
+        const write = (key, value, valid) => {
+          if (!valid.includes(value)) return;
+          try {
+            localStorage.setItem(key, value);
+          } catch (_error) {}
+        };
+        const render = () => {
+          const board = read(boardKey, "mana", boards);
+          const piece = read(pieceKey, "classic", pieces);
+          document.documentElement.dataset.pieceSkin = piece;
+          document.querySelectorAll(".mc-board-stack").forEach((stack) => stack.dataset.boardSkin = board);
+          document.querySelectorAll(".mc-shell").forEach((shell) => {
+            shell.dataset.pieceSkin = piece;
+            shell.classList.toggle("mc-piece-skin-classic", piece === "classic");
+            shell.classList.toggle("mc-piece-skin-runes", piece === "runes");
+          });
+          document.querySelectorAll("[data-board-skin-choice]").forEach((button) => {
+            const selected = button.dataset.boardSkinChoice === board;
+            button.classList.toggle("mc-skin-selected", selected);
+            button.setAttribute("aria-pressed", selected ? "true" : "false");
+          });
+          document.querySelectorAll("[data-piece-skin-choice]").forEach((button) => {
+            const selected = button.dataset.pieceSkinChoice === piece;
+            button.classList.toggle("mc-skin-selected", selected);
+            button.setAttribute("aria-pressed", selected ? "true" : "false");
+          });
+        };
+        window.ManaChessCosmetics = {
+          chooseBoard: (skin) => {
+            write(boardKey, skin, boards);
+            render();
+          },
+          choosePiece: (skin) => {
+            write(pieceKey, skin, pieces);
+            render();
+          },
+          render
+        };
+        document.addEventListener("click", (event) => {
+          const piece = event.target.closest("[data-piece-skin-choice]");
+          if (piece && !piece.disabled) {
+            event.preventDefault();
+            window.ManaChessCosmetics.choosePiece(piece.dataset.pieceSkinChoice);
+            return;
+          }
+          const board = event.target.closest("[data-board-skin-choice]");
+          if (board && !board.disabled) {
+            event.preventDefault();
+            window.ManaChessCosmetics.chooseBoard(board.dataset.boardSkinChoice);
+          }
+        }, true);
+        document.addEventListener("DOMContentLoaded", render, {once: true});
+        document.addEventListener("phx:page-loading-stop", render);
+        let queued = false;
+        new MutationObserver(() => {
+          if (queued) return;
+          queued = true;
+          requestAnimationFrame(() => {
+            queued = false;
+            render();
+          });
+        }).observe(document.documentElement, {childList: true, subtree: true});
+      })();
+    </script>
+    <script defer phx-track-static type="text/javascript" src={~p"/assets/js/phoenix.js?v=piece-shop-fit7-20260617"}></script>
+    <script defer phx-track-static type="text/javascript" src={~p"/assets/js/phoenix_live_view.js?v=piece-shop-fit7-20260617"}></script>
+    <script defer phx-track-static type="text/javascript" src={~p"/assets/js/app.js?v=piece-shop-fit7-20260617"}></script>
     <script>
       (() => {
         const setTheme = (theme) => {

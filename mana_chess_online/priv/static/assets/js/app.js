@@ -6,6 +6,7 @@ const Hooks = {
       this.storageKey = "mana-chess-local-stats";
       this.soundKey = "mana-chess-sound-enabled";
       this.skinKey = "mana-chess-board-skin";
+      this.pieceSkinKey = "mana-chess-piece-skin";
       this.audioContext = null;
       this.lastSoundState = this.soundState();
       this.handleReset = event => {
@@ -31,7 +32,16 @@ const Hooks = {
       };
       this.handleSoundAction = event => {
         const control = event.target.closest("[data-sound-action]");
-        if (!control || control.disabled || !this.soundEnabled()) return;
+        if (!control || control.disabled) return;
+        if (control.matches("[data-piece-skin-choice]")) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          this.setPieceSkin(control.dataset.pieceSkinChoice);
+          this.renderPieceSkin();
+          if (this.soundEnabled()) this.playSound("skin");
+          return;
+        }
+        if (!this.soundEnabled()) return;
         this.playSound(control.dataset.soundAction || "tap");
       };
       this.handleSkinChoice = event => {
@@ -42,15 +52,25 @@ const Hooks = {
         this.renderBoardSkin();
         this.playSound("skin");
       };
+      this.handlePieceSkinChoice = event => {
+        const control = event.target.closest("[data-piece-skin-choice]");
+        if (!control || control.disabled) return;
+        event.preventDefault();
+        this.setPieceSkin(control.dataset.pieceSkinChoice);
+        this.renderPieceSkin();
+        this.playSound("skin");
+      };
       this.el.addEventListener("click", this.handleReset);
       this.el.addEventListener("click", this.handleInviteCopy);
       this.el.addEventListener("click", this.handleSoundToggle);
       this.el.addEventListener("click", this.handleSoundAction);
       this.el.addEventListener("click", this.handleSkinChoice);
+      this.el.addEventListener("click", this.handlePieceSkinChoice);
       this.recordResult();
       this.renderStats();
       this.renderSoundToggle();
       this.renderBoardSkin();
+      this.renderPieceSkin();
     },
 
     updated() {
@@ -58,6 +78,7 @@ const Hooks = {
       this.renderStats();
       this.renderSoundToggle();
       this.renderBoardSkin();
+      this.renderPieceSkin();
       this.playChangedSound();
     },
 
@@ -67,6 +88,7 @@ const Hooks = {
       this.el.removeEventListener("click", this.handleSoundToggle);
       this.el.removeEventListener("click", this.handleSoundAction);
       this.el.removeEventListener("click", this.handleSkinChoice);
+      this.el.removeEventListener("click", this.handlePieceSkinChoice);
     },
 
     readStats() {
@@ -170,6 +192,30 @@ const Hooks = {
 
       this.el.querySelectorAll("[data-board-skin-choice]").forEach(button => {
         const selected = button.dataset.boardSkinChoice === skin;
+        button.classList.toggle("mc-skin-selected", selected);
+        button.setAttribute("aria-pressed", selected ? "true" : "false");
+      });
+    },
+
+    pieceSkin() {
+      const skin = localStorage.getItem(this.pieceSkinKey);
+      return ["classic", "runes"].includes(skin) ? skin : "classic";
+    },
+
+    setPieceSkin(skin) {
+      if (!["classic", "runes"].includes(skin)) return;
+      localStorage.setItem(this.pieceSkinKey, skin);
+    },
+
+    renderPieceSkin() {
+      const skin = this.pieceSkin();
+      this.el.dataset.pieceSkin = skin;
+      this.el.classList.toggle("mc-piece-skin-classic", skin === "classic");
+      this.el.classList.toggle("mc-piece-skin-runes", skin === "runes");
+      document.documentElement.dataset.pieceSkin = skin;
+
+      this.el.querySelectorAll("[data-piece-skin-choice]").forEach(button => {
+        const selected = button.dataset.pieceSkinChoice === skin;
         button.classList.toggle("mc-skin-selected", selected);
         button.setAttribute("aria-pressed", selected ? "true" : "false");
       });
