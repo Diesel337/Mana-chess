@@ -67,24 +67,27 @@ defmodule ManaChessOnlineWeb.GameLive do
   def handle_event("select", %{"r" => r, "c" => c}, socket) do
     r = String.to_integer(r)
     c = String.to_integer(c)
+    square = {r, c}
     piece = GameRules.at(socket.assigns.game.board, r, c)
     piece_color = GameRules.color(piece)
 
-    selected =
-      if selectable_square?(socket.assigns.game, socket.assigns.color, piece, piece_color) do
-        {r, c}
-      else
-        nil
-      end
-
-    valid_moves =
-      if selected do
+    legal_moves =
+      if piece_color in [:white, :black] do
         GameRules.legal_moves_for(socket.assigns.game.board, r, c, piece_color, socket.assigns.game.castling_rights)
       else
         []
       end
 
-    {:noreply, assign(socket, selected: selected, valid_moves: valid_moves, local_alert: select_alert(socket.assigns.game, socket.assigns.color, piece, piece_color, selected))}
+    selected =
+      if selectable_square?(socket.assigns.game, socket.assigns.color, piece, piece_color, legal_moves, square) do
+        square
+      else
+        nil
+      end
+
+    valid_moves = if selected, do: legal_moves, else: []
+
+    {:noreply, assign(socket, selected: selected, valid_moves: valid_moves, local_alert: select_alert(socket.assigns.game, socket.assigns.color, piece, piece_color, selected, legal_moves, square))}
   end
 
   def handle_event("move", %{"r" => r, "c" => c}, %{assigns: %{selected: nil}} = socket) do
@@ -107,7 +110,7 @@ defmodule ManaChessOnlineWeb.GameLive do
         GameLobby.enqueue(socket.assigns.player_id, from, to)
         nil
       else
-        select_alert(socket.assigns.game, socket.assigns.color, piece, piece_color, nil)
+        select_alert(socket.assigns.game, socket.assigns.color, piece, piece_color, nil, [], from)
       end
 
     {:noreply, socket |> refresh_assignment() |> assign(:local_alert, local_alert)}
@@ -544,6 +547,7 @@ defmodule ManaChessOnlineWeb.GameLive do
   defp friendly_alert("BOT controla Negras."), do: "El BOT controla Negras."
   defp friendly_alert("Blancas deben abrir."), do: "Blancas deben abrir la partida."
   defp friendly_alert("la pieza ya no esta ahi."), do: "La pieza ya no esta ahi."
+  defp friendly_alert("pieza en cooldown."), do: "Esa pieza sigue en cooldown."
   defp friendly_alert("ya no es valido."), do: "Ese movimiento ya no es valido."
 
   defp friendly_alert(message) do
@@ -600,21 +604,74 @@ defmodule ManaChessOnlineWeb.GameLive do
   defp can_move_now?(%{status: :playing, first_move_pending: color}, color), do: true
   defp can_move_now?(_game, _color), do: false
 
-  defp selectable_square?(game, player_color, piece, piece_color) do
-    piece != "." and manual_control_allowed?(game, player_color, piece_color) and can_move_now?(game, piece_color)
+  defp selectable_square?(game, player_color, piece, piece_color, legal_moves, square) do
+    piece != "." and manual_control_allowed?(game, player_color, piece_color) and
+      can_move_now?(game, piece_color) and not cooldown_active?(game, square) and
+      can_afford_piece?(game, piece, piece_color) and legal_moves != []
   end
 
-  defp select_alert(_game, _player_color, _piece, _piece_color, {_r, _c}), do: nil
-  defp select_alert(_game, _player_color, ".", _piece_color, nil), do: nil
-  defp select_alert(%{status: status}, _player_color, _piece, _piece_color, nil) when status not in [:playing], do: "La partida todavia no esta jugando."
-  defp select_alert(game, _player_color, _piece, piece_color, nil) when not is_nil(piece_color) do
+  defp select_alert(_game, _player_color, _piece, _piece_color, {_r, _c}, _legal_moves, _square), do: nil
+  defp select_alert(_game, _player_color, ".", _piece_color, nil, _legal_moves, _square), do: nil
+  defp select_alert(%{status: status}, _player_color, _piece, _piece_color, nil, _legal_moves, _square) when status not in [:playing], do: "La partida todavia no esta jugando."
+
+  defp select_alert(game, player_color, piece, piece_color, nil, legal_moves, square) when not is_nil(piece_color) do
     cond do
       not can_move_now?(game, piece_color) -> "Blancas deben abrir la partida."
       game.practice? and game.bot_enabled? and piece_color == :black -> "El BOT controla Negras."
-      true -> "Esa pieza no es tuya."
+      not controls_color?(player_color, piece_color) -> spectator_or_control_alert(player_color)
+      cooldown_active?(game, square) -> cooldown_alert(game, square)
+      not can_afford_piece?(game, piece, piece_color) -> elixir_alert(game, piece, piece_color)
+      legal_moves == [] -> "Esa pieza no tiene movimientos legales ahora."
+      true -> "No puedes mover esa pieza."
     end
   end
-  defp select_alert(_game, _player_color, _piece, _piece_color, nil), do: "No puedes mover esa pieza."
+
+  defp select_alert(_game, _player_color, _piece, _piece_color, nil, _legal_moves, _square), do: "No puedes mover esa pieza."
+
+  defp spectator_or_control_alert(nil), do: "Estas observando; toma un asiento para mover."
+  defp spectator_or_control_alert(_player_color), do: "Esa pieza no es tuya."
+
+  defp can_afford_piece?(game, piece, color), do: Map.get(game.elixir, color, 0) >= piece_cost_for_ui(game, piece)
+
+  defp elixir_alert(game, piece, color) do
+    "Falta elixir: #{short_number(Map.get(game.elixir, color, 0))}/#{short_number(piece_cost_for_ui(game, piece))}."
+  end
+
+  defp cooldown_alert(game, square) do
+    case cooldown_for(game, square) do
+      nil -> "Esa pieza esta en cooldown."
+      %{remaining_ms: remaining_ms} -> "Cooldown activo: espera #{ceil(remaining_ms / 1000)}s."
+    end
+  end
+
+  defp piece_cost_for_ui(game, piece) do
+    game.settings.costs
+    |> Map.get(piece_type(piece), GameRules.piece_cost(piece))
+  end
+
+  defp piece_type(piece) do
+    case String.downcase(piece) do
+      "p" -> :pawn
+      "n" -> :knight
+      "b" -> :bishop
+      "r" -> :rook
+      "q" -> :queen
+      "k" -> :king
+      _ -> :pawn
+    end
+  end
+
+  defp short_number(number) when is_integer(number), do: Integer.to_string(number)
+
+  defp short_number(number) when is_float(number) do
+    number
+    |> Float.round(2)
+    |> :erlang.float_to_binary(decimals: 2)
+    |> String.trim_trailing("0")
+    |> String.trim_trailing(".")
+  end
+
+  defp short_number(number), do: to_string(number)
 
   defp queued_actions(%{queue: queue}) when is_list(queue), do: queue
   defp queued_actions(_game), do: []

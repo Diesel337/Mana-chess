@@ -432,6 +432,9 @@ defmodule ManaChessOnline.GameLobby do
         not first_move_allowed?(game, color) ->
           reject_move(state, game_id, "Movimiento rechazado: Blancas deben abrir.")
 
+        cooldown_active?(game, from) ->
+          reject_move(state, game_id, "Movimiento rechazado: pieza en cooldown.")
+
         to not in GameRules.legal_moves_for(game.board, elem(from, 0), elem(from, 1), color, game.castling_rights) ->
           reject_move(state, game_id, "Movimiento rechazado: #{inspect(from)} -> #{inspect(to)} no es legal.")
 
@@ -909,6 +912,13 @@ defmodule ManaChessOnline.GameLobby do
   defp clear_expired_cooldowns(game) do
     now = now_ms()
     %{game | cooldowns: Map.reject(game.cooldowns, fn {_square, ready_at} -> ready_at <= now end)}
+  end
+
+  defp cooldown_active?(game, square) do
+    case Map.fetch(game.cooldowns, square) do
+      {:ok, ready_at} -> ready_at > now_ms()
+      :error -> false
+    end
   end
 
   defp put_piece_cooldown(cooldowns, square, _piece, settings) do

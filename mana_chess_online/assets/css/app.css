@@ -5132,6 +5132,8 @@ html[data-piece-skin="custom"] .mc-drag-ghost.mc-black {
   align-items: center;
   justify-content: center;
   min-width: 0;
+  line-height: 1.16;
+  overflow-wrap: anywhere;
   color: #fff7e8;
   background:
     linear-gradient(90deg, rgba(255, 150, 120, .26), rgba(240, 166, 92, .2)),
