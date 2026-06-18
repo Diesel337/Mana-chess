@@ -5246,6 +5246,48 @@ html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-elixir-bottom-track::a
   font-size: .72rem;
 }
 
+.mc-skin-option [data-cosmetic-status],
+.mc-palette-unlock [data-palette-status],
+.mc-skin-strip [data-cosmetic-status] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  justify-self: start;
+  width: max-content;
+  max-width: 100%;
+  min-height: 18px;
+  padding: 2px 7px;
+  border: 1px solid rgba(255, 217, 130, .26);
+  border-radius: 999px;
+  background: rgba(255, 217, 130, .08);
+  color: #ffd982;
+  font-size: .61rem;
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.mc-skin-option [data-cosmetic-status]::before,
+.mc-palette-unlock [data-palette-status]::before,
+.mc-skin-strip [data-cosmetic-status]::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: currentColor;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.mc-skin-unlocked [data-cosmetic-status],
+.mc-palette-editor.is-unlocked [data-palette-status],
+.mc-skin-strip .mc-skin-unlocked [data-cosmetic-status] {
+  border-color: rgba(139, 217, 189, .34);
+  background: rgba(139, 217, 189, .1);
+  color: #8bd9bd;
+}
+
 .mc-skin-option:not(:disabled):hover,
 .mc-skin-strip button:not(:disabled):hover {
   transform: translateY(-1px);
@@ -5740,6 +5782,10 @@ html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-elixir-bottom-track::a
   grid-template-columns: 82px minmax(0, 1fr);
   align-items: center;
   gap: 8px;
+}
+
+.mc-shell:has(.mc-menu) .mc-skin-option [data-cosmetic-status] {
+  display: inline-flex !important;
 }
 
 .mc-shell:has(.mc-menu) .mc-cosmetic-group-label {
@@ -6443,6 +6489,10 @@ html[data-piece-skin="custom"] .mc-drag-ghost.mc-black {
   border-radius: 5px;
 }
 
+.mc-menu .mc-skin-option [data-cosmetic-status] {
+  display: inline-flex !important;
+}
+
 .mc-skin-locked {
   border-style: dashed;
   filter: saturate(.72);
@@ -6516,6 +6566,18 @@ html[data-piece-skin="custom"] .mc-drag-ghost.mc-black {
 
   .mc-menu .mc-piece-skin-preview {
     width: 20px;
+  }
+
+  .mc-menu .mc-skin-option [data-cosmetic-status] {
+    min-height: 16px;
+    padding: 2px 4px;
+    font-size: .5rem;
+    gap: 3px;
+  }
+
+  .mc-menu .mc-skin-option [data-cosmetic-status]::before {
+    width: 4px;
+    height: 4px;
   }
 }
 
@@ -6609,6 +6671,13 @@ html[data-piece-skin="custom"] .mc-drag-ghost.mc-black {
     font-size: .62rem;
     line-height: 1.1;
     white-space: normal;
+  }
+
+  .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-skin-option [data-cosmetic-status],
+  .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-palette-unlock [data-palette-status] {
+    display: inline-flex !important;
+    font-size: .56rem;
+    white-space: nowrap;
   }
 
   .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-palette-unlock {
