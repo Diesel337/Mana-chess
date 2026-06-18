@@ -702,6 +702,8 @@ defmodule ManaChessOnlineWeb.GameLive do
   defp chat_entry_name(_entry, _player_id), do: "Jugador"
   defp chat_entry_role(%{role: role}) when is_binary(role), do: role
   defp chat_entry_role(_entry), do: "Sala"
+  defp chat_entry_time(%{sent_at: sent_at}) when is_integer(sent_at), do: sent_at
+  defp chat_entry_time(_entry), do: nil
 
   defp short_chat_name("Jugador " <> tag), do: "J-" <> tag
   defp short_chat_name(name), do: name
@@ -1382,6 +1384,7 @@ defmodule ManaChessOnlineWeb.GameLive do
               <small>
                 <strong>{chat_entry_name(entry, @player_id)}</strong>
                 <span>{chat_entry_role(entry)}</span>
+                <span :if={chat_entry_time(entry)} class="mc-chat-time" data-chat-time={chat_entry_time(entry)}>--:--</span>
               </small>
               <p>{entry.text}</p>
             </li>

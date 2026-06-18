@@ -10,8 +10,9 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert :ok = GameLobby.send_chat(player_id, view.game_id, "  hola\n   mana   ")
 
     game = GameLobby.snapshot(view.game_id)
-    assert [%{player_id: ^player_id, name: name, role: "Practica", text: "hola mana"} | _rest] = game.chat
+    assert [%{player_id: ^player_id, name: name, role: "Practica", sent_at: sent_at, text: "hola mana"} | _rest] = game.chat
     assert String.starts_with?(name, "Jugador ")
+    assert is_integer(sent_at)
   end
 
   test "rejects blank chat messages" do

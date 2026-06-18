@@ -369,6 +369,7 @@ defmodule ManaChessOnline.GameLobby do
         player_id: player_id,
         name: chat_name(player_id),
         role: chat_role(game, player_id),
+        sent_at: System.system_time(:second),
         text: text
       }
 

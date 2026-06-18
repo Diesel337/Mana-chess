@@ -115,6 +115,7 @@ const Hooks = {
       this.renderSoundToggle()
       this.renderBoardSkin()
       this.renderPieceSkin()
+      this.renderChatTimes()
       this.keepChatAtLatest()
     },
 
@@ -124,6 +125,7 @@ const Hooks = {
       this.renderSoundToggle()
       this.renderBoardSkin()
       this.renderPieceSkin()
+      this.renderChatTimes()
       this.keepViewInFrame()
       this.keepChatAtLatest()
       this.playChangedSound()
@@ -294,6 +296,18 @@ const Hooks = {
         const selected = button.dataset.pieceSkinChoice === skin
         button.classList.toggle("mc-skin-selected", selected)
         button.setAttribute("aria-pressed", selected ? "true" : "false")
+      })
+    },
+
+    renderChatTimes() {
+      this.el.querySelectorAll("[data-chat-time]").forEach(node => {
+        if (node.dataset.chatTimeRendered === node.dataset.chatTime) return
+
+        const seconds = Number.parseInt(node.dataset.chatTime || "", 10)
+        if (Number.isNaN(seconds)) return
+
+        node.textContent = new Date(seconds * 1000).toLocaleTimeString([], {hour: "2-digit", minute: "2-digit", hour12: false})
+        node.dataset.chatTimeRendered = node.dataset.chatTime
       })
     },
 
