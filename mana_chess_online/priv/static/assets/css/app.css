@@ -7188,11 +7188,34 @@ html[data-piece-skin="custom"] .mc-drag-ghost.mc-black {
 }
 
 .mc-chat-entry small {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 3px 5px;
   color: #8bd9bd;
   font-size: .58rem;
   font-weight: 1000;
   letter-spacing: .03em;
   text-transform: uppercase;
+}
+
+.mc-chat-entry small strong {
+  min-width: 0;
+  max-width: 100%;
+  color: #ffe39a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mc-chat-entry small span {
+  color: #8bd9bd;
+}
+
+.mc-chat-entry small span::before {
+  content: "/";
+  margin-right: 5px;
+  color: rgba(255, 243, 212, .45);
 }
 
 .mc-chat-entry p {

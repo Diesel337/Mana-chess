@@ -693,6 +693,15 @@ defmodule ManaChessOnlineWeb.GameLive do
   defp chat_entry_class(%{player_id: player_id}, player_id), do: "mc-chat-mine"
   defp chat_entry_class(_entry, _player_id), do: nil
   defp chat_send_disabled?(draft), do: String.trim(draft || "") == ""
+  defp chat_entry_name(%{player_id: player_id, name: name}, player_id) when is_binary(name),
+    do: "Tu " <> short_chat_name(name)
+  defp chat_entry_name(%{name: name}, _player_id) when is_binary(name) and name != "", do: name
+  defp chat_entry_name(_entry, _player_id), do: "Jugador"
+  defp chat_entry_role(%{role: role}) when is_binary(role), do: role
+  defp chat_entry_role(_entry), do: "Sala"
+
+  defp short_chat_name("Jugador " <> tag), do: "J-" <> tag
+  defp short_chat_name(name), do: name
 
   defp queue_count_text(game) do
     case length(queued_actions(game)) do
@@ -1366,7 +1375,10 @@ defmodule ManaChessOnlineWeb.GameLive do
           </div>
           <ul class="mc-chat-list">
             <li :for={entry <- chat_messages(@game)} class={["mc-chat-entry", chat_entry_class(entry, @player_id)]}>
-              <small>{entry.role}</small>
+              <small>
+                <strong>{chat_entry_name(entry, @player_id)}</strong>
+                <span>{chat_entry_role(entry)}</span>
+              </small>
               <p>{entry.text}</p>
             </li>
             <li :if={chat_messages(@game) == []} class="mc-panel-empty">

@@ -367,6 +367,7 @@ defmodule ManaChessOnline.GameLobby do
       entry = %{
         id: System.unique_integer([:positive, :monotonic]),
         player_id: player_id,
+        name: chat_name(player_id),
         role: chat_role(game, player_id),
         text: text
       }
@@ -1062,6 +1063,19 @@ defmodule ManaChessOnline.GameLobby do
   defp chat_role(%{players: %{white: player_id}}, player_id), do: "Blancas"
   defp chat_role(%{players: %{black: player_id}}, player_id), do: "Negras"
   defp chat_role(_game, _player_id), do: "Espectador"
+
+  defp chat_name(player_id) when is_binary(player_id) do
+    tag =
+      player_id
+      |> :erlang.phash2(36 * 36 * 36 * 36)
+      |> Integer.to_string(36)
+      |> String.upcase()
+      |> String.pad_leading(4, "0")
+
+    "Jugador " <> tag
+  end
+
+  defp chat_name(_player_id), do: "Jugador"
 
   defp next_status(board, _captured, _moving_color, castling_rights), do: terminal_status(board, castling_rights)
 
