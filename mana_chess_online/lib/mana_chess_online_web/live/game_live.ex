@@ -287,6 +287,7 @@ defmodule ManaChessOnlineWeb.GameLive do
   defp status_label(:draw), do: "Empate"
   defp status_label(_), do: "Sin lugar"
 
+  defp match_phase(%{status: :waiting, private?: true}), do: %{title: "Privado listo", detail: "Copia el link para invitar rival o espectadores.", tone: :waiting}
   defp match_phase(%{status: :waiting}), do: %{title: "Esperando rival", detail: "Comparte el link o toma el asiento libre.", tone: :waiting}
   defp match_phase(%{status: :ready}), do: %{title: "Listos para empezar", detail: "Cualquiera puede iniciar la cuenta regresiva.", tone: :ready}
   defp match_phase(%{status: {:starting, _starts_at}, countdown_seconds: seconds}), do: %{title: "Inicia en #{seconds}", detail: "Ambos pueden marcar listo para saltar la espera.", tone: :starting}
@@ -324,6 +325,15 @@ defmodule ManaChessOnlineWeb.GameLive do
   defp player_role_hint(%{practice?: true}, _color), do: "BOT OFF"
   defp player_role_hint(_game, color) when color in [:white, :black], do: "Sentado"
   defp player_role_hint(_game, _color), do: "Observando"
+
+  defp invite_title(%{private?: true}), do: "Privado por link"
+  defp invite_title(_game), do: "Link de sala"
+
+  defp invite_hint(%{private?: true}), do: "Comparte este link con tu rival o espectadores."
+  defp invite_hint(_game), do: "Rival o espectador entra aqui."
+
+  defp invite_copy_label(%{private?: true}), do: "Copiar privado"
+  defp invite_copy_label(_game), do: "Copiar link"
 
   defp start_label(%{practice?: true}), do: "Empezar practica"
   defp start_label(_game), do: "Empezar partida"
@@ -907,15 +917,14 @@ defmodule ManaChessOnlineWeb.GameLive do
             <p :if={@game.status == :waiting}>
               Blancas no puede iniciar hasta que Negras se siente. Para jugar solo usa Modo practica.
             </p>
-            <div class="mc-invite-strip">
+            <div class={["mc-invite-strip", @game.private? && "mc-invite-strip-private"]}>
               <div>
-                <strong>{if @game.private?, do: "Link privado", else: "Link de sala"}</strong>
-                <span>
-                  Rival o espectador entra aqui: <code>{~p"/game/#{@game.id}"}</code>
-                </span>
+                <strong>{invite_title(@game)}</strong>
+                <span>{invite_hint(@game)}</span>
+                <code>{~p"/game/#{@game.id}"}</code>
               </div>
               <div>
-                <button type="button" data-copy-invite={~p"/game/#{@game.id}"}>Copiar link</button>
+                <button type="button" data-copy-invite={~p"/game/#{@game.id}"}>{invite_copy_label(@game)}</button>
                 <a href={~p"/game/#{@game.id}"}>Abrir</a>
               </div>
             </div>
@@ -1146,8 +1155,9 @@ defmodule ManaChessOnlineWeb.GameLive do
               <div class="mc-lobby-head">
                 <h2>Salas online</h2>
                 <div class="mc-lobby-actions">
-                  <button type="button" class="mc-private-quick" phx-click="create_private" title="Crear match privado por link" data-sound-action="private">
-                    Privado
+                  <button type="button" class="mc-private-quick" phx-click="create_private" title="Crear sala privada por link" data-sound-action="private">
+                    <strong>Crear privado</strong>
+                    <small>Link para invitar</small>
                   </button>
                   <button type="button" class="mc-online-quick" phx-click="sit_anywhere" data-sound-action="mode">
                     Online rapido
