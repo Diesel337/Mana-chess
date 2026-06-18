@@ -456,6 +456,9 @@ defmodule ManaChessOnlineWeb.GameLive do
   defp sound_log_kind(%{log: [latest | _rest]}), do: log_entry_kind(latest)
   defp sound_log_kind(_game), do: ""
 
+  defp sound_chat_count(%{chat: chat}) when is_list(chat), do: length(chat)
+  defp sound_chat_count(_game), do: 0
+
   defp sound_alert_key(nil, _local_alert), do: ""
 
   defp sound_alert_key(game, local_alert) do
@@ -958,6 +961,7 @@ defmodule ManaChessOnlineWeb.GameLive do
       data-sound-status={sound_status_key(@game)}
       data-sound-log-count={sound_log_count(@game)}
       data-sound-log-kind={sound_log_kind(@game)}
+      data-sound-chat-count={sound_chat_count(@game)}
       data-sound-alert={sound_alert_key(@game, @local_alert)}
       data-sound-alert-kind={sound_alert_kind(@game, @local_alert)}
     >

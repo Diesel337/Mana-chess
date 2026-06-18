@@ -273,6 +273,7 @@ const Hooks = {
         status: this.el.dataset.soundStatus || "",
         logCount: Number.parseInt(this.el.dataset.soundLogCount || "0", 10),
         logKind: this.el.dataset.soundLogKind || "",
+        chatCount: Number.parseInt(this.el.dataset.soundChatCount || "0", 10),
         alert: this.el.dataset.soundAlert || "",
         alertKind: this.el.dataset.soundAlertKind || "",
         resultKey: this.el.dataset.resultKey || "",
@@ -324,6 +325,11 @@ const Hooks = {
         return;
       }
 
+      if (current.gameId && current.gameId === previous.gameId && current.chatCount > previous.chatCount) {
+        this.playSound("chat");
+        return;
+      }
+
       if (current.status && current.status !== previous.status) {
         this.playSound("state");
       }
@@ -346,6 +352,7 @@ const Hooks = {
           private: [[620, 0, .045, "triangle"], [880, .05, .07, "sine"]],
           skin: [[390, 0, .04, "triangle"], [590, .045, .06, "sine"], [780, .095, .06, "sine"]],
           copy: [[760, 0, .04, "sine"], [980, .045, .055, "sine"]],
+          chat: [[620, 0, .04, "sine"], [820, .045, .055, "triangle"]],
           reset: [[280, 0, .05, "triangle"], [210, .05, .06, "triangle"]],
           move: [[360, 0, .045, "triangle"], [520, .045, .065, "triangle"]],
           capture: [[180, 0, .045, "square"], [420, .035, .07, "triangle"], [700, .105, .05, "sine"]],
