@@ -431,6 +431,9 @@ defmodule ManaChessOnlineWeb.GameLive do
   defp sound_log_count(%{log: log}) when is_list(log), do: length(log)
   defp sound_log_count(_game), do: 0
 
+  defp sound_log_kind(%{log: [latest | _rest]}), do: log_entry_kind(latest)
+  defp sound_log_kind(_game), do: ""
+
   defp sound_alert_key(nil, _local_alert), do: ""
 
   defp sound_alert_key(game, local_alert) do
@@ -438,6 +441,15 @@ defmodule ManaChessOnlineWeb.GameLive do
     |> Enum.reject(&is_nil/1)
     |> Enum.reject(&(&1 == ""))
     |> Enum.join(" | ")
+  end
+
+  defp sound_alert_kind(nil, _local_alert), do: ""
+  defp sound_alert_kind(game, _local_alert) do
+    cond do
+      not is_nil(check_message(game)) -> "check"
+      not is_nil(reset_message(game)) -> "reset"
+      true -> "alert"
+    end
   end
 
   defp stats_winner_outcome(%{practice?: true}, :white, _player_color), do: "win"
@@ -839,7 +851,9 @@ defmodule ManaChessOnlineWeb.GameLive do
       data-sound-game-id={(@game && @game.id) || ""}
       data-sound-status={sound_status_key(@game)}
       data-sound-log-count={sound_log_count(@game)}
+      data-sound-log-kind={sound_log_kind(@game)}
       data-sound-alert={sound_alert_key(@game, @local_alert)}
+      data-sound-alert-kind={sound_alert_kind(@game, @local_alert)}
     >
       <section class="mc-game">
         <div class="mc-header">
@@ -854,9 +868,15 @@ defmodule ManaChessOnlineWeb.GameLive do
           <div class="mc-badge">
             <span>{color_label(@color)}</span>
             <strong>{status_label(@game && @game.status)}</strong>
-            <button type="button" class="mc-sound-toggle" data-sound-toggle aria-pressed="false">
-              Sonido Off
-            </button>
+            <div class="mc-sound-control" data-sound-control>
+              <button type="button" class="mc-sound-toggle" data-sound-toggle aria-pressed="false" aria-label="Encender sonido">
+                Sonido OFF
+              </button>
+              <label class="mc-sound-volume">
+                <span data-sound-volume-label>70%</span>
+                <input type="range" min="0" max="100" step="5" value="70" data-sound-volume aria-label="Volumen de sonido" />
+              </label>
+            </div>
           </div>
         </div>
 

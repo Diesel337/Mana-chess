@@ -32,6 +32,7 @@ const Hooks = {
       this.lastResultKey = null
       this.storageKey = "mana-chess-local-stats"
       this.soundKey = "mana-chess-sound-enabled"
+      this.soundVolumeKey = "mana-chess-sound-volume"
       this.skinKey = "mana-chess-board-skin"
       this.pieceSkinKey = "mana-chess-piece-skin"
       this.audioContext = null
@@ -58,6 +59,12 @@ const Hooks = {
         this.setSoundEnabled(enabled)
         this.renderSoundToggle()
         if (enabled) this.playSound("ready")
+      }
+      this.handleSoundVolume = event => {
+        const input = event.target.closest("[data-sound-volume]")
+        if (!input) return
+        this.setSoundVolume(input.value)
+        this.renderSoundToggle()
       }
       this.handleSoundAction = event => {
         const control = event.target.closest("[data-sound-action]")
@@ -96,6 +103,8 @@ const Hooks = {
       this.el.addEventListener("click", this.handleReset)
       this.el.addEventListener("click", this.handleInviteCopy)
       this.el.addEventListener("click", this.handleSoundToggle)
+      this.el.addEventListener("input", this.handleSoundVolume)
+      this.el.addEventListener("change", this.handleSoundVolume)
       this.el.addEventListener("click", this.handleSoundAction)
       this.el.addEventListener("click", this.handleSkinChoice)
       this.el.addEventListener("click", this.handlePieceSkinChoice)
@@ -121,6 +130,8 @@ const Hooks = {
       this.el.removeEventListener("click", this.handleReset)
       this.el.removeEventListener("click", this.handleInviteCopy)
       this.el.removeEventListener("click", this.handleSoundToggle)
+      this.el.removeEventListener("input", this.handleSoundVolume)
+      this.el.removeEventListener("change", this.handleSoundVolume)
       this.el.removeEventListener("click", this.handleSoundAction)
       this.el.removeEventListener("click", this.handleSkinChoice)
       this.el.removeEventListener("click", this.handlePieceSkinChoice)
@@ -200,22 +211,47 @@ const Hooks = {
       }
     },
 
+    soundVolume() {
+      const stored = Number.parseInt(localStorage.getItem(this.soundVolumeKey) || "70", 10)
+      if (Number.isNaN(stored)) return 0.7
+      return Math.min(1, Math.max(0, stored / 100))
+    },
+
+    setSoundVolume(value) {
+      const percent = Math.min(100, Math.max(0, Number.parseInt(value || "70", 10)))
+      localStorage.setItem(this.soundVolumeKey, String(Number.isNaN(percent) ? 70 : percent))
+    },
+
     renderSoundToggle() {
       const enabled = this.soundEnabled()
+      const percent = Math.round(this.soundVolume() * 100)
+      this.el.querySelectorAll("[data-sound-control]").forEach(control => {
+        control.classList.toggle("mc-sound-control-muted", !enabled)
+      })
       this.el.querySelectorAll("[data-sound-toggle]").forEach(button => {
-        button.textContent = enabled ? "Sonido On" : "Sonido Off"
+        button.textContent = enabled ? "Sonido ON" : "Sonido OFF"
         button.setAttribute("aria-pressed", enabled ? "true" : "false")
+        button.setAttribute("aria-label", enabled ? "Apagar sonido" : "Encender sonido")
         button.classList.toggle("mc-sound-toggle-on", enabled)
+      })
+      this.el.querySelectorAll("[data-sound-volume]").forEach(input => {
+        input.value = percent
+        input.style.setProperty("--sound-volume", `${percent}%`)
+        input.setAttribute("aria-valuetext", `${percent}%`)
+      })
+      this.el.querySelectorAll("[data-sound-volume-label]").forEach(label => {
+        label.textContent = `${percent}%`
       })
     },
 
     boardSkin() {
       const skin = localStorage.getItem(this.skinKey)
-      return ["mana", "arcane", "gilded"].includes(skin) ? skin : "mana"
+      if (skin === "mana") return "gilded"
+      return ["classic", "arcane", "gilded", "custom"].includes(skin) ? skin : "classic"
     },
 
     setBoardSkin(skin) {
-      if (!["mana", "arcane", "gilded"].includes(skin)) return
+      if (!["classic", "arcane", "gilded", "custom"].includes(skin)) return
       localStorage.setItem(this.skinKey, skin)
     },
 
@@ -263,7 +299,9 @@ const Hooks = {
         gameId: this.el.dataset.soundGameId || "",
         status: this.el.dataset.soundStatus || "",
         logCount: Number.parseInt(this.el.dataset.soundLogCount || "0", 10),
+        logKind: this.el.dataset.soundLogKind || "",
         alert: this.el.dataset.soundAlert || "",
+        alertKind: this.el.dataset.soundAlertKind || "",
         resultKey: this.el.dataset.resultKey || "",
         result: this.el.dataset.resultOutcome || "",
       }
@@ -299,17 +337,17 @@ const Hooks = {
       if (!previous || !this.soundEnabled()) return
 
       if (current.result && current.resultKey && current.resultKey !== previous.resultKey) {
-        this.playSound("final")
+        this.playSound(current.result === "win" ? "win" : current.result === "loss" ? "loss" : "final")
         return
       }
 
       if (current.alert && current.alert !== previous.alert) {
-        this.playSound("alert")
+        this.playSound(current.alertKind === "check" ? "check" : current.alertKind === "reset" ? "reset" : "alert")
         return
       }
 
       if (current.gameId && current.gameId === previous.gameId && current.logCount > previous.logCount) {
-        this.playSound("move")
+        this.playSound(current.logKind === "capture" ? "capture" : current.logKind === "alert" ? "alert" : "move")
         return
       }
 
@@ -337,9 +375,13 @@ const Hooks = {
           copy: [[760, 0, .04, "sine"], [980, .045, .055, "sine"]],
           reset: [[280, 0, .05, "triangle"], [210, .05, .06, "triangle"]],
           move: [[360, 0, .045, "triangle"], [520, .045, .065, "triangle"]],
+          capture: [[180, 0, .045, "square"], [420, .035, .07, "triangle"], [700, .105, .05, "sine"]],
+          check: [[880, 0, .05, "triangle"], [660, .045, .08, "sawtooth"], [990, .125, .08, "sine"]],
           alert: [[220, 0, .08, "sawtooth"], [180, .075, .09, "sawtooth"]],
           state: [[440, 0, .07, "sine"], [660, .07, .08, "sine"]],
           final: [[523, 0, .08, "triangle"], [659, .08, .08, "triangle"], [784, .16, .12, "triangle"]],
+          win: [[523, 0, .07, "triangle"], [659, .07, .07, "triangle"], [784, .14, .1, "triangle"], [1046, .24, .12, "sine"]],
+          loss: [[392, 0, .08, "triangle"], [330, .085, .1, "triangle"], [247, .18, .13, "sine"]],
         }
 
         for (const tone of tones[kind] || tones.move) {
@@ -351,6 +393,8 @@ const Hooks = {
 
     playTone(frequency, delay, duration, type) {
       const context = this.audioContext
+      const volume = this.soundVolume()
+      if (volume <= 0) return
       const start = context.currentTime + delay
       const oscillator = context.createOscillator()
       const gain = context.createGain()
@@ -358,7 +402,7 @@ const Hooks = {
       oscillator.type = type
       oscillator.frequency.setValueAtTime(frequency, start)
       gain.gain.setValueAtTime(0.0001, start)
-      gain.gain.linearRampToValueAtTime(0.035, start + 0.01)
+      gain.gain.linearRampToValueAtTime(0.035 * volume, start + 0.01)
       gain.gain.exponentialRampToValueAtTime(0.0001, start + duration)
 
       oscillator.connect(gain)

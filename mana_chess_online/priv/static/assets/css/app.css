@@ -4803,6 +4803,14 @@ html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-action-quiet {
 }
 
 /* Basic sound controls */
+.mc-sound-control {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  max-width: 100%;
+}
+
 .mc-sound-toggle {
   min-height: 26px;
   padding: 0 9px;
@@ -4816,6 +4824,37 @@ html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-action-quiet {
   font-weight: 900;
   line-height: 1;
   white-space: nowrap;
+}
+
+.mc-sound-volume {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 26px;
+  padding: 0 7px;
+  border: 1px solid rgba(139, 217, 189, .18);
+  border-radius: 999px;
+  background: rgba(8, 16, 11, .52);
+  color: var(--mc-muted);
+  font-size: .62rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.mc-sound-volume span {
+  min-width: 28px;
+  text-align: right;
+}
+
+.mc-sound-volume input {
+  width: 58px;
+  height: 18px;
+  accent-color: var(--mc-gold-2);
+  cursor: pointer;
+}
+
+.mc-sound-control-muted .mc-sound-volume {
+  opacity: .58;
 }
 
 .mc-sound-toggle:hover {
@@ -4837,11 +4876,38 @@ html[data-desktop="true"] .mc-sound-toggle {
   font-size: .62rem;
 }
 
+html[data-desktop="true"] .mc-sound-volume {
+  min-height: 23px;
+  padding: 0 6px;
+}
+
+html[data-desktop="true"] .mc-sound-volume input {
+  width: 52px;
+}
+
 @media (max-width: 480px) {
+  .mc-sound-control {
+    gap: 4px;
+  }
+
   .mc-sound-toggle {
     min-height: 24px;
     padding: 0 8px;
     font-size: .62rem;
+  }
+
+  .mc-sound-volume {
+    min-height: 24px;
+    padding: 0 6px;
+    font-size: .58rem;
+  }
+
+  .mc-sound-volume span {
+    min-width: 25px;
+  }
+
+  .mc-sound-volume input {
+    width: 46px;
   }
 }
 
@@ -6292,6 +6358,15 @@ html[data-piece-skin="custom"] .mc-drag-ghost.mc-black {
     min-height: 22px;
     padding: 0 7px;
     font-size: .58rem;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-sound-volume {
+    min-height: 22px;
+    padding: 0 5px;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-sound-volume input {
+    width: 36px;
   }
 
   .mc-game:has(.mc-play-area) .mc-practice-banner {
