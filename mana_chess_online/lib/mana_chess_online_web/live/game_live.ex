@@ -682,7 +682,7 @@ defmodule ManaChessOnlineWeb.GameLive do
   defp panel_log(%{log: log}) when is_list(log), do: Enum.take(log, 8)
   defp panel_log(_game), do: []
 
-  defp chat_messages(%{chat: chat}) when is_list(chat), do: chat
+  defp chat_messages(%{chat: chat}) when is_list(chat), do: Enum.reverse(chat)
   defp chat_messages(_game), do: []
 
   defp chat_count_text(game) do
@@ -1377,7 +1377,7 @@ defmodule ManaChessOnlineWeb.GameLive do
             <h2>Chat</h2>
             <span>{chat_count_text(@game)}</span>
           </div>
-          <ul class="mc-chat-list">
+          <ul class="mc-chat-list" data-chat-list>
             <li :for={entry <- chat_messages(@game)} class={["mc-chat-entry", chat_entry_class(entry, @player_id)]}>
               <small>
                 <strong>{chat_entry_name(entry, @player_id)}</strong>

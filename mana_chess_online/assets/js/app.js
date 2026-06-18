@@ -37,6 +37,7 @@ const Hooks = {
       this.pieceSkinKey = "mana-chess-piece-skin"
       this.audioContext = null
       this.lastSoundState = this.soundState()
+      this.lastChatScrollState = null
       this.lastViewKey = this.viewKey()
       this.keepInitialViewInFrame()
       this.handleReset = event => {
@@ -114,6 +115,7 @@ const Hooks = {
       this.renderSoundToggle()
       this.renderBoardSkin()
       this.renderPieceSkin()
+      this.keepChatAtLatest()
     },
 
     updated() {
@@ -123,6 +125,7 @@ const Hooks = {
       this.renderBoardSkin()
       this.renderPieceSkin()
       this.keepViewInFrame()
+      this.keepChatAtLatest()
       this.playChangedSound()
     },
 
@@ -310,6 +313,34 @@ const Hooks = {
 
     viewKey() {
       return this.el.dataset.soundGameId || "lobby"
+    },
+
+    chatScrollState() {
+      return {
+        gameId: this.el.dataset.soundGameId || "",
+        chatCount: Number.parseInt(this.el.dataset.soundChatCount || "0", 10),
+      }
+    },
+
+    keepChatAtLatest() {
+      const current = this.chatScrollState()
+      const previous = this.lastChatScrollState
+      this.lastChatScrollState = current
+
+      if (!current.gameId) return
+      if (previous && current.gameId === previous.gameId && current.chatCount <= previous.chatCount) return
+
+      this.scrollChatListsToEnd()
+    },
+
+    scrollChatListsToEnd() {
+      const scroll = () => {
+        this.el.querySelectorAll("[data-chat-list]").forEach(list => {
+          list.scrollTop = list.scrollHeight
+        })
+      }
+      window.requestAnimationFrame(scroll)
+      window.setTimeout(scroll, 80)
     },
 
     keepViewInFrame() {
