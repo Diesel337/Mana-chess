@@ -3365,6 +3365,10 @@ html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-elixir-bottom-track::a
   border-radius: 8px;
 }
 
+.mc-skins-rail {
+  display: none;
+}
+
 .mc-skins-head {
   display: flex;
   justify-content: space-between;
@@ -4428,51 +4432,72 @@ html[data-piece-skin="crystal"] .mc-drag-ghost.mc-black {
   }
 }
 
-@media (min-width: 1760px) {
+@media (min-width: 1280px) {
+  .mc-shell:has(.mc-menu) {
+    grid-template-columns: minmax(220px, 280px) minmax(0, 1fr) 240px;
+    gap: 16px;
+    width: min(1500px, calc(100vw - 32px));
+    align-items: start;
+  }
+
   .mc-shell:has(.mc-menu) .mc-menu {
-    --mc-shop-rail: min(380px, calc((100vw - 1180px) / 2 - 32px));
-    grid-template-columns: var(--mc-shop-rail) minmax(0, 1fr);
-    column-gap: 16px;
+    grid-template-columns: minmax(0, 1fr);
+    margin-left: 0;
+    column-gap: initial;
     row-gap: 14px;
-    margin-left: calc(0px - var(--mc-shop-rail) - 16px);
   }
 
   .mc-shell:has(.mc-menu) .mc-menu > :not(.mc-skins) {
+    grid-column: auto;
+  }
+
+  .mc-shell:has(.mc-menu) > .mc-game {
     grid-column: 2;
   }
 
-  .mc-shell:has(.mc-menu) .mc-skins {
+  .mc-shell:has(.mc-menu) > .mc-panel {
+    grid-column: 3;
+  }
+
+  .mc-shell:has(.mc-menu) .mc-skins-inline {
+    display: none;
+  }
+
+  .mc-shell:has(.mc-menu) > .mc-skins-rail {
+    display: grid;
     grid-column: 1;
-    grid-row: 2 / span 4;
+    grid-row: 1;
     align-self: start;
+    position: sticky;
+    top: 24px;
     gap: 12px;
     padding: 12px;
   }
 
-  .mc-shell:has(.mc-menu) .mc-skins-head {
+  .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-skins-head {
     display: flex;
   }
 
-  .mc-shell:has(.mc-menu) .mc-skin-option small {
+  .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-skin-option small {
     display: block;
   }
 
-  .mc-shell:has(.mc-menu) .mc-cosmetic-groups {
+  .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-cosmetic-groups {
     gap: 12px;
   }
 
-  .mc-shell:has(.mc-menu) .mc-cosmetic-group {
+  .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-cosmetic-group {
     grid-template-columns: minmax(0, 1fr);
     align-items: stretch;
     gap: 8px;
   }
 
-  .mc-shell:has(.mc-menu) .mc-skin-options {
+  .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-skin-options {
     grid-template-columns: minmax(0, 1fr);
     gap: 8px;
   }
 
-  .mc-shell:has(.mc-menu) .mc-skin-option {
+  .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-skin-option {
     grid-template-columns: auto minmax(0, 1fr);
     justify-items: stretch;
     min-height: 52px;
@@ -4480,12 +4505,12 @@ html[data-piece-skin="crystal"] .mc-drag-ghost.mc-black {
     text-align: left;
   }
 
-  .mc-shell:has(.mc-menu) .mc-skin-preview,
-  .mc-shell:has(.mc-menu) .mc-piece-skin-preview {
+  .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-skin-preview,
+  .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-piece-skin-preview {
     width: 34px;
   }
 
-  .mc-shell:has(.mc-menu) .mc-skin-option strong {
+  .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-skin-option strong {
     font-size: .82rem;
   }
 }

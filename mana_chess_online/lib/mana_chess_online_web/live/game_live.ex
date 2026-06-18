@@ -687,6 +687,77 @@ defmodule ManaChessOnlineWeb.GameLive do
     "width: #{percent}%"
   end
 
+  defp cosmetic_shop(assigns) do
+    ~H"""
+    <section class={@class} aria-label={@aria_label}>
+      <div class="mc-skins-head">
+        <div>
+          <h2>Tienda</h2>
+          <span>Cosmeticos visuales</span>
+        </div>
+        <small>Desbloqueo local</small>
+      </div>
+      <div class="mc-cosmetic-groups">
+        <div class="mc-cosmetic-group">
+          <span class="mc-cosmetic-group-label">Tableros</span>
+          <div class="mc-skin-options">
+            <button type="button" class="mc-skin-option" data-board-skin-choice="classic" data-sound-action="skin" aria-pressed="false">
+              <span class="mc-skin-preview mc-skin-preview-classic" aria-hidden="true">
+                <i></i><i></i><i></i><i></i>
+              </span>
+              <strong>Clasico B/N</strong>
+              <small>Incluido</small>
+            </button>
+            <button type="button" class="mc-skin-option" data-board-skin-choice="gilded" data-sound-action="skin" aria-pressed="false">
+              <span class="mc-skin-preview mc-skin-preview-gilded" aria-hidden="true">
+                <i></i><i></i><i></i><i></i>
+              </span>
+              <strong>Dorado</strong>
+              <small>Incluido</small>
+            </button>
+            <button type="button" class="mc-skin-option mc-skin-locked" data-board-skin-choice="arcane" data-cosmetic-premium="board:arcane" data-sound-action="skin" title="Desbloquear premium localmente" aria-disabled="true" aria-pressed="false">
+              <span class="mc-skin-preview mc-skin-preview-arcane" aria-hidden="true">
+                <i></i><i></i><i></i><i></i>
+              </span>
+              <strong>Arcano oscuro</strong>
+              <small data-cosmetic-status>Premium bloqueado</small>
+            </button>
+          </div>
+        </div>
+        <div class="mc-cosmetic-group">
+          <span class="mc-cosmetic-group-label">Piezas</span>
+          <div class="mc-skin-options">
+            <button type="button" class="mc-skin-option" data-piece-skin-choice="classic" data-sound-action="skin" aria-pressed="false">
+              <span class="mc-piece-skin-preview mc-piece-skin-preview-classic" aria-hidden="true">
+                <b class="mc-piece-sample mc-piece-sample-white">{@symbols["K"]}</b>
+                <b class="mc-piece-sample mc-piece-sample-black">{@symbols["q"]}</b>
+              </span>
+              <strong>Clasicas</strong>
+              <small>Incluido</small>
+            </button>
+            <button type="button" class="mc-skin-option" data-piece-skin-choice="runes" data-sound-action="skin" aria-pressed="false">
+              <span class="mc-piece-skin-preview mc-piece-skin-preview-runes" aria-hidden="true">
+                <b class="mc-piece-sample mc-piece-sample-white">{@symbols["K"]}</b>
+                <b class="mc-piece-sample mc-piece-sample-black">{@symbols["q"]}</b>
+              </span>
+              <strong>Arcano</strong>
+              <small>Incluido</small>
+            </button>
+            <button type="button" class="mc-skin-option mc-skin-locked" data-piece-skin-choice="crystal" data-cosmetic-premium="piece:crystal" data-sound-action="skin" title="Desbloquear premium localmente" aria-disabled="true" aria-pressed="false">
+              <span class="mc-piece-skin-preview mc-piece-skin-preview-crystal" aria-hidden="true">
+                <b class="mc-piece-sample mc-piece-sample-white">{@symbols["K"]}</b>
+                <b class="mc-piece-sample mc-piece-sample-black">{@symbols["q"]}</b>
+              </span>
+              <strong>Cristal premium</strong>
+              <small data-cosmetic-status>Click para unlock local</small>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+    """
+  end
+
   @impl true
   def render(assigns) do
     ~H"""
@@ -983,72 +1054,7 @@ defmodule ManaChessOnlineWeb.GameLive do
               <button type="button" data-stats-reset data-sound-action="reset">Reiniciar stats</button>
             </section>
 
-            <section class="mc-skins" aria-label="Tienda cosmetica">
-              <div class="mc-skins-head">
-                <div>
-                  <h2>Tienda</h2>
-                  <span>Cosmeticos visuales</span>
-                </div>
-                <small>Desbloqueo local</small>
-              </div>
-              <div class="mc-cosmetic-groups">
-                <div class="mc-cosmetic-group">
-                  <span class="mc-cosmetic-group-label">Tableros</span>
-                  <div class="mc-skin-options">
-                    <button type="button" class="mc-skin-option" data-board-skin-choice="classic" data-sound-action="skin" aria-pressed="false">
-                      <span class="mc-skin-preview mc-skin-preview-classic" aria-hidden="true">
-                        <i></i><i></i><i></i><i></i>
-                      </span>
-                      <strong>Clasico B/N</strong>
-                      <small>Incluido</small>
-                    </button>
-                    <button type="button" class="mc-skin-option" data-board-skin-choice="gilded" data-sound-action="skin" aria-pressed="false">
-                      <span class="mc-skin-preview mc-skin-preview-gilded" aria-hidden="true">
-                        <i></i><i></i><i></i><i></i>
-                      </span>
-                      <strong>Dorado</strong>
-                      <small>Incluido</small>
-                    </button>
-                    <button type="button" class="mc-skin-option mc-skin-locked" data-board-skin-choice="arcane" data-cosmetic-premium="board:arcane" data-sound-action="skin" title="Desbloquear premium localmente" aria-disabled="true" aria-pressed="false">
-                      <span class="mc-skin-preview mc-skin-preview-arcane" aria-hidden="true">
-                        <i></i><i></i><i></i><i></i>
-                      </span>
-                      <strong>Arcano oscuro</strong>
-                      <small data-cosmetic-status>Premium bloqueado</small>
-                    </button>
-                  </div>
-                </div>
-                <div class="mc-cosmetic-group">
-                  <span class="mc-cosmetic-group-label">Piezas</span>
-                  <div class="mc-skin-options">
-                    <button type="button" class="mc-skin-option" data-piece-skin-choice="classic" data-sound-action="skin" aria-pressed="false">
-                      <span class="mc-piece-skin-preview mc-piece-skin-preview-classic" aria-hidden="true">
-                        <b class="mc-piece-sample mc-piece-sample-white">{@symbols["K"]}</b>
-                        <b class="mc-piece-sample mc-piece-sample-black">{@symbols["q"]}</b>
-                      </span>
-                      <strong>Clasicas</strong>
-                      <small>Incluido</small>
-                    </button>
-                    <button type="button" class="mc-skin-option" data-piece-skin-choice="runes" data-sound-action="skin" aria-pressed="false">
-                      <span class="mc-piece-skin-preview mc-piece-skin-preview-runes" aria-hidden="true">
-                        <b class="mc-piece-sample mc-piece-sample-white">{@symbols["K"]}</b>
-                        <b class="mc-piece-sample mc-piece-sample-black">{@symbols["q"]}</b>
-                      </span>
-                      <strong>Arcano</strong>
-                      <small>Incluido</small>
-                    </button>
-                    <button type="button" class="mc-skin-option mc-skin-locked" data-piece-skin-choice="crystal" data-cosmetic-premium="piece:crystal" data-sound-action="skin" title="Desbloquear premium localmente" aria-disabled="true" aria-pressed="false">
-                      <span class="mc-piece-skin-preview mc-piece-skin-preview-crystal" aria-hidden="true">
-                        <b class="mc-piece-sample mc-piece-sample-white">{@symbols["K"]}</b>
-                        <b class="mc-piece-sample mc-piece-sample-black">{@symbols["q"]}</b>
-                      </span>
-                      <strong>Cristal premium</strong>
-                      <small data-cosmetic-status>Click para unlock local</small>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </section>
+            <.cosmetic_shop symbols={@symbols} class="mc-skins mc-skins-inline" aria_label="Tienda cosmetica" />
 
             <section class="mc-offline">
               <div>
@@ -1119,6 +1125,8 @@ defmodule ManaChessOnlineWeb.GameLive do
           </div>
         <% end %>
       </section>
+
+      <.cosmetic_shop :if={!@game} symbols={@symbols} class="mc-skins mc-skins-rail" aria_label="Tienda cosmetica lateral" />
 
       <aside class={["mc-panel", @game && "mc-panel-game"]}>
         <section class="mc-panel-section mc-queue-panel">
