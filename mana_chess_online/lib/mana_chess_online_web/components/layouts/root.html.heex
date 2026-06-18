@@ -79,9 +79,9 @@
           pieceBlack: "#241745"
         };
         const palettePresets = {
-          midnight: {boardLight: "#8bd9bd", boardDark: "#241745", pieceWhite: "#f5fff9", pieceBlack: "#2c1c58"},
-          emerald: {boardLight: "#c7e6a1", boardDark: "#1f4938", pieceWhite: "#f5f1d6", pieceBlack: "#12352b"},
-          frost: {boardLight: "#c7d2ff", boardDark: "#172033", pieceWhite: "#f8f2ff", pieceBlack: "#283d80"}
+          midnight: {boardLight: "#8067c9", boardDark: "#151020", pieceWhite: "#f7f2ff", pieceBlack: "#241745"},
+          emerald: {boardLight: "#8bd9bd", boardDark: "#17342b", pieceWhite: "#f5f9de", pieceBlack: "#0b2c24"},
+          frost: {boardLight: "#d9f0ff", boardDark: "#22354f", pieceWhite: "#ffffff", pieceBlack: "#2f5e8f"}
         };
         const unlockId = (kind, skin) => `${kind}:${skin}`;
         const readUnlocks = () => {
@@ -167,6 +167,9 @@
             input.value = palette[input.dataset.paletteColor] || defaultPalette[input.dataset.paletteColor];
             input.disabled = !unlocked;
           });
+          document.querySelectorAll("[data-palette-preset]").forEach((button) => {
+            button.disabled = !unlocked;
+          });
           document.querySelectorAll("[data-palette-editor]").forEach((editor) => {
             editor.classList.toggle("is-locked", !unlocked);
             editor.classList.toggle("is-unlocked", unlocked);
@@ -174,10 +177,10 @@
           document.querySelectorAll("[data-palette-unlock]").forEach((button) => {
             button.classList.toggle("mc-skin-locked", !unlocked);
             button.classList.toggle("mc-skin-unlocked", unlocked);
-            button.setAttribute("aria-disabled", unlocked ? "false" : "true");
+            button.setAttribute("aria-disabled", "false");
           });
           document.querySelectorAll("[data-palette-status]").forEach((status) => {
-            status.textContent = unlocked ? "Local activo" : "Premium pronto";
+            status.textContent = unlocked ? "Local" : "Probar local";
           });
         };
         const read = (key, fallback, valid) => {
@@ -219,10 +222,10 @@
             button.classList.toggle("mc-skin-selected", selected);
             button.classList.toggle("mc-skin-locked", !unlocked);
             button.classList.toggle("mc-skin-unlocked", unlocked && !included.has(unlockId("board", skin)));
-            button.setAttribute("aria-disabled", unlocked ? "false" : "true");
+            button.setAttribute("aria-disabled", "false");
             button.setAttribute("aria-pressed", selected ? "true" : "false");
             button.querySelectorAll("[data-cosmetic-status]").forEach((status) => {
-              status.textContent = unlocked ? "Local activo" : "Premium pronto";
+              status.textContent = unlocked ? "Local" : "Probar local";
             });
           });
           document.querySelectorAll("[data-piece-skin-choice]").forEach((button) => {
@@ -232,10 +235,10 @@
             button.classList.toggle("mc-skin-selected", selected);
             button.classList.toggle("mc-skin-locked", !unlocked);
             button.classList.toggle("mc-skin-unlocked", unlocked && !included.has(unlockId("piece", skin)));
-            button.setAttribute("aria-disabled", unlocked ? "false" : "true");
+            button.setAttribute("aria-disabled", "false");
             button.setAttribute("aria-pressed", selected ? "true" : "false");
             button.querySelectorAll("[data-cosmetic-status]").forEach((status) => {
-              status.textContent = unlocked ? "Local activo" : "Premium pronto";
+              status.textContent = unlocked ? "Local" : "Probar local";
             });
           });
         };
@@ -271,7 +274,7 @@
         };
         document.addEventListener("click", (event) => {
           const palettePreset = event.target.closest("[data-palette-preset]");
-          if (palettePreset) {
+          if (palettePreset && !palettePreset.disabled) {
             event.preventDefault();
             window.ManaChessCosmetics.choosePalette(palettePreset.dataset.palettePreset);
             return;
@@ -314,7 +317,7 @@
     </script>
     <script defer phx-track-static type="text/javascript" src={~p"/assets/js/phoenix.js?v=play-feedback-fit14-20260617"}></script>
     <script defer phx-track-static type="text/javascript" src={~p"/assets/js/phoenix_live_view.js?v=play-feedback-fit14-20260617"}></script>
-    <script defer phx-track-static type="text/javascript" src={~p"/assets/js/app.js?v=chat-time-fit31-20260618"}></script>
+    <script defer phx-track-static type="text/javascript" src={~p"/assets/js/app.js?v=local-unlocks-fit33-20260618"}></script>
     <script>
       (() => {
         const setTheme = (theme) => {

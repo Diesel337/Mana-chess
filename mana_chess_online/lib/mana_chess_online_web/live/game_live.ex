@@ -848,19 +848,19 @@ defmodule ManaChessOnlineWeb.GameLive do
               <strong>Dorado</strong>
               <small>Incluido</small>
             </button>
-            <button type="button" class="mc-skin-option mc-skin-locked" data-board-skin-choice="arcane" data-cosmetic-premium="board:arcane" data-sound-action="skin" title="Desbloquear premium localmente" aria-disabled="true" aria-pressed="false">
+            <button type="button" class="mc-skin-option mc-skin-locked" data-board-skin-choice="arcane" data-cosmetic-premium="board:arcane" data-sound-action="skin" title="Probar y desbloquear localmente" aria-disabled="false" aria-pressed="false">
               <span class="mc-skin-preview mc-skin-preview-arcane" aria-hidden="true">
                 <i></i><i></i><i></i><i></i>
               </span>
               <strong>Arcano oscuro</strong>
-              <small data-cosmetic-status>Premium pronto</small>
+              <small data-cosmetic-status>Probar local</small>
             </button>
-            <button type="button" class="mc-skin-option mc-skin-locked" data-board-skin-choice="custom" data-cosmetic-premium="board:custom" data-sound-action="skin" title="Desbloquear paleta premium localmente" aria-disabled="true" aria-pressed="false">
+            <button type="button" class="mc-skin-option mc-skin-locked" data-board-skin-choice="custom" data-cosmetic-premium="board:custom" data-sound-action="skin" title="Probar y desbloquear paleta localmente" aria-disabled="false" aria-pressed="false">
               <span class="mc-skin-preview mc-skin-preview-custom" aria-hidden="true">
                 <i></i><i></i><i></i><i></i>
               </span>
               <strong>Paleta</strong>
-              <small data-cosmetic-status>Premium pronto</small>
+              <small data-cosmetic-status>Probar local</small>
             </button>
           </div>
         </div>
@@ -883,33 +883,33 @@ defmodule ManaChessOnlineWeb.GameLive do
               <strong>Arcano</strong>
               <small>Incluido</small>
             </button>
-            <button type="button" class="mc-skin-option mc-skin-locked" data-piece-skin-choice="crystal" data-cosmetic-premium="piece:crystal" data-sound-action="skin" title="Desbloquear premium localmente" aria-disabled="true" aria-pressed="false">
+            <button type="button" class="mc-skin-option mc-skin-locked" data-piece-skin-choice="crystal" data-cosmetic-premium="piece:crystal" data-sound-action="skin" title="Probar y desbloquear localmente" aria-disabled="false" aria-pressed="false">
               <span class="mc-piece-skin-preview mc-piece-skin-preview-crystal" aria-hidden="true">
                 <b class="mc-piece-sample mc-piece-sample-white">{@symbols["K"]}</b>
                 <b class="mc-piece-sample mc-piece-sample-black">{@symbols["q"]}</b>
               </span>
               <strong>Cristal premium</strong>
-              <small data-cosmetic-status>Premium pronto</small>
+              <small data-cosmetic-status>Probar local</small>
             </button>
-            <button type="button" class="mc-skin-option mc-skin-locked" data-piece-skin-choice="custom" data-cosmetic-premium="piece:custom" data-sound-action="skin" title="Desbloquear paleta premium localmente" aria-disabled="true" aria-pressed="false">
+            <button type="button" class="mc-skin-option mc-skin-locked" data-piece-skin-choice="custom" data-cosmetic-premium="piece:custom" data-sound-action="skin" title="Probar y desbloquear paleta localmente" aria-disabled="false" aria-pressed="false">
               <span class="mc-piece-skin-preview mc-piece-skin-preview-custom" aria-hidden="true">
                 <b class="mc-piece-sample mc-piece-sample-white">{@symbols["K"]}</b>
                 <b class="mc-piece-sample mc-piece-sample-black">{@symbols["q"]}</b>
               </span>
               <strong>Paleta</strong>
-              <small data-cosmetic-status>Premium pronto</small>
+              <small data-cosmetic-status>Probar local</small>
             </button>
           </div>
         </div>
         <div class="mc-cosmetic-group mc-palette-group">
           <span class="mc-cosmetic-group-label">Paleta</span>
           <div class="mc-palette-editor" data-palette-editor>
-            <button type="button" class="mc-palette-unlock mc-skin-locked" data-palette-unlock data-sound-action="skin" aria-disabled="true">
+            <button type="button" class="mc-palette-unlock mc-skin-locked" data-palette-unlock data-sound-action="skin" aria-disabled="false">
               <span class="mc-palette-preview" aria-hidden="true">
                 <i></i><i></i><i></i><i></i>
               </span>
               <strong>Custom premium</strong>
-              <small data-palette-status>Premium pronto</small>
+              <small data-palette-status>Probar local</small>
             </button>
             <div class="mc-palette-presets" aria-label="Presets de paleta">
               <button type="button" data-palette-preset="midnight" data-sound-action="skin">Noche</button>
@@ -1152,15 +1152,15 @@ defmodule ManaChessOnlineWeb.GameLive do
                 <i class="mc-skin-dot mc-skin-dot-gilded"></i>
                 Dorado
               </button>
-              <button type="button" class="mc-skin-locked" data-board-skin-choice="arcane" data-cosmetic-premium="board:arcane" data-sound-action="skin" title="Desbloquear Arcano premium localmente" aria-label="Desbloquear Arcano premium localmente" aria-disabled="true" aria-pressed="false">
+              <button type="button" class="mc-skin-locked" data-board-skin-choice="arcane" data-cosmetic-premium="board:arcane" data-sound-action="skin" title="Probar y desbloquear Arcano localmente" aria-label="Probar y desbloquear Arcano localmente" aria-disabled="false" aria-pressed="false">
                 <i class="mc-skin-dot mc-skin-dot-arcane"></i>
                 Arcano
-                <small data-cosmetic-status>Premium pronto</small>
+                <small data-cosmetic-status>Probar local</small>
               </button>
-              <button type="button" class="mc-skin-locked" data-board-skin-choice="custom" data-cosmetic-premium="board:custom" data-sound-action="skin" title="Desbloquear paleta premium localmente" aria-label="Desbloquear paleta premium localmente" aria-disabled="true" aria-pressed="false">
+              <button type="button" class="mc-skin-locked" data-board-skin-choice="custom" data-cosmetic-premium="board:custom" data-sound-action="skin" title="Probar y desbloquear paleta localmente" aria-label="Probar y desbloquear paleta localmente" aria-disabled="false" aria-pressed="false">
                 <i class="mc-skin-dot mc-skin-dot-custom"></i>
                 Paleta
-                <small data-cosmetic-status>Premium pronto</small>
+                <small data-cosmetic-status>Probar local</small>
               </button>
             </div>
             <div class="mc-skin-strip mc-piece-strip" aria-label="Skins de piezas">
@@ -1173,15 +1173,15 @@ defmodule ManaChessOnlineWeb.GameLive do
                 <i class="mc-piece-dot mc-piece-dot-runes"></i>
                 Arcano
               </button>
-              <button type="button" class="mc-skin-locked" data-piece-skin-choice="crystal" data-cosmetic-premium="piece:crystal" data-sound-action="skin" title="Desbloquear piezas Premium localmente" aria-label="Desbloquear piezas Premium localmente" aria-disabled="true" aria-pressed="false">
+              <button type="button" class="mc-skin-locked" data-piece-skin-choice="crystal" data-cosmetic-premium="piece:crystal" data-sound-action="skin" title="Probar y desbloquear piezas localmente" aria-label="Probar y desbloquear piezas localmente" aria-disabled="false" aria-pressed="false">
                 <i class="mc-piece-dot mc-piece-dot-crystal"></i>
                 Premium
-                <small data-cosmetic-status>Premium pronto</small>
+                <small data-cosmetic-status>Probar local</small>
               </button>
-              <button type="button" class="mc-skin-locked" data-piece-skin-choice="custom" data-cosmetic-premium="piece:custom" data-sound-action="skin" title="Desbloquear paleta premium localmente" aria-label="Desbloquear paleta premium localmente" aria-disabled="true" aria-pressed="false">
+              <button type="button" class="mc-skin-locked" data-piece-skin-choice="custom" data-cosmetic-premium="piece:custom" data-sound-action="skin" title="Probar y desbloquear paleta localmente" aria-label="Probar y desbloquear paleta localmente" aria-disabled="false" aria-pressed="false">
                 <i class="mc-piece-dot mc-piece-dot-custom"></i>
                 Paleta
-                <small data-cosmetic-status>Premium pronto</small>
+                <small data-cosmetic-status>Probar local</small>
               </button>
             </div>
             <div class="mc-board-stack" data-board-skin-target>

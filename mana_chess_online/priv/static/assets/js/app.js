@@ -8,6 +8,8 @@ const Hooks = {
       this.soundVolumeKey = "mana-chess-sound-volume";
       this.skinKey = "mana-chess-board-skin";
       this.pieceSkinKey = "mana-chess-piece-skin";
+      this.cosmeticUnlockKey = "mana-chess-cosmetic-unlocks";
+      this.paletteKey = "mana-chess-custom-palette";
       this.audioContext = null;
       this.lastSoundState = this.soundState();
       this.lastChatScrollState = null;
@@ -40,6 +42,20 @@ const Hooks = {
         this.setSoundVolume(input.value);
         this.renderSoundToggle();
       };
+      this.handleCosmeticUnlock = event => {
+        const control = event.target.closest("[data-cosmetic-premium], [data-palette-unlock]");
+        if (!control || control.disabled) return;
+
+        const premiumId = control.dataset.cosmeticPremium || "palette:custom";
+        if (this.cosmeticUnlocked(premiumId) && !control.matches("[data-palette-unlock]")) return;
+
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        this.unlockCosmetic(premiumId);
+        this.activateCosmeticControl(control);
+        this.renderCosmetics();
+        if (this.soundEnabled()) this.playSound("skin");
+      };
       this.handleSoundAction = event => {
         const control = event.target.closest("[data-sound-action]");
         if (!control || control.disabled) return;
@@ -70,6 +86,20 @@ const Hooks = {
         this.renderPieceSkin();
         this.playSound("skin");
       };
+      this.handlePalettePreset = event => {
+        const control = event.target.closest("[data-palette-preset]");
+        if (!control || control.disabled || !this.cosmeticUnlocked("palette:custom")) return;
+        event.preventDefault();
+        this.setPalette(this.palettePreset(control.dataset.palettePreset));
+        this.renderPalette();
+        this.playSound("skin");
+      };
+      this.handlePaletteColor = event => {
+        const input = event.target.closest("[data-palette-color]");
+        if (!input || input.disabled || !this.cosmeticUnlocked("palette:custom")) return;
+        this.setPalette({...this.readPalette(), [input.dataset.paletteColor]: input.value});
+        this.renderPalette();
+      };
       this.handleViewJump = event => {
         if (!event.target.closest('[phx-click="start_practice"], [phx-click="start_tutorial"], [phx-click="sit_anywhere"], [phx-click="create_private"], [phx-click="leave"], [phx-click="sit"]')) return;
         this.scrollViewToTop();
@@ -79,15 +109,21 @@ const Hooks = {
       this.el.addEventListener("click", this.handleSoundToggle);
       this.el.addEventListener("input", this.handleSoundVolume);
       this.el.addEventListener("change", this.handleSoundVolume);
+      this.el.addEventListener("click", this.handleCosmeticUnlock);
       this.el.addEventListener("click", this.handleSoundAction);
       this.el.addEventListener("click", this.handleSkinChoice);
       this.el.addEventListener("click", this.handlePieceSkinChoice);
+      this.el.addEventListener("click", this.handlePalettePreset);
+      this.el.addEventListener("input", this.handlePaletteColor);
+      this.el.addEventListener("change", this.handlePaletteColor);
       this.el.addEventListener("click", this.handleViewJump, true);
       this.recordResult();
       this.renderStats();
       this.renderSoundToggle();
+      this.renderCosmetics();
       this.renderBoardSkin();
       this.renderPieceSkin();
+      this.renderPalette();
       this.renderChatTimes();
       this.keepChatAtLatest();
     },
@@ -96,8 +132,10 @@ const Hooks = {
       this.recordResult();
       this.renderStats();
       this.renderSoundToggle();
+      this.renderCosmetics();
       this.renderBoardSkin();
       this.renderPieceSkin();
+      this.renderPalette();
       this.renderChatTimes();
       this.keepViewInFrame();
       this.keepChatAtLatest();
@@ -110,9 +148,13 @@ const Hooks = {
       this.el.removeEventListener("click", this.handleSoundToggle);
       this.el.removeEventListener("input", this.handleSoundVolume);
       this.el.removeEventListener("change", this.handleSoundVolume);
+      this.el.removeEventListener("click", this.handleCosmeticUnlock);
       this.el.removeEventListener("click", this.handleSoundAction);
       this.el.removeEventListener("click", this.handleSkinChoice);
       this.el.removeEventListener("click", this.handlePieceSkinChoice);
+      this.el.removeEventListener("click", this.handlePalettePreset);
+      this.el.removeEventListener("input", this.handlePaletteColor);
+      this.el.removeEventListener("change", this.handlePaletteColor);
       this.el.removeEventListener("click", this.handleViewJump, true);
     },
 
@@ -222,14 +264,106 @@ const Hooks = {
       });
     },
 
+    readCosmeticUnlocks() {
+      try {
+        return JSON.parse(localStorage.getItem(this.cosmeticUnlockKey)) || [];
+      } catch (_error) {
+        return [];
+      }
+    },
+
+    writeCosmeticUnlocks(unlocks) {
+      localStorage.setItem(this.cosmeticUnlockKey, JSON.stringify([...new Set(unlocks)]));
+    },
+
+    cosmeticUnlocked(id) {
+      return this.readCosmeticUnlocks().includes(id);
+    },
+
+    unlockCosmetic(id) {
+      const unlocks = this.readCosmeticUnlocks();
+      const next = [...unlocks, id];
+
+      if (id === "board:custom" || id === "piece:custom" || id === "palette:custom") {
+        next.push("board:custom", "piece:custom", "palette:custom");
+      }
+
+      this.writeCosmeticUnlocks(next);
+    },
+
+    cosmeticAllowed(id) {
+      return !id || this.cosmeticUnlocked(id);
+    },
+
+    premiumIdForBoardSkin(skin) {
+      return skin === "arcane" || skin === "custom" ? `board:${skin}` : null;
+    },
+
+    premiumIdForPieceSkin(skin) {
+      return skin === "crystal" || skin === "custom" ? `piece:${skin}` : null;
+    },
+
+    activateCosmeticControl(control) {
+      if (control.matches("[data-palette-unlock]")) {
+        this.setBoardSkin("custom");
+        this.setPieceSkin("custom");
+        this.renderBoardSkin();
+        this.renderPieceSkin();
+        this.renderPalette();
+        return;
+      }
+
+      if (control.dataset.boardSkinChoice) {
+        this.setBoardSkin(control.dataset.boardSkinChoice);
+        this.renderBoardSkin();
+      }
+
+      if (control.dataset.pieceSkinChoice) {
+        this.setPieceSkin(control.dataset.pieceSkinChoice);
+        this.renderPieceSkin();
+      }
+    },
+
+    renderCosmetics() {
+      this.el.querySelectorAll("[data-cosmetic-premium]").forEach(control => {
+        const unlocked = this.cosmeticUnlocked(control.dataset.cosmeticPremium);
+        control.classList.toggle("mc-skin-locked", !unlocked);
+        control.classList.toggle("mc-skin-unlocked", unlocked);
+        control.setAttribute("aria-disabled", "false");
+        control.title = unlocked ? "Cosmetico desbloqueado localmente" : "Probar y desbloquear localmente";
+        control.querySelectorAll("[data-cosmetic-status]").forEach(status => {
+          status.textContent = unlocked ? "Local" : "Probar local";
+        });
+      });
+
+      this.el.querySelectorAll("[data-palette-editor]").forEach(editor => {
+        const unlocked = this.cosmeticUnlocked("palette:custom");
+        editor.classList.toggle("is-locked", !unlocked);
+        editor.classList.toggle("is-unlocked", unlocked);
+        editor.querySelectorAll("[data-palette-status]").forEach(status => {
+          status.textContent = unlocked ? "Local" : "Probar local";
+        });
+        editor.querySelectorAll("[data-palette-unlock]").forEach(control => {
+          control.setAttribute("aria-disabled", "false");
+        });
+        editor.querySelectorAll("[data-palette-preset], [data-palette-color]").forEach(control => {
+          control.disabled = !unlocked;
+        });
+      });
+    },
+
     boardSkin() {
       const skin = localStorage.getItem(this.skinKey);
       if (skin === "mana") return "gilded";
-      return ["classic", "arcane", "gilded", "custom"].includes(skin) ? skin : "classic";
+      if (this.cosmeticAllowed(this.premiumIdForBoardSkin(skin))) {
+        return ["classic", "arcane", "gilded", "custom"].includes(skin) ? skin : "classic";
+      }
+      return "classic";
     },
 
     setBoardSkin(skin) {
       if (!["classic", "arcane", "gilded", "custom"].includes(skin)) return;
+      if (!this.cosmeticAllowed(this.premiumIdForBoardSkin(skin))) return;
       localStorage.setItem(this.skinKey, skin);
     },
 
@@ -249,11 +383,15 @@ const Hooks = {
 
     pieceSkin() {
       const skin = localStorage.getItem(this.pieceSkinKey);
-      return ["classic", "runes", "crystal"].includes(skin) ? skin : "classic";
+      if (this.cosmeticAllowed(this.premiumIdForPieceSkin(skin))) {
+        return ["classic", "runes", "crystal", "custom"].includes(skin) ? skin : "classic";
+      }
+      return "classic";
     },
 
     setPieceSkin(skin) {
-      if (!["classic", "runes", "crystal"].includes(skin)) return;
+      if (!["classic", "runes", "crystal", "custom"].includes(skin)) return;
+      if (!this.cosmeticAllowed(this.premiumIdForPieceSkin(skin))) return;
       localStorage.setItem(this.pieceSkinKey, skin);
     },
 
@@ -263,6 +401,7 @@ const Hooks = {
       this.el.classList.toggle("mc-piece-skin-classic", skin === "classic");
       this.el.classList.toggle("mc-piece-skin-runes", skin === "runes");
       this.el.classList.toggle("mc-piece-skin-crystal", skin === "crystal");
+      this.el.classList.toggle("mc-piece-skin-custom", skin === "custom");
       document.documentElement.dataset.pieceSkin = skin;
 
       this.el.querySelectorAll("[data-piece-skin-choice]").forEach(button => {
@@ -270,6 +409,89 @@ const Hooks = {
         button.classList.toggle("mc-skin-selected", selected);
         button.setAttribute("aria-pressed", selected ? "true" : "false");
       });
+    },
+
+    defaultPalette() {
+      return {
+        boardLight: "#d9c58f",
+        boardDark: "#243a31",
+        pieceWhite: "#f6f1df",
+        pieceBlack: "#241745",
+      };
+    },
+
+    palettePreset(name) {
+      const presets = {
+        midnight: {boardLight: "#8067c9", boardDark: "#151020", pieceWhite: "#f7f2ff", pieceBlack: "#241745"},
+        emerald: {boardLight: "#8bd9bd", boardDark: "#17342b", pieceWhite: "#f5f9de", pieceBlack: "#0b2c24"},
+        frost: {boardLight: "#d9f0ff", boardDark: "#22354f", pieceWhite: "#ffffff", pieceBlack: "#2f5e8f"},
+      };
+
+      return presets[name] || this.defaultPalette();
+    },
+
+    readPalette() {
+      try {
+        return {...this.defaultPalette(), ...(JSON.parse(localStorage.getItem(this.paletteKey)) || {})};
+      } catch (_error) {
+        return this.defaultPalette();
+      }
+    },
+
+    setPalette(palette) {
+      localStorage.setItem(this.paletteKey, JSON.stringify({...this.defaultPalette(), ...palette}));
+    },
+
+    renderPalette() {
+      const palette = this.readPalette();
+      this.applyPalette(palette);
+
+      this.el.querySelectorAll("[data-palette-color]").forEach(input => {
+        if (palette[input.dataset.paletteColor]) input.value = palette[input.dataset.paletteColor];
+      });
+    },
+
+    applyPalette(palette) {
+      const root = document.documentElement;
+      const vars = {
+        "--mc-custom-board-light": palette.boardLight,
+        "--mc-custom-board-dark": palette.boardDark,
+        "--mc-custom-board-frame": palette.boardLight,
+        "--mc-custom-piece-white": palette.pieceWhite,
+        "--mc-custom-piece-black": palette.pieceBlack,
+        "--mc-custom-piece-white-text": this.readableTextColor(palette.pieceWhite),
+        "--mc-custom-piece-black-text": this.readableTextColor(palette.pieceBlack),
+        "--mc-custom-piece-white-glow": this.hexToRgba(palette.pieceWhite, 0.42),
+        "--mc-custom-piece-black-glow": this.hexToRgba(palette.pieceBlack, 0.5),
+      };
+
+      for (const [name, value] of Object.entries(vars)) {
+        root.style.setProperty(name, value);
+        this.el.style.setProperty(name, value);
+      }
+    },
+
+    readableTextColor(hex) {
+      const rgb = this.hexToRgb(hex);
+      if (!rgb) return "#10140f";
+      const luminance = (0.2126 * rgb.r + 0.7152 * rgb.g + 0.0722 * rgb.b) / 255;
+      return luminance > 0.56 ? "#10140f" : "#fff8dc";
+    },
+
+    hexToRgba(hex, alpha) {
+      const rgb = this.hexToRgb(hex);
+      if (!rgb) return `rgba(255, 255, 255, ${alpha})`;
+      return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`;
+    },
+
+    hexToRgb(hex) {
+      const match = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex || "");
+      if (!match) return null;
+      return {
+        r: Number.parseInt(match[1], 16),
+        g: Number.parseInt(match[2], 16),
+        b: Number.parseInt(match[3], 16),
+      };
     },
 
     renderChatTimes() {
