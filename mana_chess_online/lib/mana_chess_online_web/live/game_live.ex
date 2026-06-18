@@ -722,6 +722,13 @@ defmodule ManaChessOnlineWeb.GameLive do
               <strong>Arcano oscuro</strong>
               <small data-cosmetic-status>Premium bloqueado</small>
             </button>
+            <button type="button" class="mc-skin-option mc-skin-locked" data-board-skin-choice="custom" data-cosmetic-premium="board:custom" data-sound-action="skin" title="Desbloquear paleta premium localmente" aria-disabled="true" aria-pressed="false">
+              <span class="mc-skin-preview mc-skin-preview-custom" aria-hidden="true">
+                <i></i><i></i><i></i><i></i>
+              </span>
+              <strong>Paleta</strong>
+              <small data-cosmetic-status>Premium bloqueado</small>
+            </button>
           </div>
         </div>
         <div class="mc-cosmetic-group">
@@ -751,6 +758,49 @@ defmodule ManaChessOnlineWeb.GameLive do
               <strong>Cristal premium</strong>
               <small data-cosmetic-status>Click para unlock local</small>
             </button>
+            <button type="button" class="mc-skin-option mc-skin-locked" data-piece-skin-choice="custom" data-cosmetic-premium="piece:custom" data-sound-action="skin" title="Desbloquear paleta premium localmente" aria-disabled="true" aria-pressed="false">
+              <span class="mc-piece-skin-preview mc-piece-skin-preview-custom" aria-hidden="true">
+                <b class="mc-piece-sample mc-piece-sample-white">{@symbols["K"]}</b>
+                <b class="mc-piece-sample mc-piece-sample-black">{@symbols["q"]}</b>
+              </span>
+              <strong>Paleta</strong>
+              <small data-cosmetic-status>Premium bloqueado</small>
+            </button>
+          </div>
+        </div>
+        <div class="mc-cosmetic-group mc-palette-group">
+          <span class="mc-cosmetic-group-label">Paleta</span>
+          <div class="mc-palette-editor" data-palette-editor>
+            <button type="button" class="mc-palette-unlock mc-skin-locked" data-palette-unlock data-sound-action="skin" aria-disabled="true">
+              <span class="mc-palette-preview" aria-hidden="true">
+                <i></i><i></i><i></i><i></i>
+              </span>
+              <strong>Custom premium</strong>
+              <small data-palette-status>Premium bloqueado</small>
+            </button>
+            <div class="mc-palette-presets" aria-label="Presets de paleta">
+              <button type="button" data-palette-preset="midnight" data-sound-action="skin">Noche</button>
+              <button type="button" data-palette-preset="emerald" data-sound-action="skin">Jade</button>
+              <button type="button" data-palette-preset="frost" data-sound-action="skin">Hielo</button>
+            </div>
+            <div class="mc-palette-fields">
+              <label>
+                <span>Claro</span>
+                <input type="color" value="#d9c58f" data-palette-color="boardLight" aria-label="Color claro del tablero" />
+              </label>
+              <label>
+                <span>Oscuro</span>
+                <input type="color" value="#243a31" data-palette-color="boardDark" aria-label="Color oscuro del tablero" />
+              </label>
+              <label>
+                <span>Blancas</span>
+                <input type="color" value="#f6f1df" data-palette-color="pieceWhite" aria-label="Color de piezas blancas" />
+              </label>
+              <label>
+                <span>Negras</span>
+                <input type="color" value="#241745" data-palette-color="pieceBlack" aria-label="Color de piezas negras" />
+              </label>
+            </div>
           </div>
         </div>
       </div>
@@ -958,6 +1008,11 @@ defmodule ManaChessOnlineWeb.GameLive do
                 Arcano
                 <small data-cosmetic-status>Premium bloqueado</small>
               </button>
+              <button type="button" class="mc-skin-locked" data-board-skin-choice="custom" data-cosmetic-premium="board:custom" data-sound-action="skin" title="Desbloquear paleta premium localmente" aria-label="Desbloquear paleta premium localmente" aria-disabled="true" aria-pressed="false">
+                <i class="mc-skin-dot mc-skin-dot-custom"></i>
+                Paleta
+                <small data-cosmetic-status>Bloqueado</small>
+              </button>
             </div>
             <div class="mc-skin-strip mc-piece-strip" aria-label="Skins de piezas">
               <span>Piezas</span>
@@ -972,6 +1027,11 @@ defmodule ManaChessOnlineWeb.GameLive do
               <button type="button" class="mc-skin-locked" data-piece-skin-choice="crystal" data-cosmetic-premium="piece:crystal" data-sound-action="skin" title="Desbloquear piezas Premium localmente" aria-label="Desbloquear piezas Premium localmente" aria-disabled="true" aria-pressed="false">
                 <i class="mc-piece-dot mc-piece-dot-crystal"></i>
                 Premium
+                <small data-cosmetic-status>Bloqueado</small>
+              </button>
+              <button type="button" class="mc-skin-locked" data-piece-skin-choice="custom" data-cosmetic-premium="piece:custom" data-sound-action="skin" title="Desbloquear paleta premium localmente" aria-label="Desbloquear paleta premium localmente" aria-disabled="true" aria-pressed="false">
+                <i class="mc-piece-dot mc-piece-dot-custom"></i>
+                Paleta
                 <small data-cosmetic-status>Bloqueado</small>
               </button>
             </div>

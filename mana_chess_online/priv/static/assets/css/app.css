@@ -5425,6 +5425,43 @@ html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-elixir-bottom-track::a
   --skin-dark: #6e3b1f;
 }
 
+.mc-skin-preview-custom,
+.mc-skin-dot-custom {
+  --skin-frame: var(--mc-custom-board-frame, #fff0b6);
+  --skin-light: var(--mc-custom-board-light, #d9c58f);
+  --skin-dark: var(--mc-custom-board-dark, #243a31);
+}
+
+.mc-piece-skin-preview-custom,
+.mc-piece-dot-custom {
+  --piece-frame: var(--mc-custom-board-frame, #fff0b6);
+  --piece-a: var(--mc-custom-piece-white, #f6f1df);
+  --piece-b: var(--mc-custom-piece-black, #241745);
+}
+
+.mc-piece-skin-preview-custom {
+  border-color: var(--piece-frame);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--mc-custom-board-light, #d9c58f) 22%, transparent), transparent 58%),
+    #08100b;
+}
+
+.mc-piece-skin-preview-custom .mc-piece-sample-white {
+  background:
+    radial-gradient(circle at 31% 23%, #ffffff 0 18%, var(--mc-custom-piece-white, #f6f1df) 68%, color-mix(in srgb, var(--mc-custom-piece-white, #f6f1df) 62%, #000000) 100%);
+  color: var(--mc-custom-piece-white-text, #10140f);
+  box-shadow:
+    inset 0 0 0 2px color-mix(in srgb, var(--mc-custom-piece-white, #f6f1df) 72%, transparent),
+    0 0 14px var(--mc-custom-piece-white-glow, rgba(246, 241, 223, .42));
+}
+
+.mc-piece-skin-preview-custom .mc-piece-sample-black {
+  background:
+    radial-gradient(circle at 35% 24%, color-mix(in srgb, var(--mc-custom-piece-black, #241745) 82%, #ffffff), var(--mc-custom-piece-black, #241745) 64%, #050407 100%);
+  color: var(--mc-custom-piece-black-text, #fff8dc);
+  box-shadow: 0 0 14px var(--mc-custom-piece-black-glow, rgba(36, 23, 69, .46));
+}
+
 .mc-skin-strip {
   display: flex;
   flex-wrap: wrap;
@@ -5486,6 +5523,128 @@ html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-elixir-bottom-track::a
   --piece-frame: #e6bd68;
   --piece-a: #f7ebce;
   --piece-b: #171a17;
+}
+
+.mc-palette-group {
+  align-items: start;
+}
+
+.mc-palette-editor {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+
+.mc-palette-unlock {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 2px 9px;
+  min-height: 50px;
+  padding: 8px 10px;
+  border: 1px dashed rgba(255,255,255,.12);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.018)),
+    #111b13;
+  color: var(--mc-cream);
+  text-align: left;
+}
+
+.mc-palette-unlock strong {
+  overflow: hidden;
+  color: var(--mc-cream);
+  font-size: .82rem;
+  line-height: 1.1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mc-palette-unlock small {
+  color: var(--mc-muted);
+  font-size: .68rem;
+}
+
+.mc-palette-preview {
+  grid-row: 1 / span 2;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  width: 34px;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 2px solid var(--mc-custom-board-frame, #fff0b6);
+  border-radius: 7px;
+  box-shadow: 0 8px 16px rgba(0,0,0,.22);
+}
+
+.mc-palette-preview i:nth-child(1) {
+  background: var(--mc-custom-board-light, #d9c58f);
+}
+
+.mc-palette-preview i:nth-child(2) {
+  background: var(--mc-custom-board-dark, #243a31);
+}
+
+.mc-palette-preview i:nth-child(3) {
+  background: var(--mc-custom-piece-white, #f6f1df);
+}
+
+.mc-palette-preview i:nth-child(4) {
+  background: var(--mc-custom-piece-black, #241745);
+}
+
+.mc-palette-presets {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.mc-palette-presets button {
+  min-height: 30px;
+  padding: 0 6px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 7px;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.014)),
+    #101912;
+  color: var(--mc-cream);
+  font-size: .72rem;
+  font-weight: 900;
+}
+
+.mc-palette-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.mc-palette-fields label {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  color: var(--mc-muted);
+  font-size: .68rem;
+  font-weight: 900;
+}
+
+.mc-palette-fields input {
+  width: 100%;
+  height: 28px;
+  min-width: 0;
+  padding: 2px;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 7px;
+  background: #08100b;
+}
+
+.mc-palette-editor.is-locked .mc-palette-presets,
+.mc-palette-editor.is-locked .mc-palette-fields {
+  opacity: .58;
+}
+
+.mc-palette-editor.is-locked input {
+  cursor: not-allowed;
 }
 
 .mc-shell:has(.mc-menu) .mc-skins {
@@ -5764,6 +5923,47 @@ html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-elixir-bottom-track::a
   text-shadow: 0 0 15px rgba(255, 240, 182, .42);
 }
 
+.mc-board-stack[data-board-skin="custom"] {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--mc-custom-board-light, #d9c58f) 28%, transparent), transparent 32%),
+    linear-gradient(225deg, color-mix(in srgb, var(--mc-custom-board-dark, #243a31) 34%, transparent), transparent 44%),
+    linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.018)),
+    color-mix(in srgb, var(--mc-custom-board-dark, #243a31) 72%, #050806);
+  border-color: color-mix(in srgb, var(--mc-custom-board-light, #d9c58f) 58%, transparent);
+  box-shadow:
+    0 28px 66px rgba(0, 0, 0, .5),
+    0 0 34px color-mix(in srgb, var(--mc-custom-board-light, #d9c58f) 16%, transparent),
+    inset 0 1px rgba(255, 255, 255, .1);
+}
+
+.mc-board-stack[data-board-skin="custom"] .mc-board {
+  background: color-mix(in srgb, var(--mc-custom-board-dark, #243a31) 78%, #040604);
+  border-color: color-mix(in srgb, var(--mc-custom-board-dark, #243a31) 82%, #000000);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--mc-custom-board-light, #d9c58f) 26%, transparent),
+    0 18px 40px rgba(0, 0, 0, .45),
+    inset 0 0 0 1px rgba(255, 255, 255, .05);
+}
+
+.mc-board-stack[data-board-skin="custom"] .mc-light {
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.22), transparent 45%),
+    var(--mc-custom-board-light, #d9c58f);
+}
+
+.mc-board-stack[data-board-skin="custom"] .mc-dark {
+  background:
+    radial-gradient(circle at 70% 22%, color-mix(in srgb, var(--mc-custom-board-light, #d9c58f) 20%, transparent), transparent 52%),
+    var(--mc-custom-board-dark, #243a31);
+}
+
+.mc-board-stack[data-board-skin="custom"] .mc-selected {
+  box-shadow:
+    inset 0 0 0 5px var(--mc-custom-board-light, #d9c58f),
+    inset 0 0 34px color-mix(in srgb, var(--mc-custom-board-light, #d9c58f) 38%, transparent),
+    0 0 0 1px rgba(255, 255, 255, .18);
+}
+
 html[data-piece-skin="runes"] .mc-game:has(.mc-play-area) .mc-white,
 .mc-shell.mc-piece-skin-runes .mc-game:has(.mc-play-area) .mc-white,
 html[data-piece-skin="runes"] .mc-drag-ghost.mc-white {
@@ -5810,6 +6010,30 @@ html[data-piece-skin="crystal"] .mc-drag-ghost.mc-black {
     radial-gradient(circle at 35% 24%, #283d80, #101623 66%, #05070d 100%);
   color: #fff0b6;
   text-shadow: 0 0 15px rgba(255, 240, 182, .52), 0 0 5px rgba(109, 143, 255, .34);
+}
+
+html[data-piece-skin="custom"] .mc-game:has(.mc-play-area) .mc-white,
+.mc-shell.mc-piece-skin-custom .mc-game:has(.mc-play-area) .mc-white,
+html[data-piece-skin="custom"] .mc-drag-ghost.mc-white {
+  background:
+    radial-gradient(circle at 31% 23%, #ffffff 0 22%, var(--mc-custom-piece-white, #f6f1df) 62%, color-mix(in srgb, var(--mc-custom-piece-white, #f6f1df) 58%, #000000) 100%);
+  color: var(--mc-custom-piece-white-text, #10140f);
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, .5),
+    inset 0 0 0 3px color-mix(in srgb, var(--mc-custom-piece-white, #f6f1df) 44%, transparent),
+    inset 0 -11px 18px rgba(0, 0, 0, .16),
+    0 0 18px var(--mc-custom-piece-white-glow, rgba(246, 241, 223, .42)),
+    0 9px 12px rgba(0, 0, 0, .32);
+  text-shadow: 0 1px rgba(255, 255, 255, .45), 0 0 10px var(--mc-custom-piece-white-glow, rgba(246, 241, 223, .42));
+}
+
+html[data-piece-skin="custom"] .mc-game:has(.mc-play-area) .mc-black,
+.mc-shell.mc-piece-skin-custom .mc-game:has(.mc-play-area) .mc-black,
+html[data-piece-skin="custom"] .mc-drag-ghost.mc-black {
+  background:
+    radial-gradient(circle at 35% 24%, color-mix(in srgb, var(--mc-custom-piece-black, #241745) 78%, #ffffff), var(--mc-custom-piece-black, #241745) 64%, #050407 100%);
+  color: var(--mc-custom-piece-black-text, #fff8dc);
+  text-shadow: 0 0 16px var(--mc-custom-piece-black-glow, rgba(36, 23, 69, .46)), 0 0 5px rgba(255, 255, 255, .14);
 }
 
 /* Mobile in-game fit pass */
@@ -6287,25 +6511,53 @@ html[data-piece-skin="crystal"] .mc-drag-ghost.mc-black {
   }
 
   .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-skin-options {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 8px;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
   }
 
   .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-skin-option {
     grid-template-columns: auto minmax(0, 1fr);
     justify-items: stretch;
-    min-height: 52px;
-    padding: 8px 10px;
+    min-height: 46px;
+    padding: 7px;
     text-align: left;
   }
 
   .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-skin-preview,
   .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-piece-skin-preview {
-    width: 34px;
+    width: 28px;
   }
 
   .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-skin-option strong {
-    font-size: .82rem;
+    overflow: visible;
+    font-size: .74rem;
+    text-overflow: clip;
+    white-space: normal;
+  }
+
+  .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-skin-option small {
+    grid-column: 1 / -1;
+    font-size: .62rem;
+    line-height: 1.1;
+    white-space: normal;
+  }
+
+  .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-palette-unlock {
+    min-height: 44px;
+    padding: 7px;
+  }
+
+  .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-palette-preview {
+    width: 28px;
+  }
+
+  .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-palette-presets button {
+    min-height: 26px;
+    font-size: .68rem;
+  }
+
+  .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-palette-fields input {
+    height: 24px;
   }
 }
 
