@@ -297,7 +297,7 @@ defmodule ManaChessOnlineWeb.GameLive do
   defp seat_label(nil, _player_id), do: "Libre"
   defp seat_label(_player_id, _current_player_id), do: "Ocupado"
 
-  defp match_phase(%{status: :waiting, private?: true}), do: %{title: "Privado listo", detail: "Copia el link para invitar rival o espectadores.", tone: :waiting}
+  defp match_phase(%{status: :waiting, private?: true}), do: %{title: "Privado por link", detail: "Comparte el enlace y espera a que el rival tome asiento.", tone: :waiting}
   defp match_phase(%{status: :waiting}), do: %{title: "Esperando rival", detail: "Comparte el link o toma el asiento libre.", tone: :waiting}
   defp match_phase(%{status: :ready}), do: %{title: "Listos para empezar", detail: "Cualquiera puede iniciar la cuenta regresiva.", tone: :ready}
   defp match_phase(%{status: {:starting, _starts_at}, countdown_seconds: seconds}), do: %{title: "Inicia en #{seconds}", detail: "Ambos pueden marcar listo para saltar la espera.", tone: :starting}
@@ -336,14 +336,20 @@ defmodule ManaChessOnlineWeb.GameLive do
   defp player_role_hint(_game, color) when color in [:white, :black], do: "Sentado"
   defp player_role_hint(_game, _color), do: "Observando"
 
-  defp invite_title(%{private?: true}), do: "Privado por link"
+  defp invite_title(%{private?: true}), do: "Invitacion privada"
   defp invite_title(_game), do: "Link de sala"
 
-  defp invite_hint(%{private?: true}), do: "Comparte este link con tu rival o espectadores."
+  defp invite_hint(%{private?: true}), do: "El rival entra por aqui; quien no se siente queda mirando."
   defp invite_hint(_game), do: "Rival o espectador entra aqui."
 
-  defp invite_copy_label(%{private?: true}), do: "Copiar privado"
+  defp invite_copy_label(%{private?: true}), do: "Copiar link privado"
   defp invite_copy_label(_game), do: "Copiar link"
+
+  defp invite_badge(%{private?: true}), do: "Privado"
+  defp invite_badge(_game), do: nil
+
+  defp waiting_seat_hint(%{private?: true}), do: "Privado listo: comparte el link y el rival puede tomar el asiento libre."
+  defp waiting_seat_hint(_game), do: "Blancas no puede iniciar hasta que Negras se siente. Para jugar solo usa Modo practica."
 
   defp start_label(%{practice?: true}), do: "Empezar practica"
   defp start_label(_game), do: "Empezar partida"
@@ -352,9 +358,12 @@ defmodule ManaChessOnlineWeb.GameLive do
   defp observing?(nil, _player_id), do: false
   defp observing?(game, player_id), do: not game.practice? and not seated_in?(game, player_id)
   defp seat_open?(game, color), do: is_nil(game.players[color])
+  defp recovered_session?(%{"game_id" => _game_id}, %{game: %{private?: true, status: :waiting}}), do: false
   defp recovered_session?(%{"game_id" => _game_id}, %{game: game, color: color}) when not is_nil(game) and color in [:white, :black, :practice], do: true
   defp recovered_session?(params, %{game: game, color: color}) when params == %{} and not is_nil(game) and color in [:white, :black, :practice], do: true
   defp recovered_session?(_params, _view), do: false
+  defp show_reconnect_banner?(%{private?: true, status: :waiting}), do: false
+  defp show_reconnect_banner?(_game), do: true
   defp lobby_status(:waiting), do: "Esperando"
   defp lobby_status(:ready), do: "Listos"
   defp lobby_status({:starting, _starts_at}), do: "Iniciando"
@@ -939,7 +948,7 @@ defmodule ManaChessOnlineWeb.GameLive do
             <span>Puedes mirar el juego en curso sin ocupar asiento.</span>
           </div>
 
-          <div :if={@reconnected?} class="mc-reconnect-banner">
+          <div :if={@reconnected? && show_reconnect_banner?(@game)} class="mc-reconnect-banner">
             <strong>Reconectado</strong>
             <span>Recuperaste tu asiento como {color_label(@color)}.</span>
           </div>
@@ -963,18 +972,19 @@ defmodule ManaChessOnlineWeb.GameLive do
               <strong>Negras</strong>
               <span>{seat_label(@game.players.black, @player_id)}</span>
             </div>
-            <p :if={@game.status == :waiting}>
-              Blancas no puede iniciar hasta que Negras se siente. Para jugar solo usa Modo practica.
-            </p>
+            <p :if={@game.status == :waiting}>{waiting_seat_hint(@game)}</p>
             <div class={["mc-invite-strip", @game.private? && "mc-invite-strip-private"]}>
               <div>
-                <strong>{invite_title(@game)}</strong>
+                <div class="mc-invite-title-row">
+                  <strong>{invite_title(@game)}</strong>
+                  <span :if={invite_badge(@game)} class="mc-invite-badge">{invite_badge(@game)}</span>
+                </div>
                 <span>{invite_hint(@game)}</span>
                 <code>{~p"/game/#{@game.id}"}</code>
               </div>
-              <div>
-                <button type="button" data-copy-invite={~p"/game/#{@game.id}"}>{invite_copy_label(@game)}</button>
-                <a href={~p"/game/#{@game.id}"}>Abrir</a>
+              <div class="mc-invite-actions">
+                <button class="mc-copy-invite-main" type="button" data-copy-invite={~p"/game/#{@game.id}"}>{invite_copy_label(@game)}</button>
+                <a class="mc-open-invite-link" href={~p"/game/#{@game.id}"}>Abrir link</a>
               </div>
             </div>
             <div class="mc-seat-actions">
@@ -1205,8 +1215,8 @@ defmodule ManaChessOnlineWeb.GameLive do
                 <h2>Salas online</h2>
                 <div class="mc-lobby-actions">
                   <button type="button" class="mc-private-quick" phx-click="create_private" title="Crear sala privada por link" data-sound-action="private">
-                    <strong>Crear privado</strong>
-                    <small>Link para invitar</small>
+                    <strong>Privado por link</strong>
+                    <small>Crear sala</small>
                   </button>
                   <button type="button" class="mc-online-quick" phx-click="sit_anywhere" data-sound-action="mode">
                     Online rapido

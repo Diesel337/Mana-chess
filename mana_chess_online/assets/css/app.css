@@ -1251,7 +1251,7 @@ body {
 }
 
 .mc-private-quick {
-  min-width: 108px;
+  min-width: 156px;
 }
 
 .mc-lobby-head .mc-private-quick {
@@ -1271,7 +1271,7 @@ body {
 }
 
 .mc-lobby-head .mc-private-quick strong {
-  font-size: .86rem;
+  font-size: .82rem;
 }
 
 .mc-lobby-head .mc-private-quick small {
@@ -2143,11 +2143,19 @@ html[data-desktop="true"] .mc-panel ul {
   min-width: 0;
 }
 
-.mc-invite-strip > div:last-child {
+.mc-invite-actions {
   display: flex;
   flex-wrap: wrap;
   justify-content: end;
   gap: 8px;
+}
+
+.mc-invite-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
 }
 
 .mc-invite-strip strong {
@@ -2159,6 +2167,22 @@ html[data-desktop="true"] .mc-panel ul {
   color: var(--mc-muted);
   font-size: .84rem;
   line-height: 1.25;
+}
+
+.mc-invite-badge {
+  display: inline-grid;
+  place-items: center;
+  min-height: 20px;
+  padding: 0 7px;
+  border: 1px solid rgba(139, 217, 189, .28);
+  border-radius: 999px;
+  background: rgba(139, 217, 189, .1);
+  color: var(--mc-teal) !important;
+  font-size: .6rem !important;
+  font-weight: 1000;
+  letter-spacing: .04em;
+  line-height: 1;
+  text-transform: uppercase;
 }
 
 .mc-invite-strip code {
@@ -2224,6 +2248,16 @@ html[data-desktop="true"] .mc-panel ul {
   border: 1px solid rgba(255, 243, 207, .28);
   background: linear-gradient(180deg, #ffe191 0%, #e8bd63 58%, #c88f34 100%);
   color: #191000;
+}
+
+.mc-copy-invite-main {
+  min-width: 152px;
+}
+
+.mc-invite-strip button[data-copied="true"] {
+  border-color: rgba(139, 217, 189, .42);
+  background: linear-gradient(180deg, #b6f3d9 0%, #72c9aa 100%);
+  color: #06140f;
 }
 
 .mc-invite-strip a {
@@ -3508,6 +3542,16 @@ html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-elixir-bottom-track::a
     min-width: 0;
     width: 100%;
     min-height: 48px;
+  }
+
+  .mc-invite-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .mc-copy-invite-main {
+    min-width: 0;
   }
 }
 
