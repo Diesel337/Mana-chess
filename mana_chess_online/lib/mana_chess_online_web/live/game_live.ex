@@ -277,16 +277,6 @@ defmodule ManaChessOnlineWeb.GameLive do
   defp seat_label(nil, _player_id), do: "Libre"
   defp seat_label(_player_id, _current_player_id), do: "Ocupado"
 
-  defp status_label(:waiting), do: "Esperando rival"
-  defp status_label(:ready), do: "Listos para empezar"
-  defp status_label({:starting, _starts_at}), do: "Iniciando"
-  defp status_label(:playing), do: "Jugando"
-  defp status_label(:promotion), do: "Promocion pendiente"
-  defp status_label({:winner, color}), do: "Ganaron #{color_label(color)}"
-  defp status_label({:checkmate, winner, _loser}), do: "Jaque mate: ganan #{color_label(winner)}"
-  defp status_label(:draw), do: "Empate"
-  defp status_label(_), do: "Sin lugar"
-
   defp match_phase(%{status: :waiting, private?: true}), do: %{title: "Privado listo", detail: "Copia el link para invitar rival o espectadores.", tone: :waiting}
   defp match_phase(%{status: :waiting}), do: %{title: "Esperando rival", detail: "Comparte el link o toma el asiento libre.", tone: :waiting}
   defp match_phase(%{status: :ready}), do: %{title: "Listos para empezar", detail: "Cualquiera puede iniciar la cuenta regresiva.", tone: :ready}
@@ -650,6 +640,12 @@ defmodule ManaChessOnlineWeb.GameLive do
       String.starts_with?(entry, "Movimiento descartado: ") ->
         entry |> String.replace_prefix("Movimiento descartado: ", "") |> friendly_alert()
 
+      String.starts_with?(entry, "BOT ") ->
+        entry |> String.replace_prefix("BOT ", "") |> sentence_case()
+
+      String.starts_with?(entry, "Bot ") ->
+        entry |> String.replace_prefix("Bot ", "") |> sentence_case()
+
       true ->
         entry
     end
@@ -866,8 +862,6 @@ defmodule ManaChessOnlineWeb.GameLive do
             </div>
           </div>
           <div class="mc-badge">
-            <span>{color_label(@color)}</span>
-            <strong>{status_label(@game && @game.status)}</strong>
             <div class="mc-sound-control" data-sound-control>
               <button type="button" class="mc-sound-toggle" data-sound-toggle aria-pressed="false" aria-label="Encender sonido">
                 Sonido OFF
@@ -1234,8 +1228,8 @@ defmodule ManaChessOnlineWeb.GameLive do
             <span>{queue_count_text(@game)}</span>
           </div>
           <ol class="mc-queue-list">
-            <li :for={action <- queued_actions(@game)}>
-              <i class={["mc-event-dot", event_color_class(action.color)]}></i>
+            <li :for={{action, index} <- Enum.with_index(queued_actions(@game), 1)}>
+              <i class={["mc-queue-index", event_color_class(action.color)]}>{index}</i>
               <span>
                 <strong>{color_label(action.color)}</strong>
                 <small>{square_name(action.from)} -> {square_name(action.to)}</small>
@@ -1253,7 +1247,7 @@ defmodule ManaChessOnlineWeb.GameLive do
             <span>{panel_log_count_text(@game)}</span>
           </div>
           <ul class="mc-log-list">
-            <li :for={entry <- panel_log(@game)} class={["mc-log-entry", log_entry_class(entry)]}>
+            <li :for={{entry, index} <- Enum.with_index(panel_log(@game))} class={["mc-log-entry", log_entry_class(entry), index == 0 && "mc-log-latest"]}>
               <small>{log_entry_tag(entry)}</small>
               <span>{log_entry_text(entry)}</span>
             </li>
