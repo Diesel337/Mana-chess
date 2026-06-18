@@ -64,6 +64,7 @@ defmodule ManaChessOnline.GameLobby do
   def update_settings(player_id, params), do: GenServer.call(__MODULE__, {:update_settings, player_id, params})
   def promote(player_id, choice), do: GenServer.call(__MODULE__, {:promote, player_id, choice})
   def enqueue(player_id, from, to), do: GenServer.call(__MODULE__, {:enqueue, player_id, from, to})
+  def send_chat(player_id, game_id, message), do: GenServer.call(__MODULE__, {:send_chat, player_id, game_id, message})
 
   @impl true
   def init(:ok) do
@@ -360,6 +361,36 @@ defmodule ManaChessOnline.GameLobby do
     {:reply, :ok, state}
   end
 
+  def handle_call({:send_chat, player_id, game_id, message}, _from, state) do
+    with {:ok, text} <- sanitize_chat_message(message),
+         %{id: ^game_id} = game <- state.games[game_id] do
+      entry = %{
+        id: System.unique_integer([:positive, :monotonic]),
+        player_id: player_id,
+        role: chat_role(game, player_id),
+        text: text
+      }
+
+      state =
+        update_in(state.games[game_id], fn game ->
+          chat =
+            [entry | Map.get(game, :chat, [])]
+            |> Enum.take(24)
+
+          Map.put(game, :chat, chat)
+        end)
+
+      Phoenix.PubSub.broadcast(ManaChessOnline.PubSub, topic(game_id), {:game_update, public_game(state.games[game_id])})
+      {:reply, :ok, state}
+    else
+      {:error, reason} ->
+        {:reply, {:error, reason}, state}
+
+      _ ->
+        {:reply, {:error, :no_game}, state}
+    end
+  end
+
   defp enqueue_move(state, player_id, from, to) do
     with %{game_id: game_id, color: player_color} <- state.players[player_id],
          game when not is_nil(game) <- state.games[game_id] do
@@ -510,18 +541,22 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   defp reset_game(state, game_id, old_game) do
+    chat = Map.get(old_game, :chat, [])
+
     if old_game.practice? do
       player_id = old_game.players.white
 
       state
       |> put_in([:games, game_id], practice_game(game_id, player_id, old_game.settings))
       |> put_in([:players, player_id], %{game_id: game_id, color: :practice})
+      |> put_in([:games, game_id, :chat], chat)
       |> update_in([:games, game_id, :log], &["Practica reiniciada." | &1])
     else
       state
       |> put_in([:games, game_id], new_game(game_id, old_game.settings))
       |> keep_player_if_present(old_game.players.white, game_id, :white)
       |> keep_player_if_present(old_game.players.black, game_id, :black)
+      |> put_in([:games, game_id, :chat], chat)
       |> update_in([:games, game_id], &refresh_status/1)
       |> update_in([:games, game_id, :log], &["Partida reiniciada por acuerdo." | &1])
     end
@@ -916,6 +951,7 @@ defmodule ManaChessOnline.GameLobby do
       start_requests: MapSet.new(),
       queue: [],
       status: :waiting,
+      chat: [],
       log: ["Esperando jugadores..."]
     }
   end
@@ -978,6 +1014,7 @@ defmodule ManaChessOnline.GameLobby do
       checked_colors: GameRules.checked_colors(game.board),
       promotion_pending: game.promotion_pending,
       finished_at: game.finished_at,
+      chat: Map.get(game, :chat, []),
       log: Enum.take(game.log, 8)
     }
   end
@@ -999,6 +1036,22 @@ defmodule ManaChessOnline.GameLobby do
   defp broadcast_lobby(state) do
     Phoenix.PubSub.broadcast(ManaChessOnline.PubSub, lobby_topic(), {:lobby_update, public_lobby(state)})
   end
+
+  defp sanitize_chat_message(message) do
+    text =
+      message
+      |> to_string()
+      |> String.replace(~r/\s+/u, " ")
+      |> String.trim()
+      |> String.slice(0, 180)
+
+    if text == "", do: {:error, :empty}, else: {:ok, text}
+  end
+
+  defp chat_role(%{practice?: true}, player_id) when is_binary(player_id), do: "Practica"
+  defp chat_role(%{players: %{white: player_id}}, player_id), do: "Blancas"
+  defp chat_role(%{players: %{black: player_id}}, player_id), do: "Negras"
+  defp chat_role(_game, _player_id), do: "Espectador"
 
   defp next_status(board, _captured, _moving_color, castling_rights), do: terminal_status(board, castling_rights)
 

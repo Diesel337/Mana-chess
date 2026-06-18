@@ -51,6 +51,8 @@ defmodule ManaChessOnlineWeb.GameLive do
      |> assign(:valid_moves, [])
      |> assign(:selected, nil)
      |> assign(:local_alert, nil)
+     |> assign(:chat_draft, "")
+     |> assign(:chat_error, nil)
      |> assign(:reconnected?, recovered_session?(params, view))
      |> assign(:tutorial?, false)}
   end
@@ -197,6 +199,23 @@ defmodule ManaChessOnlineWeb.GameLive do
     {:noreply, push_navigate(socket, to: ~p"/game/#{view.game_id}")}
   end
 
+  def handle_event("chat_change", %{"message" => message}, socket) do
+    {:noreply, assign(socket, chat_draft: String.slice(message || "", 0, 180), chat_error: nil)}
+  end
+
+  def handle_event("send_chat", %{"message" => message}, socket) do
+    case GameLobby.send_chat(socket.assigns.player_id, socket.assigns.game_id, message) do
+      :ok ->
+        {:noreply, assign(socket, chat_draft: "", chat_error: nil)}
+
+      {:error, :empty} ->
+        {:noreply, assign(socket, chat_error: "Escribe un mensaje.")}
+
+      {:error, _reason} ->
+        {:noreply, assign(socket, chat_error: "No se pudo enviar.")}
+    end
+  end
+
   @impl true
   def handle_info({:game_update, %{id: game_id} = game}, %{assigns: %{game_id: game_id}} = socket) do
     {:noreply, assign(socket, :game, game)}
@@ -228,6 +247,7 @@ defmodule ManaChessOnlineWeb.GameLive do
     |> assign(:valid_moves, [])
     |> assign(:selected, nil)
     |> assign(:local_alert, nil)
+    |> assign(:chat_error, nil)
     |> assign(:reconnected?, false)
   end
 
@@ -592,6 +612,21 @@ defmodule ManaChessOnlineWeb.GameLive do
 
   defp panel_log(%{log: log}) when is_list(log), do: Enum.take(log, 8)
   defp panel_log(_game), do: []
+
+  defp chat_messages(%{chat: chat}) when is_list(chat), do: chat
+  defp chat_messages(_game), do: []
+
+  defp chat_count_text(game) do
+    case chat_messages(game) do
+      [] -> "Sin chat"
+      [_one] -> "1 mensaje"
+      messages -> "#{length(messages)} mensajes"
+    end
+  end
+
+  defp chat_entry_class(%{player_id: player_id}, player_id), do: "mc-chat-mine"
+  defp chat_entry_class(_entry, _player_id), do: nil
+  defp chat_send_disabled?(draft), do: String.trim(draft || "") == ""
 
   defp queue_count_text(game) do
     case length(queued_actions(game)) do
@@ -1255,6 +1290,27 @@ defmodule ManaChessOnlineWeb.GameLive do
               Los eventos apareceran aqui
             </li>
           </ul>
+        </section>
+
+        <section class="mc-panel-section mc-chat-panel">
+          <div class="mc-panel-heading">
+            <h2>Chat</h2>
+            <span>{chat_count_text(@game)}</span>
+          </div>
+          <ul class="mc-chat-list">
+            <li :for={entry <- chat_messages(@game)} class={["mc-chat-entry", chat_entry_class(entry, @player_id)]}>
+              <small>{entry.role}</small>
+              <p>{entry.text}</p>
+            </li>
+            <li :if={chat_messages(@game) == []} class="mc-panel-empty">
+              Mensajes de sala apareceran aqui
+            </li>
+          </ul>
+          <form :if={@game} class="mc-chat-form" phx-change="chat_change" phx-submit="send_chat">
+            <input name="message" value={@chat_draft} maxlength="180" autocomplete="off" placeholder="Mensaje de sala" aria-label="Mensaje de chat" />
+            <button type="submit" disabled={chat_send_disabled?(@chat_draft)}>Enviar</button>
+          </form>
+          <p :if={@chat_error} class="mc-chat-error">{@chat_error}</p>
         </section>
       </aside>
     </main>

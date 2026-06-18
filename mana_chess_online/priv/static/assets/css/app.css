@@ -3672,6 +3672,10 @@ html[data-desktop="true"] .mc-elixir-bottom-row {
     border: 1px solid rgba(255, 217, 130, .18);
     border-radius: 8px;
   }
+
+  .mc-panel-game {
+    max-height: 360px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -6951,7 +6955,8 @@ html[data-piece-skin="custom"] .mc-drag-ghost.mc-black {
 }
 
 .mc-panel .mc-queue-list,
-.mc-panel .mc-log-list {
+.mc-panel .mc-log-list,
+.mc-panel .mc-chat-list {
   display: grid;
   gap: 6px;
   margin: 0;
@@ -7122,6 +7127,98 @@ html[data-piece-skin="custom"] .mc-drag-ghost.mc-black {
   font-weight: 800;
 }
 
+.mc-chat-list {
+  max-height: 146px;
+  overflow: auto;
+}
+
+.mc-chat-entry {
+  display: grid;
+  gap: 4px;
+  padding: 7px 8px;
+  border: 1px solid rgba(139, 217, 189, .1);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, .035);
+}
+
+.mc-chat-entry small {
+  color: #8bd9bd;
+  font-size: .58rem;
+  font-weight: 1000;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+}
+
+.mc-chat-entry p {
+  min-width: 0;
+  margin: 0;
+  color: #dfe8d5;
+  font-size: .72rem;
+  line-height: 1.32;
+  overflow-wrap: anywhere;
+}
+
+.mc-chat-mine {
+  border-color: rgba(255, 217, 130, .2);
+  background:
+    linear-gradient(90deg, rgba(255, 217, 130, .08), transparent),
+    rgba(255, 255, 255, .035);
+}
+
+.mc-chat-mine small {
+  color: #ffd982;
+}
+
+.mc-chat-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.mc-chat-form input {
+  min-width: 0;
+  min-height: 34px;
+  padding: 0 9px;
+  border: 1px solid rgba(255, 217, 130, .16);
+  border-radius: 7px;
+  background: rgba(0, 0, 0, .22);
+  color: #fff7e4;
+  font: inherit;
+  font-size: .72rem;
+}
+
+.mc-chat-form input:focus {
+  outline: 2px solid rgba(139, 217, 189, .24);
+  border-color: rgba(139, 217, 189, .42);
+}
+
+.mc-chat-form button {
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 243, 207, .28);
+  border-radius: 7px;
+  background: linear-gradient(180deg, #ffe191 0%, #e8bd63 100%);
+  color: #191000;
+  cursor: pointer;
+  font: inherit;
+  font-size: .7rem;
+  font-weight: 1000;
+}
+
+.mc-chat-form button:disabled {
+  opacity: .48;
+  cursor: not-allowed;
+  filter: grayscale(.3);
+}
+
+.mc-chat-error {
+  margin: 6px 0 0;
+  color: #ffb08f;
+  font-size: .68rem;
+  font-weight: 800;
+}
+
 html[data-desktop="true"] .mc-panel-game {
   gap: 8px;
 }
@@ -7133,6 +7230,10 @@ html[data-desktop="true"] .mc-panel-section {
 html[data-desktop="true"] .mc-log-entry {
   grid-template-columns: 46px minmax(0, 1fr);
   gap: 6px;
+}
+
+html[data-desktop="true"] .mc-chat-list {
+  max-height: 118px;
 }
 
 @media (max-width: 900px) {
@@ -7148,6 +7249,10 @@ html[data-desktop="true"] .mc-log-entry {
     max-height: 112px;
     overflow: auto;
   }
+
+  .mc-panel .mc-chat-list {
+    max-height: 104px;
+  }
 }
 
 @media (max-width: 420px) {
@@ -7158,5 +7263,11 @@ html[data-desktop="true"] .mc-log-entry {
   .mc-panel-heading span {
     padding: 4px 6px;
     font-size: .62rem;
+  }
+
+  .mc-chat-form input,
+  .mc-chat-form button {
+    min-height: 32px;
+    font-size: .68rem;
   }
 }
