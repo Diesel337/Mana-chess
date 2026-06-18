@@ -980,10 +980,12 @@ defmodule ManaChessOnlineWeb.GameLive do
           <div class="mc-badge">
             <div class="mc-sound-control" data-sound-control>
               <button type="button" class="mc-sound-toggle" data-sound-toggle aria-pressed="false" aria-label="Encender sonido">
-                Sonido OFF
+                <span data-sound-toggle-copy>Sonido</span>
+                <strong data-sound-toggle-label>OFF</strong>
               </button>
               <label class="mc-sound-volume">
-                <span data-sound-volume-label>70%</span>
+                <span>Vol</span>
+                <strong data-sound-volume-label>70%</strong>
                 <input type="range" min="0" max="100" step="5" value="70" data-sound-volume aria-label="Volumen de sonido" />
               </label>
             </div>

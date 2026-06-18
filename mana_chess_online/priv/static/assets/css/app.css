@@ -4850,8 +4850,11 @@ html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-action-quiet {
 }
 
 .mc-sound-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   min-height: 26px;
-  padding: 0 9px;
+  padding: 0 5px 0 9px;
   border: 1px solid rgba(255, 217, 130, .2);
   border-radius: 999px;
   background: rgba(8, 16, 11, .74);
@@ -4864,10 +4867,24 @@ html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-action-quiet {
   white-space: nowrap;
 }
 
+.mc-sound-toggle strong {
+  display: inline-grid;
+  place-items: center;
+  min-width: 32px;
+  min-height: 18px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: rgba(255, 135, 104, .14);
+  color: #ffc5b5;
+  font-size: .58rem;
+  letter-spacing: .02em;
+  box-shadow: inset 0 0 0 1px rgba(255, 135, 104, .18);
+}
+
 .mc-sound-volume {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   min-height: 26px;
   padding: 0 7px;
   border: 1px solid rgba(139, 217, 189, .18);
@@ -4880,7 +4897,13 @@ html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-action-quiet {
 }
 
 .mc-sound-volume span {
-  min-width: 28px;
+  color: color-mix(in srgb, var(--mc-muted) 88%, transparent);
+  text-transform: uppercase;
+}
+
+.mc-sound-volume strong {
+  min-width: 32px;
+  color: var(--mc-cream);
   text-align: right;
 }
 
@@ -4908,10 +4931,22 @@ html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-action-quiet {
   text-shadow: 0 1px rgba(255,255,255,.32);
 }
 
+.mc-sound-toggle-on strong {
+  background: rgba(8, 31, 22, .18);
+  color: #0b2118;
+  box-shadow: inset 0 0 0 1px rgba(8, 31, 22, .18);
+}
+
 html[data-desktop="true"] .mc-sound-toggle {
   min-height: 23px;
-  padding: 0 8px;
+  padding: 0 5px 0 8px;
   font-size: .62rem;
+}
+
+html[data-desktop="true"] .mc-sound-toggle strong {
+  min-width: 28px;
+  min-height: 16px;
+  padding: 0 6px;
 }
 
 html[data-desktop="true"] .mc-sound-volume {
@@ -4930,8 +4965,15 @@ html[data-desktop="true"] .mc-sound-volume input {
 
   .mc-sound-toggle {
     min-height: 24px;
-    padding: 0 8px;
+    padding: 0 4px 0 7px;
     font-size: .62rem;
+  }
+
+  .mc-sound-toggle strong {
+    min-width: 27px;
+    min-height: 16px;
+    padding: 0 5px;
+    font-size: .54rem;
   }
 
   .mc-sound-volume {
@@ -4940,8 +4982,8 @@ html[data-desktop="true"] .mc-sound-volume input {
     font-size: .58rem;
   }
 
-  .mc-sound-volume span {
-    min-width: 25px;
+  .mc-sound-volume strong {
+    min-width: 28px;
   }
 
   .mc-sound-volume input {
@@ -6404,13 +6446,29 @@ html[data-piece-skin="custom"] .mc-drag-ghost.mc-black {
 
   .mc-game:has(.mc-play-area) .mc-sound-toggle {
     min-height: 22px;
-    padding: 0 7px;
+    padding: 0 4px 0 7px;
     font-size: .58rem;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-sound-toggle strong {
+    min-width: 25px;
+    min-height: 15px;
+    padding: 0 4px;
+    font-size: .5rem;
   }
 
   .mc-game:has(.mc-play-area) .mc-sound-volume {
     min-height: 22px;
     padding: 0 5px;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-sound-volume span {
+    font-size: .52rem;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-sound-volume strong {
+    min-width: 25px;
+    font-size: .54rem;
   }
 
   .mc-game:has(.mc-play-area) .mc-sound-volume input {

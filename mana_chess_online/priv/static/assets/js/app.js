@@ -249,9 +249,17 @@ const Hooks = {
         control.classList.toggle("mc-sound-control-muted", !enabled);
       });
       this.el.querySelectorAll("[data-sound-toggle]").forEach(button => {
-        button.textContent = enabled ? "Sonido ON" : "Sonido OFF";
+        const label = button.querySelector("[data-sound-toggle-label]");
+        const copy = button.querySelector("[data-sound-toggle-copy]");
+        if (copy) copy.textContent = "Sonido";
+        if (label) {
+          label.textContent = enabled ? "ON" : "OFF";
+        } else {
+          button.textContent = enabled ? "Sonido ON" : "Sonido OFF";
+        }
         button.setAttribute("aria-pressed", enabled ? "true" : "false");
         button.setAttribute("aria-label", enabled ? "Apagar sonido" : "Encender sonido");
+        button.title = enabled ? "Apagar sonido" : "Encender sonido";
         button.classList.toggle("mc-sound-toggle-on", enabled);
       });
       this.el.querySelectorAll("[data-sound-volume]").forEach(input => {
@@ -261,6 +269,9 @@ const Hooks = {
       });
       this.el.querySelectorAll("[data-sound-volume-label]").forEach(label => {
         label.textContent = `${percent}%`;
+      });
+      this.el.querySelectorAll("[data-sound-volume]").forEach(input => {
+        input.setAttribute("aria-label", `Volumen de sonido ${percent}%`);
       });
     },
 
@@ -622,13 +633,13 @@ const Hooks = {
           chat: [[620, 0, .04, "sine"], [820, .045, .055, "triangle"]],
           reset: [[280, 0, .05, "triangle"], [210, .05, .06, "triangle"]],
           move: [[360, 0, .045, "triangle"], [520, .045, .065, "triangle"]],
-          capture: [[180, 0, .045, "square"], [420, .035, .07, "triangle"], [700, .105, .05, "sine"]],
-          check: [[880, 0, .05, "triangle"], [660, .045, .08, "sawtooth"], [990, .125, .08, "sine"]],
+          capture: [[160, 0, .055, "square"], [260, .045, .075, "sawtooth"], [720, .13, .055, "sine"]],
+          check: [[1040, 0, .055, "square"], [780, .045, .08, "triangle"], [1120, .13, .075, "sine"]],
           alert: [[220, 0, .08, "sawtooth"], [180, .075, .09, "sawtooth"]],
           state: [[440, 0, .07, "sine"], [660, .07, .08, "sine"]],
-          final: [[523, 0, .08, "triangle"], [659, .08, .08, "triangle"], [784, .16, .12, "triangle"]],
-          win: [[523, 0, .07, "triangle"], [659, .07, .07, "triangle"], [784, .14, .1, "triangle"], [1046, .24, .12, "sine"]],
-          loss: [[392, 0, .08, "triangle"], [330, .085, .1, "triangle"], [247, .18, .13, "sine"]],
+          final: [[523, 0, .08, "triangle"], [659, .08, .08, "triangle"], [784, .16, .12, "triangle"], [988, .27, .11, "sine"]],
+          win: [[523, 0, .07, "triangle"], [659, .07, .07, "triangle"], [784, .14, .1, "triangle"], [1046, .24, .13, "sine"], [1318, .36, .11, "sine"]],
+          loss: [[392, 0, .09, "triangle"], [330, .095, .11, "triangle"], [247, .2, .15, "sine"], [196, .34, .12, "sine"]],
         };
 
         for (const tone of tones[kind] || tones.move) {
