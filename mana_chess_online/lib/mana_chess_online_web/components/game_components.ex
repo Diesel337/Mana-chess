@@ -1,0 +1,399 @@
+defmodule ManaChessOnlineWeb.GameComponents do
+  @moduledoc false
+  use ManaChessOnlineWeb, :html
+
+  alias ManaChessOnlineWeb.GameText
+
+  @files ~w(a b c d e f g h)
+
+  attr :symbols, :map, required: true
+  attr :class, :string, required: true
+  attr :aria_label, :string, required: true
+
+  def cosmetic_shop(assigns) do
+    ~H"""
+    <section class={@class} aria-label={@aria_label}>
+      <div class="mc-skins-head">
+        <div>
+          <h2>Tienda</h2>
+          <span>Cosmeticos visuales</span>
+        </div>
+        <small>Local primero</small>
+      </div>
+      <div class="mc-cosmetic-groups">
+        <div class="mc-cosmetic-group">
+          <span class="mc-cosmetic-group-label">Tableros</span>
+          <div class="mc-skin-options">
+            <button
+              type="button"
+              class="mc-skin-option"
+              data-board-skin-choice="classic"
+              data-sound-action="skin"
+              aria-pressed="false"
+            >
+              <span class="mc-skin-preview mc-skin-preview-classic" aria-hidden="true">
+                <i></i><i></i><i></i><i></i>
+              </span>
+              <strong>Clasico B/N</strong>
+              <small data-cosmetic-status data-cosmetic-state="included">Incluido</small>
+            </button>
+            <button
+              type="button"
+              class="mc-skin-option"
+              data-board-skin-choice="gilded"
+              data-sound-action="skin"
+              aria-pressed="false"
+            >
+              <span class="mc-skin-preview mc-skin-preview-gilded" aria-hidden="true">
+                <i></i><i></i><i></i><i></i>
+              </span>
+              <strong>Dorado</strong>
+              <small data-cosmetic-status data-cosmetic-state="included">Incluido</small>
+            </button>
+            <button
+              type="button"
+              class="mc-skin-option mc-skin-locked"
+              data-board-skin-choice="arcane"
+              data-cosmetic-premium="board:arcane"
+              data-sound-action="skin"
+              title="Probar y desbloquear localmente"
+              aria-disabled="false"
+              aria-pressed="false"
+            >
+              <span class="mc-skin-preview mc-skin-preview-arcane" aria-hidden="true">
+                <i></i><i></i><i></i><i></i>
+              </span>
+              <strong>Arcano oscuro</strong>
+              <small data-cosmetic-status data-cosmetic-state="premium">Premium proximamente</small>
+            </button>
+            <button
+              type="button"
+              class="mc-skin-option mc-skin-locked"
+              data-board-skin-choice="custom"
+              data-cosmetic-premium="board:custom"
+              data-sound-action="skin"
+              title="Probar y desbloquear paleta localmente"
+              aria-disabled="false"
+              aria-pressed="false"
+            >
+              <span class="mc-skin-preview mc-skin-preview-custom" aria-hidden="true">
+                <i></i><i></i><i></i><i></i>
+              </span>
+              <strong>Paleta</strong>
+              <small data-cosmetic-status data-cosmetic-state="premium">Premium proximamente</small>
+            </button>
+          </div>
+        </div>
+        <div class="mc-cosmetic-group">
+          <span class="mc-cosmetic-group-label">Piezas</span>
+          <div class="mc-skin-options">
+            <button
+              type="button"
+              class="mc-skin-option"
+              data-piece-skin-choice="classic"
+              data-sound-action="skin"
+              aria-pressed="false"
+            >
+              <span class="mc-piece-skin-preview mc-piece-skin-preview-classic" aria-hidden="true">
+                <b class="mc-piece-sample mc-piece-sample-white">{@symbols["K"]}</b>
+                <b class="mc-piece-sample mc-piece-sample-black">{@symbols["q"]}</b>
+              </span>
+              <strong>Clasicas</strong>
+              <small data-cosmetic-status data-cosmetic-state="included">Incluido</small>
+            </button>
+            <button
+              type="button"
+              class="mc-skin-option"
+              data-piece-skin-choice="runes"
+              data-sound-action="skin"
+              aria-pressed="false"
+            >
+              <span class="mc-piece-skin-preview mc-piece-skin-preview-runes" aria-hidden="true">
+                <b class="mc-piece-sample mc-piece-sample-white">{@symbols["K"]}</b>
+                <b class="mc-piece-sample mc-piece-sample-black">{@symbols["q"]}</b>
+              </span>
+              <strong>Arcano</strong>
+              <small data-cosmetic-status data-cosmetic-state="included">Incluido</small>
+            </button>
+            <button
+              type="button"
+              class="mc-skin-option mc-skin-locked"
+              data-piece-skin-choice="crystal"
+              data-cosmetic-premium="piece:crystal"
+              data-sound-action="skin"
+              title="Probar y desbloquear localmente"
+              aria-disabled="false"
+              aria-pressed="false"
+            >
+              <span class="mc-piece-skin-preview mc-piece-skin-preview-crystal" aria-hidden="true">
+                <b class="mc-piece-sample mc-piece-sample-white">{@symbols["K"]}</b>
+                <b class="mc-piece-sample mc-piece-sample-black">{@symbols["q"]}</b>
+              </span>
+              <strong>Cristal premium</strong>
+              <small data-cosmetic-status data-cosmetic-state="premium">Premium proximamente</small>
+            </button>
+            <button
+              type="button"
+              class="mc-skin-option mc-skin-locked"
+              data-piece-skin-choice="custom"
+              data-cosmetic-premium="piece:custom"
+              data-sound-action="skin"
+              title="Probar y desbloquear paleta localmente"
+              aria-disabled="false"
+              aria-pressed="false"
+            >
+              <span class="mc-piece-skin-preview mc-piece-skin-preview-custom" aria-hidden="true">
+                <b class="mc-piece-sample mc-piece-sample-white">{@symbols["K"]}</b>
+                <b class="mc-piece-sample mc-piece-sample-black">{@symbols["q"]}</b>
+              </span>
+              <strong>Paleta</strong>
+              <small data-cosmetic-status data-cosmetic-state="premium">Premium proximamente</small>
+            </button>
+          </div>
+        </div>
+        <div class="mc-cosmetic-group mc-palette-group">
+          <span class="mc-cosmetic-group-label">Paleta</span>
+          <div class="mc-palette-editor" data-palette-editor>
+            <button
+              type="button"
+              class="mc-palette-unlock mc-skin-locked"
+              data-palette-unlock
+              data-sound-action="skin"
+              aria-disabled="false"
+            >
+              <span class="mc-palette-preview" aria-hidden="true">
+                <i></i><i></i><i></i><i></i>
+              </span>
+              <strong>Custom premium</strong>
+              <small data-palette-status data-palette-state="premium">Premium proximamente</small>
+            </button>
+            <div class="mc-palette-presets" aria-label="Presets de paleta">
+              <button type="button" data-palette-reset data-sound-action="skin">Base</button>
+              <button type="button" data-palette-preset="midnight" data-sound-action="skin">
+                Noche
+              </button>
+              <button type="button" data-palette-preset="emerald" data-sound-action="skin">
+                Jade
+              </button>
+              <button type="button" data-palette-preset="frost" data-sound-action="skin">
+                Hielo
+              </button>
+              <button type="button" data-palette-preset="solar" data-sound-action="skin">
+                Solar
+              </button>
+              <button type="button" data-palette-preset="ruby" data-sound-action="skin">Rubi</button>
+            </div>
+            <div class="mc-palette-fields">
+              <label>
+                <span>Claro</span>
+                <input
+                  type="color"
+                  value="#d9c58f"
+                  data-palette-color="boardLight"
+                  aria-label="Color claro del tablero"
+                />
+              </label>
+              <label>
+                <span>Oscuro</span>
+                <input
+                  type="color"
+                  value="#243a31"
+                  data-palette-color="boardDark"
+                  aria-label="Color oscuro del tablero"
+                />
+              </label>
+              <label>
+                <span>Blancas</span>
+                <input
+                  type="color"
+                  value="#f6f1df"
+                  data-palette-color="pieceWhite"
+                  aria-label="Color de piezas blancas"
+                />
+              </label>
+              <label>
+                <span>Negras</span>
+                <input
+                  type="color"
+                  value="#241745"
+                  data-palette-color="pieceBlack"
+                  aria-label="Color de piezas negras"
+                />
+              </label>
+            </div>
+            <div
+              class="mc-palette-live-preview"
+              data-palette-live-preview
+              aria-label="Preview de paleta"
+            >
+              <div class="mc-palette-board-preview" aria-hidden="true">
+                <i></i><i></i><i></i><i></i>
+                <i></i><i></i><i></i><i></i>
+                <i></i><i></i><i></i><i></i>
+                <i></i><i></i><i></i><i></i>
+                <b class="mc-palette-piece-white">{@symbols["K"]}</b>
+                <b class="mc-palette-piece-black">{@symbols["q"]}</b>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    """
+  end
+
+  attr :game, :any, default: nil
+  attr :player_id, :string, required: true
+  attr :chat_draft, :string, default: ""
+  attr :chat_error, :string, default: nil
+
+  def side_panel(assigns) do
+    ~H"""
+    <aside class={["mc-panel", @game && "mc-panel-game"]}>
+      <section class="mc-panel-section mc-queue-panel">
+        <div class="mc-panel-heading">
+          <h2>Cola</h2>
+          <span>{queue_count_text(@game)}</span>
+        </div>
+        <ol class="mc-queue-list">
+          <li :for={{action, index} <- Enum.with_index(queued_actions(@game), 1)}>
+            <i class={["mc-queue-index", event_color_class(action.color)]}>{index}</i>
+            <span>
+              <strong>{color_label(action.color)}</strong>
+              <small>{square_name(action.from)} -> {square_name(action.to)}</small>
+            </span>
+          </li>
+          <li :if={queued_actions(@game) == []} class="mc-panel-empty">
+            Sin acciones pendientes
+          </li>
+        </ol>
+      </section>
+
+      <section class="mc-panel-section mc-log-panel">
+        <div class="mc-panel-heading">
+          <h2>Bitacora</h2>
+          <span>{panel_log_count_text(@game)}</span>
+        </div>
+        <ul class="mc-log-list">
+          <li
+            :for={{entry, index} <- Enum.with_index(panel_log(@game))}
+            class={["mc-log-entry", GameText.log_entry_class(entry), index == 0 && "mc-log-latest"]}
+          >
+            <small>{GameText.log_entry_tag(entry)}</small>
+            <span>{GameText.log_entry_text(entry)}</span>
+          </li>
+          <li :if={panel_log(@game) == []} class="mc-panel-empty">
+            Los eventos apareceran aqui
+          </li>
+        </ul>
+      </section>
+
+      <section class="mc-panel-section mc-chat-panel">
+        <div class="mc-panel-heading">
+          <h2>Chat</h2>
+          <span>{chat_count_text(@game)}</span>
+        </div>
+        <ul class="mc-chat-list" data-chat-list>
+          <li
+            :for={entry <- chat_messages(@game)}
+            class={["mc-chat-entry", chat_entry_class(entry, @player_id)]}
+          >
+            <small>
+              <strong>{chat_entry_name(entry, @player_id)}</strong>
+              <span>{chat_entry_role(entry)}</span>
+              <span
+                :if={chat_entry_time(entry)}
+                class="mc-chat-time"
+                data-chat-time={chat_entry_time(entry)}
+              >
+                --:--
+              </span>
+            </small>
+            <p>{entry.text}</p>
+          </li>
+          <li :if={chat_messages(@game) == []} class="mc-panel-empty">
+            Mensajes de sala apareceran aqui
+          </li>
+        </ul>
+        <form :if={@game} class="mc-chat-form" phx-change="chat_change" phx-submit="send_chat">
+          <input
+            name="message"
+            value={@chat_draft}
+            maxlength="180"
+            autocomplete="off"
+            placeholder="Mensaje de sala"
+            aria-label="Mensaje de chat"
+          />
+          <button type="submit" disabled={chat_send_disabled?(@chat_draft)}>Enviar</button>
+        </form>
+        <p :if={@chat_error} class="mc-chat-error">{@chat_error}</p>
+      </section>
+    </aside>
+    """
+  end
+
+  defp queued_actions(%{queue: queue}) when is_list(queue), do: queue
+  defp queued_actions(_game), do: []
+
+  defp panel_log(%{log: log}) when is_list(log), do: Enum.take(log, 8)
+  defp panel_log(_game), do: []
+
+  defp chat_messages(%{chat: chat}) when is_list(chat), do: Enum.reverse(chat)
+  defp chat_messages(_game), do: []
+
+  defp chat_count_text(game) do
+    case chat_messages(game) do
+      [] -> "Sin chat"
+      [_one] -> "1 mensaje"
+      messages -> "#{length(messages)} mensajes"
+    end
+  end
+
+  defp chat_entry_class(%{player_id: player_id}, player_id), do: "mc-chat-mine"
+  defp chat_entry_class(_entry, _player_id), do: nil
+  defp chat_send_disabled?(draft), do: String.trim(draft || "") == ""
+
+  defp chat_entry_name(%{player_id: player_id, name: name}, player_id) when is_binary(name),
+    do: "Tu " <> short_chat_name(name)
+
+  defp chat_entry_name(%{name: name}, _player_id) when is_binary(name) and name != "", do: name
+  defp chat_entry_name(_entry, _player_id), do: "Jugador"
+  defp chat_entry_role(%{role: role}) when is_binary(role), do: role
+  defp chat_entry_role(_entry), do: "Sala"
+  defp chat_entry_time(%{sent_at: sent_at}) when is_integer(sent_at), do: sent_at
+  defp chat_entry_time(_entry), do: nil
+
+  defp short_chat_name("Jugador " <> tag), do: "J-" <> tag
+  defp short_chat_name(name), do: name
+
+  defp queue_count_text(game) do
+    case length(queued_actions(game)) do
+      0 -> "Libre"
+      1 -> "1 accion"
+      count -> "#{count} acciones"
+    end
+  end
+
+  defp panel_log_count_text(game) do
+    case panel_log(game) do
+      [] -> "Sin eventos"
+      [_one] -> "Ultimo evento"
+      entries -> "#{length(entries)} recientes"
+    end
+  end
+
+  defp square_name({row, col}) when row in 0..7 and col in 0..7 do
+    "#{Enum.at(@files, col)}#{8 - row}"
+  end
+
+  defp square_name(square), do: inspect(square)
+
+  defp event_color_class(:white), do: "mc-event-white"
+  defp event_color_class(:black), do: "mc-event-black"
+  defp event_color_class(_color), do: "mc-event-neutral"
+
+  defp color_label(:white), do: "Blancas"
+  defp color_label(:black), do: "Negras"
+  defp color_label(:practice), do: "Practica"
+  defp color_label(_), do: "Espectador"
+end

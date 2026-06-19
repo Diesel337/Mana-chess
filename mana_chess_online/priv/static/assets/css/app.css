@@ -7501,6 +7501,7 @@ html[data-desktop="true"] .mc-chat-list {
 @media (max-width: 900px) {
   .mc-panel-game {
     gap: 8px;
+    overflow-y: auto;
   }
 
   .mc-panel-section {
