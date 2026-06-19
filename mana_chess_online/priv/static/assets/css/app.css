@@ -7812,3 +7812,81 @@ html[data-desktop="true"] .mc-chat-list {
     width: min(100%, 96px);
   }
 }
+
+/* Desktop game table fit */
+@media (min-width: 1280px) {
+  html[data-desktop="true"] .mc-shell:has(.mc-play-area) {
+    grid-template-columns: minmax(0, 1fr) 260px;
+    gap: 14px;
+    width: min(1780px, calc(100vw - 32px));
+    align-items: start;
+  }
+
+  html[data-desktop="true"] .mc-shell:has(.mc-play-area) > .mc-game {
+    justify-self: center;
+    width: min(100%, 1300px);
+  }
+
+  html[data-desktop="true"] .mc-shell:has(.mc-play-area) > .mc-panel {
+    width: 100%;
+    max-width: 260px;
+    min-width: 0;
+  }
+
+  html[data-desktop="true"] .mc-game:has(.mc-play-area) {
+    grid-template-columns: minmax(380px, min(46vh, 520px)) minmax(360px, 620px);
+    column-gap: 18px;
+    justify-content: center;
+  }
+
+  html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-play-area {
+    justify-self: stretch;
+    width: 100%;
+  }
+
+  html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-practice-banner,
+  html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-tutorial,
+  html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-spectator-banner,
+  html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-reconnect-banner,
+  html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-match-status,
+  html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-seats,
+  html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-feedback-zone,
+  html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-final-panel,
+  html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-promotion,
+  html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-check-message,
+  html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-actions {
+    width: 100%;
+    max-width: 620px;
+    justify-self: stretch;
+  }
+
+  html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-match-status {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-match-status p {
+    grid-column: 1 / -1;
+  }
+
+  html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-seats {
+    gap: 7px;
+  }
+
+  html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-invite-strip {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+  }
+
+  html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-invite-strip span {
+    max-width: 14rem;
+  }
+
+  html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-actions {
+    gap: 8px;
+  }
+}
+
+@media (min-width: 1700px) and (min-height: 900px) {
+  html[data-desktop="true"] .mc-game:has(.mc-play-area) {
+    grid-template-columns: minmax(430px, 520px) minmax(420px, 620px);
+  }
+}
