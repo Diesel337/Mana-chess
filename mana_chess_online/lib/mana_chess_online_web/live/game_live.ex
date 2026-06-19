@@ -6,6 +6,7 @@ defmodule ManaChessOnlineWeb.GameLive do
   alias ManaChessOnlineWeb.GameText
 
   import ManaChessOnlineWeb.GameComponents
+  import ManaChessOnlineWeb.GameMatchComponents
 
   @symbols %{
     "r" => "♜",
@@ -478,6 +479,18 @@ defmodule ManaChessOnlineWeb.GameLive do
     end
   end
 
+  defp feedback_alert_kind(nil, _local_alert), do: "alert"
+
+  defp feedback_alert_kind(game, local_alert) do
+    cond do
+      not is_nil(local_alert) -> "local"
+      not is_nil(check_message(game)) -> "check"
+      not is_nil(reset_message(game)) -> "reset"
+      not is_nil(alert_message(game)) -> "alert"
+      true -> "alert"
+    end
+  end
+
   defp stats_winner_outcome(%{practice?: true}, :white, _player_color), do: "win"
   defp stats_winner_outcome(%{practice?: true}, :black, _player_color), do: "loss"
   defp stats_winner_outcome(_game, winner, winner), do: "win"
@@ -774,14 +787,12 @@ defmodule ManaChessOnlineWeb.GameLive do
           </div>
 
           <% phase = match_phase(@game) %>
-          <section class={["mc-match-status", match_phase_class(phase)]}>
-            <div>
-              <span>{player_role(@game, @color)}</span>
-              <strong>{phase.title}</strong>
-            </div>
-            <p>{phase.detail}</p>
-            <small>{player_role_hint(@game, @color)}</small>
-          </section>
+          <.match_status
+            phase={phase}
+            phase_class={match_phase_class(phase)}
+            role={player_role(@game, @color)}
+            hint={player_role_hint(@game, @color)}
+          />
 
           <div :if={!@game.practice?} class="mc-seats">
             <div class={["mc-seat", @color == :white && "mc-seat-current"]}>
@@ -831,27 +842,15 @@ defmodule ManaChessOnlineWeb.GameLive do
             </div>
           </div>
 
-          <div class="mc-feedback-zone">
-            <div :if={check_message(@game)} class="mc-check-message">
-              {check_message(@game)}
-            </div>
-
-            <div :if={starting?(@game)} class="mc-countdown">
-              Inicia en {@game.countdown_seconds}
-            </div>
-
-            <div :if={first_move_message(@game)} class="mc-turn-message">
-              {first_move_message(@game)}
-            </div>
-
-            <div :if={visible_alert(@game, @local_alert)} class="mc-alert-message">
-              {visible_alert(@game, @local_alert)}
-            </div>
-
-            <div :if={reset_message(@game)} class="mc-reset-message">
-              {reset_message(@game)}
-            </div>
-          </div>
+          <.match_feedback
+            check_message={check_message(@game)}
+            starting?={starting?(@game)}
+            countdown_seconds={@game.countdown_seconds}
+            first_move_message={first_move_message(@game)}
+            alert_message={visible_alert(@game, @local_alert)}
+            alert_kind={feedback_alert_kind(@game, @local_alert)}
+            reset_message={reset_message(@game)}
+          />
 
           <div :if={final_result(@game, @color)} class={["mc-final-panel", final_panel_class(final_result(@game, @color))]}>
             <% result = final_result(@game, @color) %>
@@ -864,17 +863,7 @@ defmodule ManaChessOnlineWeb.GameLive do
             </button>
           </div>
 
-          <div :if={@game.promotion_pending && @game.promotion_pending.player_id == @player_id} class="mc-promotion">
-            <strong>Promocionar peon</strong>
-            <button phx-click="promote" phx-value-piece="Q" data-sound-action="mode">Reina</button>
-            <button phx-click="promote" phx-value-piece="R" data-sound-action="mode">Torre</button>
-            <button phx-click="promote" phx-value-piece="B" data-sound-action="mode">Alfil</button>
-            <button phx-click="promote" phx-value-piece="N" data-sound-action="mode">Caballo</button>
-          </div>
-
-          <div :if={@game.promotion_pending && @game.promotion_pending.player_id != @player_id} class="mc-check-message">
-            Esperando promocion del rival
-          </div>
+          <.promotion_panel pending={@game.promotion_pending} player_id={@player_id} />
 
           <div class="mc-actions">
             <button :if={@game.status == :ready} class="mc-action-primary" type="button" phx-click="start_game" data-sound-action="mode">{start_label(@game)}</button>

@@ -249,53 +249,80 @@ defmodule ManaChessOnlineWeb.GameComponents do
 
   def side_panel(assigns) do
     ~H"""
+    <% queue = queued_actions(@game) %>
+    <% log_entries = panel_log(@game) %>
+    <% chat_entries = chat_messages(@game) %>
     <aside class={["mc-panel", @game && "mc-panel-game"]}>
-      <section class="mc-panel-section mc-queue-panel">
+      <section
+        class={[
+          "mc-panel-section mc-queue-panel",
+          panel_empty?(queue) && "mc-panel-section-empty",
+          !panel_empty?(queue) && "mc-panel-section-active"
+        ]}
+        data-panel-state={panel_state(queue)}
+      >
         <div class="mc-panel-heading">
           <h2>Cola</h2>
-          <span>{queue_count_text(@game)}</span>
+          <span>{queue_count_text(queue)}</span>
         </div>
-        <ol class="mc-queue-list">
-          <li :for={{action, index} <- Enum.with_index(queued_actions(@game), 1)}>
+        <ol class="mc-queue-list" aria-live="polite">
+          <li
+            :for={{action, index} <- Enum.with_index(queue, 1)}
+            class={["mc-queue-item", index == 1 && "mc-queue-next"]}
+          >
             <i class={["mc-queue-index", event_color_class(action.color)]}>{index}</i>
             <span>
               <strong>{color_label(action.color)}</strong>
               <small>{square_name(action.from)} -> {square_name(action.to)}</small>
             </span>
           </li>
-          <li :if={queued_actions(@game) == []} class="mc-panel-empty">
+          <li :if={queue == []} class="mc-panel-empty">
             Sin acciones pendientes
           </li>
         </ol>
       </section>
 
-      <section class="mc-panel-section mc-log-panel">
+      <section
+        class={[
+          "mc-panel-section mc-log-panel",
+          panel_empty?(log_entries) && "mc-panel-section-empty",
+          !panel_empty?(log_entries) && "mc-panel-section-active"
+        ]}
+        data-panel-state={panel_state(log_entries)}
+      >
         <div class="mc-panel-heading">
           <h2>Bitacora</h2>
-          <span>{panel_log_count_text(@game)}</span>
+          <span>{panel_log_count_text(log_entries)}</span>
         </div>
-        <ul class="mc-log-list">
+        <ul class="mc-log-list" aria-live="polite">
           <li
-            :for={{entry, index} <- Enum.with_index(panel_log(@game))}
+            :for={{entry, index} <- Enum.with_index(log_entries)}
             class={["mc-log-entry", GameText.log_entry_class(entry), index == 0 && "mc-log-latest"]}
           >
             <small>{GameText.log_entry_tag(entry)}</small>
             <span>{GameText.log_entry_text(entry)}</span>
           </li>
-          <li :if={panel_log(@game) == []} class="mc-panel-empty">
+          <li :if={log_entries == []} class="mc-panel-empty">
             Los eventos apareceran aqui
           </li>
         </ul>
       </section>
 
-      <section class="mc-panel-section mc-chat-panel">
+      <section
+        class={[
+          "mc-panel-section mc-chat-panel",
+          panel_empty?(chat_entries) && "mc-panel-section-empty",
+          !panel_empty?(chat_entries) && "mc-panel-section-active"
+        ]}
+        data-panel-state={panel_state(chat_entries)}
+      >
         <div class="mc-panel-heading">
           <h2>Chat</h2>
           <span>{chat_count_text(@game)}</span>
         </div>
         <ul class="mc-chat-list" data-chat-list>
           <li
-            :for={entry <- chat_messages(@game)}
+            :for={entry <- chat_entries}
             class={["mc-chat-entry", chat_entry_class(entry, @player_id)]}
           >
             <small>
@@ -311,7 +338,7 @@ defmodule ManaChessOnlineWeb.GameComponents do
             </small>
             <p>{entry.text}</p>
           </li>
-          <li :if={chat_messages(@game) == []} class="mc-panel-empty">
+          <li :if={chat_entries == []} class="mc-panel-empty">
             Mensajes de sala apareceran aqui
           </li>
         </ul>
@@ -341,6 +368,10 @@ defmodule ManaChessOnlineWeb.GameComponents do
   defp chat_messages(%{chat: chat}) when is_list(chat), do: Enum.reverse(chat)
   defp chat_messages(_game), do: []
 
+  defp panel_empty?(items), do: items == []
+  defp panel_state([]), do: "empty"
+  defp panel_state(_items), do: "active"
+
   defp chat_count_text(game) do
     case chat_messages(game) do
       [] -> "Sin chat"
@@ -366,16 +397,16 @@ defmodule ManaChessOnlineWeb.GameComponents do
   defp short_chat_name("Jugador " <> tag), do: "J-" <> tag
   defp short_chat_name(name), do: name
 
-  defp queue_count_text(game) do
-    case length(queued_actions(game)) do
+  defp queue_count_text(actions) do
+    case length(actions) do
       0 -> "Libre"
       1 -> "1 accion"
       count -> "#{count} acciones"
     end
   end
 
-  defp panel_log_count_text(game) do
-    case panel_log(game) do
+  defp panel_log_count_text(entries) do
+    case entries do
       [] -> "Sin eventos"
       [_one] -> "Ultimo evento"
       entries -> "#{length(entries)} recientes"
