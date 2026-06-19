@@ -7813,39 +7813,135 @@ html[data-desktop="true"] .mc-chat-list {
   }
 }
 
-/* Desktop game table fit */
-@media (min-width: 1280px) {
-  html[data-desktop="true"] .mc-shell:has(.mc-play-area) {
-    grid-template-columns: minmax(0, 816px) 260px;
+/* Balanced game table fit */
+@media (min-width: 1000px) {
+  .mc-shell:has(.mc-play-area) {
+    --mc-game-rail: clamp(240px, 15vw, 280px);
+    --mc-game-board: clamp(430px, min(68vh, 42vw), 760px);
+    --mc-game-gap: clamp(10px, 1vw, 16px);
+    --mc-game-width: calc(var(--mc-game-rail) + var(--mc-game-gap) + var(--mc-game-board) + var(--mc-game-gap) + var(--mc-game-rail));
+    grid-template-columns:
+      minmax(0, calc(var(--mc-game-rail) + var(--mc-game-gap) + var(--mc-game-board)))
+      var(--mc-game-rail);
     justify-content: center;
-    gap: 12px;
-    width: min(1088px, calc(100vw - 24px));
+    gap: var(--mc-game-gap);
+    width: min(var(--mc-game-width), calc(100vw - 24px));
     align-items: start;
   }
 
-  html[data-desktop="true"] .mc-shell:has(.mc-play-area) > .mc-game {
+  .mc-shell:has(.mc-play-area) > .mc-game {
     justify-self: stretch;
     width: 100%;
     max-width: none;
   }
 
-  html[data-desktop="true"] .mc-shell:has(.mc-play-area) > .mc-panel {
+  .mc-shell:has(.mc-play-area) > .mc-panel {
     width: 100%;
-    max-width: 260px;
+    max-width: var(--mc-game-rail);
     min-width: 0;
   }
 
+  .mc-game:has(.mc-play-area) {
+    display: grid;
+    grid-template-columns: var(--mc-game-rail) var(--mc-game-board);
+    grid-auto-rows: min-content;
+    column-gap: var(--mc-game-gap);
+    row-gap: 6px;
+    align-items: start;
+    justify-content: center;
+  }
+
+  .mc-game:has(.mc-play-area)::before,
+  .mc-game:has(.mc-play-area) > .mc-header {
+    grid-column: 1 / -1;
+  }
+
+  .mc-game:has(.mc-play-area) > .mc-play-area {
+    grid-column: 2;
+    grid-row: 3 / span 12;
+    justify-self: stretch;
+    width: 100%;
+  }
+
+  .mc-game:has(.mc-play-area) > .mc-practice-banner,
+  .mc-game:has(.mc-play-area) > .mc-tutorial,
+  .mc-game:has(.mc-play-area) > .mc-spectator-banner,
+  .mc-game:has(.mc-play-area) > .mc-reconnect-banner,
+  .mc-game:has(.mc-play-area) > .mc-match-status,
+  .mc-game:has(.mc-play-area) > .mc-seats,
+  .mc-game:has(.mc-play-area) > .mc-feedback-zone,
+  .mc-game:has(.mc-play-area) > .mc-final-panel,
+  .mc-game:has(.mc-play-area) > .mc-promotion,
+  .mc-game:has(.mc-play-area) > .mc-check-message,
+  .mc-game:has(.mc-play-area) > .mc-actions {
+    width: 100%;
+    max-width: var(--mc-game-rail);
+    justify-self: stretch;
+    grid-column: 1;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-match-status {
+    min-height: 0;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 5px;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-match-status p {
+    grid-column: auto;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-seats {
+    gap: 7px;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mc-game:has(.mc-play-area) .mc-seats p,
+  .mc-game:has(.mc-play-area) .mc-invite-strip,
+  .mc-game:has(.mc-play-area) .mc-seat-actions {
+    grid-column: auto;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-invite-strip {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mc-game:has(.mc-play-area) .mc-invite-strip span {
+    max-width: 100%;
+  }
+
+  .mc-game:has(.mc-play-area) .mc-invite-actions,
+  .mc-game:has(.mc-play-area) .mc-seat-actions,
+  .mc-game:has(.mc-play-area) > .mc-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mc-game:has(.mc-play-area) > .mc-actions {
+    gap: 8px;
+  }
+
+  html[data-desktop="true"] .mc-shell:has(.mc-play-area) {
+    grid-template-columns:
+      minmax(0, calc(var(--mc-game-rail) + var(--mc-game-gap) + var(--mc-game-board)))
+      var(--mc-game-rail);
+    gap: var(--mc-game-gap);
+    width: min(var(--mc-game-width), calc(100vw - 24px));
+  }
+
+  html[data-desktop="true"] .mc-shell:has(.mc-play-area) > .mc-panel {
+    max-width: var(--mc-game-rail);
+  }
+
   html[data-desktop="true"] .mc-game:has(.mc-play-area) {
-    grid-template-columns: 260px minmax(380px, min(46vh, 520px));
-    column-gap: 16px;
+    grid-template-columns: var(--mc-game-rail) var(--mc-game-board);
+    column-gap: var(--mc-game-gap);
     justify-content: center;
   }
 
   html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-play-area {
     grid-column: 2;
     grid-row: 3 / span 12;
-    justify-self: stretch;
-    width: 100%;
   }
 
   html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-practice-banner,
@@ -7859,61 +7955,14 @@ html[data-desktop="true"] .mc-chat-list {
   html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-promotion,
   html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-check-message,
   html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-actions {
-    width: 100%;
-    max-width: 260px;
-    justify-self: stretch;
+    max-width: var(--mc-game-rail);
     grid-column: 1;
-  }
-
-  html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-match-status {
-    min-height: 0;
-    grid-template-columns: minmax(0, 1fr);
-    gap: 5px;
-  }
-
-  html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-match-status p {
-    grid-column: auto;
-  }
-
-  html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-seats {
-    gap: 7px;
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-seats p,
-  html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-invite-strip,
-  html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-seat-actions {
-    grid-column: auto;
-  }
-
-  html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-invite-strip {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-invite-strip span {
-    max-width: 100%;
-  }
-
-  html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-invite-actions,
-  html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-seat-actions,
-  html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-actions {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-actions {
-    gap: 8px;
   }
 }
 
-@media (min-width: 1700px) and (min-height: 900px) {
-  html[data-desktop="true"] .mc-shell:has(.mc-play-area) {
-    grid-template-columns: minmax(0, 816px) 260px;
-    width: 1088px;
-  }
-
-  html[data-desktop="true"] .mc-game:has(.mc-play-area) {
-    grid-template-columns: 260px 520px;
+@media (min-width: 1000px) and (max-width: 1320px) {
+  .mc-shell:has(.mc-play-area) {
+    --mc-game-rail: 240px;
+    --mc-game-board: clamp(430px, min(68vh, 40vw), 560px);
   }
 }
