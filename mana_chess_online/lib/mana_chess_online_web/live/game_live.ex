@@ -912,6 +912,7 @@ defmodule ManaChessOnlineWeb.GameLive do
               <small data-palette-status>Probar local</small>
             </button>
             <div class="mc-palette-presets" aria-label="Presets de paleta">
+              <button type="button" data-palette-reset data-sound-action="skin">Base</button>
               <button type="button" data-palette-preset="midnight" data-sound-action="skin">Noche</button>
               <button type="button" data-palette-preset="emerald" data-sound-action="skin">Jade</button>
               <button type="button" data-palette-preset="frost" data-sound-action="skin">Hielo</button>

@@ -94,6 +94,14 @@ const Hooks = {
         this.renderPalette();
         this.playSound("skin");
       };
+      this.handlePaletteReset = event => {
+        const control = event.target.closest("[data-palette-reset]");
+        if (!control || control.disabled || !this.cosmeticUnlocked("palette:custom")) return;
+        event.preventDefault();
+        this.setPalette(this.defaultPalette());
+        this.renderPalette();
+        this.playSound("skin");
+      };
       this.handlePaletteColor = event => {
         const input = event.target.closest("[data-palette-color]");
         if (!input || input.disabled || !this.cosmeticUnlocked("palette:custom")) return;
@@ -114,6 +122,7 @@ const Hooks = {
       this.el.addEventListener("click", this.handleSkinChoice);
       this.el.addEventListener("click", this.handlePieceSkinChoice);
       this.el.addEventListener("click", this.handlePalettePreset);
+      this.el.addEventListener("click", this.handlePaletteReset);
       this.el.addEventListener("input", this.handlePaletteColor);
       this.el.addEventListener("change", this.handlePaletteColor);
       this.el.addEventListener("click", this.handleViewJump, true);
@@ -153,6 +162,7 @@ const Hooks = {
       this.el.removeEventListener("click", this.handleSkinChoice);
       this.el.removeEventListener("click", this.handlePieceSkinChoice);
       this.el.removeEventListener("click", this.handlePalettePreset);
+      this.el.removeEventListener("click", this.handlePaletteReset);
       this.el.removeEventListener("input", this.handlePaletteColor);
       this.el.removeEventListener("change", this.handlePaletteColor);
       this.el.removeEventListener("click", this.handleViewJump, true);
@@ -357,7 +367,7 @@ const Hooks = {
         editor.querySelectorAll("[data-palette-unlock]").forEach(control => {
           control.setAttribute("aria-disabled", "false");
         });
-        editor.querySelectorAll("[data-palette-preset], [data-palette-color]").forEach(control => {
+        editor.querySelectorAll("[data-palette-preset], [data-palette-reset], [data-palette-color]").forEach(control => {
           control.disabled = !unlocked;
         });
       });

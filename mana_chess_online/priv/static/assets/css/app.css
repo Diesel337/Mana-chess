@@ -5886,7 +5886,7 @@ html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-elixir-bottom-track::a
 
 .mc-palette-presets {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
 }
 
@@ -5901,6 +5901,13 @@ html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-elixir-bottom-track::a
   color: var(--mc-cream);
   font-size: .72rem;
   font-weight: 900;
+}
+
+.mc-palette-presets [data-palette-reset] {
+  border-color: color-mix(in srgb, var(--mc-custom-board-frame, #fff0b6) 48%, rgba(255,255,255,.08));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--mc-custom-board-light, #d9c58f) 18%, rgba(255,255,255,.05)), rgba(255,255,255,.014)),
+    #101912;
 }
 
 .mc-palette-fields {
