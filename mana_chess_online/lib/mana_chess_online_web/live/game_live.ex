@@ -7,6 +7,7 @@ defmodule ManaChessOnlineWeb.GameLive do
 
   import ManaChessOnlineWeb.GameComponents
   import ManaChessOnlineWeb.GameMatchComponents
+  import ManaChessOnlineWeb.GameSoundComponents
 
   @symbols %{
     "r" => "♜",
@@ -483,36 +484,6 @@ defmodule ManaChessOnlineWeb.GameLive do
 
   defp stats_outcome(_game, _player_color), do: nil
 
-  defp sound_status_key(nil), do: ""
-  defp sound_status_key(%{status: status}), do: inspect(status)
-
-  defp sound_log_count(%{log: log}) when is_list(log), do: length(log)
-  defp sound_log_count(_game), do: 0
-
-  defp sound_log_kind(%{log: [latest | _rest]}), do: GameText.log_entry_kind(latest)
-  defp sound_log_kind(_game), do: ""
-
-  defp sound_chat_count(%{chat: chat}) when is_list(chat), do: length(chat)
-  defp sound_chat_count(_game), do: 0
-
-  defp sound_alert_key(nil, _local_alert), do: ""
-
-  defp sound_alert_key(game, local_alert) do
-    [check_message(game), visible_alert(game, local_alert), reset_message(game)]
-    |> Enum.reject(&is_nil/1)
-    |> Enum.reject(&(&1 == ""))
-    |> Enum.join(" | ")
-  end
-
-  defp sound_alert_kind(nil, _local_alert), do: ""
-  defp sound_alert_kind(game, _local_alert) do
-    cond do
-      not is_nil(check_message(game)) -> "check"
-      not is_nil(reset_message(game)) -> "reset"
-      true -> "alert"
-    end
-  end
-
   defp feedback_alert_kind(nil, _local_alert), do: "alert"
 
   defp feedback_alert_kind(game, local_alert) do
@@ -531,6 +502,7 @@ defmodule ManaChessOnlineWeb.GameLive do
   defp stats_winner_outcome(_game, _winner, player_color) when player_color in [:white, :black], do: "loss"
   defp stats_winner_outcome(_game, _winner, _player_color), do: nil
 
+  defp check_message(nil), do: nil
   defp check_message(%{checked_colors: []}), do: nil
   defp check_message(%{status: {:checkmate, _winner, loser}}), do: "Jaque mate a #{color_label(loser)}"
 
@@ -591,6 +563,7 @@ defmodule ManaChessOnlineWeb.GameLive do
   defp alert_message(_game), do: nil
   defp visible_alert(game, local_alert), do: local_alert || alert_message(game)
 
+  defp reset_message(nil), do: nil
   defp reset_message(%{reset_requests: []}), do: nil
 
   defp reset_message(game) do
@@ -752,13 +725,12 @@ defmodule ManaChessOnlineWeb.GameLive do
       phx-hook="LocalStats"
       data-result-key={stats_result_key(@game, @color)}
       data-result-outcome={stats_outcome(@game, @color) || ""}
-      data-sound-game-id={(@game && @game.id) || ""}
-      data-sound-status={sound_status_key(@game)}
-      data-sound-log-count={sound_log_count(@game)}
-      data-sound-log-kind={sound_log_kind(@game)}
-      data-sound-chat-count={sound_chat_count(@game)}
-      data-sound-alert={sound_alert_key(@game, @local_alert)}
-      data-sound-alert-kind={sound_alert_kind(@game, @local_alert)}
+      {sound_state_attrs(
+        @game,
+        check_message(@game),
+        visible_alert(@game, @local_alert),
+        reset_message(@game)
+      )}
     >
       <section class="mc-game">
         <div class="mc-header">
@@ -771,17 +743,7 @@ defmodule ManaChessOnlineWeb.GameLive do
             </div>
           </div>
           <div class="mc-badge">
-            <div class="mc-sound-control" data-sound-control>
-              <button type="button" class="mc-sound-toggle" data-sound-toggle aria-pressed="false" aria-label="Encender sonido">
-                <span data-sound-toggle-copy>Sonido</span>
-                <strong data-sound-toggle-label>OFF</strong>
-              </button>
-              <label class="mc-sound-volume">
-                <span>Vol</span>
-                <strong data-sound-volume-label>70%</strong>
-                <input type="range" min="0" max="100" step="5" value="70" data-sound-volume aria-label="Volumen de sonido" />
-              </label>
-            </div>
+            <.sound_control />
           </div>
         </div>
 
