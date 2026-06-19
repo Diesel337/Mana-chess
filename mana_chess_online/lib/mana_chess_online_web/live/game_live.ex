@@ -934,13 +934,14 @@ defmodule ManaChessOnlineWeb.GameLive do
                 <input type="color" value="#241745" data-palette-color="pieceBlack" aria-label="Color de piezas negras" />
               </label>
             </div>
-            <div class="mc-palette-live-preview" aria-label="Preview de paleta">
+            <div class="mc-palette-live-preview" data-palette-live-preview aria-label="Preview de paleta">
               <div class="mc-palette-board-preview" aria-hidden="true">
                 <i></i><i></i><i></i><i></i>
                 <i></i><i></i><i></i><i></i>
                 <i></i><i></i><i></i><i></i>
                 <i></i><i></i><i></i><i></i>
-                <b>{@symbols["K"]}</b>
+                <b class="mc-palette-piece-white">{@symbols["K"]}</b>
+                <b class="mc-palette-piece-black">{@symbols["q"]}</b>
               </div>
             </div>
           </div>

@@ -4070,6 +4070,10 @@ html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-elixir-bottom-track::a
   box-shadow: 0 8px 16px rgba(0,0,0,.22);
 }
 
+.mc-palette-preview i {
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.14);
+}
+
 .mc-palette-preview i:nth-child(1) {
   background: var(--mc-custom-board-light, #d9c58f);
 }
@@ -4135,29 +4139,35 @@ html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-elixir-bottom-track::a
   place-items: center;
   min-width: 0;
   padding: 7px;
-  border: 1px solid rgba(255,255,255,.08);
+  border: 1px solid color-mix(in srgb, var(--mc-custom-board-frame, #fff0b6) 38%, rgba(255,255,255,.08));
   border-radius: 8px;
   background:
-    radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--mc-custom-board-light, #d9c58f) 16%, transparent), transparent 62%),
-    linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.012)),
+    radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--mc-custom-board-light, #d9c58f) 44%, transparent), transparent 46%),
+    radial-gradient(circle at 88% 88%, color-mix(in srgb, var(--mc-custom-board-dark, #243a31) 64%, transparent), transparent 54%),
+    linear-gradient(135deg, color-mix(in srgb, var(--mc-custom-board-light, #d9c58f) 16%, #0b130d), color-mix(in srgb, var(--mc-custom-board-dark, #243a31) 22%, #0b130d)),
     #0b130d;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
 }
 
 .mc-palette-board-preview {
   position: relative;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  width: min(100%, 96px);
+  width: min(100%, 104px);
   aspect-ratio: 1;
   overflow: hidden;
   border: 2px solid var(--mc-custom-board-frame, #fff0b6);
   border-radius: 8px;
-  background: #09100c;
-  box-shadow: inset 0 0 0 1px rgba(0,0,0,.18), 0 10px 18px rgba(0,0,0,.28);
+  background: var(--mc-custom-board-light, #d9c58f);
+  box-shadow:
+    inset 0 0 0 1px rgba(0,0,0,.2),
+    0 10px 18px rgba(0,0,0,.28),
+    0 0 18px color-mix(in srgb, var(--mc-custom-board-frame, #fff0b6) 22%, transparent);
 }
 
 .mc-palette-board-preview i {
   background: var(--mc-custom-board-light, #d9c58f);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,.16);
 }
 
 .mc-palette-board-preview i:nth-child(2),
@@ -4173,25 +4183,42 @@ html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-elixir-bottom-track::a
 
 .mc-palette-board-preview b {
   position: absolute;
-  top: 50%;
-  left: 50%;
+  top: 52%;
   display: grid;
   place-items: center;
-  width: 42%;
+  width: 36%;
   aspect-ratio: 1;
-  border: 2px solid color-mix(in srgb, var(--mc-custom-piece-black, #241745) 72%, transparent);
   border-radius: 999px;
-  background:
-    radial-gradient(circle at 31% 23%, #fff 0 20%, var(--mc-custom-piece-white, #f6f1df) 62%, color-mix(in srgb, var(--mc-custom-piece-white, #f6f1df) 58%, var(--mc-custom-piece-black, #241745)) 100%);
-  color: var(--mc-custom-piece-white-text, #10140f);
-  font-size: clamp(1rem, 8vw, 1.45rem);
+  font-size: 1.12rem;
   line-height: 1;
-  text-shadow: 0 1px rgba(255,255,255,.42);
   transform: translate(-50%, -50%);
+}
+
+.mc-palette-piece-white {
+  left: 34%;
+  border: 2px solid color-mix(in srgb, var(--mc-custom-piece-white, #f6f1df) 66%, var(--mc-custom-board-frame, #fff0b6));
+  background:
+    radial-gradient(circle at 31% 23%, #ffffff 0 22%, var(--mc-custom-piece-white, #f6f1df) 62%, color-mix(in srgb, var(--mc-custom-piece-white, #f6f1df) 58%, #000000) 100%);
+  color: var(--mc-custom-piece-white-text, #10140f);
+  text-shadow: 0 1px rgba(255,255,255,.42);
   box-shadow:
     inset 0 1px rgba(255,255,255,.5),
-    inset 0 -7px 12px color-mix(in srgb, var(--mc-custom-piece-black, #241745) 18%, transparent),
-    0 0 16px color-mix(in srgb, var(--mc-custom-piece-black, #241745) 36%, transparent),
+    inset 0 -7px 12px color-mix(in srgb, var(--mc-custom-piece-white, #f6f1df) 28%, #000000),
+    0 0 16px var(--mc-custom-piece-white-glow, rgba(246, 241, 223, .42)),
+    0 8px 12px rgba(0,0,0,.3);
+}
+
+.mc-palette-piece-black {
+  left: 66%;
+  border: 2px solid color-mix(in srgb, var(--mc-custom-piece-black, #241745) 76%, var(--mc-custom-board-frame, #fff0b6));
+  background:
+    radial-gradient(circle at 35% 24%, color-mix(in srgb, var(--mc-custom-piece-black, #241745) 82%, #ffffff), var(--mc-custom-piece-black, #241745) 64%, #050407 100%);
+  color: var(--mc-custom-piece-black-text, #fff8dc);
+  text-shadow: 0 0 12px var(--mc-custom-piece-black-glow, rgba(36, 23, 69, .46));
+  box-shadow:
+    inset 0 1px rgba(255,255,255,.22),
+    inset 0 -7px 12px rgba(0,0,0,.3),
+    0 0 16px var(--mc-custom-piece-black-glow, rgba(36, 23, 69, .46)),
     0 8px 12px rgba(0,0,0,.3);
 }
 
@@ -4201,7 +4228,7 @@ html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-elixir-bottom-track::a
 }
 
 .mc-palette-editor.is-locked .mc-palette-live-preview {
-  opacity: .78;
+  opacity: 1;
 }
 
 .mc-palette-editor.is-locked input {
