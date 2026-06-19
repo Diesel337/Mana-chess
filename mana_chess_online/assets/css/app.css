@@ -5841,3 +5841,84 @@ html[data-desktop="true"] .mc-chat-list {
     font-size: .68rem;
   }
 }
+
+/* Desktop lobby rail fit */
+@media (min-width: 1280px) {
+  html[data-desktop="true"] .mc-shell:has(.mc-menu) {
+    display: grid;
+    grid-template-columns: minmax(240px, 300px) minmax(680px, 1fr) minmax(210px, 240px);
+    gap: 12px;
+    width: min(1540px, calc(100vw - 24px));
+    max-width: none;
+    align-items: start;
+    overflow: hidden;
+  }
+
+  html[data-desktop="true"] .mc-shell:has(.mc-menu) > .mc-skins-rail {
+    display: grid;
+    grid-column: 1;
+    grid-row: 1;
+    width: 100%;
+    max-width: 300px;
+    min-width: 0;
+    max-height: calc(100vh - 24px);
+    overflow: auto;
+    position: sticky;
+    top: 6px;
+  }
+
+  html[data-desktop="true"] .mc-shell:has(.mc-menu) > .mc-game {
+    grid-column: 2;
+    min-width: 0;
+  }
+
+  html[data-desktop="true"] .mc-shell:has(.mc-menu) > .mc-panel {
+    grid-column: 3;
+    width: 100%;
+    max-width: 240px;
+    min-width: 0;
+  }
+
+  html[data-desktop="true"] .mc-shell:has(.mc-menu) .mc-menu {
+    grid-template-columns: minmax(0, 1fr);
+    margin-left: 0;
+    column-gap: initial;
+    row-gap: 10px;
+  }
+
+  html[data-desktop="true"] .mc-shell:has(.mc-menu) .mc-menu > :not(.mc-skins) {
+    grid-column: auto;
+  }
+
+  html[data-desktop="true"] .mc-shell:has(.mc-menu) .mc-skins-inline {
+    display: none;
+  }
+
+  html[data-desktop="true"] .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-skin-options {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  html[data-desktop="true"] .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-palette-live-preview {
+    padding: 5px;
+  }
+
+  html[data-desktop="true"] .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-palette-board-preview {
+    width: min(100%, 78px);
+  }
+}
+
+@media (min-width: 1600px) {
+  html[data-desktop="true"] .mc-shell:has(.mc-menu) {
+    grid-template-columns: 340px minmax(820px, 1fr) 280px;
+    gap: 14px;
+    width: min(1780px, calc(100vw - 32px));
+  }
+
+  html[data-desktop="true"] .mc-shell:has(.mc-menu) > .mc-skins-rail {
+    max-width: 340px;
+  }
+
+  html[data-desktop="true"] .mc-shell:has(.mc-menu) > .mc-panel {
+    max-width: 280px;
+  }
+}
