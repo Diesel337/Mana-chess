@@ -7716,3 +7716,99 @@ html[data-desktop="true"] .mc-chat-list {
     max-width: 280px;
   }
 }
+
+/* Desktop cosmetic shop polish */
+@media (min-width: 1280px) {
+  html[data-desktop="true"] .mc-shell:has(.mc-menu) > .mc-skins-rail {
+    gap: 10px;
+    padding: 10px;
+  }
+
+  html[data-desktop="true"] .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-cosmetic-groups {
+    gap: 10px;
+  }
+
+  html[data-desktop="true"] .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-cosmetic-group {
+    gap: 7px;
+    padding: 8px;
+    border: 1px solid rgba(255, 217, 130, .18);
+    border-radius: 8px;
+    background:
+      linear-gradient(135deg, rgba(255, 217, 130, .07), transparent 42%),
+      rgba(8, 16, 11, .38);
+    box-shadow: inset 0 1px rgba(255, 255, 255, .045);
+  }
+
+  html[data-desktop="true"] .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-piece-group {
+    border-color: rgba(139, 217, 189, .2);
+    background:
+      linear-gradient(135deg, rgba(139, 217, 189, .07), transparent 42%),
+      rgba(8, 16, 11, .38);
+  }
+
+  html[data-desktop="true"] .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-palette-group {
+    border-color: rgba(255, 150, 120, .22);
+    background:
+      linear-gradient(135deg, rgba(255, 150, 120, .07), transparent 42%),
+      rgba(8, 16, 11, .38);
+  }
+
+  html[data-desktop="true"] .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-cosmetic-group-label {
+    display: flex;
+    align-items: center;
+    min-height: 20px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid rgba(255, 243, 207, .08);
+  }
+
+  html[data-desktop="true"] .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-skin-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+  }
+
+  html[data-desktop="true"] .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-skin-option {
+    grid-template-columns: auto minmax(0, 1fr);
+    min-height: 58px;
+    padding: 7px 6px;
+  }
+
+  html[data-desktop="true"] .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-skin-preview,
+  html[data-desktop="true"] .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-piece-skin-preview {
+    width: 26px;
+  }
+
+  html[data-desktop="true"] .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-skin-option strong {
+    font-size: .68rem;
+    line-height: 1.05;
+  }
+
+  html[data-desktop="true"] .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-skin-option small {
+    font-size: .52rem;
+  }
+
+  html[data-desktop="true"] .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-palette-editor {
+    display: grid;
+    gap: 7px;
+  }
+
+  html[data-desktop="true"] .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-palette-unlock {
+    order: 1;
+  }
+
+  html[data-desktop="true"] .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-palette-live-preview {
+    order: 2;
+    padding: 6px;
+  }
+
+  html[data-desktop="true"] .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-palette-presets {
+    order: 3;
+  }
+
+  html[data-desktop="true"] .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-palette-fields {
+    order: 4;
+  }
+
+  html[data-desktop="true"] .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-palette-board-preview {
+    width: min(100%, 96px);
+  }
+}

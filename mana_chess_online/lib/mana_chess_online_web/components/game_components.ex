@@ -21,7 +21,7 @@ defmodule ManaChessOnlineWeb.GameComponents do
         <small>Local primero</small>
       </div>
       <div class="mc-cosmetic-groups">
-        <div class="mc-cosmetic-group">
+        <div class="mc-cosmetic-group mc-board-group">
           <span class="mc-cosmetic-group-label">Tableros</span>
           <div class="mc-skin-options">
             <button
@@ -84,7 +84,7 @@ defmodule ManaChessOnlineWeb.GameComponents do
             </button>
           </div>
         </div>
-        <div class="mc-cosmetic-group">
+        <div class="mc-cosmetic-group mc-piece-group">
           <span class="mc-cosmetic-group-label">Piezas</span>
           <div class="mc-skin-options">
             <button
