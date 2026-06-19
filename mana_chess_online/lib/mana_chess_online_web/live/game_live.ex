@@ -341,20 +341,54 @@ defmodule ManaChessOnlineWeb.GameLive do
   defp player_role_hint(_game, color) when color in [:white, :black], do: "Sentado"
   defp player_role_hint(_game, _color), do: "Observando"
 
-  defp invite_title(%{private?: true}), do: "Invitacion privada"
-  defp invite_title(_game), do: "Link de sala"
+  defp invite_title(%{private?: true} = game, player_id) do
+    if private_link_guest?(game, player_id), do: "Llegaste por link", else: "Invitacion privada"
+  end
 
-  defp invite_hint(%{private?: true}), do: "El rival entra por aqui; quien no se siente queda mirando."
-  defp invite_hint(_game), do: "Rival o espectador entra aqui."
+  defp invite_title(_game, _player_id), do: "Link de sala"
 
-  defp invite_copy_label(%{private?: true}), do: "Copiar link privado"
-  defp invite_copy_label(_game), do: "Copiar link"
+  defp invite_hint(%{private?: true} = game, player_id) do
+    if private_link_guest?(game, player_id) do
+      "Toma un asiento libre para jugar, o quedate mirando."
+    else
+      "Comparte este enlace; el rival entra y toma el asiento libre."
+    end
+  end
 
-  defp invite_badge(%{private?: true}), do: "Privado"
-  defp invite_badge(_game), do: nil
+  defp invite_hint(_game, _player_id), do: "Rival o espectador entra aqui."
 
-  defp waiting_seat_hint(%{private?: true}), do: "Privado listo: comparte el link y el rival puede tomar el asiento libre."
-  defp waiting_seat_hint(_game), do: "Blancas no puede iniciar hasta que Negras se siente. Para jugar solo usa Modo practica."
+  defp invite_copy_label(%{private?: true} = game, player_id) do
+    if private_link_guest?(game, player_id), do: "Copiar link", else: "Copiar invitacion"
+  end
+
+  defp invite_copy_label(_game, _player_id), do: "Copiar link"
+
+  defp invite_badge(%{private?: true} = game, player_id) do
+    if private_link_guest?(game, player_id), do: "Invitado", else: "Privado"
+  end
+
+  defp invite_badge(_game, _player_id), do: nil
+
+  defp waiting_seat_hint(%{private?: true} = game, player_id) do
+    if private_link_guest?(game, player_id) do
+      "Entraste por invitacion: elige un asiento libre para jugar."
+    else
+      "Privado listo: comparte el link y el rival puede tomar el asiento libre."
+    end
+  end
+
+  defp waiting_seat_hint(_game, _player_id), do: "Blancas no puede iniciar hasta que Negras se siente. Para jugar solo usa Modo practica."
+
+  defp seat_cta_label(%{private?: true}, :white), do: "Tomar Blancas"
+  defp seat_cta_label(%{private?: true}, :black), do: "Tomar Negras"
+  defp seat_cta_label(_game, :white), do: "Sentarme como Blancas"
+  defp seat_cta_label(_game, :black), do: "Sentarme como Negras"
+
+  defp private_link_guest?(%{private?: true, status: status} = game, player_id) when status in [:waiting, :ready] do
+    observing?(game, player_id)
+  end
+
+  defp private_link_guest?(_game, _player_id), do: false
 
   defp start_label(%{practice?: true}), do: "Empezar practica"
   defp start_label(_game), do: "Empezar partida"
@@ -803,21 +837,17 @@ defmodule ManaChessOnlineWeb.GameLive do
               <strong>Negras</strong>
               <span>{seat_label(@game.players.black, @player_id)}</span>
             </div>
-            <p :if={@game.status == :waiting}>{waiting_seat_hint(@game)}</p>
-            <div class={["mc-invite-strip", @game.private? && "mc-invite-strip-private"]}>
-              <div>
-                <div class="mc-invite-title-row">
-                  <strong>{invite_title(@game)}</strong>
-                  <span :if={invite_badge(@game)} class="mc-invite-badge">{invite_badge(@game)}</span>
-                </div>
-                <span>{invite_hint(@game)}</span>
-                <code>{~p"/game/#{@game.id}"}</code>
-              </div>
-              <div class="mc-invite-actions">
-                <button class="mc-copy-invite-main" type="button" data-copy-invite={~p"/game/#{@game.id}"}>{invite_copy_label(@game)}</button>
-                <a class="mc-open-invite-link" href={~p"/game/#{@game.id}"}>Abrir link</a>
-              </div>
-            </div>
+            <p :if={@game.status == :waiting}>{waiting_seat_hint(@game, @player_id)}</p>
+            <% invite_path = ~p"/game/#{@game.id}" %>
+            <.invite_strip
+              game={@game}
+              invite_path={invite_path}
+              title={invite_title(@game, @player_id)}
+              hint={invite_hint(@game, @player_id)}
+              copy_label={invite_copy_label(@game, @player_id)}
+              badge={invite_badge(@game, @player_id)}
+              arrived_by_link?={private_link_guest?(@game, @player_id)}
+            />
             <div class="mc-seat-actions">
               <button
                 :if={!seated_in?(@game, @player_id) && seat_open?(@game, :white)}
@@ -827,7 +857,7 @@ defmodule ManaChessOnlineWeb.GameLive do
                 phx-value-color="white"
                 data-sound-action="mode"
               >
-                Sentarme como Blancas
+                {seat_cta_label(@game, :white)}
               </button>
               <button
                 :if={!seated_in?(@game, @player_id) && seat_open?(@game, :black)}
@@ -837,7 +867,7 @@ defmodule ManaChessOnlineWeb.GameLive do
                 phx-value-color="black"
                 data-sound-action="mode"
               >
-                Sentarme como Negras
+                {seat_cta_label(@game, :black)}
               </button>
             </div>
           </div>

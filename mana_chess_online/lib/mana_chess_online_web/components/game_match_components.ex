@@ -54,6 +54,42 @@ defmodule ManaChessOnlineWeb.GameMatchComponents do
     """
   end
 
+  attr :game, :map, required: true
+  attr :invite_path, :string, required: true
+  attr :title, :string, required: true
+  attr :hint, :string, required: true
+  attr :copy_label, :string, required: true
+  attr :badge, :string, default: nil
+  attr :arrived_by_link?, :boolean, default: false
+
+  def invite_strip(assigns) do
+    ~H"""
+    <div class={[
+      "mc-invite-strip",
+      @game.private? && "mc-invite-strip-private",
+      @arrived_by_link? && "mc-invite-strip-arrival"
+    ]}>
+      <div>
+        <div class="mc-invite-title-row">
+          <strong>{@title}</strong>
+          <span :if={@badge} class="mc-invite-badge">{@badge}</span>
+        </div>
+        <span :if={@arrived_by_link?} class="mc-invite-arrival-note">
+          Entraste por invitacion privada
+        </span>
+        <span>{@hint}</span>
+        <code>{@invite_path}</code>
+      </div>
+      <div class="mc-invite-actions">
+        <button class="mc-copy-invite-main" type="button" data-copy-invite={@invite_path}>
+          {@copy_label}
+        </button>
+        <a class="mc-open-invite-link" href={@invite_path}>Abrir link</a>
+      </div>
+    </div>
+    """
+  end
+
   attr :pending, :map, default: nil
   attr :player_id, :string, required: true
 
