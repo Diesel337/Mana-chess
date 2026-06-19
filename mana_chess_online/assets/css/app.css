@@ -6022,15 +6022,17 @@ html[data-desktop="true"] .mc-chat-list {
 /* Desktop game table fit */
 @media (min-width: 1280px) {
   html[data-desktop="true"] .mc-shell:has(.mc-play-area) {
-    grid-template-columns: minmax(0, 1fr) 260px;
-    gap: 14px;
-    width: min(1780px, calc(100vw - 32px));
+    grid-template-columns: minmax(0, min(1120px, calc(100vw - 304px))) 260px;
+    justify-content: center;
+    gap: 12px;
+    width: min(1400px, calc(100vw - 24px));
     align-items: start;
   }
 
   html[data-desktop="true"] .mc-shell:has(.mc-play-area) > .mc-game {
-    justify-self: center;
-    width: min(100%, 1300px);
+    justify-self: stretch;
+    width: 100%;
+    max-width: none;
   }
 
   html[data-desktop="true"] .mc-shell:has(.mc-play-area) > .mc-panel {
@@ -6040,9 +6042,9 @@ html[data-desktop="true"] .mc-chat-list {
   }
 
   html[data-desktop="true"] .mc-game:has(.mc-play-area) {
-    grid-template-columns: minmax(380px, min(46vh, 520px)) minmax(360px, 620px);
-    column-gap: 18px;
-    justify-content: center;
+    grid-template-columns: minmax(380px, min(46vh, 520px)) minmax(420px, 560px);
+    column-gap: 16px;
+    justify-content: start;
   }
 
   html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-play-area {
@@ -6062,7 +6064,7 @@ html[data-desktop="true"] .mc-chat-list {
   html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-check-message,
   html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-actions {
     width: 100%;
-    max-width: 620px;
+    max-width: 560px;
     justify-self: stretch;
   }
 
@@ -6083,7 +6085,7 @@ html[data-desktop="true"] .mc-chat-list {
   }
 
   html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-invite-strip span {
-    max-width: 14rem;
+    max-width: 12rem;
   }
 
   html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-actions {
@@ -6092,7 +6094,12 @@ html[data-desktop="true"] .mc-chat-list {
 }
 
 @media (min-width: 1700px) and (min-height: 900px) {
+  html[data-desktop="true"] .mc-shell:has(.mc-play-area) {
+    grid-template-columns: minmax(0, 1096px) 260px;
+    width: 1368px;
+  }
+
   html[data-desktop="true"] .mc-game:has(.mc-play-area) {
-    grid-template-columns: minmax(430px, 520px) minmax(420px, 620px);
+    grid-template-columns: 520px 560px;
   }
 }
