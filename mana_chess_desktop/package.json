@@ -2,9 +2,12 @@
   "name": "mana-chess-desktop",
   "version": "0.1.0",
   "private": true,
-  "description": "Desktop wrapper for Mana Chess Online.",
+  "description": "Desktop wrapper for Mana Chess.",
+  "author": "Diesel337",
+  "homepage": "https://mana-chess-production.up.railway.app/",
   "main": "src/main.cjs",
   "scripts": {
+    "check": "node --check src/main.cjs && node --check src/preload.cjs",
     "start": "electron .",
     "pack:win": "electron-builder --dir --win --x64",
     "dist:win": "electron-builder --win nsis --x64"
@@ -14,8 +17,9 @@
     "electron-builder": "^25.1.8"
   },
   "build": {
-    "appId": "com.manachess.desktop",
+    "appId": "com.diesel337.manachess",
     "productName": "Mana Chess",
+    "artifactName": "Mana Chess Setup ${version}.${ext}",
     "directories": {
       "output": "dist"
     },
@@ -27,10 +31,19 @@
     "win": {
       "icon": "build/icon.ico",
       "signAndEditExecutable": false,
+      "publisherName": "Diesel337",
       "target": [
         "nsis"
       ]
     },
+    "protocols": [
+      {
+        "name": "Mana Chess",
+        "schemes": [
+          "manachess"
+        ]
+      }
+    ],
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true

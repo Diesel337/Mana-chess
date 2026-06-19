@@ -1,7 +1,8 @@
 const path = require("node:path")
 const {app, BrowserWindow, Menu, screen, shell} = require("electron")
 
-const GAME_URL = desktopUrl(process.env.MANA_CHESS_URL || "https://mana-chess-production.up.railway.app/")
+const DEFAULT_GAME_URL = process.env.MANA_CHESS_URL || "https://mana-chess-production.up.railway.app/"
+const GAME_URL = desktopUrl(DEFAULT_GAME_URL)
 const GAME_ORIGIN = new URL(GAME_URL).origin
 
 let mainWindow = null
@@ -18,6 +19,7 @@ function createWindow() {
     icon: path.join(__dirname, "../build/icon.png"),
     backgroundColor: "#111713",
     autoHideMenuBar: true,
+    fullscreenable: true,
     webPreferences: {
       preload: `${__dirname}/preload.cjs`,
       contextIsolation: true,
@@ -30,12 +32,33 @@ function createWindow() {
   mainWindow.maximize()
 
   mainWindow.webContents.setWindowOpenHandler(({url}) => {
-    if (new URL(url).origin === GAME_ORIGIN) {
-      return {action: "allow"}
+    const parsed = safeUrl(url)
+    if (!parsed) return {action: "deny"}
+
+    if (parsed.origin === GAME_ORIGIN) {
+      mainWindow.loadURL(desktopUrl(url))
+      return {action: "deny"}
     }
 
     shell.openExternal(url)
     return {action: "deny"}
+  })
+
+  mainWindow.webContents.on("will-navigate", (event, url) => {
+    const parsed = safeUrl(url)
+    if (!parsed) {
+      event.preventDefault()
+      return
+    }
+    if (parsed.origin === GAME_ORIGIN) return
+
+    event.preventDefault()
+    shell.openExternal(url)
+  })
+
+  mainWindow.webContents.on("page-title-updated", event => {
+    event.preventDefault()
+    mainWindow.setTitle("Mana Chess")
   })
 
   mainWindow.webContents.on("did-fail-load", (_event, _errorCode, _errorDescription, validatedURL) => {
@@ -44,10 +67,71 @@ function createWindow() {
   })
 }
 
+function buildMenu() {
+  return Menu.buildFromTemplate([
+    {
+      label: "Mana Chess",
+      submenu: [
+        {
+          label: "Volver al lobby",
+          accelerator: "CommandOrControl+L",
+          click: () => navigateHome()
+        },
+        {
+          label: "Recargar",
+          accelerator: "CommandOrControl+R",
+          click: () => mainWindow?.reload()
+        },
+        {
+          label: "Pantalla completa",
+          accelerator: "F11",
+          click: () => toggleFullscreen()
+        },
+        {type: "separator"},
+        {
+          label: "Abrir version web",
+          click: () => shell.openExternal(DEFAULT_GAME_URL)
+        },
+        {type: "separator"},
+        {
+          label: "Salir",
+          role: "quit"
+        }
+      ]
+    },
+    {
+      label: "Vista",
+      submenu: [
+        {label: "Acercar", role: "zoomIn"},
+        {label: "Alejar", role: "zoomOut"},
+        {label: "Zoom normal", role: "resetZoom"}
+      ]
+    }
+  ])
+}
+
+function navigateHome() {
+  if (!mainWindow) return
+  mainWindow.loadURL(GAME_URL)
+}
+
+function toggleFullscreen() {
+  if (!mainWindow) return
+  mainWindow.setFullScreen(!mainWindow.isFullScreen())
+}
+
 function desktopUrl(url) {
   const parsed = new URL(url)
   parsed.searchParams.set("desktop", "1")
   return parsed.toString()
+}
+
+function safeUrl(url) {
+  try {
+    return new URL(url)
+  } catch (_error) {
+    return null
+  }
 }
 
 function showOfflineScreen() {
@@ -123,7 +207,7 @@ if (!gotLock) {
   })
 
   app.whenReady().then(() => {
-    Menu.setApplicationMenu(null)
+    Menu.setApplicationMenu(buildMenu())
     createWindow()
 
     app.on("activate", () => {
