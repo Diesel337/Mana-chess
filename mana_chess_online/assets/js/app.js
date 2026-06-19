@@ -378,9 +378,10 @@ const Hooks = {
         control.classList.toggle("mc-skin-locked", !unlocked)
         control.classList.toggle("mc-skin-unlocked", unlocked)
         control.setAttribute("aria-disabled", "false")
-        control.title = unlocked ? "Cosmetico desbloqueado localmente" : "Probar y desbloquear localmente"
+        control.title = unlocked ? "Cosmetico desbloqueado localmente" : "Premium proximamente; probar localmente"
         control.querySelectorAll("[data-cosmetic-status]").forEach(status => {
-          status.textContent = unlocked ? "Local" : "Probar local"
+          status.textContent = unlocked ? "Local" : "Premium proximamente"
+          status.dataset.cosmeticState = unlocked ? "local" : "premium"
         })
       })
 
@@ -389,7 +390,8 @@ const Hooks = {
         editor.classList.toggle("is-locked", !unlocked)
         editor.classList.toggle("is-unlocked", unlocked)
         editor.querySelectorAll("[data-palette-status]").forEach(status => {
-          status.textContent = unlocked ? "Local" : "Probar local"
+          status.textContent = unlocked ? "Local" : "Premium proximamente"
+          status.dataset.paletteState = unlocked ? "local" : "premium"
         })
         editor.querySelectorAll("[data-palette-unlock]").forEach(control => {
           control.setAttribute("aria-disabled", "false")
@@ -473,6 +475,8 @@ const Hooks = {
         midnight: {boardLight: "#8067c9", boardDark: "#151020", pieceWhite: "#f7f2ff", pieceBlack: "#241745"},
         emerald: {boardLight: "#8bd9bd", boardDark: "#17342b", pieceWhite: "#f5f9de", pieceBlack: "#0b2c24"},
         frost: {boardLight: "#d9f0ff", boardDark: "#22354f", pieceWhite: "#ffffff", pieceBlack: "#2f5e8f"},
+        solar: {boardLight: "#f2c15f", boardDark: "#174a45", pieceWhite: "#fff4d2", pieceBlack: "#31204f"},
+        ruby: {boardLight: "#f0b7a6", boardDark: "#3b141c", pieceWhite: "#fff0ea", pieceBlack: "#4c0f23"},
       }
 
       return presets[name] || this.defaultPalette()
