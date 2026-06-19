@@ -1,14 +1,19 @@
 {
-  "name": "Mana Chess Online",
+  "name": "Mana Chess",
   "short_name": "Mana Chess",
-  "description": "Ajedrez online en tiempo real con elixir, cooldown y partidas privadas por link.",
+  "description": "Ajedrez en tiempo real con elixir, cooldown, cosmeticos locales y partidas privadas por link.",
+  "id": "/",
+  "lang": "es-MX",
+  "dir": "ltr",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone"],
   "background_color": "#0b120e",
   "theme_color": "#0b120e",
   "orientation": "any",
   "categories": ["games", "strategy"],
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/images/logo.svg",

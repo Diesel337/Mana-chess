@@ -3,11 +3,13 @@ defmodule ManaChessOnlineWeb.AdminLive do
 
   alias ManaChessOnline.GameLobby
 
+  import ManaChessOnlineWeb.GameBrandComponents
+
   @impl true
   def mount(_params, session, socket) do
     {:ok,
      socket
-     |> assign(:page_title, "Admin Mana Chess")
+     |> assign(:page_title, "Admin | Mana Chess")
      |> assign(:player_id, Map.get(session, "player_id"))
      |> assign(:authenticated?, false)
      |> assign(:settings, GameLobby.global_settings())}
@@ -60,10 +62,7 @@ defmodule ManaChessOnlineWeb.AdminLive do
     <main class="mc-shell">
       <section class="mc-game mc-admin">
         <div class="mc-header">
-          <div>
-            <p class="mc-kicker">Mana Chess Online</p>
-            <h1>Admin</h1>
-          </div>
+          <.brand_lockup title="Admin" detail="Balance y configuracion" />
           <a class="mc-admin-link" href={~p"/"}>Volver al juego</a>
         </div>
 

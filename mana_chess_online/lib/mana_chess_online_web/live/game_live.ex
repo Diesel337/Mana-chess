@@ -5,6 +5,7 @@ defmodule ManaChessOnlineWeb.GameLive do
   alias ManaChessOnline.GameRules
   alias ManaChessOnlineWeb.GameText
 
+  import ManaChessOnlineWeb.GameBrandComponents
   import ManaChessOnlineWeb.GameComponents
   import ManaChessOnlineWeb.GameMatchComponents
   import ManaChessOnlineWeb.GameSoundComponents
@@ -44,7 +45,7 @@ defmodule ManaChessOnlineWeb.GameLive do
 
     {:ok,
      socket
-     |> assign(:page_title, "Mana Chess Online")
+     |> assign(:page_title, "Mana Chess")
      |> assign(:player_id, player_id)
      |> assign(:game_id, view.game_id)
      |> assign(:color, view.color)
@@ -734,14 +735,7 @@ defmodule ManaChessOnlineWeb.GameLive do
     >
       <section class="mc-game">
         <div class="mc-header">
-          <div class="mc-brand-block">
-            <img src={~p"/images/logo.svg"} alt="" class="mc-brand-mark" />
-            <div>
-              <p class="mc-kicker">Mana Chess Online</p>
-              <h1>{if @game_id, do: "Partida", else: "Lobby"}</h1>
-              <p :if={@game_id} class="mc-game-id">{@game_id}</p>
-            </div>
-          </div>
+          <.brand_lockup title={if @game_id, do: "Partida", else: "Lobby"} detail={@game_id} />
           <div class="mc-badge">
             <.sound_control />
           </div>
