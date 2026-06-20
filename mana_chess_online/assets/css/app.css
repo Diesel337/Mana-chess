@@ -3072,26 +3072,49 @@ html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-action-quiet {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 6px;
+  gap: 7px;
   max-width: 100%;
+  min-width: 0;
+  padding: 4px;
+  border: 1px solid rgba(139, 217, 189, .16);
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(23, 38, 26, .78), rgba(8, 16, 11, .64)),
+    rgba(8, 16, 11, .72);
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, .05),
+    0 10px 24px rgba(0, 0, 0, .16);
 }
 
 .mc-sound-toggle {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  min-height: 26px;
-  padding: 0 5px 0 9px;
-  border: 1px solid rgba(255, 217, 130, .2);
+  gap: 7px;
+  min-height: 28px;
+  padding: 0 6px 0 9px;
+  border: 1px solid rgba(255, 135, 104, .3);
   border-radius: 999px;
-  background: rgba(8, 16, 11, .74);
-  color: var(--mc-muted);
+  background:
+    linear-gradient(180deg, rgba(45, 18, 15, .82), rgba(15, 12, 10, .7)),
+    rgba(8, 16, 11, .74);
+  color: #ffd0c2;
   cursor: pointer;
   font: inherit;
   font-size: .68rem;
   font-weight: 900;
   line-height: 1;
   white-space: nowrap;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .03);
+}
+
+.mc-sound-toggle::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #ff7e64;
+  box-shadow: 0 0 10px rgba(255, 126, 100, .55);
 }
 
 .mc-sound-toggle strong {
@@ -3111,9 +3134,9 @@ html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-action-quiet {
 .mc-sound-volume {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  min-height: 26px;
-  padding: 0 7px;
+  gap: 7px;
+  min-height: 28px;
+  padding: 0 8px;
   border: 1px solid rgba(139, 217, 189, .18);
   border-radius: 999px;
   background: rgba(8, 16, 11, .52);
@@ -3135,14 +3158,47 @@ html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-action-quiet {
 }
 
 .mc-sound-volume input {
-  width: 58px;
-  height: 18px;
-  accent-color: var(--mc-gold-2);
+  width: 70px;
+  height: 8px;
+  margin: 0;
+  border: 1px solid rgba(255, 217, 130, .12);
+  border-radius: 999px;
+  appearance: none;
+  background:
+    linear-gradient(90deg, var(--mc-gold-2) 0 var(--sound-volume, 70%), rgba(255, 255, 255, .08) var(--sound-volume, 70%) 100%);
   cursor: pointer;
 }
 
+.mc-sound-volume input::-webkit-slider-thumb {
+  width: 18px;
+  height: 18px;
+  border: 0;
+  border-radius: 999px;
+  appearance: none;
+  background: linear-gradient(180deg, #ffe39a, #b6924f);
+  box-shadow:
+    0 0 0 3px rgba(255, 217, 130, .12),
+    0 4px 8px rgba(0, 0, 0, .35);
+}
+
+.mc-sound-volume input::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffe39a, #b6924f);
+  box-shadow:
+    0 0 0 3px rgba(255, 217, 130, .12),
+    0 4px 8px rgba(0, 0, 0, .35);
+}
+
 .mc-sound-control-muted .mc-sound-volume {
-  opacity: .58;
+  opacity: .64;
+}
+
+.mc-sound-control-muted .mc-sound-volume input {
+  background:
+    linear-gradient(90deg, rgba(255, 197, 181, .42) 0 var(--sound-volume, 70%), rgba(255, 255, 255, .07) var(--sound-volume, 70%) 100%);
 }
 
 .mc-sound-toggle:hover {
@@ -3152,10 +3208,16 @@ html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-action-quiet {
 }
 
 .mc-sound-toggle-on {
-  background: linear-gradient(180deg, #ffe191 0%, #e8bd63 100%);
+  background:
+    linear-gradient(180deg, #ffe191 0%, #e8bd63 100%);
   border-color: rgba(255, 243, 207, .38);
   color: #191000;
   text-shadow: 0 1px rgba(255,255,255,.32);
+}
+
+.mc-sound-toggle-on::before {
+  background: #7ff2c7;
+  box-shadow: 0 0 12px rgba(127, 242, 199, .72);
 }
 
 .mc-sound-toggle-on strong {
@@ -3164,8 +3226,15 @@ html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-action-quiet {
   box-shadow: inset 0 0 0 1px rgba(8, 31, 22, .18);
 }
 
+@media (max-width: 720px) {
+  .mc-sound-control {
+    width: min(100%, 320px);
+    justify-content: center;
+  }
+}
+
 html[data-desktop="true"] .mc-sound-toggle {
-  min-height: 23px;
+  min-height: 25px;
   padding: 0 5px 0 8px;
   font-size: .62rem;
 }
@@ -3177,23 +3246,29 @@ html[data-desktop="true"] .mc-sound-toggle strong {
 }
 
 html[data-desktop="true"] .mc-sound-volume {
-  min-height: 23px;
+  min-height: 25px;
   padding: 0 6px;
 }
 
 html[data-desktop="true"] .mc-sound-volume input {
-  width: 52px;
+  width: 58px;
 }
 
 @media (max-width: 480px) {
   .mc-sound-control {
     gap: 4px;
+    padding: 3px;
   }
 
   .mc-sound-toggle {
     min-height: 24px;
-    padding: 0 4px 0 7px;
+    padding: 0 4px 0 6px;
     font-size: .62rem;
+  }
+
+  .mc-sound-toggle::before {
+    width: 6px;
+    height: 6px;
   }
 
   .mc-sound-toggle strong {
@@ -3214,7 +3289,7 @@ html[data-desktop="true"] .mc-sound-volume input {
   }
 
   .mc-sound-volume input {
-    width: 46px;
+    width: 44px;
   }
 }
 
