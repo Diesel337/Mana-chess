@@ -339,18 +339,28 @@ defmodule ManaChessOnlineWeb.GameComponents do
             <p>{entry.text}</p>
           </li>
           <li :if={chat_entries == []} class="mc-panel-empty">
-            Mensajes de sala apareceran aqui
+            <span>Mensajes de sala apareceran aqui</span>
+            <small>Saluda sin pausar la partida</small>
           </li>
         </ul>
-        <form :if={@game} class="mc-chat-form" phx-change="chat_change" phx-submit="send_chat">
-          <input
-            name="message"
-            value={@chat_draft}
-            maxlength="180"
-            autocomplete="off"
-            placeholder="Mensaje de sala"
-            aria-label="Mensaje de chat"
-          />
+        <form
+          :if={@game}
+          class={["mc-chat-form", !chat_send_disabled?(@chat_draft) && "mc-chat-form-ready"]}
+          phx-change="chat_change"
+          phx-submit="send_chat"
+        >
+          <label class={["mc-chat-field", chat_draft_near_limit?(@chat_draft) && "mc-chat-field-hot"]}>
+            <input
+              name="message"
+              value={@chat_draft}
+              maxlength="180"
+              autocomplete="off"
+              autocapitalize="sentences"
+              placeholder="Mensaje de sala"
+              aria-label="Mensaje de chat"
+            />
+            <small>{chat_draft_length(@chat_draft)}/180</small>
+          </label>
           <button type="submit" disabled={chat_send_disabled?(@chat_draft)}>Enviar</button>
         </form>
         <p :if={@chat_error} class="mc-chat-error">{@chat_error}</p>
@@ -396,6 +406,8 @@ defmodule ManaChessOnlineWeb.GameComponents do
 
   defp short_chat_name("Jugador " <> tag), do: "J-" <> tag
   defp short_chat_name(name), do: name
+  defp chat_draft_length(draft), do: draft |> to_string() |> String.length()
+  defp chat_draft_near_limit?(draft), do: chat_draft_length(draft) >= 150
 
   defp queue_count_text(actions) do
     case length(actions) do
