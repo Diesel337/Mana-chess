@@ -831,13 +831,21 @@ const Hooks = {
         const piece = square && square.querySelector(".mc-piece:not(:empty)");
 
         this.clearLegalPreview();
+        this.clearBlockedPreview();
         if (!square || !piece) return;
 
-        this.showLegalPreview(square);
+        const legalMoves = this.legalMoves(square);
+        if (legalMoves.length === 0) {
+          this.flashBlockedSquare(square);
+          return;
+        }
+
+        this.showLegalPreview(square, legalMoves);
 
         this.drag = {
           fromR: square.dataset.r,
           fromC: square.dataset.c,
+          legalMoves,
           pointerId: event.pointerId,
           startX: event.clientX,
           startY: event.clientY,
@@ -881,7 +889,18 @@ const Hooks = {
         const target = document.elementFromPoint(event.clientX, event.clientY);
         const square = target && target.closest(".mc-square");
 
-        if (!square) return;
+        if (!square) {
+          this.flashBlockedSquare(drag.square);
+          this.pushEvent("drag_invalid", {
+            from_r: drag.fromR,
+            from_c: drag.fromC
+          });
+          return;
+        }
+
+        if (!this.legalTarget(drag, square)) {
+          this.flashBlockedSquare(square);
+        }
 
         this.pushEvent("drag_move", {
           from_r: drag.fromR,
@@ -896,6 +915,7 @@ const Hooks = {
         this.drag = null;
         this.clearDragVisuals(drag);
         this.clearLegalPreview();
+        this.clearBlockedPreview();
       });
 
       this.el.addEventListener("click", event => {
@@ -909,14 +929,23 @@ const Hooks = {
 
     updated() {
       this.clearLegalPreview();
+      this.clearBlockedPreview();
     },
 
     destroyed() {
       this.clearLegalPreview();
+      this.clearBlockedPreview();
     },
 
-    showLegalPreview(square) {
-      const moves = (square.dataset.legalMoves || "").trim().split(/\s+/).filter(Boolean);
+    legalMoves(square) {
+      return (square.dataset.legalMoves || "").trim().split(/\s+/).filter(Boolean);
+    },
+
+    legalTarget(drag, square) {
+      return drag.legalMoves.includes(`${square.dataset.r},${square.dataset.c}`);
+    },
+
+    showLegalPreview(square, moves = this.legalMoves(square)) {
       if (moves.length === 0) return;
 
       square.classList.add("mc-selected", "mc-client-selected");
@@ -934,6 +963,24 @@ const Hooks = {
       });
       this.el.querySelectorAll(".mc-client-valid").forEach(square => {
         square.classList.remove("mc-valid", "mc-client-valid");
+      });
+    },
+
+    flashBlockedSquare(square) {
+      if (!square) return;
+      square.classList.remove("mc-client-blocked");
+      void square.offsetWidth;
+      square.classList.add("mc-client-blocked");
+      window.clearTimeout(square.blockedPreviewTimer);
+      square.blockedPreviewTimer = window.setTimeout(() => {
+        square.classList.remove("mc-client-blocked");
+      }, 620);
+    },
+
+    clearBlockedPreview() {
+      this.el.querySelectorAll(".mc-client-blocked").forEach(square => {
+        window.clearTimeout(square.blockedPreviewTimer);
+        square.classList.remove("mc-client-blocked");
       });
     },
 

@@ -54,6 +54,7 @@ defmodule ManaChessOnlineWeb.GameLive do
      |> assign(:symbols, @symbols)
      |> assign(:valid_moves, [])
      |> assign(:selected, nil)
+     |> assign(:blocked_square, nil)
      |> assign(:local_alert, nil)
      |> assign(:chat_draft, "")
      |> assign(:chat_error, nil)
@@ -91,7 +92,15 @@ defmodule ManaChessOnlineWeb.GameLive do
 
     valid_moves = if selected, do: legal_moves, else: []
 
-    {:noreply, assign(socket, selected: selected, valid_moves: valid_moves, local_alert: select_alert(socket.assigns.game, socket.assigns.color, piece, piece_color, selected, legal_moves, square))}
+    local_alert = select_alert(socket.assigns.game, socket.assigns.color, piece, piece_color, selected, legal_moves, square)
+
+    {:noreply,
+     assign(socket,
+       selected: selected,
+       valid_moves: valid_moves,
+       blocked_square: blocked_square_for(local_alert, square),
+       local_alert: local_alert
+     )}
   end
 
   def handle_event("move", %{"r" => r, "c" => c}, %{assigns: %{selected: nil}} = socket) do
@@ -99,8 +108,15 @@ defmodule ManaChessOnlineWeb.GameLive do
   end
 
   def handle_event("move", %{"r" => r, "c" => c}, socket) do
-    GameLobby.enqueue(socket.assigns.player_id, socket.assigns.selected, {String.to_integer(r), String.to_integer(c)})
-    {:noreply, socket |> refresh_assignment() |> assign(:local_alert, nil)}
+    to = {String.to_integer(r), String.to_integer(c)}
+    blocked_square = if to in socket.assigns.valid_moves, do: nil, else: to
+
+    GameLobby.enqueue(socket.assigns.player_id, socket.assigns.selected, to)
+
+    {:noreply,
+     socket
+     |> refresh_assignment()
+     |> assign(local_alert: nil, blocked_square: blocked_square)}
   end
 
   def handle_event("drag_move", %{"from_r" => from_r, "from_c" => from_c, "to_r" => to_r, "to_c" => to_c}, socket) do
@@ -108,6 +124,7 @@ defmodule ManaChessOnlineWeb.GameLive do
     to = {String.to_integer(to_r), String.to_integer(to_c)}
     piece = GameRules.at(socket.assigns.game.board, elem(from, 0), elem(from, 1))
     piece_color = GameRules.color(piece)
+    legal_moves = legal_moves_for(socket.assigns.game, piece_color, from)
 
     local_alert =
       if manual_control_allowed?(socket.assigns.game, socket.assigns.color, piece_color) do
@@ -117,7 +134,29 @@ defmodule ManaChessOnlineWeb.GameLive do
         select_alert(socket.assigns.game, socket.assigns.color, piece, piece_color, nil, [], from)
       end
 
-    {:noreply, socket |> refresh_assignment() |> assign(:local_alert, local_alert)}
+    blocked_square =
+      cond do
+        not is_nil(local_alert) -> from
+        to in legal_moves -> nil
+        true -> to
+      end
+
+    {:noreply,
+     socket
+     |> refresh_assignment()
+     |> assign(local_alert: local_alert, blocked_square: blocked_square)}
+  end
+
+  def handle_event("drag_invalid", %{"from_r" => from_r, "from_c" => from_c}, socket) do
+    from = {String.to_integer(from_r), String.to_integer(from_c)}
+
+    {:noreply,
+     assign(socket,
+       selected: nil,
+       valid_moves: [],
+       blocked_square: from,
+       local_alert: GameText.friendly_alert("casilla invalida.")
+     )}
   end
 
   def handle_event("reset", _params, socket) do
@@ -253,6 +292,7 @@ defmodule ManaChessOnlineWeb.GameLive do
     |> assign(:lobby, view.lobby)
     |> assign(:valid_moves, [])
     |> assign(:selected, nil)
+    |> assign(:blocked_square, nil)
     |> assign(:local_alert, nil)
     |> assign(:chat_error, nil)
     |> assign(:reconnected?, false)
@@ -271,28 +311,27 @@ defmodule ManaChessOnlineWeb.GameLive do
     Enum.any?(game.checked_colors, &(GameRules.king_square(game.board, &1) == {r, c}))
   end
 
-  defp square_class(game, r, c, selected, valid_moves) do
+  defp square_class(game, r, c, selected, valid_moves, blocked_square) do
     [
       "mc-square",
       rem(r + c, 2) == 0 && "mc-light",
       rem(r + c, 2) == 1 && "mc-dark",
       selected?(selected, {r, c}) && "mc-selected",
       {r, c} in valid_moves && "mc-valid",
+      selected?(blocked_square, {r, c}) && "mc-blocked",
       in_check_square?(game, r, c) && "mc-check",
       cooldown_active?(game, {r, c}) && "mc-cooldown"
     ]
   end
 
+  defp blocked_square_for(nil, _square), do: nil
+  defp blocked_square_for(_alert, square), do: square
+
   defp legal_moves_data(game, player_color, piece, r, c) do
     piece_color = GameRules.color(piece)
     square = {r, c}
 
-    legal_moves =
-      if piece_color in [:white, :black] do
-        GameRules.legal_moves_for(game.board, r, c, piece_color, game.castling_rights)
-      else
-        []
-      end
+    legal_moves = legal_moves_for(game, piece_color, square)
 
     if selectable_square?(game, player_color, piece, piece_color, legal_moves, square) do
       legal_moves
@@ -540,6 +579,12 @@ defmodule ManaChessOnlineWeb.GameLive do
   defp first_move_message(%{status: :playing, first_move_pending: :white}), do: "Blancas abren la partida"
   defp first_move_message(_game), do: nil
 
+  defp legal_moves_for(game, piece_color, {r, c}) when piece_color in [:white, :black] do
+    GameRules.legal_moves_for(game.board, r, c, piece_color, game.castling_rights)
+  end
+
+  defp legal_moves_for(_game, _piece_color, _square), do: []
+
   defp tutorial_steps(game) do
     moved? = tutorial_white_moved?(game)
     bot_on? = game.bot_enabled?
@@ -639,25 +684,25 @@ defmodule ManaChessOnlineWeb.GameLive do
 
   defp select_alert(game, player_color, piece, piece_color, nil, legal_moves, square) when not is_nil(piece_color) do
     cond do
-      not can_move_now?(game, piece_color) -> "Blancas deben abrir la partida."
+      not can_move_now?(game, piece_color) -> "Blancas abren: mueve una pieza blanca primero."
       game.practice? and game.bot_enabled? and piece_color == :black -> "El BOT controla Negras."
       not controls_color?(player_color, piece_color) -> spectator_or_control_alert(player_color)
       cooldown_active?(game, square) -> cooldown_alert(game, square)
       not can_afford_piece?(game, piece, piece_color) -> elixir_alert(game, piece, piece_color)
-      legal_moves == [] -> "Esa pieza no tiene movimientos legales ahora."
-      true -> "No puedes mover esa pieza."
+      legal_moves == [] -> "Esa pieza no tiene destinos legales ahora."
+      true -> "No puedes mover esa pieza ahora."
     end
   end
 
-  defp select_alert(_game, _player_color, _piece, _piece_color, nil, _legal_moves, _square), do: "No puedes mover esa pieza."
+  defp select_alert(_game, _player_color, _piece, _piece_color, nil, _legal_moves, _square), do: "No puedes mover esa pieza ahora."
 
   defp spectator_or_control_alert(nil), do: "Estas observando; toma un asiento para mover."
-  defp spectator_or_control_alert(_player_color), do: "Esa pieza no es tuya."
+  defp spectator_or_control_alert(_player_color), do: "Esa pieza no es tuya; elige una de tu lado."
 
   defp can_afford_piece?(game, piece, color), do: Map.get(game.elixir, color, 0) >= piece_cost_for_ui(game, piece)
 
   defp elixir_alert(game, piece, color) do
-    "Falta elixir: #{short_number(Map.get(game.elixir, color, 0))}/#{short_number(piece_cost_for_ui(game, piece))}."
+    "Falta elixir para esa pieza: #{short_number(Map.get(game.elixir, color, 0))}/#{short_number(piece_cost_for_ui(game, piece))}."
   end
 
   defp cooldown_alert(game, square) do
@@ -944,7 +989,7 @@ defmodule ManaChessOnlineWeb.GameLive do
                 <%= for {row, r} <- rows_for(assigns) do %>
                   <%= for {piece, c} <- cols_for(@color, row) do %>
                     <button
-                      class={square_class(@game, r, c, @selected, @valid_moves)}
+                      class={square_class(@game, r, c, @selected, @valid_moves, @blocked_square)}
                       phx-click="move"
                       phx-value-r={r}
                       phx-value-c={c}
