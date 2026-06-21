@@ -5,7 +5,7 @@ defmodule ManaChessOnlineWeb.PageControllerTest do
     conn = get(conn, ~p"/")
     response = html_response(conn, 200)
     assert response =~ "Mana Chess"
-    assert response =~ "sound-events-fit59-20260620"
+    assert response =~ "legal-preview-fit60-20260620"
   end
 
   test "GET /admin", %{conn: conn} do

@@ -429,6 +429,8 @@ const Hooks = {
         button.classList.toggle("mc-skin-selected", selected)
         button.setAttribute("aria-pressed", selected ? "true" : "false")
       })
+
+      this.renderCosmeticPreview()
     },
 
     pieceSkin() {
@@ -459,6 +461,8 @@ const Hooks = {
         button.classList.toggle("mc-skin-selected", selected)
         button.setAttribute("aria-pressed", selected ? "true" : "false")
       })
+
+      this.renderCosmeticPreview()
     },
 
     defaultPalette() {
@@ -500,6 +504,90 @@ const Hooks = {
 
       this.el.querySelectorAll("[data-palette-color]").forEach(input => {
         if (palette[input.dataset.paletteColor]) input.value = palette[input.dataset.paletteColor]
+      })
+
+      this.renderCosmeticPreview()
+    },
+
+    boardPreviewPalette(skin, palette) {
+      const palettes = {
+        classic: {frame: "#f7f2e8", light: "#f3eee2", dark: "#171817"},
+        gilded: {frame: "#fff0b6", light: "#f4d477", dark: "#6e3b1f"},
+        arcane: {frame: "#8b6bea", light: "#8bd9bd", dark: "#241745"},
+        custom: {frame: palette.boardLight, light: palette.boardLight, dark: palette.boardDark},
+      }
+
+      return palettes[skin] || palettes.classic
+    },
+
+    piecePreviewPalette(skin, palette) {
+      const palettes = {
+        classic: {
+          frame: "#e6bd68",
+          white: "#f7ebce",
+          black: "#171a17",
+          whiteText: "#171a12",
+          blackText: "#7c5bd6",
+          whiteGlow: "rgba(247, 235, 206, .36)",
+          blackGlow: "rgba(124, 91, 214, .44)",
+        },
+        runes: {
+          frame: "#8bd9bd",
+          white: "#8bd9bd",
+          black: "#120b22",
+          whiteText: "#03251d",
+          blackText: "#c7b3ff",
+          whiteGlow: "rgba(139, 217, 189, .48)",
+          blackGlow: "rgba(168, 132, 255, .52)",
+        },
+        crystal: {
+          frame: "#fff0b6",
+          white: "#c7d2ff",
+          black: "#101623",
+          whiteText: "#101629",
+          blackText: "#fff0b6",
+          whiteGlow: "rgba(109, 143, 255, .48)",
+          blackGlow: "rgba(255, 240, 182, .5)",
+        },
+        custom: {
+          frame: palette.boardLight,
+          white: palette.pieceWhite,
+          black: palette.pieceBlack,
+          whiteText: this.readableTextColor(palette.pieceWhite),
+          blackText: this.readableTextColor(palette.pieceBlack),
+          whiteGlow: this.hexToRgba(palette.pieceWhite, 0.42),
+          blackGlow: this.hexToRgba(palette.pieceBlack, 0.5),
+        },
+      }
+
+      return palettes[skin] || palettes.classic
+    },
+
+    renderCosmeticPreview() {
+      const palette = this.readPalette()
+      const boardSkin = this.boardSkin()
+      const pieceSkin = this.pieceSkin()
+      const board = this.boardPreviewPalette(boardSkin, palette)
+      const piece = this.piecePreviewPalette(pieceSkin, palette)
+      const vars = {
+        "--mc-preview-board-frame": board.frame,
+        "--mc-preview-board-light": board.light,
+        "--mc-preview-board-dark": board.dark,
+        "--mc-preview-piece-frame": piece.frame,
+        "--mc-preview-piece-white": piece.white,
+        "--mc-preview-piece-black": piece.black,
+        "--mc-preview-piece-white-text": piece.whiteText,
+        "--mc-preview-piece-black-text": piece.blackText,
+        "--mc-preview-piece-white-glow": piece.whiteGlow,
+        "--mc-preview-piece-black-glow": piece.blackGlow,
+      }
+
+      this.el.querySelectorAll("[data-palette-live-preview]").forEach(preview => {
+        preview.dataset.boardSkin = boardSkin
+        preview.dataset.pieceSkin = pieceSkin
+        for (const [name, value] of Object.entries(vars)) {
+          preview.style.setProperty(name, value)
+        }
       })
     },
 
@@ -769,7 +857,10 @@ const Hooks = {
         const square = event.target.closest(".mc-square")
         const piece = square && square.querySelector(".mc-piece:not(:empty)")
 
+        this.clearLegalPreview()
         if (!square || !piece) return
+
+        this.showLegalPreview(square)
 
         this.drag = {
           fromR: square.dataset.r,
@@ -812,6 +903,7 @@ const Hooks = {
 
         if (!drag.moved) return
         this.suppressClick = true
+        this.clearLegalPreview()
 
         const target = document.elementFromPoint(event.clientX, event.clientY)
         const square = target && target.closest(".mc-square")
@@ -830,6 +922,7 @@ const Hooks = {
         const drag = this.drag
         this.drag = null
         this.clearDragVisuals(drag)
+        this.clearLegalPreview()
       })
 
       this.el.addEventListener("click", event => {
@@ -839,6 +932,36 @@ const Hooks = {
           event.stopPropagation()
         }
       }, true)
+    },
+
+    updated() {
+      this.clearLegalPreview()
+    },
+
+    destroyed() {
+      this.clearLegalPreview()
+    },
+
+    showLegalPreview(square) {
+      const moves = (square.dataset.legalMoves || "").trim().split(/\s+/).filter(Boolean)
+      if (moves.length === 0) return
+
+      square.classList.add("mc-selected", "mc-client-selected")
+
+      moves.forEach(move => {
+        const [r, c] = move.split(",")
+        const target = this.el.querySelector(`.mc-square[data-r="${r}"][data-c="${c}"]`)
+        if (target) target.classList.add("mc-valid", "mc-client-valid")
+      })
+    },
+
+    clearLegalPreview() {
+      this.el.querySelectorAll(".mc-client-selected").forEach(square => {
+        square.classList.remove("mc-selected", "mc-client-selected")
+      })
+      this.el.querySelectorAll(".mc-client-valid").forEach(square => {
+        square.classList.remove("mc-valid", "mc-client-valid")
+      })
     },
 
     createDragGhost(piece, x, y) {

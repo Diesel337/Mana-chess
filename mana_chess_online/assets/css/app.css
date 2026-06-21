@@ -4317,12 +4317,12 @@ html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-elixir-bottom-track::a
   place-items: center;
   min-width: 0;
   padding: 7px;
-  border: 1px solid color-mix(in srgb, var(--mc-custom-board-frame, #fff0b6) 38%, rgba(255,255,255,.08));
+  border: 1px solid color-mix(in srgb, var(--mc-preview-board-frame, var(--mc-custom-board-frame, #fff0b6)) 38%, rgba(255,255,255,.08));
   border-radius: 8px;
   background:
-    radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--mc-custom-board-light, #d9c58f) 44%, transparent), transparent 46%),
-    radial-gradient(circle at 88% 88%, color-mix(in srgb, var(--mc-custom-board-dark, #243a31) 64%, transparent), transparent 54%),
-    linear-gradient(135deg, color-mix(in srgb, var(--mc-custom-board-light, #d9c58f) 16%, #0b130d), color-mix(in srgb, var(--mc-custom-board-dark, #243a31) 22%, #0b130d)),
+    radial-gradient(circle at 18% 12%, color-mix(in srgb, var(--mc-preview-board-light, var(--mc-custom-board-light, #d9c58f)) 44%, transparent), transparent 46%),
+    radial-gradient(circle at 88% 88%, color-mix(in srgb, var(--mc-preview-board-dark, var(--mc-custom-board-dark, #243a31)) 64%, transparent), transparent 54%),
+    linear-gradient(135deg, color-mix(in srgb, var(--mc-preview-board-light, var(--mc-custom-board-light, #d9c58f)) 16%, #0b130d), color-mix(in srgb, var(--mc-preview-board-dark, var(--mc-custom-board-dark, #243a31)) 22%, #0b130d)),
     #0b130d;
   box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
 }
@@ -4334,17 +4334,17 @@ html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-elixir-bottom-track::a
   width: min(100%, 104px);
   aspect-ratio: 1;
   overflow: hidden;
-  border: 2px solid var(--mc-custom-board-frame, #fff0b6);
+  border: 2px solid var(--mc-preview-board-frame, var(--mc-custom-board-frame, #fff0b6));
   border-radius: 8px;
-  background: var(--mc-custom-board-light, #d9c58f);
+  background: var(--mc-preview-board-light, var(--mc-custom-board-light, #d9c58f));
   box-shadow:
     inset 0 0 0 1px rgba(0,0,0,.2),
     0 10px 18px rgba(0,0,0,.28),
-    0 0 18px color-mix(in srgb, var(--mc-custom-board-frame, #fff0b6) 22%, transparent);
+    0 0 18px color-mix(in srgb, var(--mc-preview-board-frame, var(--mc-custom-board-frame, #fff0b6)) 22%, transparent);
 }
 
 .mc-palette-board-preview i {
-  background: var(--mc-custom-board-light, #d9c58f);
+  background: var(--mc-preview-board-light, var(--mc-custom-board-light, #d9c58f));
   box-shadow: inset 0 0 0 1px rgba(0,0,0,.16);
 }
 
@@ -4356,7 +4356,7 @@ html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-elixir-bottom-track::a
 .mc-palette-board-preview i:nth-child(12),
 .mc-palette-board-preview i:nth-child(13),
 .mc-palette-board-preview i:nth-child(15) {
-  background: var(--mc-custom-board-dark, #243a31);
+  background: var(--mc-preview-board-dark, var(--mc-custom-board-dark, #243a31));
 }
 
 .mc-palette-board-preview b {
@@ -4374,29 +4374,29 @@ html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-elixir-bottom-track::a
 
 .mc-palette-piece-white {
   left: 34%;
-  border: 2px solid color-mix(in srgb, var(--mc-custom-piece-white, #f6f1df) 66%, var(--mc-custom-board-frame, #fff0b6));
+  border: 2px solid color-mix(in srgb, var(--mc-preview-piece-white, var(--mc-custom-piece-white, #f6f1df)) 66%, var(--mc-preview-piece-frame, var(--mc-custom-board-frame, #fff0b6)));
   background:
-    radial-gradient(circle at 31% 23%, #ffffff 0 22%, var(--mc-custom-piece-white, #f6f1df) 62%, color-mix(in srgb, var(--mc-custom-piece-white, #f6f1df) 58%, #000000) 100%);
-  color: var(--mc-custom-piece-white-text, #10140f);
+    radial-gradient(circle at 31% 23%, #ffffff 0 22%, var(--mc-preview-piece-white, var(--mc-custom-piece-white, #f6f1df)) 62%, color-mix(in srgb, var(--mc-preview-piece-white, var(--mc-custom-piece-white, #f6f1df)) 58%, #000000) 100%);
+  color: var(--mc-preview-piece-white-text, var(--mc-custom-piece-white-text, #10140f));
   text-shadow: 0 1px rgba(255,255,255,.42);
   box-shadow:
     inset 0 1px rgba(255,255,255,.5),
-    inset 0 -7px 12px color-mix(in srgb, var(--mc-custom-piece-white, #f6f1df) 28%, #000000),
-    0 0 16px var(--mc-custom-piece-white-glow, rgba(246, 241, 223, .42)),
+    inset 0 -7px 12px color-mix(in srgb, var(--mc-preview-piece-white, var(--mc-custom-piece-white, #f6f1df)) 28%, #000000),
+    0 0 16px var(--mc-preview-piece-white-glow, var(--mc-custom-piece-white-glow, rgba(246, 241, 223, .42))),
     0 8px 12px rgba(0,0,0,.3);
 }
 
 .mc-palette-piece-black {
   left: 66%;
-  border: 2px solid color-mix(in srgb, var(--mc-custom-piece-black, #241745) 76%, var(--mc-custom-board-frame, #fff0b6));
+  border: 2px solid color-mix(in srgb, var(--mc-preview-piece-black, var(--mc-custom-piece-black, #241745)) 76%, var(--mc-preview-piece-frame, var(--mc-custom-board-frame, #fff0b6)));
   background:
-    radial-gradient(circle at 35% 24%, color-mix(in srgb, var(--mc-custom-piece-black, #241745) 82%, #ffffff), var(--mc-custom-piece-black, #241745) 64%, #050407 100%);
-  color: var(--mc-custom-piece-black-text, #fff8dc);
-  text-shadow: 0 0 12px var(--mc-custom-piece-black-glow, rgba(36, 23, 69, .46));
+    radial-gradient(circle at 35% 24%, color-mix(in srgb, var(--mc-preview-piece-black, var(--mc-custom-piece-black, #241745)) 82%, #ffffff), var(--mc-preview-piece-black, var(--mc-custom-piece-black, #241745)) 64%, #050407 100%);
+  color: var(--mc-preview-piece-black-text, var(--mc-custom-piece-black-text, #fff8dc));
+  text-shadow: 0 0 12px var(--mc-preview-piece-black-glow, var(--mc-custom-piece-black-glow, rgba(36, 23, 69, .46)));
   box-shadow:
     inset 0 1px rgba(255,255,255,.22),
     inset 0 -7px 12px rgba(0,0,0,.3),
-    0 0 16px var(--mc-custom-piece-black-glow, rgba(36, 23, 69, .46)),
+    0 0 16px var(--mc-preview-piece-black-glow, var(--mc-custom-piece-black-glow, rgba(36, 23, 69, .46))),
     0 8px 12px rgba(0,0,0,.3);
 }
 

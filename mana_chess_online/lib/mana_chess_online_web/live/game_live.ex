@@ -283,6 +283,26 @@ defmodule ManaChessOnlineWeb.GameLive do
     ]
   end
 
+  defp legal_moves_data(game, player_color, piece, r, c) do
+    piece_color = GameRules.color(piece)
+    square = {r, c}
+
+    legal_moves =
+      if piece_color in [:white, :black] do
+        GameRules.legal_moves_for(game.board, r, c, piece_color, game.castling_rights)
+      else
+        []
+      end
+
+    if selectable_square?(game, player_color, piece, piece_color, legal_moves, square) do
+      legal_moves
+      |> Enum.map(fn {to_r, to_c} -> "#{to_r},#{to_c}" end)
+      |> Enum.join(" ")
+    else
+      ""
+    end
+  end
+
   defp piece_class("."), do: "mc-piece"
   defp piece_class(piece), do: "mc-piece mc-" <> Atom.to_string(GameRules.color(piece))
 
@@ -923,7 +943,15 @@ defmodule ManaChessOnlineWeb.GameLive do
               <div id={"mc-board-#{@game.id}"} class="mc-board" phx-hook="BoardDrag">
                 <%= for {row, r} <- rows_for(assigns) do %>
                   <%= for {piece, c} <- cols_for(@color, row) do %>
-                    <button class={square_class(@game, r, c, @selected, @valid_moves)} phx-click="move" phx-value-r={r} phx-value-c={c} data-r={r} data-c={c}>
+                    <button
+                      class={square_class(@game, r, c, @selected, @valid_moves)}
+                      phx-click="move"
+                      phx-value-r={r}
+                      phx-value-c={c}
+                      data-r={r}
+                      data-c={c}
+                      data-legal-moves={legal_moves_data(@game, @color, piece, r, c)}
+                    >
                       <span class={piece_class(piece)}>{@symbols[piece]}</span>
                       <span :if={cooldown_for(@game, {r, c})} class="mc-cooldown-ring" style={cooldown_style(@game, {r, c})}>
                         <svg viewBox="0 0 26 26" aria-hidden="true">
