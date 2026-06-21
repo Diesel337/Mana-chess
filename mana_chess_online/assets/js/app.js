@@ -630,7 +630,7 @@ const Hooks = {
       if (!previous || !this.soundEnabled()) return
 
       if (current.result && current.resultKey && current.resultKey !== previous.resultKey) {
-        this.playSound(current.result === "win" ? "win" : current.result === "loss" ? "loss" : "final")
+        this.playSound(current.result === "win" ? "win" : current.result === "loss" ? "loss" : "draw")
         return
       }
 
@@ -664,24 +664,7 @@ const Hooks = {
         this.audioContext = this.audioContext || new AudioContext()
         if (this.audioContext.state === "suspended") this.audioContext.resume()
 
-        const tones = {
-          ready: [[660, 0, .06, "sine"], [880, .07, .08, "sine"]],
-          tap: [[480, 0, .035, "triangle"]],
-          mode: [[520, 0, .045, "sine"], [720, .045, .055, "sine"]],
-          private: [[620, 0, .045, "triangle"], [880, .05, .07, "sine"]],
-          skin: [[390, 0, .04, "triangle"], [590, .045, .06, "sine"], [780, .095, .06, "sine"]],
-          copy: [[760, 0, .04, "sine"], [980, .045, .055, "sine"]],
-          chat: [[620, 0, .04, "sine"], [820, .045, .055, "triangle"]],
-          reset: [[280, 0, .05, "triangle"], [210, .05, .06, "triangle"]],
-          move: [[360, 0, .045, "triangle"], [520, .045, .065, "triangle"]],
-          capture: [[160, 0, .055, "square"], [260, .045, .075, "sawtooth"], [720, .13, .055, "sine"]],
-          check: [[1040, 0, .055, "square"], [780, .045, .08, "triangle"], [1120, .13, .075, "sine"]],
-          alert: [[220, 0, .08, "sawtooth"], [180, .075, .09, "sawtooth"]],
-          state: [[440, 0, .07, "sine"], [660, .07, .08, "sine"]],
-          final: [[523, 0, .08, "triangle"], [659, .08, .08, "triangle"], [784, .16, .12, "triangle"], [988, .27, .11, "sine"]],
-          win: [[523, 0, .07, "triangle"], [659, .07, .07, "triangle"], [784, .14, .1, "triangle"], [1046, .24, .13, "sine"], [1318, .36, .11, "sine"]],
-          loss: [[392, 0, .09, "triangle"], [330, .095, .11, "triangle"], [247, .2, .15, "sine"], [196, .34, .12, "sine"]],
-        }
+        const tones = this.soundPatterns()
 
         for (const tone of tones[kind] || tones.move) {
           this.playTone(...tone)
@@ -690,7 +673,29 @@ const Hooks = {
       }
     },
 
-    playTone(frequency, delay, duration, type) {
+    soundPatterns() {
+      return {
+        ready: [[660, 0, .06, "sine"], [880, .07, .08, "sine"]],
+        tap: [[480, 0, .035, "triangle", .028]],
+        mode: [[520, 0, .045, "sine", .03], [720, .045, .055, "sine", .026]],
+        private: [[620, 0, .045, "triangle", .03], [880, .05, .07, "sine", .026]],
+        skin: [[390, 0, .04, "triangle", .026], [590, .045, .06, "sine", .024], [780, .095, .06, "sine", .02]],
+        copy: [[760, 0, .04, "sine", .026], [980, .045, .055, "sine", .022]],
+        chat: [[620, 0, .04, "sine", .018], [820, .045, .055, "triangle", .016]],
+        reset: [[280, 0, .05, "triangle", .032, 230], [210, .05, .06, "triangle", .026, 170]],
+        move: [[360, 0, .04, "triangle", .024, 410], [520, .042, .058, "triangle", .02, 470]],
+        capture: [[140, 0, .05, "sawtooth", .048, 95], [220, .035, .075, "square", .04, 160], [520, .105, .055, "triangle", .028, 760], [980, .15, .04, "sine", .018, 1180]],
+        check: [[988, 0, .045, "square", .042], [698, .04, .075, "triangle", .034], [1175, .11, .06, "square", .032], [1568, .175, .06, "sine", .022]],
+        alert: [[220, 0, .08, "sawtooth", .035, 185], [180, .075, .09, "sawtooth", .028, 150]],
+        state: [[440, 0, .07, "sine", .026], [660, .07, .08, "sine", .022]],
+        draw: [[440, 0, .08, "triangle", .026], [554, .08, .08, "triangle", .022], [440, .18, .11, "sine", .018]],
+        final: [[523, 0, .08, "triangle", .03], [659, .08, .08, "triangle", .027], [784, .16, .12, "triangle", .024], [988, .27, .11, "sine", .02]],
+        win: [[523, 0, .07, "triangle", .032], [659, .07, .07, "triangle", .03], [784, .14, .1, "triangle", .028], [1046, .24, .13, "sine", .024], [1318, .36, .11, "sine", .018]],
+        loss: [[392, 0, .09, "triangle", .032, 360], [330, .095, .11, "triangle", .028, 294], [247, .2, .15, "sine", .024, 220], [196, .34, .12, "sine", .018, 185]],
+      }
+    },
+
+    playTone(frequency, delay, duration, type, peak = .035, endFrequency = frequency) {
       const context = this.audioContext
       const volume = this.soundVolume()
       if (volume <= 0) return
@@ -700,8 +705,11 @@ const Hooks = {
 
       oscillator.type = type
       oscillator.frequency.setValueAtTime(frequency, start)
+      if (endFrequency !== frequency) {
+        oscillator.frequency.exponentialRampToValueAtTime(Math.max(1, endFrequency), start + duration)
+      }
       gain.gain.setValueAtTime(0.0001, start)
-      gain.gain.linearRampToValueAtTime(0.035 * volume, start + 0.01)
+      gain.gain.linearRampToValueAtTime(peak * volume, start + 0.01)
       gain.gain.exponentialRampToValueAtTime(0.0001, start + duration)
 
       oscillator.connect(gain)
