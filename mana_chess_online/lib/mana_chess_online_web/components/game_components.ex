@@ -151,61 +151,46 @@ defmodule ManaChessOnlineWeb.GameComponents do
             </button>
           </div>
         </div>
-        <div class="mc-cosmetic-group mc-pack-group">
+        <div class="mc-cosmetic-group mc-preset-group">
           <span class="mc-cosmetic-group-label">Conjuntos</span>
-          <div class="mc-pack-options">
-            <button
-              type="button"
-              class="mc-skin-option mc-pack-option"
-              data-cosmetic-pack="classic"
-              data-sound-action="skin"
-              aria-pressed="false"
-            >
-              <span class="mc-pack-preview mc-pack-preview-classic" aria-hidden="true">
-                <i></i><i></i><i></i><i></i>
-                <b class="mc-pack-piece-white">{@symbols["K"]}</b>
-                <b class="mc-pack-piece-black">{@symbols["q"]}</b>
-              </span>
-              <strong>Clasico</strong>
-              <small data-cosmetic-status data-cosmetic-pack-status data-cosmetic-state="included">
-                Incluido
-              </small>
+          <div class="mc-palette-presets mc-conjunto-options" aria-label="Conjuntos de color">
+            <button type="button" data-palette-reset data-sound-action="skin" aria-pressed="false">
+              Base
             </button>
             <button
               type="button"
-              class="mc-skin-option mc-pack-option"
-              data-cosmetic-pack="mana"
+              data-palette-preset="midnight"
               data-sound-action="skin"
               aria-pressed="false"
             >
-              <span class="mc-pack-preview mc-pack-preview-mana" aria-hidden="true">
-                <i></i><i></i><i></i><i></i>
-                <b class="mc-pack-piece-white">{@symbols["K"]}</b>
-                <b class="mc-pack-piece-black">{@symbols["q"]}</b>
-              </span>
-              <strong>Mana</strong>
-              <small data-cosmetic-status data-cosmetic-pack-status data-cosmetic-state="included">
-                Incluido
-              </small>
+              Noche
             </button>
             <button
               type="button"
-              class="mc-skin-option mc-pack-option mc-skin-locked"
-              data-cosmetic-pack="arcane"
+              data-palette-preset="emerald"
               data-sound-action="skin"
-              title="Probar pack premium localmente"
-              aria-disabled="false"
               aria-pressed="false"
             >
-              <span class="mc-pack-preview mc-pack-preview-arcane" aria-hidden="true">
-                <i></i><i></i><i></i><i></i>
-                <b class="mc-pack-piece-white">{@symbols["K"]}</b>
-                <b class="mc-pack-piece-black">{@symbols["q"]}</b>
-              </span>
-              <strong>Arcano</strong>
-              <small data-cosmetic-status data-cosmetic-pack-status data-cosmetic-state="premium">
-                Premium proximamente
-              </small>
+              Jade
+            </button>
+            <button
+              type="button"
+              data-palette-preset="frost"
+              data-sound-action="skin"
+              aria-pressed="false"
+            >
+              Hielo
+            </button>
+            <button
+              type="button"
+              data-palette-preset="solar"
+              data-sound-action="skin"
+              aria-pressed="false"
+            >
+              Solar
+            </button>
+            <button type="button" data-palette-preset="ruby" data-sound-action="skin" aria-pressed="false">
+              Rubi
             </button>
           </div>
         </div>
@@ -225,22 +210,6 @@ defmodule ManaChessOnlineWeb.GameComponents do
               <strong>Custom premium</strong>
               <small data-palette-status data-palette-state="premium">Premium proximamente</small>
             </button>
-            <div class="mc-palette-presets" aria-label="Presets de paleta">
-              <button type="button" data-palette-reset data-sound-action="skin">Base</button>
-              <button type="button" data-palette-preset="midnight" data-sound-action="skin">
-                Noche
-              </button>
-              <button type="button" data-palette-preset="emerald" data-sound-action="skin">
-                Jade
-              </button>
-              <button type="button" data-palette-preset="frost" data-sound-action="skin">
-                Hielo
-              </button>
-              <button type="button" data-palette-preset="solar" data-sound-action="skin">
-                Solar
-              </button>
-              <button type="button" data-palette-preset="ruby" data-sound-action="skin">Rubi</button>
-            </div>
             <div class="mc-palette-fields">
               <label>
                 <span>Claro</span>

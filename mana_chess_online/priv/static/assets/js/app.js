@@ -91,7 +91,12 @@ const Hooks = {
         if (!control || control.disabled || !this.cosmeticUnlocked("palette:custom")) return;
         event.preventDefault();
         this.setPalette(this.palettePreset(control.dataset.palettePreset));
+        this.setBoardSkin("custom");
+        this.setPieceSkin("custom");
+        this.renderBoardSkin();
+        this.renderPieceSkin();
         this.renderPalette();
+        this.renderCosmetics();
         this.playSound("skin");
       };
       this.handlePaletteReset = event => {
@@ -99,14 +104,24 @@ const Hooks = {
         if (!control || control.disabled || !this.cosmeticUnlocked("palette:custom")) return;
         event.preventDefault();
         this.setPalette(this.defaultPalette());
+        this.setBoardSkin("custom");
+        this.setPieceSkin("custom");
+        this.renderBoardSkin();
+        this.renderPieceSkin();
         this.renderPalette();
+        this.renderCosmetics();
         this.playSound("skin");
       };
       this.handlePaletteColor = event => {
         const input = event.target.closest("[data-palette-color]");
         if (!input || input.disabled || !this.cosmeticUnlocked("palette:custom")) return;
         this.setPalette({...this.readPalette(), [input.dataset.paletteColor]: input.value});
+        this.setBoardSkin("custom");
+        this.setPieceSkin("custom");
+        this.renderBoardSkin();
+        this.renderPieceSkin();
         this.renderPalette();
+        this.renderCosmetics();
       };
       this.handleCosmeticPack = event => {
         const control = event.target.closest("[data-cosmetic-pack]");
@@ -406,9 +421,14 @@ const Hooks = {
         editor.querySelectorAll("[data-palette-unlock]").forEach(control => {
           control.setAttribute("aria-disabled", "false");
         });
-        editor.querySelectorAll("[data-palette-preset], [data-palette-reset], [data-palette-color]").forEach(control => {
+        editor.querySelectorAll("[data-palette-color]").forEach(control => {
           control.disabled = !unlocked;
         });
+      });
+
+      const paletteUnlocked = this.cosmeticUnlocked("palette:custom");
+      this.el.querySelectorAll("[data-palette-preset], [data-palette-reset], [data-palette-color]").forEach(control => {
+        control.disabled = !paletteUnlocked;
       });
 
       this.renderCosmeticPacks();

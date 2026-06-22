@@ -8485,3 +8485,46 @@ html[data-desktop="true"] .mc-chat-list {
     --mc-game-board: clamp(430px, min(68vh, 40vw), 560px);
   }
 }
+
+/* Compact cosmetic shop cards and active preset state */
+.mc-skins .mc-skin-option > .mc-skin-preview,
+.mc-skins .mc-skin-option > .mc-piece-skin-preview,
+.mc-skins .mc-skin-option > .mc-pack-preview {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+}
+
+.mc-skins .mc-skin-option > strong {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: end;
+}
+
+.mc-skins .mc-skin-option > small[data-cosmetic-status] {
+  grid-column: 2 !important;
+  grid-row: 2;
+  align-self: start;
+  justify-self: start;
+  margin-top: 2px;
+}
+
+.mc-skins .mc-skin-option {
+  min-height: 58px;
+}
+
+.mc-skins-rail .mc-skin-option,
+html[data-desktop="true"] .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-skin-option {
+  min-height: 48px;
+}
+
+.mc-conjunto-options {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.mc-palette-presets [data-palette-reset]:not(.mc-palette-selected) {
+  border-color: rgba(255,255,255,.08);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.014)),
+    #101912;
+  box-shadow: none;
+}
