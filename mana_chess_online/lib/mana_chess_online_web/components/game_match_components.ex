@@ -59,6 +59,7 @@ defmodule ManaChessOnlineWeb.GameMatchComponents do
   attr :title, :string, required: true
   attr :hint, :string, required: true
   attr :copy_label, :string, required: true
+  attr :copy_success_label, :string, required: true
   attr :badge, :string, default: nil
   attr :arrived_by_link?, :boolean, default: false
 
@@ -81,7 +82,13 @@ defmodule ManaChessOnlineWeb.GameMatchComponents do
         <code>{@invite_path}</code>
       </div>
       <div class="mc-invite-actions">
-        <button class="mc-copy-invite-main" type="button" data-copy-invite={@invite_path}>
+        <button
+          class="mc-copy-invite-main"
+          type="button"
+          data-copy-invite={@invite_path}
+          data-copy-success={@copy_success_label}
+          aria-label={@copy_label}
+        >
           {@copy_label}
         </button>
         <a class="mc-open-invite-link" href={@invite_path}>Abrir link</a>

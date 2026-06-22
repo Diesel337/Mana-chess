@@ -1271,7 +1271,20 @@ body {
 }
 
 .mc-lobby-head .mc-private-quick strong {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   font-size: .82rem;
+}
+
+.mc-lobby-head .mc-private-quick strong::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--mc-teal);
+  box-shadow: 0 0 12px rgba(139, 217, 189, .7);
 }
 
 .mc-lobby-head .mc-private-quick small {
@@ -1336,6 +1349,10 @@ body {
   cursor: pointer;
   font: inherit;
   font-weight: 800;
+}
+
+.mc-lobby-meta button[data-copied="true"] {
+  color: var(--mc-teal);
 }
 
 .mc-lobby-game strong {

@@ -915,9 +915,10 @@ const Hooks = {
     copyInvite(button) {
       const inviteUrl = new URL(button.dataset.copyInvite, window.location.origin).toString()
       const originalHtml = button.innerHTML
+      const copiedLabel = button.dataset.copySuccess || "Copiado"
       const markCopied = () => {
         button.dataset.copied = "true"
-        button.textContent = "Copiado"
+        button.textContent = copiedLabel
         this.playSound("copy")
         window.clearTimeout(button.copyInviteTimer)
         button.copyInviteTimer = window.setTimeout(() => {

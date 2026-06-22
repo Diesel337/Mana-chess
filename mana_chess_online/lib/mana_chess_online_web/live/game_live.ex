@@ -424,6 +424,12 @@ defmodule ManaChessOnlineWeb.GameLive do
 
   defp invite_copy_label(_game, _player_id), do: "Copiar link"
 
+  defp invite_copy_success_label(%{private?: true} = game, player_id) do
+    if private_link_guest?(game, player_id), do: "Link copiado", else: "Invitacion copiada"
+  end
+
+  defp invite_copy_success_label(_game, _player_id), do: "Link copiado"
+
   defp invite_badge(%{private?: true} = game, player_id) do
     if private_link_guest?(game, player_id), do: "Invitado", else: "Privado"
   end
@@ -866,6 +872,7 @@ defmodule ManaChessOnlineWeb.GameLive do
               title={invite_title(@game, @player_id)}
               hint={invite_hint(@game, @player_id)}
               copy_label={invite_copy_label(@game, @player_id)}
+              copy_success_label={invite_copy_success_label(@game, @player_id)}
               badge={invite_badge(@game, @player_id)}
               arrived_by_link?={private_link_guest?(@game, @player_id)}
             />
@@ -1082,9 +1089,9 @@ defmodule ManaChessOnlineWeb.GameLive do
               <div class="mc-lobby-head">
                 <h2>Salas online</h2>
                 <div class="mc-lobby-actions">
-                  <button type="button" class="mc-private-quick" phx-click="create_private" title="Crear sala privada por link" data-sound-action="private">
-                    <strong>Privado por link</strong>
-                    <small>Crear sala</small>
+                  <button type="button" class="mc-private-quick" phx-click="create_private" title="Crear partida privada por link" data-sound-action="private">
+                    <strong>Crear privado</strong>
+                    <small>Invitar por link</small>
                   </button>
                   <button type="button" class="mc-online-quick" phx-click="sit_anywhere" data-sound-action="mode">
                     Online rapido
@@ -1099,7 +1106,7 @@ defmodule ManaChessOnlineWeb.GameLive do
                   </div>
                   <div class="mc-lobby-meta">
                     <a href={~p"/game/#{game.id}"}>Observar</a>
-                    <button type="button" title="Copiar link de sala" data-copy-invite={~p"/game/#{game.id}"}>Link</button>
+                    <button type="button" title="Copiar link de sala" data-copy-invite={~p"/game/#{game.id}"} data-copy-success="Link copiado">Copiar</button>
                     <button :if={clearable_room?(game)} type="button" phx-click="clear_room" phx-value-game={game.id} data-sound-action="reset">Limpiar</button>
                     <span>{lobby_status(game.status)}</span>
                   </div>
