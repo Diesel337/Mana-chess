@@ -549,6 +549,19 @@ const Hooks = {
       return presets[name] || this.defaultPalette()
     },
 
+    paletteEquals(first, second) {
+      return Object.keys(this.defaultPalette()).every(key => {
+        const a = (first[key] || "").toLowerCase()
+        const b = (second[key] || "").toLowerCase()
+        return a === b
+      })
+    },
+
+    activePalettePreset(palette) {
+      const normalized = {...this.defaultPalette(), ...palette}
+      if (this.paletteEquals(normalized, this.defaultPalette())) return "base"
+      return ["midnight", "emerald", "frost", "solar", "ruby"].find(name => this.paletteEquals(normalized, this.palettePreset(name))) || null
+    },
     readPalette() {
       try {
         return {...this.defaultPalette(), ...(JSON.parse(localStorage.getItem(this.paletteKey)) || {})}
@@ -568,7 +581,17 @@ const Hooks = {
       this.el.querySelectorAll("[data-palette-color]").forEach(input => {
         if (palette[input.dataset.paletteColor]) input.value = palette[input.dataset.paletteColor]
       })
-
+      const activePreset = this.activePalettePreset(palette)
+      this.el.querySelectorAll("[data-palette-reset]").forEach(button => {
+        const selected = activePreset === "base"
+        button.classList.toggle("mc-palette-selected", selected)
+        button.setAttribute("aria-pressed", selected ? "true" : "false")
+      })
+      this.el.querySelectorAll("[data-palette-preset]").forEach(button => {
+        const selected = button.dataset.palettePreset === activePreset
+        button.classList.toggle("mc-palette-selected", selected)
+        button.setAttribute("aria-pressed", selected ? "true" : "false")
+      })
       this.renderCosmeticPreview()
     },
 

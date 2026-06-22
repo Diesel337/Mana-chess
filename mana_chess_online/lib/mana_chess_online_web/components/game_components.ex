@@ -21,64 +21,6 @@ defmodule ManaChessOnlineWeb.GameComponents do
         <small>Local primero</small>
       </div>
       <div class="mc-cosmetic-groups">
-        <div class="mc-cosmetic-group mc-pack-group">
-          <span class="mc-cosmetic-group-label">Packs</span>
-          <div class="mc-pack-options">
-            <button
-              type="button"
-              class="mc-skin-option mc-pack-option"
-              data-cosmetic-pack="classic"
-              data-sound-action="skin"
-              aria-pressed="false"
-            >
-              <span class="mc-pack-preview mc-pack-preview-classic" aria-hidden="true">
-                <i></i><i></i><i></i><i></i>
-                <b class="mc-pack-piece-white">{@symbols["K"]}</b>
-                <b class="mc-pack-piece-black">{@symbols["q"]}</b>
-              </span>
-              <strong>Clasico</strong>
-              <small data-cosmetic-status data-cosmetic-pack-status data-cosmetic-state="included">
-                Incluido
-              </small>
-            </button>
-            <button
-              type="button"
-              class="mc-skin-option mc-pack-option"
-              data-cosmetic-pack="mana"
-              data-sound-action="skin"
-              aria-pressed="false"
-            >
-              <span class="mc-pack-preview mc-pack-preview-mana" aria-hidden="true">
-                <i></i><i></i><i></i><i></i>
-                <b class="mc-pack-piece-white">{@symbols["K"]}</b>
-                <b class="mc-pack-piece-black">{@symbols["q"]}</b>
-              </span>
-              <strong>Mana</strong>
-              <small data-cosmetic-status data-cosmetic-pack-status data-cosmetic-state="included">
-                Incluido
-              </small>
-            </button>
-            <button
-              type="button"
-              class="mc-skin-option mc-pack-option mc-skin-locked"
-              data-cosmetic-pack="arcane"
-              data-sound-action="skin"
-              title="Probar pack premium localmente"
-              aria-disabled="false"
-              aria-pressed="false"
-            >
-              <span class="mc-pack-preview mc-pack-preview-arcane" aria-hidden="true">
-                <i></i><i></i><i></i><i></i>
-                <b class="mc-pack-piece-white">{@symbols["K"]}</b>
-                <b class="mc-pack-piece-black">{@symbols["q"]}</b>
-              </span>
-              <strong>Arcano</strong>
-              <small data-cosmetic-status data-cosmetic-pack-status data-cosmetic-state="premium">
-                Premium proximamente
-              </small>
-            </button>
-          </div>
-        </div>
         <div class="mc-cosmetic-group mc-board-group">
           <span class="mc-cosmetic-group-label">Tableros</span>
           <div class="mc-skin-options">
@@ -206,6 +148,64 @@ defmodule ManaChessOnlineWeb.GameComponents do
               </span>
               <strong>Paleta</strong>
               <small data-cosmetic-status data-cosmetic-state="premium">Premium proximamente</small>
+            </button>
+          </div>
+        </div>
+        <div class="mc-cosmetic-group mc-pack-group">
+          <span class="mc-cosmetic-group-label">Conjuntos</span>
+          <div class="mc-pack-options">
+            <button
+              type="button"
+              class="mc-skin-option mc-pack-option"
+              data-cosmetic-pack="classic"
+              data-sound-action="skin"
+              aria-pressed="false"
+            >
+              <span class="mc-pack-preview mc-pack-preview-classic" aria-hidden="true">
+                <i></i><i></i><i></i><i></i>
+                <b class="mc-pack-piece-white">{@symbols["K"]}</b>
+                <b class="mc-pack-piece-black">{@symbols["q"]}</b>
+              </span>
+              <strong>Clasico</strong>
+              <small data-cosmetic-status data-cosmetic-pack-status data-cosmetic-state="included">
+                Incluido
+              </small>
+            </button>
+            <button
+              type="button"
+              class="mc-skin-option mc-pack-option"
+              data-cosmetic-pack="mana"
+              data-sound-action="skin"
+              aria-pressed="false"
+            >
+              <span class="mc-pack-preview mc-pack-preview-mana" aria-hidden="true">
+                <i></i><i></i><i></i><i></i>
+                <b class="mc-pack-piece-white">{@symbols["K"]}</b>
+                <b class="mc-pack-piece-black">{@symbols["q"]}</b>
+              </span>
+              <strong>Mana</strong>
+              <small data-cosmetic-status data-cosmetic-pack-status data-cosmetic-state="included">
+                Incluido
+              </small>
+            </button>
+            <button
+              type="button"
+              class="mc-skin-option mc-pack-option mc-skin-locked"
+              data-cosmetic-pack="arcane"
+              data-sound-action="skin"
+              title="Probar pack premium localmente"
+              aria-disabled="false"
+              aria-pressed="false"
+            >
+              <span class="mc-pack-preview mc-pack-preview-arcane" aria-hidden="true">
+                <i></i><i></i><i></i><i></i>
+                <b class="mc-pack-piece-white">{@symbols["K"]}</b>
+                <b class="mc-pack-piece-black">{@symbols["q"]}</b>
+              </span>
+              <strong>Arcano</strong>
+              <small data-cosmetic-status data-cosmetic-pack-status data-cosmetic-state="premium">
+                Premium proximamente
+              </small>
             </button>
           </div>
         </div>
