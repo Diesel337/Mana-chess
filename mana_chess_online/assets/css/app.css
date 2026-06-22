@@ -6016,6 +6016,52 @@ html[data-desktop="true"] .mc-chat-list {
   }
 }
 
+/* Game fit rail balance */
+@media (min-width: 1000px) {
+  .mc-shell:has(.mc-play-area) {
+    --mc-game-board: clamp(430px, min(calc(100dvh - 260px), 42vw), 760px);
+  }
+
+  .mc-shell:has(.mc-play-area) > .mc-panel,
+  html[data-desktop="true"] .mc-shell:has(.mc-play-area) > .mc-panel {
+    max-height: calc(100dvh - 24px);
+    overflow: auto;
+    scrollbar-width: thin;
+  }
+
+  .mc-panel-game .mc-panel-section {
+    min-height: 0;
+  }
+
+  .mc-panel-game .mc-queue-list,
+  .mc-panel-game .mc-log-list,
+  .mc-panel-game .mc-chat-list {
+    max-height: clamp(72px, 16dvh, 148px);
+    overflow: auto;
+  }
+
+  .mc-panel-game .mc-chat-list {
+    max-height: clamp(82px, 18dvh, 156px);
+  }
+
+  .mc-game:has(.mc-play-area) > .mc-spectator-banner,
+  .mc-game:has(.mc-play-area) > .mc-practice-banner,
+  .mc-game:has(.mc-play-area) > .mc-reconnect-banner,
+  html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-spectator-banner,
+  html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-practice-banner,
+  html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-reconnect-banner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+@media (min-width: 1000px) and (max-width: 1320px) {
+  .mc-shell:has(.mc-play-area) {
+    --mc-game-board: clamp(430px, min(calc(100dvh - 250px), 40vw), 560px);
+  }
+}
+
 /* Desktop lobby rail fit */
 @media (min-width: 1280px) {
   html[data-desktop="true"] .mc-shell:has(.mc-menu) {
