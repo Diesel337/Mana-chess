@@ -135,6 +135,15 @@ const Hooks = {
         this.setPalette({...this.readPalette(), [input.dataset.paletteColor]: input.value})
         this.renderPalette()
       }
+      this.handleCosmeticPack = event => {
+        const control = event.target.closest("[data-cosmetic-pack]")
+        if (!control || control.disabled) return
+        event.preventDefault()
+        this.applyCosmeticPack(control.dataset.cosmeticPack)
+        this.renderBoardSkin()
+        this.renderPieceSkin()
+        this.renderCosmetics()
+      }
       this.handleViewJump = event => {
         if (!event.target.closest('[phx-click="start_practice"], [phx-click="start_tutorial"], [phx-click="sit_anywhere"], [phx-click="create_private"], [phx-click="leave"], [phx-click="sit"]')) return
         this.scrollViewToTop()
@@ -152,6 +161,7 @@ const Hooks = {
       this.el.addEventListener("click", this.handlePaletteReset)
       this.el.addEventListener("input", this.handlePaletteColor)
       this.el.addEventListener("change", this.handlePaletteColor)
+      this.el.addEventListener("click", this.handleCosmeticPack)
       this.el.addEventListener("click", this.handleViewJump, true)
       this.recordResult()
       this.renderStats()
@@ -192,6 +202,7 @@ const Hooks = {
       this.el.removeEventListener("click", this.handlePaletteReset)
       this.el.removeEventListener("input", this.handlePaletteColor)
       this.el.removeEventListener("change", this.handlePaletteColor)
+      this.el.removeEventListener("click", this.handleCosmeticPack)
       this.el.removeEventListener("click", this.handleViewJump, true)
     },
 
@@ -343,6 +354,32 @@ const Hooks = {
       return !id || this.cosmeticUnlocked(id)
     },
 
+    cosmeticPackConfig(pack) {
+      const packs = {
+        classic: {board: "classic", piece: "classic", included: true},
+        mana: {board: "gilded", piece: "runes", included: true},
+        arcane: {board: "arcane", piece: "crystal", unlocks: ["board:arcane", "piece:crystal"]},
+      }
+
+      return packs[pack] || null
+    },
+
+    cosmeticPackUnlocked(pack) {
+      const config = this.cosmeticPackConfig(pack)
+      if (!config) return false
+      if (config.included) return true
+      return (config.unlocks || []).every(id => this.cosmeticUnlocked(id))
+    },
+
+    applyCosmeticPack(pack) {
+      const config = this.cosmeticPackConfig(pack)
+      if (!config) return
+
+      ;(config.unlocks || []).forEach(id => this.unlockCosmetic(id))
+      this.setBoardSkin(config.board)
+      this.setPieceSkin(config.piece)
+    },
+
     premiumIdForBoardSkin(skin) {
       return skin === "arcane" || skin === "custom" ? `board:${skin}` : null
     },
@@ -398,6 +435,32 @@ const Hooks = {
         })
         editor.querySelectorAll("[data-palette-preset], [data-palette-reset], [data-palette-color]").forEach(control => {
           control.disabled = !unlocked
+        })
+      })
+
+      this.renderCosmeticPacks()
+    },
+
+    renderCosmeticPacks() {
+      const board = this.boardSkin()
+      const piece = this.pieceSkin()
+
+      this.el.querySelectorAll("[data-cosmetic-pack]").forEach(control => {
+        const pack = control.dataset.cosmeticPack
+        const config = this.cosmeticPackConfig(pack)
+        if (!config) return
+
+        const unlocked = this.cosmeticPackUnlocked(pack)
+        const selected = unlocked && config.board === board && config.piece === piece
+        control.classList.toggle("mc-skin-selected", selected)
+        control.classList.toggle("mc-skin-locked", !unlocked)
+        control.classList.toggle("mc-skin-unlocked", unlocked && !config.included)
+        control.setAttribute("aria-pressed", selected ? "true" : "false")
+        control.setAttribute("aria-disabled", "false")
+        control.title = unlocked ? "Pack disponible localmente" : "Premium proximamente; probar localmente"
+        control.querySelectorAll("[data-cosmetic-pack-status]").forEach(status => {
+          status.textContent = config.included ? "Incluido" : unlocked ? "Local" : "Premium proximamente"
+          status.dataset.cosmeticState = config.included ? "included" : unlocked ? "local" : "premium"
         })
       })
     },

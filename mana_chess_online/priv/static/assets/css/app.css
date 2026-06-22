@@ -5705,6 +5705,94 @@ html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-elixir-bottom-track::a
     inset 0 1px rgba(255,255,255,.1);
 }
 
+.mc-pack-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.mc-pack-option {
+  min-height: 68px;
+}
+
+.mc-pack-preview {
+  --pack-frame: #f7f2e8;
+  --pack-light: #f3eee2;
+  --pack-dark: #171817;
+  --pack-white: #f7ebce;
+  --pack-black: #171a17;
+  --pack-white-text: #171a12;
+  --pack-black-text: #7c5bd6;
+  position: relative;
+  display: grid;
+  grid-row: 1 / span 2;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 40px;
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 2px solid var(--pack-frame);
+  border-radius: 7px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, .22);
+}
+
+.mc-pack-preview i:nth-child(1),
+.mc-pack-preview i:nth-child(4) {
+  background: var(--pack-light);
+}
+
+.mc-pack-preview i:nth-child(2),
+.mc-pack-preview i:nth-child(3) {
+  background: var(--pack-dark);
+}
+
+.mc-pack-preview b {
+  position: absolute;
+  display: grid;
+  width: 18px;
+  aspect-ratio: 1;
+  place-items: center;
+  border-radius: 999px;
+  font-size: .78rem;
+  line-height: 1;
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, .4),
+    0 5px 10px rgba(0, 0, 0, .3);
+}
+
+.mc-pack-piece-white {
+  right: 4px;
+  bottom: 4px;
+  background: radial-gradient(circle at 32% 24%, #fff, var(--pack-white) 64%, color-mix(in srgb, var(--pack-white) 68%, #000) 100%);
+  color: var(--pack-white-text);
+}
+
+.mc-pack-piece-black {
+  top: 4px;
+  left: 4px;
+  background: radial-gradient(circle at 35% 24%, color-mix(in srgb, var(--pack-black) 74%, #fff), var(--pack-black) 64%, #050407 100%);
+  color: var(--pack-black-text);
+}
+
+.mc-pack-preview-mana {
+  --pack-frame: #fff0b6;
+  --pack-light: #f4d477;
+  --pack-dark: #6e3b1f;
+  --pack-white: #8bd9bd;
+  --pack-black: #120b22;
+  --pack-white-text: #03251d;
+  --pack-black-text: #c7b3ff;
+}
+
+.mc-pack-preview-arcane {
+  --pack-frame: #8b6bea;
+  --pack-light: #8bd9bd;
+  --pack-dark: #241745;
+  --pack-white: #c7d2ff;
+  --pack-black: #101623;
+  --pack-white-text: #101629;
+  --pack-black-text: #fff0b6;
+}
+
 .mc-skin-locked,
 .mc-skin-strip button:disabled {
   cursor: not-allowed;
@@ -7090,6 +7178,11 @@ html[data-piece-skin="custom"] .mc-drag-ghost.mc-black {
     gap: 5px;
   }
 
+  .mc-menu .mc-pack-options {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 5px;
+  }
+
   .mc-menu .mc-skin-option {
     min-width: 0;
     overflow: hidden;
@@ -7104,6 +7197,10 @@ html[data-piece-skin="custom"] .mc-drag-ghost.mc-black {
 
   .mc-menu .mc-piece-skin-preview {
     width: 20px;
+  }
+
+  .mc-menu .mc-pack-preview {
+    width: 28px;
   }
 
   .mc-menu .mc-skin-option [data-cosmetic-status] {
@@ -7187,6 +7284,11 @@ html[data-piece-skin="custom"] .mc-drag-ghost.mc-black {
     gap: 6px !important;
   }
 
+  .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-pack-options {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+
   .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-skin-option {
     grid-template-columns: auto minmax(0, 1fr);
     justify-items: stretch;
@@ -7198,6 +7300,10 @@ html[data-piece-skin="custom"] .mc-drag-ghost.mc-black {
   .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-skin-preview,
   .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-piece-skin-preview {
     width: 28px;
+  }
+
+  .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-pack-preview {
+    width: 30px;
   }
 
   .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-skin-option strong {
@@ -7959,6 +8065,13 @@ html[data-desktop="true"] .mc-chat-list {
     box-shadow: inset 0 1px rgba(255, 255, 255, .045);
   }
 
+  html[data-desktop="true"] .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-pack-group {
+    border-color: rgba(168, 132, 255, .22);
+    background:
+      linear-gradient(135deg, rgba(168, 132, 255, .08), transparent 42%),
+      rgba(8, 16, 11, .38);
+  }
+
   html[data-desktop="true"] .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-piece-group {
     border-color: rgba(139, 217, 189, .2);
     background:
@@ -7986,6 +8099,11 @@ html[data-desktop="true"] .mc-chat-list {
     gap: 6px !important;
   }
 
+  html[data-desktop="true"] .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-pack-options {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+
   html[data-desktop="true"] .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-skin-option {
     grid-template-columns: auto minmax(0, 1fr);
     min-height: 58px;
@@ -7995,6 +8113,10 @@ html[data-desktop="true"] .mc-chat-list {
   html[data-desktop="true"] .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-skin-preview,
   html[data-desktop="true"] .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-piece-skin-preview {
     width: 26px;
+  }
+
+  html[data-desktop="true"] .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-pack-preview {
+    width: 30px;
   }
 
   html[data-desktop="true"] .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-skin-option strong {
