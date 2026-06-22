@@ -8545,3 +8545,45 @@ html[data-desktop="true"] .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-skin-opti
     #101912;
   box-shadow: none;
 }
+
+/* Chat v2 polish */
+.mc-chat-list {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139, 217, 189, .34) rgba(0, 0, 0, .16);
+}
+
+.mc-chat-latest {
+  border-color: rgba(139, 217, 189, .24);
+  box-shadow:
+    inset 2px 0 rgba(139, 217, 189, .62),
+    0 8px 18px rgba(0, 0, 0, .12);
+}
+
+.mc-chat-latest.mc-chat-mine {
+  border-color: rgba(255, 217, 130, .3);
+  box-shadow:
+    inset 2px 0 rgba(255, 217, 130, .72),
+    0 8px 18px rgba(0, 0, 0, .12);
+}
+
+.mc-chat-form {
+  position: relative;
+}
+
+.mc-chat-form:focus-within .mc-chat-field input {
+  background:
+    linear-gradient(90deg, rgba(139, 217, 189, .08), transparent 60%),
+    rgba(0, 0, 0, .24);
+}
+
+.mc-chat-form-ready .mc-chat-field input {
+  border-color: rgba(139, 217, 189, .34);
+}
+
+.mc-chat-form button[disabled] {
+  box-shadow: none;
+}
+
+.mc-chat-form button:disabled:not([data-phx-disable-with]) {
+  color: rgba(25, 16, 0, .72);
+}

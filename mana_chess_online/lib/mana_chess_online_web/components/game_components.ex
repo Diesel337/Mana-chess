@@ -347,10 +347,14 @@ defmodule ManaChessOnlineWeb.GameComponents do
           <h2>Chat</h2>
           <span>{chat_count_text(@game)}</span>
         </div>
-        <ul class="mc-chat-list" data-chat-list>
+        <ul class="mc-chat-list" data-chat-list aria-live="polite" aria-label="Chat de sala">
           <li
-            :for={entry <- chat_entries}
-            class={["mc-chat-entry", chat_entry_class(entry, @player_id)]}
+            :for={{entry, index} <- Enum.with_index(chat_entries)}
+            class={[
+              "mc-chat-entry",
+              chat_entry_class(entry, @player_id),
+              latest_chat_entry?(chat_entries, index) && "mc-chat-latest"
+            ]}
           >
             <small>
               <strong>{chat_entry_name(entry, @player_id)}</strong>
@@ -375,6 +379,7 @@ defmodule ManaChessOnlineWeb.GameComponents do
           class={["mc-chat-form", !chat_send_disabled?(@chat_draft) && "mc-chat-form-ready"]}
           phx-change="chat_change"
           phx-submit="send_chat"
+          data-chat-form
         >
           <label class={["mc-chat-field", chat_draft_near_limit?(@chat_draft) && "mc-chat-field-hot"]}>
             <input
@@ -383,14 +388,15 @@ defmodule ManaChessOnlineWeb.GameComponents do
               maxlength="180"
               autocomplete="off"
               autocapitalize="sentences"
-              placeholder="Mensaje de sala"
+              placeholder={chat_placeholder(chat_entries)}
               aria-label="Mensaje de chat"
+              data-chat-input
             />
             <small>{chat_draft_length(@chat_draft)}/180</small>
           </label>
-          <button type="submit" disabled={chat_send_disabled?(@chat_draft)}>Enviar</button>
+          <button type="submit" disabled={chat_send_disabled?(@chat_draft)} phx-disable-with="Enviando">Enviar</button>
         </form>
-        <p :if={@chat_error} class="mc-chat-error">{@chat_error}</p>
+        <p :if={@chat_error} class="mc-chat-error" role="status">{@chat_error}</p>
       </section>
     </aside>
     """
@@ -419,7 +425,10 @@ defmodule ManaChessOnlineWeb.GameComponents do
 
   defp chat_entry_class(%{player_id: player_id}, player_id), do: "mc-chat-mine"
   defp chat_entry_class(_entry, _player_id), do: nil
+  defp latest_chat_entry?(entries, index), do: entries != [] and index == length(entries) - 1
   defp chat_send_disabled?(draft), do: String.trim(draft || "") == ""
+  defp chat_placeholder([]), do: "Primer mensaje"
+  defp chat_placeholder(_entries), do: "Responder en sala"
 
   defp chat_entry_name(%{player_id: player_id, name: name}, player_id) when is_binary(name),
     do: "Tu " <> short_chat_name(name)
