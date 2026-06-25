@@ -7,6 +7,8 @@ const GAME_ORIGIN = new URL(DEFAULT_GAME_URL).origin
 const PROTOCOL_SCHEME = "manachess"
 const DESKTOP_CHANNEL = process.env.MANA_CHESS_DESKTOP_CHANNEL || "desktop"
 const WINDOW_STATE_FILE = "window-state.json"
+const DESKTOP_STATE_FILE = "desktop-state.json"
+const EVENT_LOG_LIMIT = 40
 const MIN_WINDOW_WIDTH = 1024
 const MIN_WINDOW_HEIGHT = 720
 const DEFAULT_WINDOW_WIDTH = 1440
@@ -74,10 +76,11 @@ function bindDesktopBridge() {
     return {ok: true, url: shareUrl}
   })
 
-  ipcMain.on("mana-chess:desktop-event", (_event, event) => {
-    if (!event || typeof event.name !== "string") return
-    // Reserved for Steamworks achievements, rich presence, and cloud-save hooks.
-  })
+  ipcMain.handle("mana-chess:get-desktop-state", () => readDesktopState())
+
+  ipcMain.handle("mana-chess:copy-desktop-state", () => copyDesktopState())
+
+  ipcMain.on("mana-chess:desktop-event", (_event, event) => recordDesktopEvent(event))
 }
 
 function buildMenu() {
@@ -94,6 +97,10 @@ function buildMenu() {
           label: "Copiar link actual",
           accelerator: "CommandOrControl+Shift+C",
           click: () => copyCurrentLink()
+        },
+        {
+          label: "Copiar estado desktop",
+          click: () => copyDesktopState()
         },
         {
           label: "Recargar",
@@ -240,6 +247,173 @@ function copyCurrentLink() {
   clipboard.writeText(cleanShareUrl(mainWindow.webContents.getURL()) || DEFAULT_GAME_URL)
 }
 
+function desktopStatePath() {
+  return path.join(app.getPath("userData"), DESKTOP_STATE_FILE)
+}
+
+function readDesktopState() {
+  try {
+    return normalizeDesktopState(JSON.parse(fs.readFileSync(desktopStatePath(), "utf8")))
+  } catch (_error) {
+    return normalizeDesktopState({})
+  }
+}
+
+function writeDesktopState(state) {
+  try {
+    fs.mkdirSync(app.getPath("userData"), {recursive: true})
+    fs.writeFileSync(desktopStatePath(), JSON.stringify(normalizeDesktopState(state), null, 2))
+  } catch (_error) {
+    // Desktop state should never block gameplay or app launch.
+  }
+}
+
+function normalizeDesktopState(state) {
+  return {
+    version: 1,
+    updatedAt: typeof state.updatedAt === "string" ? state.updatedAt : "",
+    presence: typeof state.presence === "object" && state.presence ? state.presence : desktopPresence("lobby"),
+    counters: typeof state.counters === "object" && state.counters ? state.counters : {},
+    achievements: typeof state.achievements === "object" && state.achievements ? state.achievements : {},
+    seen: typeof state.seen === "object" && state.seen ? state.seen : {},
+    lastEvents: Array.isArray(state.lastEvents) ? state.lastEvents.slice(0, EVENT_LOG_LIMIT) : []
+  }
+}
+
+function copyDesktopState() {
+  const state = readDesktopState()
+  clipboard.writeText(JSON.stringify(state, null, 2))
+  return {ok: true, state}
+}
+
+function recordDesktopEvent(event) {
+  const normalizedEvent = normalizeDesktopEvent(event)
+  if (!normalizedEvent) return
+
+  const state = updateDesktopState(readDesktopState(), normalizedEvent)
+  writeDesktopState(state)
+}
+
+function normalizeDesktopEvent(event) {
+  if (!event || typeof event.name !== "string") return null
+
+  const name = event.name.trim().slice(0, 80)
+  if (!name) return null
+
+  return {
+    name,
+    payload: cloneJson(event.payload),
+    at: new Date().toISOString()
+  }
+}
+
+function cloneJson(value) {
+  try {
+    return JSON.parse(JSON.stringify(value || {}))
+  } catch (_error) {
+    return {}
+  }
+}
+
+function updateDesktopState(state, event) {
+  const next = normalizeDesktopState(state)
+  const {name, payload, at} = event
+
+  next.updatedAt = at
+  next.lastEvents = [event, ...next.lastEvents].slice(0, EVENT_LOG_LIMIT)
+  incrementCounter(next, `event:${name}`)
+
+  if (name === "desktop.session_started") {
+    incrementCounter(next, "sessions")
+    unlockAchievement(next, "desktop_session", "Abrir Mana Chess Desktop", at)
+    next.presence = desktopPresence("lobby", payload, at)
+  }
+
+  if (name === "screen.viewed") {
+    next.presence = desktopPresence(payload.screen || "lobby", payload, at)
+  }
+
+  if (name === "match.opened") {
+    next.presence = desktopPresence("game", payload, at)
+    if (markSeen(next, "openedMatches", payload.gameId)) incrementCounter(next, "matchesOpened")
+    if (String(payload.gameId || "").startsWith("private_")) unlockAchievement(next, "private_match", "Abrir partida privada", at)
+  }
+
+  if (name === "match.status_changed") {
+    next.presence = desktopPresence("game", payload, at)
+  }
+
+  if (name === "match.started") {
+    next.presence = desktopPresence("playing", payload, at)
+    if (markSeen(next, "startedMatches", payload.gameId)) incrementCounter(next, "matchesStarted")
+    unlockAchievement(next, "first_match", "Iniciar primera partida", at)
+  }
+
+  if (name === "match.finished") {
+    next.presence = desktopPresence("result", payload, at)
+    const newResult = markSeen(next, "finishedResults", payload.resultKey || payload.gameId)
+
+    if (newResult) {
+      incrementCounter(next, "matchesFinished")
+      if (payload.result === "win") {
+        incrementCounter(next, "wins")
+        unlockAchievement(next, "first_win", "Primera victoria", at)
+      }
+      if (payload.result === "loss") incrementCounter(next, "losses")
+      if (payload.result === "draw") {
+        incrementCounter(next, "draws")
+        unlockAchievement(next, "first_draw", "Primer empate", at)
+      }
+    }
+
+    unlockAchievement(next, "first_result", "Terminar primera partida", at)
+  }
+
+  return next
+}
+
+function desktopPresence(kind, payload = {}, at = new Date().toISOString()) {
+  const labels = {
+    lobby: "En lobby",
+    game: "En partida",
+    playing: "Jugando partida",
+    result: resultPresenceLabel(payload.result)
+  }
+
+  return {
+    kind,
+    label: labels[kind] || labels.lobby,
+    gameId: payload.gameId || "",
+    status: payload.status || "",
+    screen: payload.screen || (payload.gameId ? "game" : "lobby"),
+    updatedAt: at
+  }
+}
+
+function resultPresenceLabel(result) {
+  if (result === "win") return "Victoria registrada"
+  if (result === "loss") return "Derrota registrada"
+  if (result === "draw") return "Empate registrado"
+  return "Partida terminada"
+}
+
+function incrementCounter(state, key) {
+  state.counters[key] = Number.isFinite(state.counters[key]) ? state.counters[key] + 1 : 1
+}
+
+function markSeen(state, bucket, value) {
+  if (!value) return true
+  const seen = Array.isArray(state.seen[bucket]) ? state.seen[bucket] : []
+  if (seen.includes(value)) return false
+
+  state.seen[bucket] = [value, ...seen].slice(0, 80)
+  return true
+}
+
+function unlockAchievement(state, id, title, at) {
+  if (state.achievements[id]) return
+  state.achievements[id] = {id, title, unlockedAt: at}
+}
 function cleanShareUrl(url) {
   const parsed = safeUrl(String(url || ""))
   if (!parsed || parsed.origin !== GAME_ORIGIN) return null
@@ -470,6 +644,7 @@ if (!gotLock) {
   app.whenReady().then(() => {
     Menu.setApplicationMenu(buildMenu())
     bindDesktopBridge()
+    recordDesktopEvent({name: "desktop.session_started", payload: {version: app.getVersion(), channel: DESKTOP_CHANNEL}})
     createWindow()
 
     app.on("activate", () => {

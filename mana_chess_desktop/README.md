@@ -84,6 +84,8 @@ The preload exposes a small, future-safe API to the remote game:
 
 ```js
 window.ManaChessDesktop.getInfo()
+window.ManaChessDesktop.getState()
+window.ManaChessDesktop.copyState()
 window.ManaChessDesktop.copyShareLink(window.location.href)
 window.ManaChessDesktop.sendEvent("match.finished", {result: "win"})
 ```
@@ -91,6 +93,8 @@ window.ManaChessDesktop.sendEvent("match.finished", {result: "win"})
 `sendEvent` is intentionally a no-op sink for now. It gives us a stable place to attach Steamworks achievements, rich presence, and cloud-save hooks later.
 
 Emitted event names currently include `screen.viewed`, `match.opened`, `match.status_changed`, `match.started`, and `match.finished`.
+
+Desktop state is stored locally in Electron user data as `desktop-state.json`. It tracks session counters, a small event log, current presence, and local achievement flags that can later map to Steamworks achievements.
 
 ## Notes
 
