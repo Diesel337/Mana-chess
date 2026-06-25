@@ -1,10 +1,11 @@
 const fs = require("node:fs")
 const path = require("node:path")
-const {app, BrowserWindow, Menu, clipboard, screen, shell} = require("electron")
+const {app, BrowserWindow, Menu, clipboard, ipcMain, screen, shell} = require("electron")
 
 const DEFAULT_GAME_URL = process.env.MANA_CHESS_URL || "https://mana-chess-production.up.railway.app/"
 const GAME_ORIGIN = new URL(DEFAULT_GAME_URL).origin
 const PROTOCOL_SCHEME = "manachess"
+const DESKTOP_CHANNEL = process.env.MANA_CHESS_DESKTOP_CHANNEL || "desktop"
 const WINDOW_STATE_FILE = "window-state.json"
 const MIN_WINDOW_WIDTH = 1024
 const MIN_WINDOW_HEIGHT = 720
@@ -40,6 +41,11 @@ function createWindow() {
     show: false,
     webPreferences: {
       preload: `${__dirname}/preload.cjs`,
+      additionalArguments: [
+        `--mana-chess-version=${app.getVersion()}`,
+        `--mana-chess-channel=${DESKTOP_CHANNEL}`,
+        `--mana-chess-origin=${GAME_ORIGIN}`
+      ],
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true
@@ -59,6 +65,19 @@ function createWindow() {
   const initialUrl = pendingGameUrl || DEFAULT_GAME_URL
   pendingGameUrl = null
   loadGameUrl(initialUrl)
+}
+
+function bindDesktopBridge() {
+  ipcMain.handle("mana-chess:copy-share-link", (_event, url) => {
+    const shareUrl = cleanShareUrl(url) || cleanShareUrl(mainWindow?.webContents.getURL()) || DEFAULT_GAME_URL
+    clipboard.writeText(shareUrl)
+    return {ok: true, url: shareUrl}
+  })
+
+  ipcMain.on("mana-chess:desktop-event", (_event, event) => {
+    if (!event || typeof event.name !== "string") return
+    // Reserved for Steamworks achievements, rich presence, and cloud-save hooks.
+  })
 }
 
 function buildMenu() {
@@ -218,15 +237,14 @@ function toggleFullscreen() {
 
 function copyCurrentLink() {
   if (!mainWindow) return
+  clipboard.writeText(cleanShareUrl(mainWindow.webContents.getURL()) || DEFAULT_GAME_URL)
+}
 
-  const currentUrl = safeUrl(mainWindow.webContents.getURL())
-  if (!currentUrl || currentUrl.origin !== GAME_ORIGIN) {
-    clipboard.writeText(DEFAULT_GAME_URL)
-    return
-  }
-
-  currentUrl.searchParams.delete("desktop")
-  clipboard.writeText(currentUrl.toString())
+function cleanShareUrl(url) {
+  const parsed = safeUrl(String(url || ""))
+  if (!parsed || parsed.origin !== GAME_ORIGIN) return null
+  parsed.searchParams.delete("desktop")
+  return parsed.toString()
 }
 
 function desktopUrl(url) {
@@ -451,6 +469,7 @@ if (!gotLock) {
 
   app.whenReady().then(() => {
     Menu.setApplicationMenu(buildMenu())
+    bindDesktopBridge()
     createWindow()
 
     app.on("activate", () => {

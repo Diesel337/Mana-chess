@@ -59,6 +59,7 @@ npm run pack:win
 - `manachess://` deep links can open lobby or game routes inside the desktop app.
 - External links open in the user's browser; Mana Chess links stay in the app window.
 - The Windows build uses `build/icon.ico` and app id `com.diesel337.manachess`.
+- The web game can read `window.ManaChessDesktop.getInfo()` for desktop version, channel, platform, and origin.
 
 Deep link examples:
 
@@ -76,6 +77,18 @@ Shortcuts:
 - `Ctrl+R`: reload.
 - `F11`: fullscreen.
 - `Esc`: leave fullscreen.
+
+## Desktop bridge
+
+The preload exposes a small, future-safe API to the remote game:
+
+```js
+window.ManaChessDesktop.getInfo()
+window.ManaChessDesktop.copyShareLink(window.location.href)
+window.ManaChessDesktop.sendEvent("match.finished", {result: "win"})
+```
+
+`sendEvent` is intentionally a no-op sink for now. It gives us a stable place to attach Steamworks achievements, rich presence, and cloud-save hooks later.
 
 ## Notes
 

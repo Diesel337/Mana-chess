@@ -6,8 +6,12 @@
     <meta name="csrf-token" content={get_csrf_token()} />
     <script>
       (() => {
-        if (new URLSearchParams(window.location.search).get("desktop") === "1") {
+        const bridge = window.ManaChessDesktop;
+        const info = typeof bridge?.getInfo === "function" ? bridge.getInfo() : null;
+        if (new URLSearchParams(window.location.search).get("desktop") === "1" || info?.isDesktop) {
           document.documentElement.dataset.desktop = "true";
+          if (info?.channel) document.documentElement.dataset.desktopChannel = info.channel;
+          if (info?.version) document.documentElement.dataset.desktopVersion = info.version;
         }
       })();
     </script>
