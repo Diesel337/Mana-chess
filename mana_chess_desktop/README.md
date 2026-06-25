@@ -90,6 +90,8 @@ window.ManaChessDesktop.sendEvent("match.finished", {result: "win"})
 
 `sendEvent` is intentionally a no-op sink for now. It gives us a stable place to attach Steamworks achievements, rich presence, and cloud-save hooks later.
 
+Emitted event names currently include `screen.viewed`, `match.opened`, `match.status_changed`, `match.started`, and `match.finished`.
+
 ## Notes
 
 - This version requires internet.

@@ -40,6 +40,8 @@ const Hooks = {
       this.audioContext = null
       this.lastSoundState = this.soundState()
       this.lastChatScrollState = null
+      this.lastDesktopEventKeys = new Set()
+      this.lastDesktopViewKey = null
       this.lastViewKey = this.viewKey()
       this.keepInitialViewInFrame()
       this.handleReset = event => {
@@ -187,6 +189,8 @@ const Hooks = {
       this.renderPalette()
       this.renderChatTimes()
       this.keepChatAtLatest()
+      this.emitDesktopView()
+      this.emitDesktopState(this.soundState(), null)
     },
 
     updated() {
@@ -199,6 +203,7 @@ const Hooks = {
       this.renderPalette()
       this.renderChatTimes()
       this.keepViewInFrame()
+      this.emitDesktopView()
       this.keepChatAtLatest()
       this.playChangedSound()
     },
@@ -265,6 +270,78 @@ const Hooks = {
       stats.seen = [key, ...stats.seen].slice(0, 40)
       this.writeStats(stats)
       this.lastResultKey = key
+      this.sendDesktopEvent("match.finished", {result: outcome, resultKey: key}, `match.finished:${key}`)
+    },
+
+    desktopBridge() {
+      const bridge = window.ManaChessDesktop
+      return bridge && typeof bridge.sendEvent === "function" ? bridge : null
+    },
+
+    desktopPayload(payload = {}) {
+      const state = this.soundState()
+      return {
+        path: window.location.pathname,
+        screen: state.gameId ? "game" : "lobby",
+        view: this.viewKey(),
+        gameId: state.gameId,
+        status: state.status,
+        ...payload,
+      }
+    },
+
+    sendDesktopEvent(name, payload = {}, key = "") {
+      const bridge = this.desktopBridge()
+      if (!bridge) return
+
+      const eventKey = key || `${name}:${payload.gameId || ""}:${payload.status || ""}:${payload.result || ""}`
+      if (eventKey && this.lastDesktopEventKeys.has(eventKey)) return
+
+      if (eventKey) {
+        this.lastDesktopEventKeys.add(eventKey)
+        if (this.lastDesktopEventKeys.size > 80) {
+          this.lastDesktopEventKeys = new Set([...this.lastDesktopEventKeys].slice(-40))
+        }
+      }
+
+      try {
+        bridge.sendEvent(name, this.desktopPayload(payload))
+      } catch (_error) {
+      }
+    },
+
+    emitDesktopView() {
+      const state = this.soundState()
+      const screen = state.gameId ? "game" : "lobby"
+      const key = `${screen}:${state.gameId || "lobby"}:${window.location.pathname}`
+      if (key === this.lastDesktopViewKey) return
+
+      this.lastDesktopViewKey = key
+      this.sendDesktopEvent("screen.viewed", {screen}, `screen.viewed:${key}`)
+    },
+
+    emitDesktopState(current, previous) {
+      if (!current.gameId) return
+
+      if (!previous || current.gameId !== previous.gameId) {
+        this.sendDesktopEvent("match.opened", {}, `match.opened:${current.gameId}`)
+      }
+
+      if (!current.status || (previous && current.status === previous.status)) return
+
+      this.sendDesktopEvent(
+        "match.status_changed",
+        {previousStatus: previous?.status || ""},
+        `match.status_changed:${current.gameId}:${current.status}`
+      )
+
+      if (this.desktopStatusIsPlaying(current.status) && !this.desktopStatusIsPlaying(previous?.status || "")) {
+        this.sendDesktopEvent("match.started", {}, `match.started:${current.gameId}`)
+      }
+    },
+
+    desktopStatusIsPlaying(status) {
+      return status === ":playing" || status.includes("starting") || status.includes("promotion")
     },
 
     renderStats() {
@@ -820,6 +897,7 @@ const Hooks = {
       const current = this.soundState()
       const previous = this.lastSoundState
       this.lastSoundState = current
+      this.emitDesktopState(current, previous)
 
       if (!previous || !this.soundEnabled()) return
 
@@ -927,7 +1005,12 @@ const Hooks = {
         }, 1400)
       }
 
-      if (navigator.clipboard && window.isSecureContext) {
+      const desktop = this.desktopBridge()
+      if (desktop && typeof desktop.copyShareLink === "function") {
+        desktop.copyShareLink(inviteUrl).then(markCopied).catch(() => {
+          this.fallbackCopy(inviteUrl, markCopied)
+        })
+      } else if (navigator.clipboard && window.isSecureContext) {
         navigator.clipboard.writeText(inviteUrl).then(markCopied).catch(() => {
           this.fallbackCopy(inviteUrl, markCopied)
         })
