@@ -4,7 +4,7 @@ Desktop wrapper for Mana Chess.
 
 ## What this is
 
-This is the first Steam-oriented desktop build path. It opens the current online game inside a desktop window with desktop layout enabled.
+This is the Steam-oriented desktop build path. It opens the current online game inside a desktop window with desktop layout enabled.
 
 Current game URL:
 
@@ -45,15 +45,40 @@ Create a Windows installer:
 npm run dist:win
 ```
 
+Create an unpacked Windows app for quick testing:
+
+```powershell
+npm run pack:win
+```
+
+## Desktop v2 notes
+
+- The app keeps one Mana Chess window open and focuses it when launched again.
+- Window size, position, maximized state, and fullscreen state are restored between sessions.
+- Desktop mode is forced with `?desktop=1` on every in-app navigation.
+- `manachess://` deep links can open lobby or game routes inside the desktop app.
+- External links open in the user's browser; Mana Chess links stay in the app window.
+- The Windows build uses `build/icon.ico` and app id `com.diesel337.manachess`.
+
+Deep link examples:
+
+```text
+manachess://lobby
+manachess://game/game_1
+manachess://game/private_abc123
+manachess://private_abc123
+```
+
+Shortcuts:
+
+- `Ctrl+L`: back to lobby.
+- `Ctrl+Shift+C`: copy the current share link without `desktop=1`.
+- `Ctrl+R`: reload.
+- `F11`: fullscreen.
+- `Esc`: leave fullscreen.
+
 ## Notes
 
-- This first version requires internet.
-- Desktop mode is forced with `?desktop=1`.
-- Shortcuts:
-  - `Ctrl+L`: back to lobby.
-  - `Ctrl+R`: reload.
-  - `F11`: fullscreen.
+- This version requires internet.
 - Practice, tutorial, bot, online rooms, admin settings, and local browser stats keep using the deployed web game.
-- External links open in the user's browser; Mana Chess links stay in the app window.
-- The Windows build uses `build/icon.ico` and the `manachess://` protocol reservation for future Steam/deep-link work.
 - Later we can add Steamworks, achievements, cloud saves, rich presence, splash art, and an offline mode if needed.
