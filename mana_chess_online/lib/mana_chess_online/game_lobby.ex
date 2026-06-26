@@ -3,7 +3,7 @@ defmodule ManaChessOnline.GameLobby do
 
   use GenServer
 
-  alias ManaChessOnline.{GameBot, GameDirectory, GameEngine, GameRules, GameServer, GameState, GameSupervisor, GameTick, RateLimiter}
+  alias ManaChessOnline.{GameBot, GameDirectory, GameEngine, GameMetrics, GameRules, GameServer, GameState, GameSupervisor, GameTick, RateLimiter}
 
   @max_games 4
   @tick_ms 250
@@ -45,6 +45,7 @@ defmodule ManaChessOnline.GameLobby do
   def watch(player_id, game_id), do: GenServer.call(__MODULE__, {:watch, player_id, game_id})
   def snapshot(game_id), do: GenServer.call(__MODULE__, {:snapshot, game_id})
   def lobby, do: GenServer.call(__MODULE__, :lobby)
+  def metrics, do: GenServer.call(__MODULE__, :metrics)
   def global_settings, do: GenServer.call(__MODULE__, :global_settings)
   def update_global_settings(params), do: GenServer.call(__MODULE__, {:update_global_settings, params})
   def apply_global_settings_to_practice(player_id), do: GenServer.call(__MODULE__, {:apply_global_settings_to_practice, player_id})
@@ -158,6 +159,11 @@ defmodule ManaChessOnline.GameLobby do
 
   def handle_call(:global_settings, _from, state) do
     {:reply, state.global_settings, state}
+  end
+
+  def handle_call(:metrics, _from, state) do
+    metrics = GameMetrics.snapshot(state.games, game_server_pids(state.games), GameSupervisor.child_count(), state.rate_limits)
+    {:reply, metrics, state}
   end
 
   def handle_call({:update_global_settings, params}, _from, state) do
@@ -736,6 +742,17 @@ defmodule ManaChessOnline.GameLobby do
       {:ok, _pid} -> :ok
       _error -> :ok
     end
+  end
+
+  defp game_server_pids(games) do
+    games
+    |> Map.keys()
+    |> Enum.flat_map(fn game_id ->
+      case GameSupervisor.lookup_game(game_id) do
+        {:ok, pid} -> [pid]
+        :error -> []
+      end
+    end)
   end
 
   defp stop_game_server(game_id), do: GameSupervisor.stop_game(game_id)

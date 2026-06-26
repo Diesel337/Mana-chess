@@ -12,13 +12,14 @@ defmodule ManaChessOnlineWeb.AdminLive do
      |> assign(:page_title, "Admin | Mana Chess")
      |> assign(:player_id, Map.get(session, "player_id"))
      |> assign(:authenticated?, false)
-     |> assign(:settings, GameLobby.global_settings())}
+     |> assign(:settings, GameLobby.global_settings())
+     |> assign(:metrics, GameLobby.metrics())}
   end
 
   @impl true
   def handle_event("login", %{"password" => password}, socket) do
     if password == admin_password() do
-      {:noreply, assign(socket, authenticated?: true)}
+      {:noreply, assign(socket, authenticated?: true, metrics: GameLobby.metrics())}
     else
       {:noreply, put_flash(socket, :error, "Clave incorrecta.")}
     end
@@ -27,7 +28,7 @@ defmodule ManaChessOnlineWeb.AdminLive do
   def handle_event("save_settings", params, socket) do
     if socket.assigns.authenticated? do
       settings = GameLobby.update_global_settings(params)
-      socket = assign(socket, :settings, settings)
+      socket = assign(socket, settings: settings, metrics: GameLobby.metrics())
 
       if Map.get(params, "apply_practice") == "true" do
         apply_settings_to_practice(socket)
@@ -39,7 +40,17 @@ defmodule ManaChessOnlineWeb.AdminLive do
     end
   end
 
+  def handle_event("refresh_metrics", _params, socket) do
+    if socket.assigns.authenticated? do
+      {:noreply, assign(socket, :metrics, GameLobby.metrics())}
+    else
+      {:noreply, put_flash(socket, :error, "Inicia sesion para ver metricas.")}
+    end
+  end
+
   defp apply_settings_to_practice(socket) do
+    socket = assign(socket, :metrics, GameLobby.metrics())
+
     case GameLobby.apply_global_settings_to_practice(socket.assigns.player_id) do
       :ok ->
         {:noreply, put_flash(socket, :info, "Configuracion guardada y aplicada a tu practica.")}
@@ -55,6 +66,11 @@ defmodule ManaChessOnlineWeb.AdminLive do
 
   defp setting_value(value) when is_float(value), do: :erlang.float_to_binary(value, decimals: 2)
   defp setting_value(value), do: value
+
+  defp metric_value(value) when is_integer(value), do: Integer.to_string(value)
+  defp metric_value(value), do: to_string(value)
+
+  defp metric_kb(value), do: metric_value(value) <> " KB"
 
   @impl true
   def render(assigns) do
@@ -143,6 +159,35 @@ defmodule ManaChessOnlineWeb.AdminLive do
             </label>
           </div>
         </form>
+
+        <section :if={@authenticated?} class="mc-settings mc-admin-metrics">
+          <div class="mc-settings-head">
+            <h2>Salud del servidor</h2>
+            <div class="mc-settings-actions">
+              <button type="button" phx-click="refresh_metrics">Actualizar</button>
+            </div>
+          </div>
+          <p>Snapshot local para preparar carga Steam: partidas, procesos, memoria y colas.</p>
+
+          <div class="mc-metrics-grid">
+            <div class="mc-metric"><span>Partidas</span><strong>{metric_value(@metrics.game_count)}</strong></div>
+            <div class="mc-metric"><span>Publicas</span><strong>{metric_value(@metrics.public_game_count)}</strong></div>
+            <div class="mc-metric"><span>Privadas</span><strong>{metric_value(@metrics.private_game_count)}</strong></div>
+            <div class="mc-metric"><span>Practica</span><strong>{metric_value(@metrics.practice_game_count)}</strong></div>
+            <div class="mc-metric"><span>Jugando</span><strong>{metric_value(@metrics.playing_game_count)}</strong></div>
+            <div class="mc-metric"><span>Esperando</span><strong>{metric_value(@metrics.waiting_game_count)}</strong></div>
+            <div class="mc-metric"><span>Bots activos</span><strong>{metric_value(@metrics.bot_game_count)}</strong></div>
+            <div class="mc-metric"><span>Movs en cola</span><strong>{metric_value(@metrics.queued_move_count)}</strong></div>
+            <div class="mc-metric"><span>GameServers</span><strong>{metric_value(@metrics.game_server_count)}</strong></div>
+            <div class="mc-metric"><span>Mailbox total</span><strong>{metric_value(@metrics.game_server_mailbox_total)}</strong></div>
+            <div class="mc-metric"><span>Mailbox max</span><strong>{metric_value(@metrics.game_server_mailbox_max)}</strong></div>
+            <div class="mc-metric"><span>Rate buckets</span><strong>{metric_value(@metrics.rate_limit_bucket_count)}</strong></div>
+            <div class="mc-metric"><span>Mem VM</span><strong>{metric_kb(@metrics.memory_total_kb)}</strong></div>
+            <div class="mc-metric"><span>Mem juegos</span><strong>{metric_kb(@metrics.game_server_memory_kb)}</strong></div>
+            <div class="mc-metric"><span>Procesos VM</span><strong>{metric_value(@metrics.process_count)}</strong></div>
+            <div class="mc-metric"><span>Run queue</span><strong>{metric_value(@metrics.run_queue)}</strong></div>
+          </div>
+        </section>
       </section>
     </main>
     """

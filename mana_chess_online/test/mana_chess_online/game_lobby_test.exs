@@ -15,6 +15,17 @@ defmodule ManaChessOnline.GameLobbyTest do
     end
   end
 
+  test "exposes runtime metrics for admin health checks" do
+    metrics = GameLobby.metrics()
+
+    assert metrics.game_count >= 4
+    assert metrics.public_game_count >= 4
+    assert metrics.game_server_count >= 4
+    assert metrics.memory_total_kb > 0
+    assert metrics.process_count > 0
+    assert is_integer(metrics.game_server_mailbox_total)
+  end
+
   test "creates private games outside the public lobby and lets spectators watch by link" do
     player_id = unique_player("private-owner")
     on_exit(fn -> GameLobby.leave(player_id) end)
