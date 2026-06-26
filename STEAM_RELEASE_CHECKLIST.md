@@ -157,7 +157,7 @@ Release candidate target:
 - [x] Extract pure game-state/game-engine helpers where low-risk.
 - [x] Add `GameServer` process per game.
 - [x] Add `GameSupervisor` DynamicSupervisor.
-- [ ] Add Registry lookup by `game_id`.
+- [x] Add Registry lookup by `game_id`.
 - [ ] Split lobby discovery from per-game state.
 - [ ] Move bot ticks into per-game processes or workers.
 - [ ] Broadcast only changed game/lobby state.
