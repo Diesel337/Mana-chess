@@ -3,7 +3,7 @@ defmodule ManaChessOnline.GameLobby do
 
   use GenServer
 
-  alias ManaChessOnline.{GameEngine, GameRules, GameState}
+  alias ManaChessOnline.{GameDirectory, GameEngine, GameRules, GameState}
 
   @max_games 4
   @tick_ms 250
@@ -567,30 +567,11 @@ defmodule ManaChessOnline.GameLobby do
     end
   end
 
-  defp empty_waiting_game?(%{practice?: false, status: :waiting, players: players}) do
-    is_nil(players.white) and is_nil(players.black)
-  end
+  defp empty_waiting_game?(game), do: GameDirectory.empty_waiting_game?(game)
 
-  defp empty_waiting_game?(_game), do: false
+  defp seated_players(game), do: GameDirectory.seated_players(game)
 
-  defp seated_players(game) do
-    game.players
-    |> Map.values()
-    |> Enum.reject(&is_nil/1)
-    |> Enum.uniq()
-  end
-
-  defp find_slot(games) do
-    games
-    |> Enum.reject(fn {_game_id, game} -> game.practice? or Map.get(game, :private?, false) end)
-    |> Enum.find_value(fn {game_id, game} ->
-      cond do
-        is_nil(game.players.white) -> {game_id, :white}
-        is_nil(game.players.black) -> {game_id, :black}
-        true -> nil
-      end
-    end)
-  end
+  defp find_slot(games), do: GameDirectory.find_open_slot(games)
 
   defp player_view(state, player_id) do
     assignment = state.players[player_id] || %{game_id: nil, color: nil}

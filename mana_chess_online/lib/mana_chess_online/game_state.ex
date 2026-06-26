@@ -1,7 +1,7 @@
 defmodule ManaChessOnline.GameState do
   @moduledoc false
 
-  alias ManaChessOnline.GameRules
+  alias ManaChessOnline.{GameDirectory, GameRules}
 
   def new_game(id, settings) do
     %{
@@ -83,8 +83,7 @@ defmodule ManaChessOnline.GameState do
 
   def public_lobby(%{games: games}, now_ms) do
     games
-    |> Enum.reject(fn {_game_id, game} -> game.practice? or Map.get(game, :private?, false) end)
-    |> Enum.sort_by(fn {game_id, _game} -> game_id end)
+    |> GameDirectory.public_games()
     |> Enum.map(fn {_game_id, game} ->
       %{
         id: game.id,
