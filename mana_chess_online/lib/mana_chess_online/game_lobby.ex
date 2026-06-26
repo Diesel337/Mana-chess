@@ -3,7 +3,7 @@ defmodule ManaChessOnline.GameLobby do
 
   use GenServer
 
-  alias ManaChessOnline.GameRules
+  alias ManaChessOnline.{GameRules, GameState}
 
   @max_games 4
   @tick_ms 250
@@ -933,60 +933,18 @@ defmodule ManaChessOnline.GameLobby do
     end
   end
 
-  defp piece_cooldown(settings), do: Map.get(settings, :cooldown_seconds, @default_settings.cooldown_seconds)
+  defp piece_cooldown(settings), do: GameState.piece_cooldown(settings, @default_settings.cooldown_seconds)
   defp bot_move_ms(settings), do: round(Map.get(settings, :bot_move_seconds, @bot_move_seconds) * 1000)
 
   defp now_ms, do: System.monotonic_time(:millisecond)
 
-  defp new_game(id, settings) do
-    %{
-      id: id,
-      board: GameRules.initial_board(),
-      players: %{white: nil, black: nil},
-      practice?: false,
-      private?: false,
-      settings: settings,
-      elixir: full_elixir(settings),
-      castling_rights: %{
-        {:white, :king} => true,
-        {:white, :queen} => true,
-        {:black, :king} => true,
-        {:black, :queen} => true
-      },
-      cooldowns: %{},
-      bot_enabled?: false,
-      bot_ready_at: nil,
-      promotion_pending: nil,
-      finished_at: nil,
-      first_move_pending: :white,
-      reset_requests: MapSet.new(),
-      start_requests: MapSet.new(),
-      queue: [],
-      status: :waiting,
-      chat: [],
-      log: ["Esperando jugadores..."]
-    }
-  end
+  defp new_game(id, settings), do: GameState.new_game(id, settings)
 
   defp practice_game(id, player_id, settings) do
-    %{
-      new_game(id, settings)
-      | players: %{white: player_id, black: player_id},
-        practice?: true,
-        bot_enabled?: true,
-        bot_ready_at: now_ms() + bot_move_ms(settings),
-        status: :playing,
-        log: ["BOT encendido.", "Practica iniciada. Blancas abren."]
-    }
+    GameState.practice_game(id, player_id, settings, now_ms(), bot_move_ms(settings))
   end
 
-  defp private_game(id, settings) do
-    %{
-      new_game(id, settings)
-      | private?: true,
-        log: ["Sala privada creada. Comparte el link para invitar."]
-    }
-  end
+  defp private_game(id, settings), do: GameState.private_game(id, settings)
 
   defp refresh_status(%{players: %{white: white, black: black}} = game)
        when is_binary(white) and is_binary(black),
@@ -1003,47 +961,9 @@ defmodule ManaChessOnline.GameLobby do
 
   defp refresh_terminal_status(game), do: game
 
-  defp public_game(nil), do: nil
+  defp public_game(game), do: GameState.public_game(game, now_ms(), @default_settings.cooldown_seconds)
 
-  defp public_game(game) do
-    %{
-      id: game.id,
-      board: game.board,
-      players: game.players,
-      practice?: game.practice?,
-      private?: Map.get(game, :private?, false),
-      elixir: game.elixir,
-      settings: game.settings,
-      bot_enabled?: game.bot_enabled?,
-      castling_rights: game.castling_rights,
-      cooldowns: public_cooldowns(game),
-      queue: game.queue,
-      status: game.status,
-      countdown_seconds: countdown_seconds(game.status),
-      first_move_pending: game.first_move_pending,
-      reset_requests: MapSet.to_list(game.reset_requests),
-      start_requests: MapSet.to_list(game.start_requests),
-      checked_colors: GameRules.checked_colors(game.board),
-      promotion_pending: game.promotion_pending,
-      finished_at: game.finished_at,
-      chat: Map.get(game, :chat, []),
-      log: Enum.take(game.log, 8)
-    }
-  end
-
-  defp public_lobby(state) do
-    state.games
-    |> Enum.reject(fn {_game_id, game} -> game.practice? or Map.get(game, :private?, false) end)
-    |> Enum.sort_by(fn {game_id, _game} -> game_id end)
-    |> Enum.map(fn {_game_id, game} ->
-      %{
-        id: game.id,
-        players: game.players,
-        status: game.status,
-        countdown_seconds: countdown_seconds(game.status)
-      }
-    end)
-  end
+  defp public_lobby(state), do: GameState.public_lobby(state, now_ms())
 
   defp broadcast_lobby(state) do
     Phoenix.PubSub.broadcast(ManaChessOnline.PubSub, lobby_topic(), {:lobby_update, public_lobby(state)})
@@ -1105,10 +1025,7 @@ defmodule ManaChessOnline.GameLobby do
   defp label(:black), do: "Negras"
   defp label(:practice), do: "Practica"
 
-  defp full_elixir(settings) do
-    initial_elixir = min(settings.initial_elixir, settings.max_elixir)
-    %{white: initial_elixir, black: initial_elixir}
-  end
+  defp full_elixir(settings), do: GameState.full_elixir(settings)
 
   defp clamp_elixir(elixir, settings) do
     Map.new(elixir, fn {color, amount} -> {color, min(amount, settings.max_elixir)} end)
@@ -1305,30 +1222,6 @@ defmodule ManaChessOnline.GameLobby do
 
   defp clear_first_move(:white, :white), do: nil
   defp clear_first_move(first_move_pending, _color), do: first_move_pending
-
-  defp countdown_seconds({:starting, starts_at}) do
-    remaining = starts_at - System.monotonic_time(:millisecond)
-    max(0, ceil(remaining / 1000))
-  end
-
-  defp countdown_seconds(_status), do: nil
-
-  defp public_cooldowns(game) do
-    now = now_ms()
-
-    game.cooldowns
-    |> Enum.flat_map(fn {square, ready_at} ->
-      remaining = ready_at - now
-      piece = GameRules.at(game.board, elem(square, 0), elem(square, 1))
-
-      if remaining > 0 and piece != "." do
-        total = round(piece_cooldown(game.settings) * 1000)
-        [%{at: square, seconds: max(1, ceil(remaining / 1000)), remaining_ms: remaining, total_ms: total}]
-      else
-        []
-      end
-    end)
-  end
 
   defp promotion_choice("Q", :white), do: "Q"
   defp promotion_choice("R", :white), do: "R"
