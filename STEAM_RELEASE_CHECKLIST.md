@@ -158,7 +158,7 @@ Release candidate target:
 - [x] Add `GameServer` process per game.
 - [x] Add `GameSupervisor` DynamicSupervisor.
 - [x] Add Registry lookup by `game_id`.
-- [~] Split lobby discovery from per-game state.
+- [~] Split lobby discovery from per-game state. Game processes are mirrored, not authoritative yet.
 - [ ] Move bot ticks into per-game processes or workers.
 - [ ] Broadcast only changed game/lobby state.
 - [ ] Add rate limits for chat, joins, moves, private room creation, and reconnects.

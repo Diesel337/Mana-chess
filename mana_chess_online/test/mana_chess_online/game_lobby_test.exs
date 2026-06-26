@@ -1,7 +1,7 @@
 defmodule ManaChessOnline.GameLobbyTest do
   use ExUnit.Case, async: false
 
-  alias ManaChessOnline.GameLobby
+  alias ManaChessOnline.{GameLobby, GameServer, GameSupervisor}
 
   defp unique_player(prefix) do
     prefix <> "-" <> Integer.to_string(System.unique_integer([:positive]))
@@ -31,6 +31,7 @@ defmodule ManaChessOnline.GameLobbyTest do
   test "private matches become ready when black joins without entering public lobby" do
     white_id = unique_player("private-white")
     black_id = unique_player("private-black")
+
     on_exit(fn ->
       GameLobby.leave(white_id)
       GameLobby.leave(black_id)
@@ -64,6 +65,18 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert GameLobby.snapshot(view.game_id) == nil
   end
 
+  test "mirrors practice games into registered game servers and removes them on leave" do
+    player_id = unique_player("mirror-practice")
+    view = GameLobby.start_practice(player_id)
+
+    assert {:ok, pid} = GameSupervisor.lookup_game(view.game_id)
+    assert GameServer.snapshot(pid).id == view.game_id
+    assert GameServer.snapshot(pid).players.white == player_id
+
+    assert :ok = GameLobby.leave(player_id)
+    assert GameSupervisor.lookup_game(view.game_id) == :error
+  end
+
   test "stores sanitized room chat messages" do
     player_id = unique_player("chat-player")
     on_exit(fn -> GameLobby.leave(player_id) end)
@@ -73,7 +86,18 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert :ok = GameLobby.send_chat(player_id, view.game_id, "  hola\n   mana   ")
 
     game = GameLobby.snapshot(view.game_id)
-    assert [%{player_id: ^player_id, name: name, role: "Practica", sent_at: sent_at, text: "hola mana"} | _rest] = game.chat
+
+    assert [
+             %{
+               player_id: ^player_id,
+               name: name,
+               role: "Practica",
+               sent_at: sent_at,
+               text: "hola mana"
+             }
+             | _rest
+           ] = game.chat
+
     assert String.starts_with?(name, "Jugador ")
     assert is_integer(sent_at)
   end

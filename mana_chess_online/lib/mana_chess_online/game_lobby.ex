@@ -3,7 +3,7 @@ defmodule ManaChessOnline.GameLobby do
 
   use GenServer
 
-  alias ManaChessOnline.{GameDirectory, GameEngine, GameRules, GameState}
+  alias ManaChessOnline.{GameDirectory, GameEngine, GameRules, GameState, GameSupervisor}
 
   @max_games 4
   @tick_ms 250
@@ -71,12 +71,14 @@ defmodule ManaChessOnline.GameLobby do
     Process.send_after(self(), :tick, @tick_ms)
     settings = load_global_settings()
 
-    {:ok,
-     %{
-       global_settings: settings,
-       games: Map.new(1..@max_games, fn n -> {"game_#{n}", new_game("game_#{n}", settings)} end),
-       players: %{}
-     }}
+    state = %{
+      global_settings: settings,
+      games: Map.new(1..@max_games, fn n -> {"game_#{n}", new_game("game_#{n}", settings)} end),
+      players: %{}
+    }
+
+    sync_game_servers(state)
+    {:ok, state}
   end
 
   @impl true
@@ -382,6 +384,7 @@ defmodule ManaChessOnline.GameLobby do
           Map.put(game, :chat, chat)
         end)
 
+      sync_game_server(state.games[game_id])
       Phoenix.PubSub.broadcast(ManaChessOnline.PubSub, topic(game_id), {:game_update, public_game(state.games[game_id])})
       {:reply, :ok, state}
     else
@@ -479,6 +482,7 @@ defmodule ManaChessOnline.GameLobby do
         end)
       end)
 
+    sync_game_servers(state)
     {:noreply, state}
   end
 
@@ -507,6 +511,8 @@ defmodule ManaChessOnline.GameLobby do
       %{game_id: game_id, color: color} when is_binary(game_id) ->
         case state.games[game_id] do
           %{practice?: true} ->
+            stop_game_server(game_id)
+
             state
             |> update_in([:players], &Map.delete(&1, player_id))
             |> update_in([:games], &Map.delete(&1, game_id))
@@ -847,8 +853,25 @@ defmodule ManaChessOnline.GameLobby do
   defp public_lobby(state), do: GameState.public_lobby(state, now_ms())
 
   defp broadcast_lobby(state) do
+    sync_game_servers(state)
     Phoenix.PubSub.broadcast(ManaChessOnline.PubSub, lobby_topic(), {:lobby_update, public_lobby(state)})
   end
+
+  defp sync_game_servers(state) do
+    Enum.each(state.games, fn {_game_id, game} -> sync_game_server(game) end)
+    state
+  end
+
+  defp sync_game_server(nil), do: :ok
+
+  defp sync_game_server(game) do
+    case GameSupervisor.upsert_game(game) do
+      {:ok, _pid} -> :ok
+      _error -> :ok
+    end
+  end
+
+  defp stop_game_server(game_id), do: GameSupervisor.stop_game(game_id)
 
   defp sanitize_chat_message(message) do
     text =
@@ -1023,7 +1046,9 @@ defmodule ManaChessOnline.GameLobby do
 
   defp ensure_private_game(state, game_id) do
     if private_game_id?(game_id) and is_nil(state.games[game_id]) do
-      put_in(state.games[game_id], private_game(game_id, state.global_settings))
+      game = private_game(game_id, state.global_settings)
+      sync_game_server(game)
+      put_in(state.games[game_id], game)
     else
       state
     end
@@ -1035,6 +1060,7 @@ defmodule ManaChessOnline.GameLobby do
   defp maybe_drop_empty_private_game(state, game_id) do
     case state.games[game_id] do
       %{private?: true, players: %{white: nil, black: nil}} ->
+        stop_game_server(game_id)
         update_in(state.games, &Map.delete(&1, game_id))
 
       _game ->

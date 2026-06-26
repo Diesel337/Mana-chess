@@ -41,4 +41,18 @@ defmodule ManaChessOnline.GameSupervisorTest do
     assert {:error, {:already_started, ^pid}} =
              GameSupervisor.start_game(game, id: {__MODULE__, game_id, :again})
   end
+
+  test "upserts existing games and stops them by id" do
+    game_id = "upsert_" <> Integer.to_string(System.unique_integer([:positive]))
+    game = GameState.new_game(game_id, settings())
+
+    {:ok, pid} = GameSupervisor.upsert_game(game)
+
+    updated = %{game | log: ["Mirror actualizado." | game.log]}
+    assert {:ok, ^pid} = GameSupervisor.upsert_game(updated)
+    assert GameServer.snapshot(pid).log == updated.log
+
+    assert :ok = GameSupervisor.stop_game(game_id)
+    assert GameSupervisor.lookup_game(game_id) == :error
+  end
 end
