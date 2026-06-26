@@ -19,7 +19,7 @@ defmodule ManaChessOnline.GameLobbyTest do
     player_id = unique_player("private-owner")
     on_exit(fn -> GameLobby.leave(player_id) end)
 
-    view = GameLobby.create_private(player_id)
+    {:ok, view} = GameLobby.create_private(player_id)
 
     assert String.starts_with?(view.game_id, "private_")
     assert view.color == :white
@@ -45,7 +45,7 @@ defmodule ManaChessOnline.GameLobbyTest do
       GameLobby.leave(black_id)
     end)
 
-    white_view = GameLobby.create_private(white_id)
+    {:ok, white_view} = GameLobby.create_private(white_id)
     black_view = GameLobby.sit(black_id, white_view.game_id, :black)
 
     assert black_view.game_id == white_view.game_id
@@ -137,6 +137,31 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert hd(messages).text == "msg 30"
     assert List.last(messages).text == "msg 7"
     refute Enum.any?(messages, &(&1.text == "msg 1"))
+  end
+
+  test "rate limits bursty room chat" do
+    player_id = unique_player("chat-rate")
+    on_exit(fn -> GameLobby.leave(player_id) end)
+
+    view = GameLobby.start_practice(player_id)
+
+    for number <- 1..30 do
+      assert :ok = GameLobby.send_chat(player_id, view.game_id, "burst #{number}")
+    end
+
+    assert {:error, :rate_limited} = GameLobby.send_chat(player_id, view.game_id, "one too many")
+  end
+
+  test "rate limits repeated private room creation" do
+    player_id = unique_player("private-rate")
+    on_exit(fn -> GameLobby.leave(player_id) end)
+
+    for _number <- 1..3 do
+      assert {:ok, view} = GameLobby.create_private(player_id)
+      assert String.starts_with?(view.game_id, "private_")
+    end
+
+    assert {:error, :rate_limited} = GameLobby.create_private(player_id)
   end
 
   test "rejects blank chat messages" do

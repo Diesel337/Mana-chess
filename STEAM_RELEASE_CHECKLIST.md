@@ -161,7 +161,7 @@ Release candidate target:
 - [~] Split lobby discovery from per-game state. Game processes are mirrored, not authoritative yet.
 - [~] Move bot ticks into per-game processes or workers. GameServer now runs the shared tick pipeline and bot decisions; Lobby still mirrors state for views.
 - [~] Broadcast only changed game/lobby state. Idle ticks no longer emit unchanged game/lobby payloads.
-- [ ] Add rate limits for chat, joins, moves, private room creation, and reconnects.
+- [~] Add rate limits for chat, joins, moves, private room creation, and reconnects. Chat, move spam, and private room bursts are limited; joins/reconnects still need launch-safe gating.
 - [ ] Add metrics for websocket latency, process mailbox sizes, game count, memory, CPU, PubSub fanout, and bot CPU.
 - [ ] Load test 100 concurrent connections.
 - [ ] Load test 500 concurrent connections.

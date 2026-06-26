@@ -3,12 +3,16 @@ defmodule ManaChessOnline.GameLobby do
 
   use GenServer
 
-  alias ManaChessOnline.{GameBot, GameDirectory, GameEngine, GameRules, GameServer, GameState, GameSupervisor, GameTick}
+  alias ManaChessOnline.{GameBot, GameDirectory, GameEngine, GameRules, GameServer, GameState, GameSupervisor, GameTick, RateLimiter}
 
   @max_games 4
   @tick_ms 250
   @countdown_ms 5_000
   @bot_move_seconds 1.2
+  @chat_rate_limit {30, 10_000}
+  @move_rate_limit {60, 1_000}
+  @private_room_rate_limit {3, 60_000}
+  @rate_limit_retention_ms 60_000
   @settings_file "mana_chess_settings.json"
   @settings_version 2
   @default_settings %{
@@ -62,7 +66,8 @@ defmodule ManaChessOnline.GameLobby do
     state = %{
       global_settings: settings,
       games: Map.new(1..@max_games, fn n -> {"game_#{n}", new_game("game_#{n}", settings)} end),
-      players: %{}
+      players: %{},
+      rate_limits: %{}
     }
 
     sync_game_servers(state)
@@ -101,16 +106,22 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   def handle_call({:create_private, player_id}, _from, state) do
-    game_id = unique_private_game_id(state.games)
+    case take_rate_limit(state, {:private_room, player_id}, @private_room_rate_limit) do
+      {:ok, state} ->
+        game_id = unique_private_game_id(state.games)
 
-    state =
-      state
-      |> remove_player(player_id)
-      |> put_in([:games, game_id], private_game(game_id, state.global_settings))
-      |> assign_player(player_id, game_id, :white)
+        state =
+          state
+          |> remove_player(player_id)
+          |> put_in([:games, game_id], private_game(game_id, state.global_settings))
+          |> assign_player(player_id, game_id, :white)
 
-    broadcast_lobby(state)
-    {:reply, player_view(state, player_id), state}
+        broadcast_lobby(state)
+        {:reply, {:ok, player_view(state, player_id)}, state}
+
+      {:error, :rate_limited, state} ->
+        {:reply, {:error, :rate_limited}, state}
+    end
   end
 
   def handle_call({:watch, player_id, game_id}, _from, state) do
@@ -341,18 +352,25 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   def handle_call({:enqueue, player_id, from, to}, _from, state) do
-    {state, game_id} = enqueue_move(state, player_id, from, to)
+    case take_rate_limit(state, {:move, player_id}, @move_rate_limit) do
+      {:ok, state} ->
+        {state, game_id} = enqueue_move(state, player_id, from, to)
 
-    if game_id do
-      Phoenix.PubSub.broadcast(ManaChessOnline.PubSub, topic(game_id), {:game_update, public_game(state.games[game_id])})
-      broadcast_lobby(state)
+        if game_id do
+          Phoenix.PubSub.broadcast(ManaChessOnline.PubSub, topic(game_id), {:game_update, public_game(state.games[game_id])})
+          broadcast_lobby(state)
+        end
+
+        {:reply, :ok, state}
+
+      {:error, :rate_limited, state} ->
+        {:reply, :ok, state}
     end
-
-    {:reply, :ok, state}
   end
 
   def handle_call({:send_chat, player_id, game_id, message}, _from, state) do
     with {:ok, text} <- sanitize_chat_message(message),
+         {:ok, state} <- take_rate_limit(state, {:chat, game_id, player_id}, @chat_rate_limit),
          %{id: ^game_id} = game <- state.games[game_id] do
       entry = %{
         id: System.unique_integer([:positive, :monotonic]),
@@ -376,6 +394,9 @@ defmodule ManaChessOnline.GameLobby do
       Phoenix.PubSub.broadcast(ManaChessOnline.PubSub, topic(game_id), {:game_update, public_game(state.games[game_id])})
       {:reply, :ok, state}
     else
+      {:error, :rate_limited, state} ->
+        {:reply, {:error, :rate_limited}, state}
+
       {:error, reason} ->
         {:reply, {:error, reason}, state}
 
@@ -467,7 +488,7 @@ defmodule ManaChessOnline.GameLobby do
         {Map.put(games, game_id, ticked_game), changed_game_ids}
       end)
 
-    next_state = %{state | games: games}
+    next_state = %{state | games: games, rate_limits: RateLimiter.prune(state.rate_limits, now, @rate_limit_retention_ms)}
 
     changed_game_ids
     |> Enum.reverse()
@@ -605,6 +626,13 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   defp process_next_action(game), do: GameEngine.process_next_action(game, now_ms(), @default_settings.cooldown_seconds)
+
+  defp take_rate_limit(state, key, {max_hits, window_ms}) do
+    case RateLimiter.hit(state.rate_limits, key, now_ms(), max_hits, window_ms) do
+      {:ok, rate_limits} -> {:ok, %{state | rate_limits: rate_limits}}
+      {{:error, :rate_limited}, rate_limits} -> {:error, :rate_limited, %{state | rate_limits: rate_limits}}
+    end
+  end
 
   defp tick_game_server(game, now) do
     case GameSupervisor.upsert_game(game) do

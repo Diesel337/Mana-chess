@@ -240,9 +240,13 @@ defmodule ManaChessOnlineWeb.GameLive do
   end
 
   def handle_event("create_private", _params, socket) do
-    view = GameLobby.create_private(socket.assigns.player_id)
+    case GameLobby.create_private(socket.assigns.player_id) do
+      {:ok, view} ->
+        {:noreply, push_navigate(socket, to: ~p"/game/#{view.game_id}")}
 
-    {:noreply, push_navigate(socket, to: ~p"/game/#{view.game_id}")}
+      {:error, :rate_limited} ->
+        {:noreply, put_flash(socket, :error, "Espera un momento antes de crear otra sala privada.")}
+    end
   end
 
   def handle_event("chat_change", %{"message" => message}, socket) do
@@ -256,6 +260,9 @@ defmodule ManaChessOnlineWeb.GameLive do
 
       {:error, :empty} ->
         {:noreply, assign(socket, chat_error: "Escribe un mensaje.")}
+
+      {:error, :rate_limited} ->
+        {:noreply, assign(socket, chat_error: "Espera un momento antes de enviar mas mensajes.")}
 
       {:error, _reason} ->
         {:noreply, assign(socket, chat_error: "No se pudo enviar.")}
