@@ -7,6 +7,14 @@ defmodule ManaChessOnline.GameLobbyTest do
     prefix <> "-" <> Integer.to_string(System.unique_integer([:positive]))
   end
 
+  defp flush_messages do
+    receive do
+      _message -> flush_messages()
+    after
+      0 -> :ok
+    end
+  end
+
   test "creates private games outside the public lobby and lets spectators watch by link" do
     player_id = unique_player("private-owner")
     on_exit(fn -> GameLobby.leave(player_id) end)
@@ -75,6 +83,18 @@ defmodule ManaChessOnline.GameLobbyTest do
 
     assert :ok = GameLobby.leave(player_id)
     assert GameSupervisor.lookup_game(view.game_id) == :error
+  end
+
+  test "idle ticks do not broadcast unchanged lobby or room payloads" do
+    Phoenix.PubSub.subscribe(ManaChessOnline.PubSub, GameLobby.lobby_topic())
+    Phoenix.PubSub.subscribe(ManaChessOnline.PubSub, GameLobby.topic("game_1"))
+    flush_messages()
+
+    send(Process.whereis(GameLobby), :tick)
+    :sys.get_state(GameLobby)
+
+    refute_receive {:game_update, %{id: "game_1"}}, 75
+    refute_receive {:lobby_update, _lobby}, 75
   end
 
   test "stores sanitized room chat messages" do

@@ -451,18 +451,33 @@ defmodule ManaChessOnline.GameLobby do
   @impl true
   def handle_info(:tick, state) do
     Process.send_after(self(), :tick, @tick_ms)
+    now = now_ms()
 
-    games =
-      Map.new(state.games, fn {game_id, game} ->
-        game = tick_game_server(game)
-        Phoenix.PubSub.broadcast(ManaChessOnline.PubSub, topic(game_id), {:game_update, public_game(game)})
-        {game_id, game}
+    {games, changed_game_ids} =
+      Enum.reduce(state.games, {%{}, []}, fn {game_id, game}, {games, changed_game_ids} ->
+        ticked_game = tick_game_server(game, now)
+
+        changed_game_ids =
+          if game_broadcast_needed?(game, ticked_game, now) do
+            [game_id | changed_game_ids]
+          else
+            changed_game_ids
+          end
+
+        {Map.put(games, game_id, ticked_game), changed_game_ids}
       end)
 
-    state = %{state | games: games}
-    Phoenix.PubSub.broadcast(ManaChessOnline.PubSub, lobby_topic(), {:lobby_update, public_lobby(state)})
+    next_state = %{state | games: games}
 
-    {:noreply, state}
+    changed_game_ids
+    |> Enum.reverse()
+    |> Enum.each(fn game_id -> broadcast_game_update(next_state.games[game_id], now) end)
+
+    if lobby_broadcast_needed?(state, next_state, now) do
+      Phoenix.PubSub.broadcast(ManaChessOnline.PubSub, lobby_topic(), {:lobby_update, public_lobby_at(next_state, now)})
+    end
+
+    {:noreply, next_state}
   end
 
   def topic(game_id), do: "game:" <> game_id
@@ -591,10 +606,10 @@ defmodule ManaChessOnline.GameLobby do
 
   defp process_next_action(game), do: GameEngine.process_next_action(game, now_ms(), @default_settings.cooldown_seconds)
 
-  defp tick_game_server(game) do
+  defp tick_game_server(game, now) do
     case GameSupervisor.upsert_game(game) do
-      {:ok, pid} -> GameServer.tick(pid)
-      _error -> GameTick.tick(game, now_ms(), @tick_ms, @default_settings.cooldown_seconds)
+      {:ok, pid} -> GameServer.tick(pid, now)
+      _error -> GameTick.tick(game, now, @tick_ms, @default_settings.cooldown_seconds)
     end
   end
 
@@ -626,9 +641,33 @@ defmodule ManaChessOnline.GameLobby do
 
   defp refresh_terminal_status(game), do: GameEngine.refresh_terminal_status(game, now_ms())
 
-  defp public_game(game), do: GameState.public_game(game, now_ms(), @default_settings.cooldown_seconds)
+  defp public_game(game), do: public_game_at(game, now_ms())
 
-  defp public_lobby(state), do: GameState.public_lobby(state, now_ms())
+  defp public_game_at(game, now), do: GameState.public_game(game, now, @default_settings.cooldown_seconds)
+
+  defp public_lobby(state), do: public_lobby_at(state, now_ms())
+
+  defp public_lobby_at(state, now), do: GameState.public_lobby(state, now)
+
+  defp broadcast_game_update(game, now) do
+    Phoenix.PubSub.broadcast(ManaChessOnline.PubSub, topic(game.id), {:game_update, public_game_at(game, now)})
+  end
+
+  defp game_broadcast_needed?(previous_game, next_game, now) do
+    public_game_at(previous_game, now) != public_game_at(next_game, now) or
+      countdown_visible?(next_game) or cooldowns_visible?(next_game)
+  end
+
+  defp lobby_broadcast_needed?(previous_state, next_state, now) do
+    public_lobby_at(previous_state, now) != public_lobby_at(next_state, now) or
+      Enum.any?(next_state.games, fn {_game_id, game} -> countdown_visible?(game) end)
+  end
+
+  defp countdown_visible?(%{status: {:starting, _starts_at}}), do: true
+  defp countdown_visible?(_game), do: false
+
+  defp cooldowns_visible?(%{status: :playing, cooldowns: cooldowns}), do: map_size(cooldowns) > 0
+  defp cooldowns_visible?(_game), do: false
 
   defp broadcast_lobby(state) do
     sync_game_servers(state)
