@@ -62,6 +62,7 @@ npm run pack:win
 - The web game can read `window.ManaChessDesktop.getInfo()` for desktop version, channel, platform, and origin.
 - The window title follows local presence, such as lobby, active match, playing, or result states.
 - The desktop menu can copy, open, or reset local desktop QA state.
+- The desktop menu can copy the current `manachess://` deep link and open the current clean web link in the browser.
 
 Deep link examples:
 
@@ -76,6 +77,7 @@ Shortcuts:
 
 - `Ctrl+L`: back to lobby.
 - `Ctrl+Shift+C`: copy the current share link without `desktop=1`.
+- Menu `Mana Chess > Copiar deep link desktop`: copy the current `manachess://` route.
 - `Ctrl+R`: reload.
 - `F11`: fullscreen.
 - `Esc`: leave fullscreen.
@@ -91,6 +93,7 @@ window.ManaChessDesktop.copyState()
 window.ManaChessDesktop.openStateFolder()
 window.ManaChessDesktop.resetState()
 window.ManaChessDesktop.copyShareLink(window.location.href)
+window.ManaChessDesktop.copyDeepLink(window.location.href)
 window.ManaChessDesktop.sendEvent("match.finished", {result: "win"})
 ```
 

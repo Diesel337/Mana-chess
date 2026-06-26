@@ -77,6 +77,8 @@ function bindDesktopBridge() {
     return {ok: true, url: shareUrl}
   })
 
+  ipcMain.handle("mana-chess:copy-deep-link", (_event, url) => copyDeepLinkForUrl(url || mainWindow?.webContents.getURL()))
+
   ipcMain.handle("mana-chess:get-desktop-state", () => readDesktopState())
 
   ipcMain.handle("mana-chess:copy-desktop-state", () => copyDesktopState())
@@ -102,6 +104,10 @@ function buildMenu() {
           label: "Copiar link actual",
           accelerator: "CommandOrControl+Shift+C",
           click: () => copyCurrentLink()
+        },
+        {
+          label: "Copiar deep link desktop",
+          click: () => copyCurrentDeepLink()
         },
         {
           label: "Desktop",
@@ -132,8 +138,8 @@ function buildMenu() {
         },
         {type: "separator"},
         {
-          label: "Abrir version web",
-          click: () => shell.openExternal(DEFAULT_GAME_URL)
+          label: "Abrir link actual en web",
+          click: () => openCurrentWebLink()
         },
         {type: "separator"},
         {
@@ -260,9 +266,21 @@ function toggleFullscreen() {
   mainWindow.setFullScreen(!mainWindow.isFullScreen())
 }
 
+function currentShareUrl() {
+  if (!mainWindow) return DEFAULT_GAME_URL
+  return cleanShareUrl(mainWindow.webContents.getURL()) || DEFAULT_GAME_URL
+}
+
 function copyCurrentLink() {
-  if (!mainWindow) return
-  clipboard.writeText(cleanShareUrl(mainWindow.webContents.getURL()) || DEFAULT_GAME_URL)
+  clipboard.writeText(currentShareUrl())
+}
+
+function copyCurrentDeepLink() {
+  copyDeepLinkForUrl(mainWindow?.webContents.getURL())
+}
+
+function openCurrentWebLink() {
+  shell.openExternal(currentShareUrl())
 }
 
 function desktopStatePath() {
@@ -469,6 +487,22 @@ function cleanShareUrl(url) {
   if (!parsed || parsed.origin !== GAME_ORIGIN) return null
   parsed.searchParams.delete("desktop")
   return parsed.toString()
+}
+
+function copyDeepLinkForUrl(url) {
+  const deepLink = deepLinkForGameUrl(url)
+  clipboard.writeText(deepLink)
+  return {ok: true, url: deepLink}
+}
+
+function deepLinkForGameUrl(url) {
+  const parsed = safeUrl(cleanShareUrl(url) || DEFAULT_GAME_URL)
+  if (!parsed || parsed.origin !== GAME_ORIGIN) return `${PROTOCOL_SCHEME}://lobby`
+
+  const parts = parsed.pathname.split("/").filter(Boolean)
+  if (parts[0] === "game" && parts[1]) return `${PROTOCOL_SCHEME}://game/${encodeURIComponent(parts[1])}`
+
+  return `${PROTOCOL_SCHEME}://lobby`
 }
 
 function desktopUrl(url) {
