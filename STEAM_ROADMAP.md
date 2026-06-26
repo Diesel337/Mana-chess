@@ -172,18 +172,21 @@ Needed before release candidate:
 - Direct public web access gets a Steam-required screen or limited non-commercial preview.
 - Cosmetic paid state comes from Steam ownership/DLC/inventory, not local storage.
 
+## Release checklist
+
+See `STEAM_RELEASE_CHECKLIST.md` for the operational Steam release gate list.
+
 ## Suggested next cuts
 
-1. Add this roadmap and keep it current.
-2. Add a Steam launch checklist to the desktop README or a separate `STEAM_RELEASE_CHECKLIST.md`.
-3. Create the first backend safety tests around current `GameLobby` behavior.
-4. Extract a `GameServer` module behind the existing `GameLobby` API.
-5. Split practice/private game ownership into per-game processes.
-6. Add Ecto/Postgres for Steam users and entitlement records.
-7. Add a production gate for Steam-required access while preserving QA/staging access.
-8. Integrate real Steamworks identity and achievements.
-9. Convert local cosmetic unlocks into Steam entitlement-aware unlocks.
-10. Run load tests and tune infrastructure before release.
+1. Keep this roadmap and `STEAM_RELEASE_CHECKLIST.md` current.
+2. Create the first backend safety tests around current `GameLobby` behavior.
+3. Extract a `GameServer` module behind the existing `GameLobby` API.
+4. Split practice/private game ownership into per-game processes.
+5. Add Ecto/Postgres for Steam users and entitlement records.
+6. Add a production gate for Steam-required access while preserving QA/staging access.
+7. Integrate real Steamworks identity and achievements.
+8. Convert local cosmetic unlocks into Steam entitlement-aware unlocks.
+9. Run load tests and tune infrastructure before release.
 
 ## Non-goals for now
 
