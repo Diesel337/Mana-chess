@@ -153,8 +153,8 @@ Prototype constraint:
 
 Release candidate target:
 
-- [ ] Add safety tests for current `GameLobby` behavior.
-- [x] Extract pure game-state helpers where low-risk.
+- [x] Add safety tests for current `GameLobby` behavior.
+- [x] Extract pure game-state/game-engine helpers where low-risk.
 - [ ] Add `GameServer` process per game.
 - [ ] Add `GameSupervisor` DynamicSupervisor.
 - [ ] Add Registry lookup by `game_id`.

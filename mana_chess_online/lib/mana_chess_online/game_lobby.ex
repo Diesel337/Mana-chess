@@ -3,7 +3,7 @@ defmodule ManaChessOnline.GameLobby do
 
   use GenServer
 
-  alias ManaChessOnline.{GameRules, GameState}
+  alias ManaChessOnline.{GameEngine, GameRules, GameState}
 
   @max_games 4
   @tick_ms 250
@@ -333,7 +333,7 @@ defmodule ManaChessOnline.GameLobby do
            %{player_id: ^player_id, color: color, at: square} <- game.promotion_pending,
            true <- controls_color?(player_color, color) do
         board = GameRules.promote(game.board, square, promotion_choice(choice, color), color)
-        status = terminal_status(board, game.castling_rights) || :playing
+        status = GameEngine.terminal_status(board, game.castling_rights) || :playing
 
         put_in(state.games[game_id], %{
           game
@@ -623,56 +623,9 @@ defmodule ManaChessOnline.GameLobby do
     }
   end
 
-  defp process_next_action(%{queue: []} = game), do: game
-  defp process_next_action(%{promotion_pending: pending} = game) when not is_nil(pending), do: game
+  defp process_next_action(game), do: GameEngine.process_next_action(game, now_ms(), @default_settings.cooldown_seconds)
 
-  defp process_next_action(%{queue: [action | rest]} = game) do
-    piece = GameRules.at(game.board, elem(action.from, 0), elem(action.from, 1))
-
-    cond do
-      piece == "." or GameRules.color(piece) != action.color ->
-        %{game | queue: rest, log: ["Movimiento descartado: la pieza ya no esta ahi." | game.log]}
-
-      game.elixir[action.color] < piece_cost(game.settings, piece) ->
-        %{game | queue: rest, log: ["Sin elixir para #{label(action.color)}." | game.log]}
-
-      action.to not in GameRules.legal_moves_for(game.board, elem(action.from, 0), elem(action.from, 1), action.color, game.castling_rights) ->
-        %{game | queue: rest, log: ["Movimiento descartado: ya no es valido." | game.log]}
-
-      true ->
-        cost = piece_cost(game.settings, piece)
-        {board, captured} = GameRules.move(game.board, action.from, action.to, game.castling_rights)
-        castling_rights = GameRules.update_castling_rights(game.castling_rights, piece, action.from, captured, action.to)
-        cooldowns =
-          game.cooldowns
-          |> Map.delete(action.from)
-          |> put_piece_cooldown(action.to, piece, game.settings)
-
-        {board, promotion_pending, status} =
-          resolve_promotion(board, piece, action, captured, castling_rights)
-
-        %{
-          game
-          | board: board,
-            castling_rights: castling_rights,
-            cooldowns: cooldowns,
-            promotion_pending: promotion_pending,
-            queue: rest,
-            first_move_pending: clear_first_move(game.first_move_pending, action.color),
-            elixir: spend_and_refund_elixir(game, action.color, cost, captured),
-            status: status || game.status,
-            log: [move_message(action, captured) | game.log]
-        }
-    end
-  end
-
-  defp regen_elixir(game) do
-    if game.status != :playing or not is_nil(game.first_move_pending) do
-      game
-    else
-      do_regen_elixir(game)
-    end
-  end
+  defp regen_elixir(game), do: GameEngine.regen_elixir(game, @tick_ms)
 
   defp maybe_enqueue_bot_move(%{practice?: true, bot_enabled?: true, status: :playing, queue: [], promotion_pending: nil, first_move_pending: nil} = game) do
     now = now_ms()
@@ -852,23 +805,6 @@ defmodule ManaChessOnline.GameLobby do
     :erlang.phash2({action.from, action.to, now}, 11) / 100
   end
 
-  defp resolve_promotion(board, piece, %{player_id: :bot, color: :black, to: to} = action, captured, castling_rights) do
-    if GameRules.promotion_pending?(piece, elem(to, 0)) do
-      board = GameRules.promote(board, to, "q", :black)
-      {board, nil, next_status(board, captured, action.color, castling_rights)}
-    else
-      {board, nil, next_status(board, captured, action.color, castling_rights)}
-    end
-  end
-
-  defp resolve_promotion(board, piece, action, captured, castling_rights) do
-    if GameRules.promotion_pending?(piece, elem(action.to, 0)) do
-      {board, %{player_id: action.player_id, color: action.color, at: action.to}, :promotion}
-    else
-      {board, nil, next_status(board, captured, action.color, castling_rights)}
-    end
-  end
-
   defp maybe_finish_countdown(%{status: {:starting, starts_at}} = game) do
     if System.monotonic_time(:millisecond) >= starts_at do
       start_playing(game)
@@ -901,39 +837,10 @@ defmodule ManaChessOnline.GameLobby do
     }
   end
 
-  defp do_regen_elixir(game) do
-    regen_per_tick = game.settings.regen_per_second * @tick_ms / 1000
+  defp clear_expired_cooldowns(game), do: GameEngine.clear_expired_cooldowns(game, now_ms())
 
-    update_in(game.elixir, fn elixir ->
-      Map.new(elixir, fn {color, amount} ->
-        {color, min(game.settings.max_elixir, Float.round(amount + regen_per_tick, 2))}
-      end)
-    end)
-  end
+  defp cooldown_active?(game, square), do: GameEngine.cooldown_active?(game, square, now_ms())
 
-  defp clear_expired_cooldowns(game) do
-    now = now_ms()
-    %{game | cooldowns: Map.reject(game.cooldowns, fn {_square, ready_at} -> ready_at <= now end)}
-  end
-
-  defp cooldown_active?(game, square) do
-    case Map.fetch(game.cooldowns, square) do
-      {:ok, ready_at} -> ready_at > now_ms()
-      :error -> false
-    end
-  end
-
-  defp put_piece_cooldown(cooldowns, square, _piece, settings) do
-    cooldown_ms = round(piece_cooldown(settings) * 1000)
-
-    if not Map.get(settings, :cooldown_enabled, true) or cooldown_ms <= 0 do
-      cooldowns
-    else
-      Map.put(cooldowns, square, now_ms() + cooldown_ms)
-    end
-  end
-
-  defp piece_cooldown(settings), do: GameState.piece_cooldown(settings, @default_settings.cooldown_seconds)
   defp bot_move_ms(settings), do: round(Map.get(settings, :bot_move_seconds, @bot_move_seconds) * 1000)
 
   defp now_ms, do: System.monotonic_time(:millisecond)
@@ -952,14 +859,7 @@ defmodule ManaChessOnline.GameLobby do
 
   defp refresh_status(game), do: game
 
-  defp refresh_terminal_status(%{status: :playing} = game) do
-    case terminal_status(game.board, game.castling_rights) do
-      nil -> game
-      status -> %{game | status: status, queue: [], finished_at: now_ms()}
-    end
-  end
-
-  defp refresh_terminal_status(game), do: game
+  defp refresh_terminal_status(game), do: GameEngine.refresh_terminal_status(game, now_ms())
 
   defp public_game(game), do: GameState.public_game(game, now_ms(), @default_settings.cooldown_seconds)
 
@@ -998,27 +898,6 @@ defmodule ManaChessOnline.GameLobby do
 
   defp chat_name(_player_id), do: "Jugador"
 
-  defp next_status(board, _captured, _moving_color, castling_rights), do: terminal_status(board, castling_rights)
-
-  defp terminal_status(board, castling_rights) do
-    cond do
-      GameRules.in_check?(board, :white) and not GameRules.has_legal_moves?(board, :white, castling_rights) ->
-        {:checkmate, :black, :white}
-
-      GameRules.in_check?(board, :black) and not GameRules.has_legal_moves?(board, :black, castling_rights) ->
-        {:checkmate, :white, :black}
-
-      not GameRules.has_legal_moves?(board, :white, castling_rights) and
-          not GameRules.has_legal_moves?(board, :black, castling_rights) ->
-        :draw
-
-      true ->
-        nil
-    end
-  end
-
-  defp move_message(action, "."), do: "#{label(action.color)} movio una pieza."
-  defp move_message(action, captured), do: "#{label(action.color)} capturo #{captured}."
   defp bot_toggle_message(true), do: "Bot de negras activado."
   defp bot_toggle_message(false), do: "Bot de negras desactivado."
   defp label(:white), do: "Blancas"
@@ -1031,37 +910,9 @@ defmodule ManaChessOnline.GameLobby do
     Map.new(elixir, fn {color, amount} -> {color, min(amount, settings.max_elixir)} end)
   end
 
-  defp piece_cost(settings, piece), do: Map.fetch!(settings.costs, piece_type(piece))
+  defp piece_cost(settings, piece), do: GameEngine.piece_cost(settings, piece)
 
-  defp piece_type(piece) do
-    case String.downcase(piece) do
-      "p" -> :pawn
-      "n" -> :knight
-      "b" -> :bishop
-      "r" -> :rook
-      "q" -> :queen
-      "k" -> :king
-    end
-  end
-
-  defp spend_and_refund_elixir(game, color, cost, captured) do
-    max_elixir = game.settings.max_elixir
-    refund = capture_refund(game.settings, captured)
-
-    Map.update!(game.elixir, color, fn amount ->
-      amount
-      |> Kernel.-(cost)
-      |> Kernel.+(refund)
-      |> min(max_elixir)
-      |> Float.round(2)
-    end)
-  end
-
-  defp capture_refund(_settings, "."), do: 0.0
-
-  defp capture_refund(settings, captured) do
-    piece_cost(settings, captured) * settings.capture_refund_percent / 100
-  end
+  defp piece_type(piece), do: GameEngine.piece_type(piece)
 
   defp sanitize_settings(params, current) do
     current_costs = Map.get(current, :costs, @default_settings.costs)
@@ -1220,8 +1071,6 @@ defmodule ManaChessOnline.GameLobby do
     if Map.has_key?(games, game_id), do: unique_private_game_id(games), else: game_id
   end
 
-  defp clear_first_move(:white, :white), do: nil
-  defp clear_first_move(first_move_pending, _color), do: first_move_pending
 
   defp promotion_choice("Q", :white), do: "Q"
   defp promotion_choice("R", :white), do: "R"
