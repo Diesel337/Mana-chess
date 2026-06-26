@@ -60,6 +60,8 @@ npm run pack:win
 - External links open in the user's browser; Mana Chess links stay in the app window.
 - The Windows build uses `build/icon.ico` and app id `com.diesel337.manachess`.
 - The web game can read `window.ManaChessDesktop.getInfo()` for desktop version, channel, platform, and origin.
+- The window title follows local presence, such as lobby, active match, playing, or result states.
+- The desktop menu can copy, open, or reset local desktop QA state.
 
 Deep link examples:
 
@@ -86,6 +88,8 @@ The preload exposes a small, future-safe API to the remote game:
 window.ManaChessDesktop.getInfo()
 window.ManaChessDesktop.getState()
 window.ManaChessDesktop.copyState()
+window.ManaChessDesktop.openStateFolder()
+window.ManaChessDesktop.resetState()
 window.ManaChessDesktop.copyShareLink(window.location.href)
 window.ManaChessDesktop.sendEvent("match.finished", {result: "win"})
 ```
@@ -94,7 +98,7 @@ window.ManaChessDesktop.sendEvent("match.finished", {result: "win"})
 
 Emitted event names currently include `screen.viewed`, `match.opened`, `match.status_changed`, `match.started`, and `match.finished`.
 
-Desktop state is stored locally in Electron user data as `desktop-state.json`. It tracks session counters, a small event log, current presence, and local achievement flags that can later map to Steamworks achievements.
+Desktop state is stored locally in Electron user data as `desktop-state.json`. It tracks session counters, a small event log, current presence, and local achievement flags that can later map to Steamworks achievements. Use the Desktop menu to copy the state, open the data folder, or reset the local state during QA.
 
 ## Notes
 

@@ -27,6 +27,8 @@ contextBridge.exposeInMainWorld("ManaChessDesktop", {
   getInfo: () => ({...desktopInfo}),
   getState: () => ipcRenderer.invoke("mana-chess:get-desktop-state"),
   copyState: () => ipcRenderer.invoke("mana-chess:copy-desktop-state"),
+  openStateFolder: () => ipcRenderer.invoke("mana-chess:open-desktop-state-folder"),
+  resetState: () => ipcRenderer.invoke("mana-chess:reset-desktop-state"),
   copyShareLink: (url = "") => ipcRenderer.invoke("mana-chess:copy-share-link", String(url || "")),
   sendEvent: (name, payload = {}) => {
     if (typeof name !== "string" || name.trim().length === 0) return

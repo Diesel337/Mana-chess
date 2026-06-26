@@ -57,6 +57,7 @@ function createWindow() {
   bindWindowState(windowState)
   bindNavigationGuards()
   bindShortcuts()
+  applyDesktopPresence(readDesktopState().presence)
 
   mainWindow.once("ready-to-show", () => {
     if (windowState.isMaximized) mainWindow.maximize()
@@ -80,6 +81,10 @@ function bindDesktopBridge() {
 
   ipcMain.handle("mana-chess:copy-desktop-state", () => copyDesktopState())
 
+  ipcMain.handle("mana-chess:open-desktop-state-folder", () => openDesktopStateFolder())
+
+  ipcMain.handle("mana-chess:reset-desktop-state", () => resetDesktopState())
+
   ipcMain.on("mana-chess:desktop-event", (_event, event) => recordDesktopEvent(event))
 }
 
@@ -99,8 +104,21 @@ function buildMenu() {
           click: () => copyCurrentLink()
         },
         {
-          label: "Copiar estado desktop",
-          click: () => copyDesktopState()
+          label: "Desktop",
+          submenu: [
+            {
+              label: "Copiar estado local",
+              click: () => copyDesktopState()
+            },
+            {
+              label: "Abrir datos desktop",
+              click: () => openDesktopStateFolder()
+            },
+            {
+              label: "Reiniciar estado local",
+              click: () => resetDesktopState()
+            }
+          ]
         },
         {
           label: "Recargar",
@@ -170,7 +188,7 @@ function bindNavigationGuards() {
 
   mainWindow.webContents.on("page-title-updated", event => {
     event.preventDefault()
-    mainWindow.setTitle("Mana Chess")
+    applyDesktopPresence(readDesktopState().presence)
   })
 
   mainWindow.webContents.on("did-fail-load", (_event, _errorCode, _errorDescription, validatedURL, isMainFrame) => {
@@ -286,12 +304,43 @@ function copyDesktopState() {
   return {ok: true, state}
 }
 
+async function openDesktopStateFolder() {
+  try {
+    const dataPath = app.getPath("userData")
+    fs.mkdirSync(dataPath, {recursive: true})
+    const error = await shell.openPath(dataPath)
+    return {ok: !error, path: dataPath, error}
+  } catch (error) {
+    return {ok: false, error: String(error?.message || error)}
+  }
+}
+
+function resetDesktopState() {
+  writeDesktopState(normalizeDesktopState({}))
+  return recordDesktopEvent({
+    name: "desktop.session_started",
+    payload: {version: app.getVersion(), channel: DESKTOP_CHANNEL, reset: true}
+  }) || readDesktopState()
+}
+
+function applyDesktopPresence(presence = {}) {
+  const label = typeof presence.label === "string" ? presence.label.trim() : ""
+  const title = label ? `Mana Chess - ${label}` : "Mana Chess"
+
+  if (!mainWindow || mainWindow.isDestroyed()) return title
+
+  mainWindow.setTitle(title)
+  return title
+}
+
 function recordDesktopEvent(event) {
   const normalizedEvent = normalizeDesktopEvent(event)
-  if (!normalizedEvent) return
+  if (!normalizedEvent) return null
 
   const state = updateDesktopState(readDesktopState(), normalizedEvent)
   writeDesktopState(state)
+  applyDesktopPresence(state.presence)
+  return state
 }
 
 function normalizeDesktopEvent(event) {
@@ -414,6 +463,7 @@ function unlockAchievement(state, id, title, at) {
   if (state.achievements[id]) return
   state.achievements[id] = {id, title, unlockedAt: at}
 }
+
 function cleanShareUrl(url) {
   const parsed = safeUrl(String(url || ""))
   if (!parsed || parsed.origin !== GAME_ORIGIN) return null
