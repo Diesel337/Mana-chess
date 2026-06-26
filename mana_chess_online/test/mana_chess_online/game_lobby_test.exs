@@ -3,8 +3,71 @@ defmodule ManaChessOnline.GameLobbyTest do
 
   alias ManaChessOnline.GameLobby
 
+  defp unique_player(prefix) do
+    prefix <> "-" <> Integer.to_string(System.unique_integer([:positive]))
+  end
+
+  test "creates private games outside the public lobby and lets spectators watch by link" do
+    player_id = unique_player("private-owner")
+    on_exit(fn -> GameLobby.leave(player_id) end)
+
+    view = GameLobby.create_private(player_id)
+
+    assert String.starts_with?(view.game_id, "private_")
+    assert view.color == :white
+    refute Enum.any?(view.lobby, &(&1.id == view.game_id))
+
+    game = GameLobby.snapshot(view.game_id)
+    assert game.private?
+    assert game.players.white == player_id
+    assert game.players.black == nil
+
+    spectator_view = GameLobby.watch(unique_player("spectator"), view.game_id)
+    assert spectator_view.game_id == view.game_id
+    assert spectator_view.color == nil
+    assert spectator_view.game.private?
+  end
+
+  test "private matches become ready when black joins without entering public lobby" do
+    white_id = unique_player("private-white")
+    black_id = unique_player("private-black")
+    on_exit(fn ->
+      GameLobby.leave(white_id)
+      GameLobby.leave(black_id)
+    end)
+
+    white_view = GameLobby.create_private(white_id)
+    black_view = GameLobby.sit(black_id, white_view.game_id, :black)
+
+    assert black_view.game_id == white_view.game_id
+    assert black_view.color == :black
+
+    game = GameLobby.snapshot(white_view.game_id)
+    assert game.private?
+    assert game.status == :ready
+    assert game.players.white == white_id
+    assert game.players.black == black_id
+    refute Enum.any?(black_view.lobby, &(&1.id == white_view.game_id))
+  end
+
+  test "practice games are isolated and removed when the player leaves" do
+    player_id = unique_player("practice-player")
+    view = GameLobby.start_practice(player_id)
+
+    assert view.color == :practice
+    assert view.game.practice?
+    assert view.game.bot_enabled?
+    assert view.game.players.white == player_id
+    assert view.game.players.black == player_id
+
+    assert :ok = GameLobby.leave(player_id)
+    assert GameLobby.snapshot(view.game_id) == nil
+  end
+
   test "stores sanitized room chat messages" do
-    player_id = "chat-player-" <> Integer.to_string(System.unique_integer([:positive]))
+    player_id = unique_player("chat-player")
+    on_exit(fn -> GameLobby.leave(player_id) end)
+
     view = GameLobby.start_practice(player_id)
 
     assert :ok = GameLobby.send_chat(player_id, view.game_id, "  hola\n   mana   ")
@@ -15,16 +78,51 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert is_integer(sent_at)
   end
 
+  test "keeps only the latest room chat messages in newest-first order" do
+    player_id = unique_player("chat-limit")
+    on_exit(fn -> GameLobby.leave(player_id) end)
+
+    view = GameLobby.start_practice(player_id)
+
+    for number <- 1..30 do
+      assert :ok = GameLobby.send_chat(player_id, view.game_id, "msg #{number}")
+    end
+
+    messages = GameLobby.snapshot(view.game_id).chat
+    assert length(messages) == 24
+    assert hd(messages).text == "msg 30"
+    assert List.last(messages).text == "msg 7"
+    refute Enum.any?(messages, &(&1.text == "msg 1"))
+  end
+
   test "rejects blank chat messages" do
-    player_id = "chat-blank-" <> Integer.to_string(System.unique_integer([:positive]))
+    player_id = unique_player("chat-blank")
+    on_exit(fn -> GameLobby.leave(player_id) end)
+
     view = GameLobby.start_practice(player_id)
 
     assert {:error, :empty} = GameLobby.send_chat(player_id, view.game_id, "   ")
     assert GameLobby.snapshot(view.game_id).chat == []
   end
 
+  test "rejects moving from an empty square without changing the board" do
+    player_id = unique_player("empty-move")
+    on_exit(fn -> GameLobby.leave(player_id) end)
+
+    view = GameLobby.start_practice(player_id)
+    before_board = view.game.board
+
+    assert :ok = GameLobby.enqueue(player_id, {4, 4}, {3, 4})
+
+    game = GameLobby.snapshot(view.game_id)
+    assert game.board == before_board
+    assert hd(game.log) == "Movimiento rechazado: no hay pieza en origen {4, 4}."
+  end
+
   test "rejects moving a piece while it is on cooldown" do
-    player_id = "cooldown-player-" <> Integer.to_string(System.unique_integer([:positive]))
+    player_id = unique_player("cooldown-player")
+    on_exit(fn -> GameLobby.leave(player_id) end)
+
     view = GameLobby.start_practice(player_id)
 
     assert :ok = GameLobby.enqueue(player_id, {6, 4}, {5, 4})
