@@ -164,6 +164,32 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert {:error, :rate_limited} = GameLobby.create_private(player_id)
   end
 
+  test "rate limits repeated lobby reconnect checks softly" do
+    player_id = unique_player("join-rate")
+
+    for _number <- 1..120 do
+      view = GameLobby.join(player_id)
+      assert is_list(view.lobby)
+    end
+
+    limited_view = GameLobby.join(player_id)
+    assert is_list(limited_view.lobby)
+  end
+
+  test "rate limits repeated seat requests without moving the player again" do
+    player_id = unique_player("seat-rate")
+    on_exit(fn -> GameLobby.leave(player_id) end)
+
+    for _number <- 1..30 do
+      view = GameLobby.sit(player_id, "game_1", :white)
+      assert view.game_id == "game_1"
+    end
+
+    limited_view = GameLobby.sit(player_id, "game_2", :black)
+    assert limited_view.game_id == "game_1"
+    assert limited_view.color == :white
+  end
+
   test "rejects blank chat messages" do
     player_id = unique_player("chat-blank")
     on_exit(fn -> GameLobby.leave(player_id) end)

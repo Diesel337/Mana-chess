@@ -12,6 +12,8 @@ defmodule ManaChessOnline.GameLobby do
   @chat_rate_limit {30, 10_000}
   @move_rate_limit {60, 1_000}
   @private_room_rate_limit {3, 60_000}
+  @presence_rate_limit {120, 60_000}
+  @seat_rate_limit {30, 10_000}
   @rate_limit_retention_ms 60_000
   @settings_file "mana_chess_settings.json"
   @settings_version 2
@@ -76,33 +78,48 @@ defmodule ManaChessOnline.GameLobby do
 
   @impl true
   def handle_call({:join, player_id}, _from, state) do
-    {:reply, player_view(state, player_id), state}
+    case take_rate_limit(state, {:join, player_id}, @presence_rate_limit) do
+      {:ok, state} -> {:reply, player_view(state, player_id), state}
+      {:error, :rate_limited, state} -> {:reply, player_view(state, player_id), state}
+    end
   end
 
   def handle_call({:sit, player_id, game_id, color}, _from, state) do
-    state =
-      state
-      |> remove_player(player_id)
-      |> assign_player(player_id, game_id, color)
-
-    broadcast_lobby(state)
-    {:reply, player_view(state, player_id), state}
-  end
-
-  def handle_call({:sit_anywhere, player_id}, _from, state) do
-    state =
-      case find_slot(state.games) do
-        {game_id, color} ->
+    case take_rate_limit(state, {:seat, player_id}, @seat_rate_limit) do
+      {:ok, state} ->
+        state =
           state
           |> remove_player(player_id)
           |> assign_player(player_id, game_id, color)
 
-        nil ->
-          state
-      end
+        broadcast_lobby(state)
+        {:reply, player_view(state, player_id), state}
 
-    broadcast_lobby(state)
-    {:reply, player_view(state, player_id), state}
+      {:error, :rate_limited, state} ->
+        {:reply, player_view(state, player_id), state}
+    end
+  end
+
+  def handle_call({:sit_anywhere, player_id}, _from, state) do
+    case take_rate_limit(state, {:seat, player_id}, @seat_rate_limit) do
+      {:ok, state} ->
+        state =
+          case find_slot(state.games) do
+            {game_id, color} ->
+              state
+              |> remove_player(player_id)
+              |> assign_player(player_id, game_id, color)
+
+            nil ->
+              state
+          end
+
+        broadcast_lobby(state)
+        {:reply, player_view(state, player_id), state}
+
+      {:error, :rate_limited, state} ->
+        {:reply, player_view(state, player_id), state}
+    end
   end
 
   def handle_call({:create_private, player_id}, _from, state) do
@@ -125,9 +142,14 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   def handle_call({:watch, player_id, game_id}, _from, state) do
-    state = ensure_private_game(state, game_id)
+    case take_rate_limit(state, {:watch, player_id}, @presence_rate_limit) do
+      {:ok, state} ->
+        state = ensure_private_game(state, game_id)
+        {:reply, player_view(state, player_id, game_id), state}
 
-    {:reply, player_view(state, player_id, game_id), state}
+      {:error, :rate_limited, state} ->
+        {:reply, player_view(state, player_id, game_id), state}
+    end
   end
 
   def handle_call(:lobby, _from, state) do
