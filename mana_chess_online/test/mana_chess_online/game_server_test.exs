@@ -48,6 +48,23 @@ defmodule ManaChessOnline.GameServerTest do
     assert GameServer.snapshot(pid).board == game.board
   end
 
+  test "ticks bot decisions inside the game process" do
+    game =
+      GameState.practice_game("server_bot_1", "player-1", settings(), 0, 0)
+      |> Map.put(:first_move_pending, nil)
+      |> Map.put(:bot_ready_at, 900)
+
+    {:ok, pid} =
+      start_supervised({GameServer, game: game, id: {:game_server_test, 4}, tick_ms: 250})
+
+    game = GameServer.tick(pid, 1_000)
+
+    assert game.queue == []
+    assert game.bot_ready_at == 2_200
+    assert game.elixir.black < 5.25
+    assert hd(game.log) =~ "Negras"
+  end
+
   test "ticks cooldown cleanup and elixir regeneration in one process cycle" do
     game =
       GameState.new_game("server_test_2", settings())

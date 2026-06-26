@@ -1,11 +1,12 @@
 defmodule ManaChessOnline.GameTick do
   @moduledoc false
 
-  alias ManaChessOnline.GameEngine
+  alias ManaChessOnline.{GameBot, GameEngine}
 
   def tick(game, now_ms, tick_ms, default_cooldown_seconds) do
     game
     |> before_bot(now_ms, tick_ms)
+    |> GameBot.maybe_enqueue_move(now_ms)
     |> after_bot(now_ms, default_cooldown_seconds)
   end
 

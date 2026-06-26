@@ -3,24 +3,12 @@ defmodule ManaChessOnline.GameLobby do
 
   use GenServer
 
-  alias ManaChessOnline.{GameDirectory, GameEngine, GameRules, GameState, GameSupervisor, GameTick}
+  alias ManaChessOnline.{GameBot, GameDirectory, GameEngine, GameRules, GameServer, GameState, GameSupervisor, GameTick}
 
   @max_games 4
   @tick_ms 250
   @countdown_ms 5_000
-  @bot_search_depth 4
-  @bot_branch_limit 8
-  @bot_root_branch_limit 12
   @bot_move_seconds 1.2
-  @mate_score 100_000
-  @piece_values %{
-    pawn: 100,
-    knight: 320,
-    bishop: 330,
-    rook: 500,
-    queen: 900,
-    king: 20_000
-  }
   @settings_file "mana_chess_settings.json"
   @settings_version 2
   @default_settings %{
@@ -294,7 +282,7 @@ defmodule ManaChessOnline.GameLobby do
         game = %{
           game
           | bot_enabled?: enabled?,
-            bot_ready_at: if(enabled?, do: now_ms() + bot_move_ms(game.settings), else: nil),
+            bot_ready_at: if(enabled?, do: now_ms() + GameBot.move_delay_ms(game.settings), else: nil),
             log: [bot_toggle_message(enabled?) | game.log]
         }
 
@@ -464,22 +452,16 @@ defmodule ManaChessOnline.GameLobby do
   def handle_info(:tick, state) do
     Process.send_after(self(), :tick, @tick_ms)
 
-    state =
-      update_in(state.games, fn games ->
-        Map.new(games, fn {game_id, game} ->
-          game =
-            game
-            |> tick_before_bot()
-            |> maybe_enqueue_bot_move()
-            |> tick_after_bot()
-
-          Phoenix.PubSub.broadcast(ManaChessOnline.PubSub, topic(game_id), {:game_update, public_game(game)})
-          Phoenix.PubSub.broadcast(ManaChessOnline.PubSub, lobby_topic(), {:lobby_update, public_lobby(%{games: games, players: state.players})})
-          {game_id, game}
-        end)
+    games =
+      Map.new(state.games, fn {game_id, game} ->
+        game = tick_game_server(game)
+        Phoenix.PubSub.broadcast(ManaChessOnline.PubSub, topic(game_id), {:game_update, public_game(game)})
+        {game_id, game}
       end)
 
-    sync_game_servers(state)
+    state = %{state | games: games}
+    Phoenix.PubSub.broadcast(ManaChessOnline.PubSub, lobby_topic(), {:lobby_update, public_lobby(state)})
+
     {:noreply, state}
   end
 
@@ -609,186 +591,11 @@ defmodule ManaChessOnline.GameLobby do
 
   defp process_next_action(game), do: GameEngine.process_next_action(game, now_ms(), @default_settings.cooldown_seconds)
 
-  defp tick_before_bot(game), do: GameTick.before_bot(game, now_ms(), @tick_ms)
-
-  defp tick_after_bot(game), do: GameTick.after_bot(game, now_ms(), @default_settings.cooldown_seconds)
-
-  defp maybe_enqueue_bot_move(%{practice?: true, bot_enabled?: true, status: :playing, queue: [], promotion_pending: nil, first_move_pending: nil} = game) do
-    now = now_ms()
-
-    if is_integer(game.bot_ready_at) and game.bot_ready_at <= now do
-      case bot_action(game, now) do
-        nil -> %{game | bot_ready_at: now + bot_move_ms(game.settings)}
-        action -> %{game | queue: [action], bot_ready_at: now + bot_move_ms(game.settings)}
-      end
-    else
-      game
+  defp tick_game_server(game) do
+    case GameSupervisor.upsert_game(game) do
+      {:ok, pid} -> GameServer.tick(pid)
+      _error -> GameTick.tick(game, now_ms(), @tick_ms, @default_settings.cooldown_seconds)
     end
-  end
-
-  defp maybe_enqueue_bot_move(game), do: game
-
-  defp bot_action(game, now) do
-    game.board
-    |> bot_actions_for(:black, game)
-    |> affordable_bot_actions(game)
-    |> pick_best_bot_action(game, now)
-  end
-
-  defp bot_actions_for(board, color, game) do
-    for {row, r} <- Enum.with_index(board),
-        {piece, c} <- Enum.with_index(row),
-        piece != ".",
-        GameRules.color(piece) == color,
-        to <- GameRules.legal_moves_for(board, r, c, color, game.castling_rights),
-        do: %{player_id: :bot, color: color, from: {r, c}, to: to}
-  end
-
-  defp affordable_bot_actions(actions, game) do
-    Enum.filter(actions, fn action ->
-      piece = GameRules.at(game.board, elem(action.from, 0), elem(action.from, 1))
-      game.elixir[action.color] >= piece_cost(game.settings, piece)
-    end)
-  end
-
-  defp pick_best_bot_action([], _game, _now), do: nil
-
-  defp pick_best_bot_action(actions, game, now) do
-    actions
-    |> order_search_actions(game.board)
-    |> Enum.take(@bot_root_branch_limit)
-    |> Enum.map(fn action ->
-      position = apply_bot_search_action(game.board, game.castling_rights, action)
-      score = minimax(position.board, position.castling_rights, :white, @bot_search_depth - 1, -@mate_score, @mate_score)
-      {score + bot_tiebreaker(action, now), action}
-    end)
-    |> Enum.max_by(fn {score, _action} -> score end)
-    |> elem(1)
-  end
-
-  defp minimax(board, castling_rights, color, depth, alpha, beta) do
-    cond do
-      depth <= 0 ->
-        evaluate_board(board, castling_rights)
-
-      not GameRules.has_legal_moves?(board, color, castling_rights) ->
-        terminal_score(board, color, depth)
-
-      color == :black ->
-        actions = board |> legal_search_actions(color, castling_rights) |> order_search_actions(board) |> Enum.take(@bot_branch_limit)
-        maximize_bot(board, castling_rights, actions, depth, alpha, beta)
-
-      true ->
-        actions = board |> legal_search_actions(color, castling_rights) |> order_search_actions(board) |> Enum.take(@bot_branch_limit)
-        minimize_bot(board, castling_rights, actions, depth, alpha, beta)
-    end
-  end
-
-  defp maximize_bot(_board, _rights, [], _depth, alpha, _beta), do: alpha
-
-  defp maximize_bot(board, rights, [action | rest], depth, alpha, beta) do
-    position = apply_bot_search_action(board, rights, action)
-    score = minimax(position.board, position.castling_rights, :white, depth - 1, alpha, beta)
-    alpha = max(alpha, score)
-
-    if alpha >= beta do
-      alpha
-    else
-      maximize_bot(board, rights, rest, depth, alpha, beta)
-    end
-  end
-
-  defp minimize_bot(_board, _rights, [], _depth, _alpha, beta), do: beta
-
-  defp minimize_bot(board, rights, [action | rest], depth, alpha, beta) do
-    position = apply_bot_search_action(board, rights, action)
-    score = minimax(position.board, position.castling_rights, :black, depth - 1, alpha, beta)
-    beta = min(beta, score)
-
-    if alpha >= beta do
-      beta
-    else
-      minimize_bot(board, rights, rest, depth, alpha, beta)
-    end
-  end
-
-  defp legal_search_actions(board, color, castling_rights) do
-    for {row, r} <- Enum.with_index(board),
-        {piece, c} <- Enum.with_index(row),
-        piece != ".",
-        GameRules.color(piece) == color,
-        to <- GameRules.legal_moves_for(board, r, c, color, castling_rights),
-        do: %{color: color, from: {r, c}, to: to}
-  end
-
-  defp order_search_actions(actions, board) do
-    Enum.sort_by(actions, &search_action_priority(board, &1), :desc)
-  end
-
-  defp search_action_priority(board, action) do
-    piece = GameRules.at(board, elem(action.from, 0), elem(action.from, 1))
-    captured = GameRules.at(board, elem(action.to, 0), elem(action.to, 1))
-    capture_value = if captured == ".", do: 0, else: Map.fetch!(@piece_values, piece_type(captured))
-    promotion_value = if GameRules.promotion_pending?(piece, elem(action.to, 0)), do: 900, else: 0
-
-    capture_value + promotion_value
-  end
-
-  defp apply_bot_search_action(board, castling_rights, action) do
-    piece = GameRules.at(board, elem(action.from, 0), elem(action.from, 1))
-    {board, captured} = GameRules.move(board, action.from, action.to, castling_rights)
-    castling_rights = GameRules.update_castling_rights(castling_rights, piece, action.from, captured, action.to)
-
-    board =
-      if GameRules.promotion_pending?(piece, elem(action.to, 0)) do
-        promote_for_search(board, action.to, action.color)
-      else
-        board
-      end
-
-    %{board: board, castling_rights: castling_rights}
-  end
-
-  defp promote_for_search(board, to, :white), do: GameRules.promote(board, to, "Q", :white)
-  defp promote_for_search(board, to, :black), do: GameRules.promote(board, to, "q", :black)
-
-  defp evaluate_board(board, castling_rights) do
-    material_score(board) + check_score(board, castling_rights)
-  end
-
-  defp material_score(board) do
-    board
-    |> List.flatten()
-    |> Enum.reduce(0, fn
-      ".", score ->
-        score
-
-      piece, score ->
-        value = Map.fetch!(@piece_values, piece_type(piece))
-        if GameRules.color(piece) == :black, do: score + value, else: score - value
-    end)
-  end
-
-  defp check_score(board, castling_rights) do
-    cond do
-      GameRules.in_check?(board, :white) and not GameRules.has_legal_moves?(board, :white, castling_rights) -> @mate_score
-      GameRules.in_check?(board, :black) and not GameRules.has_legal_moves?(board, :black, castling_rights) -> -@mate_score
-      GameRules.in_check?(board, :white) -> 25
-      GameRules.in_check?(board, :black) -> -25
-      true -> 0
-    end
-  end
-
-  defp terminal_score(board, color, depth) do
-    cond do
-      GameRules.in_check?(board, color) and color == :white -> @mate_score + depth
-      GameRules.in_check?(board, color) and color == :black -> -@mate_score - depth
-      true -> 0
-    end
-  end
-
-  defp bot_tiebreaker(action, now) do
-    :erlang.phash2({action.from, action.to, now}, 11) / 100
   end
 
   defp maybe_start_when_everyone_ready(%{status: {:starting, _starts_at}} = game) do
@@ -800,14 +607,13 @@ defmodule ManaChessOnline.GameLobby do
 
   defp cooldown_active?(game, square), do: GameEngine.cooldown_active?(game, square, now_ms())
 
-  defp bot_move_ms(settings), do: round(Map.get(settings, :bot_move_seconds, @bot_move_seconds) * 1000)
 
   defp now_ms, do: System.monotonic_time(:millisecond)
 
   defp new_game(id, settings), do: GameState.new_game(id, settings)
 
   defp practice_game(id, player_id, settings) do
-    GameState.practice_game(id, player_id, settings, now_ms(), bot_move_ms(settings))
+    GameState.practice_game(id, player_id, settings, now_ms(), GameBot.move_delay_ms(settings))
   end
 
   defp private_game(id, settings), do: GameState.private_game(id, settings)
@@ -886,9 +692,6 @@ defmodule ManaChessOnline.GameLobby do
     Map.new(elixir, fn {color, amount} -> {color, min(amount, settings.max_elixir)} end)
   end
 
-  defp piece_cost(settings, piece), do: GameEngine.piece_cost(settings, piece)
-
-  defp piece_type(piece), do: GameEngine.piece_type(piece)
 
   defp sanitize_settings(params, current) do
     current_costs = Map.get(current, :costs, @default_settings.costs)
