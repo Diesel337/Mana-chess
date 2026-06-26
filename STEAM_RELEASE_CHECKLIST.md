@@ -155,8 +155,8 @@ Release candidate target:
 
 - [x] Add safety tests for current `GameLobby` behavior.
 - [x] Extract pure game-state/game-engine helpers where low-risk.
-- [ ] Add `GameServer` process per game.
-- [ ] Add `GameSupervisor` DynamicSupervisor.
+- [x] Add `GameServer` process per game.
+- [x] Add `GameSupervisor` DynamicSupervisor.
 - [ ] Add Registry lookup by `game_id`.
 - [ ] Split lobby discovery from per-game state.
 - [ ] Move bot ticks into per-game processes or workers.

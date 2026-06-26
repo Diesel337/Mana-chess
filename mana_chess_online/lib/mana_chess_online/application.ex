@@ -11,6 +11,7 @@ defmodule ManaChessOnline.Application do
       ManaChessOnlineWeb.Telemetry,
       {DNSCluster, query: Application.get_env(:mana_chess_online, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: ManaChessOnline.PubSub},
+      ManaChessOnline.GameSupervisor,
       ManaChessOnline.GameLobby,
       # Start a worker by calling: ManaChessOnline.Worker.start_link(arg)
       # {ManaChessOnline.Worker, arg},
