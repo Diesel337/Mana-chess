@@ -2383,6 +2383,37 @@ body {
 .mc-admin-login {
   max-width: 420px;
 }
+
+.mc-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.mc-metric {
+  min-width: 0;
+  padding: 10px;
+  background: #0f1711;
+  border: 1px solid #344032;
+  border-radius: 8px;
+}
+
+.mc-metric span {
+  display: block;
+  color: #b7c3b3;
+  font-size: .72rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.mc-metric strong {
+  display: block;
+  margin-top: 4px;
+  color: #f7f2e8;
+  font-size: 1.12rem;
+  overflow-wrap: anywhere;
+}
 .mc-settings .mc-toggle {
   align-content: end;
   grid-template-columns: 1fr auto;
