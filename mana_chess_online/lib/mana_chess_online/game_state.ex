@@ -21,6 +21,7 @@ defmodule ManaChessOnline.GameState do
       cooldowns: %{},
       bot_enabled?: false,
       bot_ready_at: nil,
+      bot_color: nil,
       promotion_pending: nil,
       finished_at: nil,
       first_move_pending: :white,
@@ -33,13 +34,14 @@ defmodule ManaChessOnline.GameState do
     }
   end
 
-  def practice_game(id, player_id, settings, now_ms, bot_move_ms) do
+  def practice_game(id, player_id, settings, now_ms, bot_move_ms, bot_color \\ :black) do
     %{
       new_game(id, settings)
       | players: %{white: player_id, black: player_id},
         practice?: true,
         bot_enabled?: true,
         bot_ready_at: now_ms + bot_move_ms,
+        bot_color: bot_color,
         status: :playing,
         log: ["BOT encendido.", "Practica iniciada. Blancas abren."]
     }
@@ -65,6 +67,7 @@ defmodule ManaChessOnline.GameState do
       elixir: game.elixir,
       settings: game.settings,
       bot_enabled?: game.bot_enabled?,
+      bot_color: Map.get(game, :bot_color),
       castling_rights: game.castling_rights,
       cooldowns: public_cooldowns(game, now_ms, default_cooldown_seconds),
       queue: game.queue,
@@ -77,7 +80,7 @@ defmodule ManaChessOnline.GameState do
       promotion_pending: game.promotion_pending,
       finished_at: game.finished_at,
       chat: Map.get(game, :chat, []),
-      log: Enum.take(game.log, 8)
+      log: Map.get(game, :log, [])
     }
   end
 

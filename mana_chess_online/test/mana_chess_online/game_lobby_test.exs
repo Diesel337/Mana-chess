@@ -96,6 +96,19 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert GameLobby.snapshot(view.game_id) == nil
   end
 
+  test "practice can swap bot side so player can play black" do
+    player_id = unique_player("practice-side")
+    on_exit(fn -> GameLobby.leave(player_id) end)
+
+    view = GameLobby.start_practice(player_id)
+    assert view.game.bot_color == :black
+
+    view = GameLobby.toggle_practice_side(player_id)
+    assert view.color == :practice
+    assert view.game.bot_color == :white
+    assert hd(view.game.log) == "Ahora juegas Negras; BOT controla Blancas."
+  end
+
   test "mirrors practice games into registered game servers and removes them on leave" do
     player_id = unique_player("mirror-practice")
     view = GameLobby.start_practice(player_id)

@@ -29,6 +29,7 @@ defmodule ManaChessOnlineWeb.GameLive do
   @impl true
   def mount(params, session, socket) do
     player_id = Map.get(session, "player_id") || random_player_id()
+
     view =
       case params do
         %{"game_id" => game_id} -> GameLobby.watch(player_id, game_id)
@@ -78,13 +79,26 @@ defmodule ManaChessOnlineWeb.GameLive do
 
     legal_moves =
       if piece_color in [:white, :black] do
-        GameRules.legal_moves_for(socket.assigns.game.board, r, c, piece_color, socket.assigns.game.castling_rights)
+        GameRules.legal_moves_for(
+          socket.assigns.game.board,
+          r,
+          c,
+          piece_color,
+          socket.assigns.game.castling_rights
+        )
       else
         []
       end
 
     selected =
-      if selectable_square?(socket.assigns.game, socket.assigns.color, piece, piece_color, legal_moves, square) do
+      if selectable_square?(
+           socket.assigns.game,
+           socket.assigns.color,
+           piece,
+           piece_color,
+           legal_moves,
+           square
+         ) do
         square
       else
         nil
@@ -92,7 +106,16 @@ defmodule ManaChessOnlineWeb.GameLive do
 
     valid_moves = if selected, do: legal_moves, else: []
 
-    local_alert = select_alert(socket.assigns.game, socket.assigns.color, piece, piece_color, selected, legal_moves, square)
+    local_alert =
+      select_alert(
+        socket.assigns.game,
+        socket.assigns.color,
+        piece,
+        piece_color,
+        selected,
+        legal_moves,
+        square
+      )
 
     {:noreply,
      assign(socket,
@@ -119,7 +142,11 @@ defmodule ManaChessOnlineWeb.GameLive do
      |> assign(local_alert: nil, blocked_square: blocked_square)}
   end
 
-  def handle_event("drag_move", %{"from_r" => from_r, "from_c" => from_c, "to_r" => to_r, "to_c" => to_c}, socket) do
+  def handle_event(
+        "drag_move",
+        %{"from_r" => from_r, "from_c" => from_c, "to_r" => to_r, "to_c" => to_c},
+        socket
+      ) do
     from = {String.to_integer(from_r), String.to_integer(from_c)}
     to = {String.to_integer(to_r), String.to_integer(to_c)}
     piece = GameRules.at(socket.assigns.game.board, elem(from, 0), elem(from, 1))
@@ -204,6 +231,16 @@ defmodule ManaChessOnlineWeb.GameLive do
     {:noreply, assign_view(socket, view)}
   end
 
+  def handle_event("toggle_practice_side", _params, socket) do
+    view = GameLobby.toggle_practice_side(socket.assigns.player_id)
+
+    if connected?(socket) and view.game_id do
+      Phoenix.PubSub.subscribe(ManaChessOnline.PubSub, GameLobby.topic(view.game_id))
+    end
+
+    {:noreply, assign_view(socket, view)}
+  end
+
   def handle_event("leave", _params, socket) do
     :ok = GameLobby.leave(socket.assigns.player_id)
     {:noreply, assign_view(socket, GameLobby.join(socket.assigns.player_id))}
@@ -245,7 +282,8 @@ defmodule ManaChessOnlineWeb.GameLive do
         {:noreply, push_navigate(socket, to: ~p"/game/#{view.game_id}")}
 
       {:error, :rate_limited} ->
-        {:noreply, put_flash(socket, :error, "Espera un momento antes de crear otra sala privada.")}
+        {:noreply,
+         put_flash(socket, :error, "Espera un momento antes de crear otra sala privada.")}
     end
   end
 
@@ -305,7 +343,9 @@ defmodule ManaChessOnlineWeb.GameLive do
     |> assign(:reconnected?, false)
   end
 
-  defp rows_for(%{color: :black, game: %{board: board}}), do: board |> Enum.with_index() |> Enum.reverse()
+  defp rows_for(%{color: :black, game: %{board: board}}),
+    do: board |> Enum.with_index() |> Enum.reverse()
+
   defp rows_for(%{game: %{board: board}}), do: Enum.with_index(board)
 
   defp cols_for(:black, row), do: row |> Enum.with_index() |> Enum.reverse()
@@ -370,32 +410,80 @@ defmodule ManaChessOnlineWeb.GameLive do
   defp seat_label(nil, _player_id), do: "Libre"
   defp seat_label(_player_id, _current_player_id), do: "Ocupado"
 
-  defp match_phase(%{status: :waiting, private?: true}), do: %{title: "Privado por link", detail: "Comparte el enlace y espera a que el rival tome asiento.", tone: :waiting}
-  defp match_phase(%{status: :waiting}), do: %{title: "Esperando rival", detail: "Comparte el link o toma el asiento libre.", tone: :waiting}
-  defp match_phase(%{status: :ready}), do: %{title: "Listos para empezar", detail: "Cualquiera puede iniciar la cuenta regresiva.", tone: :ready}
-  defp match_phase(%{status: {:starting, _starts_at}, countdown_seconds: seconds}), do: %{title: "Inicia en #{seconds}", detail: "Ambos pueden marcar listo para saltar la espera.", tone: :starting}
-  defp match_phase(%{status: :promotion}), do: %{title: "Promocion pendiente", detail: "Elige pieza para continuar.", tone: :alert}
-  defp match_phase(%{status: {:checkmate, winner, _loser}}), do: %{title: "Jaque mate", detail: "Ganan #{color_label(winner)}.", tone: :final}
-  defp match_phase(%{status: {:winner, winner}}), do: %{title: "Partida terminada", detail: "Ganan #{color_label(winner)}.", tone: :final}
-  defp match_phase(%{status: :draw}), do: %{title: "Empate", detail: "La partida termino sin ganador.", tone: :final}
+  defp match_phase(%{status: :waiting, private?: true}),
+    do: %{
+      title: "Privado por link",
+      detail: "Comparte el enlace y espera a que el rival tome asiento.",
+      tone: :waiting
+    }
+
+  defp match_phase(%{status: :waiting}),
+    do: %{
+      title: "Esperando rival",
+      detail: "Comparte el link o toma el asiento libre.",
+      tone: :waiting
+    }
+
+  defp match_phase(%{status: :ready}),
+    do: %{
+      title: "Listos para empezar",
+      detail: "Cualquiera puede iniciar la cuenta regresiva.",
+      tone: :ready
+    }
+
+  defp match_phase(%{status: {:starting, _starts_at}, countdown_seconds: seconds}),
+    do: %{
+      title: "Inicia en #{seconds}",
+      detail: "Ambos pueden marcar listo para saltar la espera.",
+      tone: :starting
+    }
+
+  defp match_phase(%{status: :promotion}),
+    do: %{title: "Promocion pendiente", detail: "Elige pieza para continuar.", tone: :alert}
+
+  defp match_phase(%{status: {:checkmate, winner, _loser}}),
+    do: %{title: "Jaque mate", detail: "Ganan #{color_label(winner)}.", tone: :final}
+
+  defp match_phase(%{status: {:winner, winner}}),
+    do: %{title: "Partida terminada", detail: "Ganan #{color_label(winner)}.", tone: :final}
+
+  defp match_phase(%{status: :draw}),
+    do: %{title: "Empate", detail: "La partida termino sin ganador.", tone: :final}
 
   defp match_phase(%{status: :playing, first_move_pending: :white}) do
-    %{title: "Blancas abren", detail: "Elixir pausado hasta el primer movimiento blanco.", tone: :ready}
+    %{
+      title: "Blancas abren",
+      detail: "Elixir pausado hasta el primer movimiento blanco.",
+      tone: :ready
+    }
   end
 
-  defp match_phase(%{practice?: true, bot_enabled?: true, queue: []}) do
-    %{title: "Tiempo real contra BOT", detail: "Mueve cuando tengas elixir; el BOT controla Negras.", tone: :bot}
+  defp match_phase(%{practice?: true, bot_enabled?: true, queue: []} = game) do
+    %{
+      title: "Tiempo real contra BOT",
+      detail: "Mueve cuando tengas elixir; el BOT controla #{color_label(bot_color(game))}.",
+      tone: :bot
+    }
   end
 
   defp match_phase(%{practice?: true, bot_enabled?: true}) do
-    %{title: "BOT pensando", detail: "La cola esta procesando una accion.", tone: :bot}
+    %{title: "BOT pensando", detail: "Hay un movimiento pendiente por procesar.", tone: :bot}
   end
 
   defp match_phase(%{status: :playing}) do
-    %{title: "Tiempo real", detail: "No hay turnos: mueve cuando tengas elixir y cooldown libre.", tone: :playing}
+    %{
+      title: "Tiempo real",
+      detail: "No hay turnos: mueve cuando tengas elixir y cooldown libre.",
+      tone: :playing
+    }
   end
 
-  defp match_phase(_game), do: %{title: "Mana Chess", detail: "Elixir, cooldown y movimientos en tiempo real.", tone: :ready}
+  defp match_phase(_game),
+    do: %{
+      title: "Mana Chess",
+      detail: "Elixir, cooldown y movimientos en tiempo real.",
+      tone: :ready
+    }
 
   defp match_phase_class(%{tone: tone}), do: "mc-match-status-#{tone}"
 
@@ -451,14 +539,16 @@ defmodule ManaChessOnlineWeb.GameLive do
     end
   end
 
-  defp waiting_seat_hint(_game, _player_id), do: "Blancas no puede iniciar hasta que Negras se siente. Para jugar solo usa Modo practica."
+  defp waiting_seat_hint(_game, _player_id),
+    do: "Blancas no puede iniciar hasta que Negras se siente. Para jugar solo usa Modo practica."
 
   defp seat_cta_label(%{private?: true}, :white), do: "Tomar Blancas"
   defp seat_cta_label(%{private?: true}, :black), do: "Tomar Negras"
   defp seat_cta_label(_game, :white), do: "Sentarme como Blancas"
   defp seat_cta_label(_game, :black), do: "Sentarme como Negras"
 
-  defp private_link_guest?(%{private?: true, status: status} = game, player_id) when status in [:waiting, :ready] do
+  defp private_link_guest?(%{private?: true, status: status} = game, player_id)
+       when status in [:waiting, :ready] do
     observing?(game, player_id)
   end
 
@@ -467,13 +557,22 @@ defmodule ManaChessOnlineWeb.GameLive do
   defp start_label(%{practice?: true}), do: "Empezar practica"
   defp start_label(_game), do: "Empezar partida"
 
-  defp seated_in?(game, player_id), do: game.players.white == player_id or game.players.black == player_id
+  defp seated_in?(game, player_id),
+    do: game.players.white == player_id or game.players.black == player_id
+
   defp observing?(nil, _player_id), do: false
   defp observing?(game, player_id), do: not game.practice? and not seated_in?(game, player_id)
   defp seat_open?(game, color), do: is_nil(game.players[color])
-  defp recovered_session?(%{"game_id" => _game_id}, %{game: %{private?: true, status: :waiting}}), do: false
-  defp recovered_session?(%{"game_id" => _game_id}, %{game: game, color: color}) when not is_nil(game) and color in [:white, :black, :practice], do: true
-  defp recovered_session?(params, %{game: game, color: color}) when params == %{} and not is_nil(game) and color in [:white, :black, :practice], do: true
+
+  defp recovered_session?(%{"game_id" => _game_id}, %{game: %{private?: true, status: :waiting}}),
+    do: false
+
+  defp recovered_session?(%{"game_id" => _game_id}, %{game: game, color: color})
+       when not is_nil(game) and color in [:white, :black, :practice], do: true
+
+  defp recovered_session?(params, %{game: game, color: color})
+       when params == %{} and not is_nil(game) and color in [:white, :black, :practice], do: true
+
   defp recovered_session?(_params, _view), do: false
   defp show_reconnect_banner?(%{private?: true, status: :waiting}), do: false
   defp show_reconnect_banner?(_game), do: true
@@ -496,7 +595,8 @@ defmodule ManaChessOnlineWeb.GameLive do
 
   defp open_seats_count(lobby) do
     Enum.reduce(lobby, 0, fn game, total ->
-      total + if(is_nil(game.players.white), do: 1, else: 0) + if(is_nil(game.players.black), do: 1, else: 0)
+      total + if(is_nil(game.players.white), do: 1, else: 0) +
+        if(is_nil(game.players.black), do: 1, else: 0)
     end)
   end
 
@@ -528,14 +628,18 @@ defmodule ManaChessOnlineWeb.GameLive do
   defp final_title(%{practice?: true}, :white, _player_color), do: "Ganaste"
   defp final_title(%{practice?: true}, :black, _player_color), do: "Gana el bot"
   defp final_title(_game, winner, winner), do: "Ganaste"
-  defp final_title(_game, _winner, player_color) when player_color in [:white, :black], do: "Perdiste"
+
+  defp final_title(_game, _winner, player_color) when player_color in [:white, :black],
+    do: "Perdiste"
+
   defp final_title(_game, winner, _player_color), do: "Ganan #{color_label(winner)}"
 
   defp final_panel_class(%{tone: :win}), do: "mc-final-win"
   defp final_panel_class(%{tone: :loss}), do: "mc-final-loss"
   defp final_panel_class(_result), do: "mc-final-draw"
 
-  defp stats_result_key(%{finished_at: finished_at} = game, player_color) when not is_nil(finished_at) do
+  defp stats_result_key(%{finished_at: finished_at} = game, player_color)
+       when not is_nil(finished_at) do
     case stats_outcome(game, player_color) do
       nil -> ""
       _outcome -> "#{game.id}:#{finished_at}:#{inspect(game.status)}"
@@ -545,7 +649,9 @@ defmodule ManaChessOnlineWeb.GameLive do
   defp stats_result_key(_game, _player_color), do: ""
 
   defp stats_outcome(%{status: :draw, practice?: true}, _player_color), do: "draw"
-  defp stats_outcome(%{status: :draw}, player_color) when player_color in [:white, :black], do: "draw"
+
+  defp stats_outcome(%{status: :draw}, player_color) when player_color in [:white, :black],
+    do: "draw"
 
   defp stats_outcome(%{status: {:checkmate, winner, _loser}} = game, player_color) do
     stats_winner_outcome(game, winner, player_color)
@@ -572,12 +678,17 @@ defmodule ManaChessOnlineWeb.GameLive do
   defp stats_winner_outcome(%{practice?: true}, :white, _player_color), do: "win"
   defp stats_winner_outcome(%{practice?: true}, :black, _player_color), do: "loss"
   defp stats_winner_outcome(_game, winner, winner), do: "win"
-  defp stats_winner_outcome(_game, _winner, player_color) when player_color in [:white, :black], do: "loss"
+
+  defp stats_winner_outcome(_game, _winner, player_color) when player_color in [:white, :black],
+    do: "loss"
+
   defp stats_winner_outcome(_game, _winner, _player_color), do: nil
 
   defp check_message(nil), do: nil
   defp check_message(%{checked_colors: []}), do: nil
-  defp check_message(%{status: {:checkmate, _winner, loser}}), do: "Jaque mate a #{color_label(loser)}"
+
+  defp check_message(%{status: {:checkmate, _winner, loser}}),
+    do: "Jaque mate a #{color_label(loser)}"
 
   defp check_message(%{checked_colors: colors}) do
     colors
@@ -589,7 +700,9 @@ defmodule ManaChessOnlineWeb.GameLive do
   defp starting?(%{status: {:starting, _starts_at}}), do: true
   defp starting?(_game), do: false
 
-  defp first_move_message(%{status: :playing, first_move_pending: :white}), do: "Blancas abren la partida"
+  defp first_move_message(%{status: :playing, first_move_pending: :white}),
+    do: "Blancas abren la partida"
+
   defp first_move_message(_game), do: nil
 
   defp legal_moves_for(game, piece_color, {r, c}) when piece_color in [:white, :black] do
@@ -604,7 +717,10 @@ defmodule ManaChessOnlineWeb.GameLive do
 
     [
       %{state: tutorial_step_state(moved?, true), text: "Mueve una pieza blanca para abrir."},
-      %{state: tutorial_step_state(moved?, moved?), text: "Mira elixir y cooldown: son el ritmo del modo."},
+      %{
+        state: tutorial_step_state(moved?, moved?),
+        text: "Mira elixir y cooldown: son el ritmo del modo."
+      },
       %{state: tutorial_step_state(bot_on?, moved?), text: "Prende BOT para que Negras conteste."}
     ]
   end
@@ -629,7 +745,9 @@ defmodule ManaChessOnlineWeb.GameLive do
         latest |> String.replace_prefix("Movimiento rechazado: ", "") |> GameText.friendly_alert()
 
       String.starts_with?(latest, "Movimiento descartado: ") ->
-        latest |> String.replace_prefix("Movimiento descartado: ", "") |> GameText.friendly_alert()
+        latest
+        |> String.replace_prefix("Movimiento descartado: ", "")
+        |> GameText.friendly_alert()
 
       String.starts_with?(latest, "Sin elixir") ->
         latest
@@ -691,14 +809,27 @@ defmodule ManaChessOnlineWeb.GameLive do
       can_afford_piece?(game, piece, piece_color) and legal_moves != []
   end
 
-  defp select_alert(_game, _player_color, _piece, _piece_color, {_r, _c}, _legal_moves, _square), do: nil
-  defp select_alert(_game, _player_color, ".", _piece_color, nil, _legal_moves, _square), do: nil
-  defp select_alert(%{status: status}, _player_color, _piece, _piece_color, nil, _legal_moves, _square) when status not in [:playing], do: "La partida todavia no esta jugando."
+  defp select_alert(_game, _player_color, _piece, _piece_color, {_r, _c}, _legal_moves, _square),
+    do: nil
 
-  defp select_alert(game, player_color, piece, piece_color, nil, legal_moves, square) when not is_nil(piece_color) do
+  defp select_alert(_game, _player_color, ".", _piece_color, nil, _legal_moves, _square), do: nil
+
+  defp select_alert(
+         %{status: status},
+         _player_color,
+         _piece,
+         _piece_color,
+         nil,
+         _legal_moves,
+         _square
+       )
+       when status not in [:playing], do: "La partida todavia no esta jugando."
+
+  defp select_alert(game, player_color, piece, piece_color, nil, legal_moves, square)
+       when not is_nil(piece_color) do
     cond do
       not can_move_now?(game, piece_color) -> "Blancas abren: mueve una pieza blanca primero."
-      game.practice? and game.bot_enabled? and piece_color == :black -> "El BOT controla Negras."
+      bot_controls_color?(game, piece_color) -> "El BOT controla #{color_label(piece_color)}."
       not controls_color?(player_color, piece_color) -> spectator_or_control_alert(player_color)
       cooldown_active?(game, square) -> cooldown_alert(game, square)
       not can_afford_piece?(game, piece, piece_color) -> elixir_alert(game, piece, piece_color)
@@ -707,12 +838,16 @@ defmodule ManaChessOnlineWeb.GameLive do
     end
   end
 
-  defp select_alert(_game, _player_color, _piece, _piece_color, nil, _legal_moves, _square), do: "No puedes mover esa pieza ahora."
+  defp select_alert(_game, _player_color, _piece, _piece_color, nil, _legal_moves, _square),
+    do: "No puedes mover esa pieza ahora."
 
   defp spectator_or_control_alert(nil), do: "Estas observando; toma un asiento para mover."
-  defp spectator_or_control_alert(_player_color), do: "Esa pieza no es tuya; elige una de tu lado."
 
-  defp can_afford_piece?(game, piece, color), do: Map.get(game.elixir, color, 0) >= piece_cost_for_ui(game, piece)
+  defp spectator_or_control_alert(_player_color),
+    do: "Esa pieza no es tuya; elige una de tu lado."
+
+  defp can_afford_piece?(game, piece, color),
+    do: Map.get(game.elixir, color, 0) >= piece_cost_for_ui(game, piece)
 
   defp elixir_alert(game, piece, color) do
     "Falta elixir para esa pieza: #{short_number(Map.get(game.elixir, color, 0))}/#{short_number(piece_cost_for_ui(game, piece))}."
@@ -758,8 +893,32 @@ defmodule ManaChessOnlineWeb.GameLive do
   defp controls_color?(color, color), do: true
   defp controls_color?(_player_color, _piece_color), do: false
 
-  defp manual_control_allowed?(%{practice?: true, bot_enabled?: true}, :practice, :black), do: false
-  defp manual_control_allowed?(_game, player_color, piece_color), do: controls_color?(player_color, piece_color)
+  defp manual_control_allowed?(
+         %{practice?: true, bot_enabled?: true} = game,
+         :practice,
+         piece_color
+       ),
+       do: not bot_controls_color?(game, piece_color)
+
+  defp manual_control_allowed?(_game, player_color, piece_color),
+    do: controls_color?(player_color, piece_color)
+
+  defp bot_controls_color?(%{practice?: true, bot_enabled?: true} = game, color),
+    do: bot_color(game) == color
+
+  defp bot_controls_color?(_game, _color), do: false
+
+  defp bot_color(%{bot_color: color}) when color in [:white, :black], do: color
+  defp bot_color(_game), do: :black
+
+  defp practice_player_side(game), do: game |> bot_color() |> opposite_color()
+  defp practice_banner_text(%{bot_enabled?: true}), do: "Bot ON, juegas contra el bot."
+
+  defp practice_banner_text(_game),
+    do: "Bot OFF, controlas ambos lados para probar reglas, elixir y cooldowns."
+
+  defp opposite_color(:white), do: :black
+  defp opposite_color(:black), do: :white
 
   defp bot_toggle_label(%{bot_enabled?: true}), do: "ON"
   defp bot_toggle_label(_game), do: "OFF"
@@ -775,7 +934,9 @@ defmodule ManaChessOnlineWeb.GameLive do
 
   defp cooldown_style(game, square) do
     case cooldown_for(game, square) do
-      nil -> nil
+      nil ->
+        nil
+
       cooldown ->
         elapsed = max(cooldown.total_ms - cooldown.remaining_ms, 0)
 
@@ -814,32 +975,52 @@ defmodule ManaChessOnlineWeb.GameLive do
       <section class="mc-game">
         <div class="mc-header">
           <.brand_lockup title={if @game_id, do: "Partida", else: "Lobby"} detail={@game_id} />
-          <div class="mc-badge">
-            <.sound_control />
-          </div>
+          <div class="mc-badge"><.sound_control /></div>
         </div>
 
         <%= if @game do %>
           <div :if={@game.practice?} class="mc-practice-banner">
             <strong>Modo practica</strong>
-            <span>Controlas ambos lados para probar reglas, elixir y cooldowns.</span>
+            <span>{practice_banner_text(@game)}</span>
             <div class="mc-bot-control">
               <span>BOT</span>
-              <button class={["mc-bot-toggle", @game.bot_enabled? && "mc-bot-toggle-on"]} type="button" phx-click="toggle_practice_bot" data-sound-action="tap">
+              <button
+                class={["mc-bot-toggle", @game.bot_enabled? && "mc-bot-toggle-on"]}
+                type="button"
+                phx-click="toggle_practice_bot"
+                data-sound-action="tap"
+              >
                 {bot_toggle_label(@game)}
+              </button>
+              <button
+                :if={@game.bot_enabled?}
+                class="mc-bot-side"
+                type="button"
+                phx-click="toggle_practice_side"
+                data-sound-action="mode"
+              >
+                Juegas {color_label(practice_player_side(@game))}
               </button>
             </div>
           </div>
 
           <div :if={@tutorial? && @game.practice?} class="mc-tutorial mc-tutorial-pop">
             <div>
-              <strong>{if tutorial_complete?(@game), do: "Listo: ya sabes el modo", else: "Mana Chess en 1 minuto"}</strong>
-              <span>{if tutorial_complete?(@game), do: "Sigue en practica o reta a alguien online.", else: "No es clase de ajedrez: solo aprende elixir, cooldown y bot."}</span>
+              <strong>
+                {if tutorial_complete?(@game),
+                  do: "Listo: ya sabes el modo",
+                  else: "Mana Chess en 1 minuto"}
+              </strong>
+              <span>
+                {if tutorial_complete?(@game),
+                  do: "Sigue en practica o reta a alguien online.",
+                  else: "No es clase de ajedrez: solo aprende elixir, cooldown y bot."}
+              </span>
             </div>
+
             <ol>
               <li :for={step <- tutorial_steps(@game)} class={tutorial_step_class(step)}>
-                <span></span>
-                {step.text}
+                <span></span> {step.text}
               </li>
             </ol>
           </div>
@@ -853,7 +1034,6 @@ defmodule ManaChessOnlineWeb.GameLive do
             <strong>Reconectado</strong>
             <span>Recuperaste tu asiento como {color_label(@color)}.</span>
           </div>
-
           <% phase = match_phase(@game) %>
           <.match_status
             phase={phase}
@@ -861,16 +1041,15 @@ defmodule ManaChessOnlineWeb.GameLive do
             role={player_role(@game, @color)}
             hint={player_role_hint(@game, @color)}
           />
-
           <div :if={!@game.practice?} class="mc-seats">
             <div class={["mc-seat", @color == :white && "mc-seat-current"]}>
-              <strong>Blancas</strong>
-              <span>{seat_label(@game.players.white, @player_id)}</span>
+              <strong>Blancas</strong> <span>{seat_label(@game.players.white, @player_id)}</span>
             </div>
+
             <div class={["mc-seat", @color == :black && "mc-seat-current"]}>
-              <strong>Negras</strong>
-              <span>{seat_label(@game.players.black, @player_id)}</span>
+              <strong>Negras</strong> <span>{seat_label(@game.players.black, @player_id)}</span>
             </div>
+
             <p :if={@game.status == :waiting}>{waiting_seat_hint(@game, @player_id)}</p>
             <% invite_path = ~p"/game/#{@game.id}" %>
             <.invite_strip
@@ -916,26 +1095,50 @@ defmodule ManaChessOnlineWeb.GameLive do
             alert_kind={feedback_alert_kind(@game, @local_alert)}
             reset_message={reset_message(@game)}
           />
-
-          <div :if={final_result(@game, @color)} class={["mc-final-panel", final_panel_class(final_result(@game, @color))]}>
+          <div
+            :if={final_result(@game, @color)}
+            class={["mc-final-panel", final_panel_class(final_result(@game, @color))]}
+          >
             <% result = final_result(@game, @color) %>
-            <div>
-              <strong>{result.title}</strong>
-              <span>{result.detail}</span>
-            </div>
-            <button type="button" phx-click="reset" disabled={reset_disabled?(@game, @player_id)} data-sound-action="reset">
+            <div><strong>{result.title}</strong> <span>{result.detail}</span></div>
+
+            <button
+              type="button"
+              phx-click="reset"
+              disabled={reset_disabled?(@game, @player_id)}
+              data-sound-action="reset"
+            >
               {if @game.practice?, do: "Jugar otra vez", else: "Pedir revancha"}
             </button>
           </div>
-
           <.promotion_panel pending={@game.promotion_pending} player_id={@player_id} />
-
           <div class="mc-actions">
-            <button :if={@game.status == :ready} class="mc-action-primary" type="button" phx-click="start_game" data-sound-action="mode">{start_label(@game)}</button>
-            <button :if={starting?(@game) and seated_in?(@game, @player_id)} class="mc-action-primary" type="button" phx-click="ready_to_start" disabled={ready_to_start_disabled?(@game, @player_id)} data-sound-action="mode">
+            <button
+              :if={@game.status == :ready}
+              class="mc-action-primary"
+              type="button"
+              phx-click="start_game"
+              data-sound-action="mode"
+            >
+              {start_label(@game)}
+            </button>
+            <button
+              :if={starting?(@game) and seated_in?(@game, @player_id)}
+              class="mc-action-primary"
+              type="button"
+              phx-click="ready_to_start"
+              disabled={ready_to_start_disabled?(@game, @player_id)}
+              data-sound-action="mode"
+            >
               {ready_to_start_label(@game, @player_id)}
             </button>
-            <button class="mc-action-secondary" type="button" phx-click="reset" disabled={reset_disabled?(@game, @player_id)} data-sound-action="reset">
+            <button
+              class="mc-action-secondary"
+              type="button"
+              phx-click="reset"
+              disabled={reset_disabled?(@game, @player_id)}
+              data-sound-action="reset"
+            >
               {reset_label(@game, @player_id)}
             </button>
             <button class="mc-action-quiet" type="button" phx-click="leave" data-sound-action="tap">
@@ -946,49 +1149,115 @@ defmodule ManaChessOnlineWeb.GameLive do
           <div class="mc-play-area">
             <div class="mc-skin-strip" aria-label="Skins de tablero">
               <span>Tablero</span>
-              <button type="button" data-board-skin-choice="classic" data-sound-action="skin" title="Tablero clasico blanco y negro" aria-label="Tablero clasico blanco y negro" aria-pressed="false">
-                <i class="mc-skin-dot mc-skin-dot-classic"></i>
-                Clasico
+              <button
+                type="button"
+                data-board-skin-choice="classic"
+                data-sound-action="skin"
+                title="Tablero clasico blanco y negro"
+                aria-label="Tablero clasico blanco y negro"
+                aria-pressed="false"
+              >
+                <i class="mc-skin-dot mc-skin-dot-classic"></i> Clasico
               </button>
-              <button type="button" data-board-skin-choice="gilded" data-sound-action="skin" title="Tablero Dorado" aria-label="Tablero Dorado" aria-pressed="false">
-                <i class="mc-skin-dot mc-skin-dot-gilded"></i>
-                Dorado
+              <button
+                type="button"
+                data-board-skin-choice="gilded"
+                data-sound-action="skin"
+                title="Tablero Dorado"
+                aria-label="Tablero Dorado"
+                aria-pressed="false"
+              >
+                <i class="mc-skin-dot mc-skin-dot-gilded"></i> Dorado
               </button>
-              <button type="button" class="mc-skin-locked" data-board-skin-choice="arcane" data-cosmetic-premium="board:arcane" data-sound-action="skin" title="Probar y desbloquear Arcano localmente" aria-label="Probar y desbloquear Arcano localmente" aria-disabled="false" aria-pressed="false">
+              <button
+                type="button"
+                class="mc-skin-locked"
+                data-board-skin-choice="arcane"
+                data-cosmetic-premium="board:arcane"
+                data-sound-action="skin"
+                title="Probar y desbloquear Arcano localmente"
+                aria-label="Probar y desbloquear Arcano localmente"
+                aria-disabled="false"
+                aria-pressed="false"
+              >
                 <i class="mc-skin-dot mc-skin-dot-arcane"></i>
                 Arcano
                 <small data-cosmetic-status data-cosmetic-state="premium">Premium proximamente</small>
               </button>
-              <button type="button" class="mc-skin-locked" data-board-skin-choice="custom" data-cosmetic-premium="board:custom" data-sound-action="skin" title="Probar y desbloquear paleta localmente" aria-label="Probar y desbloquear paleta localmente" aria-disabled="false" aria-pressed="false">
+              <button
+                type="button"
+                class="mc-skin-locked"
+                data-board-skin-choice="custom"
+                data-cosmetic-premium="board:custom"
+                data-sound-action="skin"
+                title="Probar y desbloquear paleta localmente"
+                aria-label="Probar y desbloquear paleta localmente"
+                aria-disabled="false"
+                aria-pressed="false"
+              >
                 <i class="mc-skin-dot mc-skin-dot-custom"></i>
                 Paleta
                 <small data-cosmetic-status data-cosmetic-state="premium">Premium proximamente</small>
               </button>
             </div>
+
             <div class="mc-skin-strip mc-piece-strip" aria-label="Skins de piezas">
               <span>Piezas</span>
-              <button type="button" data-piece-skin-choice="classic" data-sound-action="skin" title="Piezas clasicas" aria-label="Piezas clasicas" aria-pressed="false">
-                <i class="mc-piece-dot mc-piece-dot-classic"></i>
-                Clasicas
+              <button
+                type="button"
+                data-piece-skin-choice="classic"
+                data-sound-action="skin"
+                title="Piezas clasicas"
+                aria-label="Piezas clasicas"
+                aria-pressed="false"
+              >
+                <i class="mc-piece-dot mc-piece-dot-classic"></i> Clasicas
               </button>
-              <button type="button" data-piece-skin-choice="runes" data-sound-action="skin" title="Piezas Arcano" aria-label="Piezas Arcano" aria-pressed="false">
-                <i class="mc-piece-dot mc-piece-dot-runes"></i>
-                Arcano
+              <button
+                type="button"
+                data-piece-skin-choice="runes"
+                data-sound-action="skin"
+                title="Piezas Arcano"
+                aria-label="Piezas Arcano"
+                aria-pressed="false"
+              >
+                <i class="mc-piece-dot mc-piece-dot-runes"></i> Arcano
               </button>
-              <button type="button" class="mc-skin-locked" data-piece-skin-choice="crystal" data-cosmetic-premium="piece:crystal" data-sound-action="skin" title="Probar y desbloquear piezas localmente" aria-label="Probar y desbloquear piezas localmente" aria-disabled="false" aria-pressed="false">
+              <button
+                type="button"
+                class="mc-skin-locked"
+                data-piece-skin-choice="crystal"
+                data-cosmetic-premium="piece:crystal"
+                data-sound-action="skin"
+                title="Probar y desbloquear piezas localmente"
+                aria-label="Probar y desbloquear piezas localmente"
+                aria-disabled="false"
+                aria-pressed="false"
+              >
                 <i class="mc-piece-dot mc-piece-dot-crystal"></i>
                 Premium
                 <small data-cosmetic-status data-cosmetic-state="premium">Premium proximamente</small>
               </button>
-              <button type="button" class="mc-skin-locked" data-piece-skin-choice="custom" data-cosmetic-premium="piece:custom" data-sound-action="skin" title="Probar y desbloquear paleta localmente" aria-label="Probar y desbloquear paleta localmente" aria-disabled="false" aria-pressed="false">
+              <button
+                type="button"
+                class="mc-skin-locked"
+                data-piece-skin-choice="custom"
+                data-cosmetic-premium="piece:custom"
+                data-sound-action="skin"
+                title="Probar y desbloquear paleta localmente"
+                aria-label="Probar y desbloquear paleta localmente"
+                aria-disabled="false"
+                aria-pressed="false"
+              >
                 <i class="mc-piece-dot mc-piece-dot-custom"></i>
                 Paleta
                 <small data-cosmetic-status data-cosmetic-state="premium">Premium proximamente</small>
               </button>
             </div>
+
             <div class="mc-board-stack" data-board-skin-target>
-              <% top_elixir = top_elixir_color(@color) %>
-              <% bottom_elixir = bottom_elixir_color(@color) %>
+              <% top_elixir = top_elixir_color(@color) %> <% bottom_elixir =
+                bottom_elixir_color(@color) %>
               <div class="mc-elixir-bottom">
                 <div class={["mc-elixir-bottom-row", elixir_color_class(top_elixir)]}>
                   <span>{color_label(top_elixir)}</span>
@@ -1012,10 +1281,27 @@ defmodule ManaChessOnlineWeb.GameLive do
                       data-legal-moves={legal_moves_data(@game, @color, piece, r, c)}
                     >
                       <span class={piece_class(piece)}>{@symbols[piece]}</span>
-                      <span :if={cooldown_for(@game, {r, c})} class="mc-cooldown-ring" style={cooldown_style(@game, {r, c})} aria-hidden="true">
+                      <span
+                        :if={cooldown_for(@game, {r, c})}
+                        class="mc-cooldown-ring"
+                        style={cooldown_style(@game, {r, c})}
+                        aria-hidden="true"
+                      >
                         <svg viewBox="0 0 26 26" aria-hidden="true">
-                          <circle class="mc-cooldown-ring-track" cx="13" cy="13" r="10" pathLength="100" />
-                          <circle class="mc-cooldown-ring-fill" cx="13" cy="13" r="10" pathLength="100" />
+                          <circle
+                            class="mc-cooldown-ring-track"
+                            cx="13"
+                            cy="13"
+                            r="10"
+                            pathLength="100"
+                          />
+                          <circle
+                            class="mc-cooldown-ring-fill"
+                            cx="13"
+                            cy="13"
+                            r="10"
+                            pathLength="100"
+                          />
                         </svg>
                       </span>
                     </button>
@@ -1039,8 +1325,10 @@ defmodule ManaChessOnlineWeb.GameLive do
             <section class="mc-menu-hero">
               <div>
                 <p class="mc-kicker">Ajedrez en tiempo real con elixir</p>
+
                 <h2>Mana Chess</h2>
               </div>
+
               <div class="mc-menu-stats">
                 <span>{@lobby |> lobby_count(:playing)} en juego</span>
                 <span>{open_seats_count(@lobby)} asientos libres</span>
@@ -1048,46 +1336,66 @@ defmodule ManaChessOnlineWeb.GameLive do
             </section>
 
             <section class="mc-local-stats">
-              <div>
-                <strong>Tus stats</strong>
-                <span>Guardadas en este navegador.</span>
-              </div>
+              <div><strong>Tus stats</strong> <span>Guardadas en este navegador.</span></div>
+
               <dl>
                 <div>
                   <dt>Partidas</dt>
+
                   <dd data-stat="played">0</dd>
                 </div>
+
                 <div>
                   <dt>Victorias</dt>
+
                   <dd data-stat="wins">0</dd>
                 </div>
+
                 <div>
                   <dt>Derrotas</dt>
+
                   <dd data-stat="losses">0</dd>
                 </div>
+
                 <div>
                   <dt>Empates</dt>
+
                   <dd data-stat="draws">0</dd>
                 </div>
               </dl>
-              <button type="button" data-stats-reset data-sound-action="reset">Reiniciar stats</button>
+
+              <button type="button" data-stats-reset data-sound-action="reset">
+                Reiniciar stats
+              </button>
             </section>
 
-            <.cosmetic_shop symbols={@symbols} class="mc-skins mc-skins-inline" aria_label="Tienda cosmetica" />
-
+            <.cosmetic_shop
+              symbols={@symbols}
+              class="mc-skins mc-skins-inline"
+              aria_label="Tienda cosmetica"
+            />
             <section class="mc-offline">
               <div>
                 <h2>Offline</h2>
                 <span>Practica solo con BOT encendido por default.</span>
               </div>
+
               <div class="mc-mode-grid mc-mode-grid-offline">
-                <button type="button" class="mc-mode" phx-click="start_practice" data-sound-action="mode">
-                  <strong>Practica</strong>
-                  <span>Prueba elixir, cooldown y BOT.</span>
+                <button
+                  type="button"
+                  class="mc-mode"
+                  phx-click="start_practice"
+                  data-sound-action="mode"
+                >
+                  <strong>Practica</strong> <span>Prueba elixir, cooldown y BOT.</span>
                 </button>
-                <button type="button" class="mc-mode" phx-click="start_tutorial" data-sound-action="mode">
-                  <strong>Tutorial rapido</strong>
-                  <span>Aprende el modo en menos de un minuto.</span>
+                <button
+                  type="button"
+                  class="mc-mode"
+                  phx-click="start_tutorial"
+                  data-sound-action="mode"
+                >
+                  <strong>Tutorial rapido</strong> <span>Aprende el modo en menos de un minuto.</span>
                 </button>
               </div>
             </section>
@@ -1095,12 +1403,23 @@ defmodule ManaChessOnlineWeb.GameLive do
             <div class="mc-lobby">
               <div class="mc-lobby-head">
                 <h2>Salas online</h2>
+
                 <div class="mc-lobby-actions">
-                  <button type="button" class="mc-private-quick" phx-click="create_private" title="Crear partida privada por link" data-sound-action="private">
-                    <strong>Crear privado</strong>
-                    <small>Invitar por link</small>
+                  <button
+                    type="button"
+                    class="mc-private-quick"
+                    phx-click="create_private"
+                    title="Crear partida privada por link"
+                    data-sound-action="private"
+                  >
+                    <strong>Crear privado</strong> <small>Invitar por link</small>
                   </button>
-                  <button type="button" class="mc-online-quick" phx-click="sit_anywhere" data-sound-action="mode">
+                  <button
+                    type="button"
+                    class="mc-online-quick"
+                    phx-click="sit_anywhere"
+                    data-sound-action="mode"
+                  >
                     Online rapido
                   </button>
                 </div>
@@ -1108,16 +1427,31 @@ defmodule ManaChessOnlineWeb.GameLive do
 
               <div :for={game <- @lobby} class="mc-lobby-game">
                 <div>
-                  <div class="mc-lobby-title">
-                    <strong>{lobby_room_name(game.id)}</strong>
-                  </div>
+                  <div class="mc-lobby-title"><strong>{lobby_room_name(game.id)}</strong></div>
+
                   <div class="mc-lobby-meta">
                     <a href={~p"/game/#{game.id}"}>Observar</a>
-                    <button type="button" title="Copiar link de sala" data-copy-invite={~p"/game/#{game.id}"} data-copy-success="Link copiado">Copiar</button>
-                    <button :if={clearable_room?(game)} type="button" phx-click="clear_room" phx-value-game={game.id} data-sound-action="reset">Limpiar</button>
+                    <button
+                      type="button"
+                      title="Copiar link de sala"
+                      data-copy-invite={~p"/game/#{game.id}"}
+                      data-copy-success="Link copiado"
+                    >
+                      Copiar
+                    </button>
+                    <button
+                      :if={clearable_room?(game)}
+                      type="button"
+                      phx-click="clear_room"
+                      phx-value-game={game.id}
+                      data-sound-action="reset"
+                    >
+                      Limpiar
+                    </button>
                     <span>{lobby_status(game.status)}</span>
                   </div>
                 </div>
+
                 <div class="mc-lobby-seats">
                   <button
                     type="button"
@@ -1146,9 +1480,18 @@ defmodule ManaChessOnlineWeb.GameLive do
         <% end %>
       </section>
 
-      <.cosmetic_shop :if={!@game} symbols={@symbols} class="mc-skins mc-skins-rail" aria_label="Tienda cosmetica lateral" />
-
-      <.side_panel game={@game} player_id={@player_id} chat_draft={@chat_draft} chat_error={@chat_error} />
+      <.cosmetic_shop
+        :if={!@game}
+        symbols={@symbols}
+        class="mc-skins mc-skins-rail"
+        aria_label="Tienda cosmetica lateral"
+      />
+      <.side_panel
+        game={@game}
+        player_id={@player_id}
+        chat_draft={@chat_draft}
+        chat_error={@chat_error}
+      />
     </main>
     """
   end

@@ -20,6 +20,7 @@ defmodule ManaChessOnlineWeb.GameComponents do
         </div>
         <small>Local primero</small>
       </div>
+
       <div class="mc-cosmetic-groups">
         <div class="mc-cosmetic-group mc-board-group">
           <span class="mc-cosmetic-group-label">Tableros</span>
@@ -84,6 +85,7 @@ defmodule ManaChessOnlineWeb.GameComponents do
             </button>
           </div>
         </div>
+
         <div class="mc-cosmetic-group mc-piece-group">
           <span class="mc-cosmetic-group-label">Piezas</span>
           <div class="mc-skin-options">
@@ -151,6 +153,7 @@ defmodule ManaChessOnlineWeb.GameComponents do
             </button>
           </div>
         </div>
+
         <div class="mc-cosmetic-group mc-preset-group">
           <span class="mc-cosmetic-group-label">Conjuntos</span>
           <div class="mc-palette-presets mc-conjunto-options" aria-label="Conjuntos de color">
@@ -189,11 +192,17 @@ defmodule ManaChessOnlineWeb.GameComponents do
             >
               Solar
             </button>
-            <button type="button" data-palette-preset="ruby" data-sound-action="skin" aria-pressed="false">
+            <button
+              type="button"
+              data-palette-preset="ruby"
+              data-sound-action="skin"
+              aria-pressed="false"
+            >
               Rubi
             </button>
           </div>
         </div>
+
         <div class="mc-cosmetic-group mc-palette-group">
           <span class="mc-cosmetic-group-label">Paleta</span>
           <div class="mc-palette-editor" data-palette-editor>
@@ -204,9 +213,7 @@ defmodule ManaChessOnlineWeb.GameComponents do
               data-sound-action="skin"
               aria-disabled="false"
             >
-              <span class="mc-palette-preview" aria-hidden="true">
-                <i></i><i></i><i></i><i></i>
-              </span>
+              <span class="mc-palette-preview" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
               <strong>Custom premium</strong>
               <small data-palette-status data-palette-state="premium">Premium proximamente</small>
             </button>
@@ -248,17 +255,15 @@ defmodule ManaChessOnlineWeb.GameComponents do
                 />
               </label>
             </div>
+
             <div
               class="mc-palette-live-preview"
               data-palette-live-preview
               aria-label="Preview de paleta"
             >
               <div class="mc-palette-board-preview" aria-hidden="true">
-                <i></i><i></i><i></i><i></i>
-                <i></i><i></i><i></i><i></i>
-                <i></i><i></i><i></i><i></i>
-                <i></i><i></i><i></i><i></i>
-                <b class="mc-palette-piece-white">{@symbols["K"]}</b>
+                <i></i><i></i><i></i><i></i> <i></i><i></i><i></i><i></i> <i></i><i></i><i></i><i></i>
+                <i></i><i></i><i></i><i></i> <b class="mc-palette-piece-white">{@symbols["K"]}</b>
                 <b class="mc-palette-piece-black">{@symbols["q"]}</b>
               </div>
             </div>
@@ -276,8 +281,7 @@ defmodule ManaChessOnlineWeb.GameComponents do
 
   def side_panel(assigns) do
     ~H"""
-    <% queue = queued_actions(@game) %>
-    <% log_entries = panel_log(@game) %>
+    <% queue = queued_actions(@game) %> <% log_entries = panel_log(@game) %>
     <% chat_entries = chat_messages(@game) %>
     <aside class={["mc-panel", @game && "mc-panel-game"]}>
       <section
@@ -289,9 +293,10 @@ defmodule ManaChessOnlineWeb.GameComponents do
         data-panel-state={panel_state(queue)}
       >
         <div class="mc-panel-heading">
-          <h2>Cola</h2>
+          <h2>Pendientes</h2>
           <span>{queue_count_text(queue)}</span>
         </div>
+
         <ol class="mc-queue-list" aria-live="polite">
           <li
             :for={{action, index} <- Enum.with_index(queue, 1)}
@@ -303,9 +308,8 @@ defmodule ManaChessOnlineWeb.GameComponents do
               <small>{square_name(action.from)} -> {square_name(action.to)}</small>
             </span>
           </li>
-          <li :if={queue == []} class="mc-panel-empty">
-            Sin acciones pendientes
-          </li>
+
+          <li :if={queue == []} class="mc-panel-empty">Sin movimientos pendientes</li>
         </ol>
       </section>
 
@@ -321,6 +325,7 @@ defmodule ManaChessOnlineWeb.GameComponents do
           <h2>Bitacora</h2>
           <span>{panel_log_count_text(log_entries)}</span>
         </div>
+
         <ul class="mc-log-list" aria-live="polite">
           <li
             :for={{entry, index} <- Enum.with_index(log_entries)}
@@ -329,9 +334,8 @@ defmodule ManaChessOnlineWeb.GameComponents do
             <small>{GameText.log_entry_tag(entry)}</small>
             <span>{GameText.log_entry_text(entry)}</span>
           </li>
-          <li :if={log_entries == []} class="mc-panel-empty">
-            Los eventos apareceran aqui
-          </li>
+
+          <li :if={log_entries == []} class="mc-panel-empty">Los eventos apareceran aqui</li>
         </ul>
       </section>
 
@@ -347,6 +351,7 @@ defmodule ManaChessOnlineWeb.GameComponents do
           <h2>Chat</h2>
           <span>{chat_count_text(@game)}</span>
         </div>
+
         <ul class="mc-chat-list" data-chat-list aria-live="polite" aria-label="Chat de sala">
           <li
             :for={{entry, index} <- Enum.with_index(chat_entries)}
@@ -369,11 +374,12 @@ defmodule ManaChessOnlineWeb.GameComponents do
             </small>
             <p>{entry.text}</p>
           </li>
+
           <li :if={chat_entries == []} class="mc-panel-empty">
-            <span>Mensajes de sala apareceran aqui</span>
-            <small>Saluda sin pausar la partida</small>
+            <span>Mensajes de sala apareceran aqui</span> <small>Saluda sin pausar la partida</small>
           </li>
         </ul>
+
         <form
           :if={@game}
           class={["mc-chat-form", !chat_send_disabled?(@chat_draft) && "mc-chat-form-ready"]}
@@ -391,11 +397,17 @@ defmodule ManaChessOnlineWeb.GameComponents do
               placeholder={chat_placeholder(chat_entries)}
               aria-label="Mensaje de chat"
               data-chat-input
-            />
-            <small>{chat_draft_length(@chat_draft)}/180</small>
+            /> <small>{chat_draft_length(@chat_draft)}/180</small>
           </label>
-          <button type="submit" disabled={chat_send_disabled?(@chat_draft)} phx-disable-with="Enviando">Enviar</button>
+          <button
+            type="submit"
+            disabled={chat_send_disabled?(@chat_draft)}
+            phx-disable-with="Enviando"
+          >
+            Enviar
+          </button>
         </form>
+
         <p :if={@chat_error} class="mc-chat-error" role="status">{@chat_error}</p>
       </section>
     </aside>
@@ -405,7 +417,7 @@ defmodule ManaChessOnlineWeb.GameComponents do
   defp queued_actions(%{queue: queue}) when is_list(queue), do: queue
   defp queued_actions(_game), do: []
 
-  defp panel_log(%{log: log}) when is_list(log), do: Enum.take(log, 8)
+  defp panel_log(%{log: log}) when is_list(log), do: log
   defp panel_log(_game), do: []
 
   defp chat_messages(%{chat: chat}) when is_list(chat), do: Enum.reverse(chat)
@@ -448,16 +460,16 @@ defmodule ManaChessOnlineWeb.GameComponents do
   defp queue_count_text(actions) do
     case length(actions) do
       0 -> "Libre"
-      1 -> "1 accion"
-      count -> "#{count} acciones"
+      1 -> "1 pendiente"
+      count -> "#{count} pendientes"
     end
   end
 
   defp panel_log_count_text(entries) do
     case entries do
       [] -> "Sin eventos"
-      [_one] -> "Ultimo evento"
-      entries -> "#{length(entries)} recientes"
+      [_one] -> "1 evento"
+      entries -> "#{length(entries)} eventos"
     end
   end
 

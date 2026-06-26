@@ -149,9 +149,10 @@ defmodule ManaChessOnline.GameEngine do
     end
   end
 
-  defp resolve_promotion(board, piece, %{player_id: :bot, color: :black, to: to}, castling_rights) do
+  defp resolve_promotion(board, piece, %{player_id: :bot, color: color, to: to}, castling_rights)
+       when color in [:white, :black] do
     if GameRules.promotion_pending?(piece, elem(to, 0)) do
-      board = GameRules.promote(board, to, "q", :black)
+      board = GameRules.promote(board, to, bot_promotion_choice(color), color)
       {board, nil, terminal_status(board, castling_rights)}
     else
       {board, nil, terminal_status(board, castling_rights)}
@@ -165,6 +166,9 @@ defmodule ManaChessOnline.GameEngine do
       {board, nil, terminal_status(board, castling_rights)}
     end
   end
+
+  defp bot_promotion_choice(:white), do: "Q"
+  defp bot_promotion_choice(:black), do: "q"
 
   defp spend_and_refund_elixir(game, color, cost, captured) do
     max_elixir = game.settings.max_elixir

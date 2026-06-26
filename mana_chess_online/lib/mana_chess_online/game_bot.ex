@@ -28,12 +28,14 @@ defmodule ManaChessOnline.GameBot do
           bot_enabled?: true,
           status: :playing,
           queue: [],
-          promotion_pending: nil,
-          first_move_pending: nil
+          promotion_pending: nil
         } = game,
         now_ms
       ) do
-    if is_integer(game.bot_ready_at) and game.bot_ready_at <= now_ms do
+    color = bot_color(game)
+
+    if bot_can_move?(game, color) and is_integer(game.bot_ready_at) and
+         game.bot_ready_at <= now_ms do
       case action(game, now_ms) do
         nil -> %{game | bot_ready_at: now_ms + move_delay_ms(game.settings)}
         action -> %{game | queue: [action], bot_ready_at: now_ms + move_delay_ms(game.settings)}
@@ -46,11 +48,20 @@ defmodule ManaChessOnline.GameBot do
   def maybe_enqueue_move(game, _now_ms), do: game
 
   def action(game, now_ms) do
+    color = bot_color(game)
+
     game.board
-    |> actions_for(:black, game)
+    |> actions_for(color, game)
     |> affordable_actions(game)
-    |> pick_best_action(game, now_ms)
+    |> pick_best_action(game, now_ms, color)
   end
+
+  defp bot_color(%{bot_color: color}) when color in [:white, :black], do: color
+  defp bot_color(_game), do: :black
+
+  defp bot_can_move?(%{first_move_pending: nil}, _color), do: true
+  defp bot_can_move?(%{first_move_pending: color}, color), do: true
+  defp bot_can_move?(_game, _color), do: false
 
   defp actions_for(board, color, game) do
     for {row, r} <- Enum.with_index(board),
@@ -68,30 +79,39 @@ defmodule ManaChessOnline.GameBot do
     end)
   end
 
-  defp pick_best_action([], _game, _now_ms), do: nil
+  defp pick_best_action([], _game, _now_ms, _color), do: nil
 
-  defp pick_best_action(actions, game, now_ms) do
-    actions
-    |> order_search_actions(game.board)
-    |> Enum.take(@root_branch_limit)
-    |> Enum.map(fn action ->
-      position = apply_search_action(game.board, game.castling_rights, action)
+  defp pick_best_action(actions, game, now_ms, color) do
+    scored_actions =
+      actions
+      |> order_search_actions(game.board)
+      |> Enum.take(@root_branch_limit)
+      |> Enum.map(fn action ->
+        position = apply_search_action(game.board, game.castling_rights, action)
 
-      score =
-        minimax(
-          position.board,
-          position.castling_rights,
-          :white,
-          @search_depth - 1,
-          -@mate_score,
-          @mate_score
-        )
+        score =
+          minimax(
+            position.board,
+            position.castling_rights,
+            opposite(color),
+            @search_depth - 1,
+            -@mate_score,
+            @mate_score
+          )
 
-      {score + tiebreaker(action, now_ms), action}
-    end)
-    |> Enum.max_by(fn {score, _action} -> score end)
+        {score + tiebreaker(action, now_ms), action}
+      end)
+
+    scored_actions
+    |> pick_for_color(color)
     |> elem(1)
   end
+
+  defp pick_for_color(scored_actions, :black),
+    do: Enum.max_by(scored_actions, fn {score, _action} -> score end)
+
+  defp pick_for_color(scored_actions, :white),
+    do: Enum.min_by(scored_actions, fn {score, _action} -> score end)
 
   defp minimax(board, castling_rights, color, depth, alpha, beta) do
     cond do
@@ -239,6 +259,9 @@ defmodule ManaChessOnline.GameBot do
       true -> 0
     end
   end
+
+  defp opposite(:white), do: :black
+  defp opposite(:black), do: :white
 
   defp tiebreaker(action, now_ms) do
     :erlang.phash2({action.from, action.to, now_ms}, 11) / 100

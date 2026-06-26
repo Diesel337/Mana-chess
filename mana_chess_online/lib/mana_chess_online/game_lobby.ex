@@ -3,7 +3,18 @@ defmodule ManaChessOnline.GameLobby do
 
   use GenServer
 
-  alias ManaChessOnline.{GameBot, GameDirectory, GameEngine, GameMetrics, GameRules, GameServer, GameState, GameSupervisor, GameTick, RateLimiter}
+  alias ManaChessOnline.{
+    GameBot,
+    GameDirectory,
+    GameEngine,
+    GameMetrics,
+    GameRules,
+    GameServer,
+    GameState,
+    GameSupervisor,
+    GameTick,
+    RateLimiter
+  }
 
   @max_games 4
   @tick_ms 250
@@ -39,7 +50,10 @@ defmodule ManaChessOnline.GameLobby do
   def start_link(_opts), do: GenServer.start_link(__MODULE__, :ok, name: __MODULE__)
 
   def join(player_id), do: GenServer.call(__MODULE__, {:join, player_id})
-  def sit(player_id, game_id, color), do: GenServer.call(__MODULE__, {:sit, player_id, game_id, color})
+
+  def sit(player_id, game_id, color),
+    do: GenServer.call(__MODULE__, {:sit, player_id, game_id, color})
+
   def sit_anywhere(player_id), do: GenServer.call(__MODULE__, {:sit_anywhere, player_id})
   def create_private(player_id), do: GenServer.call(__MODULE__, {:create_private, player_id})
   def watch(player_id, game_id), do: GenServer.call(__MODULE__, {:watch, player_id, game_id})
@@ -47,19 +61,36 @@ defmodule ManaChessOnline.GameLobby do
   def lobby, do: GenServer.call(__MODULE__, :lobby)
   def metrics(timeout \\ 5_000), do: GenServer.call(__MODULE__, :metrics, timeout)
   def global_settings, do: GenServer.call(__MODULE__, :global_settings)
-  def update_global_settings(params), do: GenServer.call(__MODULE__, {:update_global_settings, params})
-  def apply_global_settings_to_practice(player_id), do: GenServer.call(__MODULE__, {:apply_global_settings_to_practice, player_id})
+
+  def update_global_settings(params),
+    do: GenServer.call(__MODULE__, {:update_global_settings, params})
+
+  def apply_global_settings_to_practice(player_id),
+    do: GenServer.call(__MODULE__, {:apply_global_settings_to_practice, player_id})
+
   def leave(player_id), do: GenServer.call(__MODULE__, {:leave, player_id})
   def clear_room(game_id), do: GenServer.call(__MODULE__, {:clear_room, game_id})
   def reset(player_id), do: GenServer.call(__MODULE__, {:reset, player_id})
   def start_game(player_id), do: GenServer.call(__MODULE__, {:start_game, player_id})
   def ready_to_start(player_id), do: GenServer.call(__MODULE__, {:ready_to_start, player_id})
   def start_practice(player_id), do: GenServer.call(__MODULE__, {:start_practice, player_id})
-  def toggle_practice_bot(player_id), do: GenServer.call(__MODULE__, {:toggle_practice_bot, player_id})
-  def update_settings(player_id, params), do: GenServer.call(__MODULE__, {:update_settings, player_id, params})
+
+  def toggle_practice_bot(player_id),
+    do: GenServer.call(__MODULE__, {:toggle_practice_bot, player_id})
+
+  def toggle_practice_side(player_id),
+    do: GenServer.call(__MODULE__, {:toggle_practice_side, player_id})
+
+  def update_settings(player_id, params),
+    do: GenServer.call(__MODULE__, {:update_settings, player_id, params})
+
   def promote(player_id, choice), do: GenServer.call(__MODULE__, {:promote, player_id, choice})
-  def enqueue(player_id, from, to), do: GenServer.call(__MODULE__, {:enqueue, player_id, from, to})
-  def send_chat(player_id, game_id, message), do: GenServer.call(__MODULE__, {:send_chat, player_id, game_id, message})
+
+  def enqueue(player_id, from, to),
+    do: GenServer.call(__MODULE__, {:enqueue, player_id, from, to})
+
+  def send_chat(player_id, game_id, message),
+    do: GenServer.call(__MODULE__, {:send_chat, player_id, game_id, message})
 
   @impl true
   def init(:ok) do
@@ -162,7 +193,14 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   def handle_call(:metrics, _from, state) do
-    metrics = GameMetrics.snapshot(state.games, game_server_pids(state.games), GameSupervisor.child_count(), state.rate_limits)
+    metrics =
+      GameMetrics.snapshot(
+        state.games,
+        game_server_pids(state.games),
+        GameSupervisor.child_count(),
+        state.rate_limits
+      )
+
     {:reply, metrics, state}
   end
 
@@ -201,7 +239,12 @@ defmodule ManaChessOnline.GameLobby do
             }
           end)
 
-        Phoenix.PubSub.broadcast(ManaChessOnline.PubSub, topic(game_id), {:game_update, public_game(state.games[game_id])})
+        Phoenix.PubSub.broadcast(
+          ManaChessOnline.PubSub,
+          topic(game_id),
+          {:game_update, public_game(state.games[game_id])}
+        )
+
         {:reply, :ok, state}
 
       _ ->
@@ -328,9 +371,37 @@ defmodule ManaChessOnline.GameLobby do
         game = %{
           game
           | bot_enabled?: enabled?,
-            bot_ready_at: if(enabled?, do: now_ms() + GameBot.move_delay_ms(game.settings), else: nil),
-            log: [bot_toggle_message(enabled?) | game.log]
+            bot_ready_at:
+              if(enabled?, do: now_ms() + GameBot.move_delay_ms(game.settings), else: nil),
+            log: [bot_toggle_message(enabled?, bot_color(game)) | game.log]
         }
+
+        put_in(state.games[game_id], game)
+      else
+        _ -> state
+      end
+
+    broadcast_lobby(state)
+    {:reply, player_view(state, player_id), state}
+  end
+
+  def handle_call({:toggle_practice_side, player_id}, _from, state) do
+    state =
+      with %{game_id: game_id, color: :practice} <- state.players[player_id],
+           %{practice?: true} = game <- state.games[game_id] do
+        next_bot_color = game |> bot_color() |> opposite_color()
+        chat = Map.get(game, :chat, [])
+
+        game =
+          practice_game(game_id, player_id, game.settings, next_bot_color)
+          |> Map.put(:chat, chat)
+          |> update_in(
+            [:log],
+            &[
+              "Ahora juegas #{label(opposite_color(next_bot_color))}; BOT controla #{label(next_bot_color)}."
+              | &1
+            ]
+          )
 
         put_in(state.games[game_id], game)
       else
@@ -343,7 +414,8 @@ defmodule ManaChessOnline.GameLobby do
 
   def handle_call({:update_settings, player_id, params}, _from, state) do
     state =
-      with %{game_id: game_id, color: color} when color in [:white, :practice] <- state.players[player_id],
+      with %{game_id: game_id, color: color} when color in [:white, :practice] <-
+             state.players[player_id],
            game when game.practice? or game.status in [:waiting, :ready] <- state.games[game_id] do
         settings = sanitize_settings(params, game.settings)
 
@@ -392,7 +464,12 @@ defmodule ManaChessOnline.GameLobby do
         {state, game_id} = enqueue_move(state, player_id, from, to)
 
         if game_id do
-          Phoenix.PubSub.broadcast(ManaChessOnline.PubSub, topic(game_id), {:game_update, public_game(state.games[game_id])})
+          Phoenix.PubSub.broadcast(
+            ManaChessOnline.PubSub,
+            topic(game_id),
+            {:game_update, public_game(state.games[game_id])}
+          )
+
           broadcast_lobby(state)
         end
 
@@ -426,7 +503,13 @@ defmodule ManaChessOnline.GameLobby do
         end)
 
       sync_game_server(state.games[game_id])
-      Phoenix.PubSub.broadcast(ManaChessOnline.PubSub, topic(game_id), {:game_update, public_game(state.games[game_id])})
+
+      Phoenix.PubSub.broadcast(
+        ManaChessOnline.PubSub,
+        topic(game_id),
+        {:game_update, public_game(state.games[game_id])}
+      )
+
       {:reply, :ok, state}
     else
       {:error, :rate_limited, state} ->
@@ -466,36 +549,50 @@ defmodule ManaChessOnline.GameLobby do
     color = GameRules.color(piece)
 
     cond do
-        piece == "." ->
-          reject_move(state, game_id, "Movimiento rechazado: no hay pieza en origen #{inspect(from)}.")
+      piece == "." ->
+        reject_move(
+          state,
+          game_id,
+          "Movimiento rechazado: no hay pieza en origen #{inspect(from)}."
+        )
 
-        color not in [:white, :black] ->
-          reject_move(state, game_id, "Movimiento rechazado: pieza sin color.")
+      color not in [:white, :black] ->
+        reject_move(state, game_id, "Movimiento rechazado: pieza sin color.")
 
-        bot_controls_black?(game, color) ->
-          reject_move(state, game_id, "Movimiento rechazado: BOT controla Negras.")
+      bot_controls_color?(game, color) ->
+        reject_move(state, game_id, "Movimiento rechazado: BOT controla #{label(color)}.")
 
-        not controls_color?(player_color, color) ->
-          reject_move(state, game_id, "Movimiento rechazado: no controlas #{label(color)}.")
+      not controls_color?(player_color, color) ->
+        reject_move(state, game_id, "Movimiento rechazado: no controlas #{label(color)}.")
 
-        not first_move_allowed?(game, color) ->
-          reject_move(state, game_id, "Movimiento rechazado: Blancas deben abrir.")
+      not first_move_allowed?(game, color) ->
+        reject_move(state, game_id, "Movimiento rechazado: Blancas deben abrir.")
 
-        cooldown_active?(game, from) ->
-          reject_move(state, game_id, "Movimiento rechazado: pieza en cooldown.")
+      cooldown_active?(game, from) ->
+        reject_move(state, game_id, "Movimiento rechazado: pieza en cooldown.")
 
-        to not in GameRules.legal_moves_for(game.board, elem(from, 0), elem(from, 1), color, game.castling_rights) ->
-          reject_move(state, game_id, "Movimiento rechazado: #{inspect(from)} -> #{inspect(to)} no es legal.")
+      to not in GameRules.legal_moves_for(
+        game.board,
+        elem(from, 0),
+        elem(from, 1),
+        color,
+        game.castling_rights
+      ) ->
+        reject_move(
+          state,
+          game_id,
+          "Movimiento rechazado: #{inspect(from)} -> #{inspect(to)} no es legal."
+        )
 
-        true ->
-          action = %{player_id: player_id, color: color, from: from, to: to}
+      true ->
+        action = %{player_id: player_id, color: color, from: from, to: to}
 
-          game =
-            %{game | queue: game.queue ++ [action]}
-            |> process_next_action()
-            |> refresh_terminal_status()
+        game =
+          %{game | queue: game.queue ++ [action]}
+          |> process_next_action()
+          |> refresh_terminal_status()
 
-          {put_in(state.games[game_id], game), game_id}
+        {put_in(state.games[game_id], game), game_id}
     end
   end
 
@@ -523,14 +620,22 @@ defmodule ManaChessOnline.GameLobby do
         {Map.put(games, game_id, ticked_game), changed_game_ids}
       end)
 
-    next_state = %{state | games: games, rate_limits: RateLimiter.prune(state.rate_limits, now, @rate_limit_retention_ms)}
+    next_state = %{
+      state
+      | games: games,
+        rate_limits: RateLimiter.prune(state.rate_limits, now, @rate_limit_retention_ms)
+    }
 
     changed_game_ids
     |> Enum.reverse()
     |> Enum.each(fn game_id -> broadcast_game_update(next_state.games[game_id], now) end)
 
     if lobby_broadcast_needed?(state, next_state, now) do
-      Phoenix.PubSub.broadcast(ManaChessOnline.PubSub, lobby_topic(), {:lobby_update, public_lobby_at(next_state, now)})
+      Phoenix.PubSub.broadcast(
+        ManaChessOnline.PubSub,
+        lobby_topic(),
+        {:lobby_update, public_lobby_at(next_state, now)}
+      )
     end
 
     {:noreply, next_state}
@@ -608,7 +713,10 @@ defmodule ManaChessOnline.GameLobby do
       player_id = old_game.players.white
 
       state
-      |> put_in([:games, game_id], practice_game(game_id, player_id, old_game.settings))
+      |> put_in(
+        [:games, game_id],
+        practice_game(game_id, player_id, old_game.settings, bot_color(old_game))
+      )
       |> put_in([:players, player_id], %{game_id: game_id, color: :practice})
       |> put_in([:games, game_id, :chat], chat)
       |> update_in([:games, game_id, :log], &["Practica reiniciada." | &1])
@@ -660,12 +768,16 @@ defmodule ManaChessOnline.GameLobby do
     }
   end
 
-  defp process_next_action(game), do: GameEngine.process_next_action(game, now_ms(), @default_settings.cooldown_seconds)
+  defp process_next_action(game),
+    do: GameEngine.process_next_action(game, now_ms(), @default_settings.cooldown_seconds)
 
   defp take_rate_limit(state, key, {max_hits, window_ms}) do
     case RateLimiter.hit(state.rate_limits, key, now_ms(), max_hits, window_ms) do
-      {:ok, rate_limits} -> {:ok, %{state | rate_limits: rate_limits}}
-      {{:error, :rate_limited}, rate_limits} -> {:error, :rate_limited, %{state | rate_limits: rate_limits}}
+      {:ok, rate_limits} ->
+        {:ok, %{state | rate_limits: rate_limits}}
+
+      {{:error, :rate_limited}, rate_limits} ->
+        {:error, :rate_limited, %{state | rate_limits: rate_limits}}
     end
   end
 
@@ -682,16 +794,21 @@ defmodule ManaChessOnline.GameLobby do
 
   defp maybe_start_when_everyone_ready(game), do: game
 
-
   defp cooldown_active?(game, square), do: GameEngine.cooldown_active?(game, square, now_ms())
-
 
   defp now_ms, do: System.monotonic_time(:millisecond)
 
   defp new_game(id, settings), do: GameState.new_game(id, settings)
 
-  defp practice_game(id, player_id, settings) do
-    GameState.practice_game(id, player_id, settings, now_ms(), GameBot.move_delay_ms(settings))
+  defp practice_game(id, player_id, settings, bot_color \\ :black) do
+    GameState.practice_game(
+      id,
+      player_id,
+      settings,
+      now_ms(),
+      GameBot.move_delay_ms(settings),
+      bot_color
+    )
   end
 
   defp private_game(id, settings), do: GameState.private_game(id, settings)
@@ -706,14 +823,19 @@ defmodule ManaChessOnline.GameLobby do
 
   defp public_game(game), do: public_game_at(game, now_ms())
 
-  defp public_game_at(game, now), do: GameState.public_game(game, now, @default_settings.cooldown_seconds)
+  defp public_game_at(game, now),
+    do: GameState.public_game(game, now, @default_settings.cooldown_seconds)
 
   defp public_lobby(state), do: public_lobby_at(state, now_ms())
 
   defp public_lobby_at(state, now), do: GameState.public_lobby(state, now)
 
   defp broadcast_game_update(game, now) do
-    Phoenix.PubSub.broadcast(ManaChessOnline.PubSub, topic(game.id), {:game_update, public_game_at(game, now)})
+    Phoenix.PubSub.broadcast(
+      ManaChessOnline.PubSub,
+      topic(game.id),
+      {:game_update, public_game_at(game, now)}
+    )
   end
 
   defp game_broadcast_needed?(previous_game, next_game, now) do
@@ -738,7 +860,11 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   defp broadcast_lobby_payload(state) do
-    Phoenix.PubSub.broadcast(ManaChessOnline.PubSub, lobby_topic(), {:lobby_update, public_lobby(state)})
+    Phoenix.PubSub.broadcast(
+      ManaChessOnline.PubSub,
+      lobby_topic(),
+      {:lobby_update, public_lobby(state)}
+    )
   end
 
   defp sync_game_servers(state) do
@@ -809,8 +935,8 @@ defmodule ManaChessOnline.GameLobby do
 
   defp chat_name(_player_id), do: "Jugador"
 
-  defp bot_toggle_message(true), do: "Bot de negras activado."
-  defp bot_toggle_message(false), do: "Bot de negras desactivado."
+  defp bot_toggle_message(true, color), do: "Bot activado: controla #{label(color)}."
+  defp bot_toggle_message(false, _color), do: "Bot desactivado."
   defp label(:white), do: "Blancas"
   defp label(:black), do: "Negras"
   defp label(:practice), do: "Practica"
@@ -821,7 +947,6 @@ defmodule ManaChessOnline.GameLobby do
     Map.new(elixir, fn {color, amount} -> {color, min(amount, settings.max_elixir)} end)
   end
 
-
   defp sanitize_settings(params, current) do
     current_costs = Map.get(current, :costs, @default_settings.costs)
     max_elixir = number_param(params, "max_elixir", Map.get(current, :max_elixir, 10.0), 1, 99)
@@ -830,13 +955,35 @@ defmodule ManaChessOnline.GameLobby do
       settings_version: @settings_version,
       max_elixir: max_elixir,
       initial_elixir:
-        number_param(params, "initial_elixir", Map.get(current, :initial_elixir, max_elixir), 0, max_elixir),
-      regen_per_second: number_param(params, "regen_per_second", Map.get(current, :regen_per_second, 1.0), 0, 20),
+        number_param(
+          params,
+          "initial_elixir",
+          Map.get(current, :initial_elixir, max_elixir),
+          0,
+          max_elixir
+        ),
+      regen_per_second:
+        number_param(params, "regen_per_second", Map.get(current, :regen_per_second, 1.0), 0, 20),
       capture_refund_percent:
-        number_param(params, "capture_refund_percent", Map.get(current, :capture_refund_percent, 40), 0, 100),
-      cooldown_enabled: bool_param(params, "cooldown_enabled", Map.get(current, :cooldown_enabled, true)),
-      cooldown_seconds: number_param(params, "cooldown_seconds", Map.get(current, :cooldown_seconds, 1.0), 0, 60),
-      bot_move_seconds: number_param(params, "bot_move_seconds", Map.get(current, :bot_move_seconds, @bot_move_seconds), 0.25, 30),
+        number_param(
+          params,
+          "capture_refund_percent",
+          Map.get(current, :capture_refund_percent, 40),
+          0,
+          100
+        ),
+      cooldown_enabled:
+        bool_param(params, "cooldown_enabled", Map.get(current, :cooldown_enabled, true)),
+      cooldown_seconds:
+        number_param(params, "cooldown_seconds", Map.get(current, :cooldown_seconds, 1.0), 0, 60),
+      bot_move_seconds:
+        number_param(
+          params,
+          "bot_move_seconds",
+          Map.get(current, :bot_move_seconds, @bot_move_seconds),
+          0.25,
+          30
+        ),
       costs: %{
         pawn: number_param(params, "pawn", Map.get(current_costs, :pawn, 1.0), 0, 99),
         knight: number_param(params, "knight", Map.get(current_costs, :knight, 3.0), 0, 99),
@@ -898,18 +1045,22 @@ defmodule ManaChessOnline.GameLobby do
     end
   end
 
-  defp migrate_settings_params(%{"settings_version" => version} = params) when is_number(version) and version >= @settings_version, do: params
+  defp migrate_settings_params(%{"settings_version" => version} = params)
+       when is_number(version) and version >= @settings_version, do: params
 
   defp migrate_settings_params(params) do
     max_elixir = parse_number(Map.get(params, "max_elixir"), @default_settings.max_elixir)
-    initial_elixir = parse_number(Map.get(params, "initial_elixir"), @default_settings.initial_elixir)
+
+    initial_elixir =
+      parse_number(Map.get(params, "initial_elixir"), @default_settings.initial_elixir)
 
     params
     |> Map.put("settings_version", @settings_version)
     |> maybe_start_at_half_elixir(max_elixir, initial_elixir)
   end
 
-  defp maybe_start_at_half_elixir(params, max_elixir, initial_elixir) when initial_elixir >= max_elixir do
+  defp maybe_start_at_half_elixir(params, max_elixir, initial_elixir)
+       when initial_elixir >= max_elixir do
     Map.put(params, "initial_elixir", max_elixir / 2)
   end
 
@@ -940,13 +1091,22 @@ defmodule ManaChessOnline.GameLobby do
   defp controls_color?(color, color), do: true
   defp controls_color?(_player_color, _piece_color), do: false
 
-  defp bot_controls_black?(%{practice?: true, bot_enabled?: true}, :black), do: true
-  defp bot_controls_black?(_game, _color), do: false
+  defp bot_controls_color?(%{practice?: true, bot_enabled?: true} = game, color),
+    do: bot_color(game) == color
+
+  defp bot_controls_color?(_game, _color), do: false
+
+  defp bot_color(%{bot_color: color}) when color in [:white, :black], do: color
+  defp bot_color(_game), do: :black
+
+  defp opposite_color(:white), do: :black
+  defp opposite_color(:black), do: :white
 
   defp valid_square?({r, c}), do: r in 0..7 and c in 0..7
   defp valid_square?(_square), do: false
 
-  defp practice_game_id(player_id), do: "practice_" <> Integer.to_string(:erlang.phash2(player_id))
+  defp practice_game_id(player_id),
+    do: "practice_" <> Integer.to_string(:erlang.phash2(player_id))
 
   defp ensure_private_game(state, game_id) do
     if private_game_id?(game_id) and is_nil(state.games[game_id]) do
@@ -981,7 +1141,6 @@ defmodule ManaChessOnline.GameLobby do
 
     if Map.has_key?(games, game_id), do: unique_private_game_id(games), else: game_id
   end
-
 
   defp promotion_choice("Q", :white), do: "Q"
   defp promotion_choice("R", :white), do: "R"

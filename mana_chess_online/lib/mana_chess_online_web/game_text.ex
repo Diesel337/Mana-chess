@@ -5,7 +5,7 @@ defmodule ManaChessOnlineWeb.GameText do
   def friendly_alert("la partida no esta jugando."), do: "La partida todavia no esta jugando."
   def friendly_alert("hay una promocion pendiente."), do: "Primero termina la promocion."
   def friendly_alert("pieza sin color."), do: "Esa pieza no se puede mover ahora."
-  def friendly_alert("BOT controla Negras."), do: "El BOT controla Negras."
+  def friendly_alert("BOT controla " <> color), do: "El BOT controla " <> color
   def friendly_alert("Blancas deben abrir."), do: "Blancas abren: mueve una pieza blanca primero."
   def friendly_alert("la pieza ya no esta ahi."), do: "La pieza ya no esta ahi."
   def friendly_alert("pieza en cooldown."), do: "Cooldown activo: esa pieza aun no puede moverse."
@@ -13,10 +13,17 @@ defmodule ManaChessOnlineWeb.GameText do
 
   def friendly_alert(message) do
     cond do
-      String.starts_with?(message, "no hay pieza en origen") -> "No hay pieza en esa casilla."
-      String.starts_with?(message, "no controlas") -> "Esa pieza no es tuya; elige una de tu lado."
-      String.contains?(message, "no es legal") -> "Ese destino no es legal para esa pieza."
-      true -> sentence_case(message)
+      String.starts_with?(message, "no hay pieza en origen") ->
+        "No hay pieza en esa casilla."
+
+      String.starts_with?(message, "no controlas") ->
+        "Esa pieza no es tuya; elige una de tu lado."
+
+      String.contains?(message, "no es legal") ->
+        "Ese destino no es legal para esa pieza."
+
+      true ->
+        sentence_case(message)
     end
   end
 

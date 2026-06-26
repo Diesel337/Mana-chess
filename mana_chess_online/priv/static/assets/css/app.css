@@ -2119,6 +2119,12 @@ body {
   background: #e6bd68;
   color: #171207;
 }
+
+.mc-bot-side {
+  border-color: rgba(139, 217, 189, .55) !important;
+  background: #13251f !important;
+  color: #dff8ef !important;
+}
 .mc-tutorial {
   display: grid;
   gap: 12px;
@@ -2589,6 +2595,7 @@ body {
 .mc-board {
   display: grid;
   grid-template-columns: repeat(8, minmax(36px, 1fr));
+  grid-template-rows: repeat(8, minmax(0, 1fr));
   width: 100%;
   aspect-ratio: 1;
   border: 3px solid #090c09;
@@ -2655,6 +2662,7 @@ body {
   border: 0;
   padding: 0;
   min-width: 0;
+  overflow: hidden;
   cursor: grab;
 }
 .mc-dragging .mc-square {
@@ -2689,10 +2697,16 @@ body {
 }
 .mc-valid::after {
   content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 2;
   width: 24%;
   aspect-ratio: 1;
   border-radius: 999px;
   background: rgb(20 75 36 / 72%);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
 }
 .mc-valid:has(.mc-piece:not(:empty))::after {
   display: none;
@@ -7665,6 +7679,13 @@ html[data-piece-skin="custom"] .mc-drag-ghost.mc-black {
   box-shadow: 0 0 12px rgba(139, 217, 189, .38);
 }
 
+.mc-log-panel .mc-log-list {
+  max-height: clamp(220px, 34dvh, 460px);
+  overflow: auto;
+  padding-right: 2px;
+  scrollbar-width: thin;
+}
+
 .mc-log-entry {
   position: relative;
   display: grid;
@@ -7953,7 +7974,7 @@ html[data-desktop="true"] .mc-chat-list {
   }
 
   .mc-panel .mc-log-list {
-    max-height: 112px;
+    max-height: 220px;
     overflow: auto;
   }
 
@@ -8000,15 +8021,19 @@ html[data-desktop="true"] .mc-chat-list {
     min-height: 0;
   }
 
-  .mc-panel-game .mc-queue-list,
-  .mc-panel-game .mc-log-list,
-  .mc-panel-game .mc-chat-list {
-    max-height: clamp(72px, 16dvh, 148px);
+  .mc-panel-game .mc-queue-list {
+    max-height: clamp(72px, 14dvh, 120px);
+    overflow: auto;
+  }
+
+  .mc-panel-game .mc-log-list {
+    max-height: clamp(220px, 36dvh, 460px);
     overflow: auto;
   }
 
   .mc-panel-game .mc-chat-list {
     max-height: clamp(82px, 18dvh, 156px);
+    overflow: auto;
   }
 
   .mc-game:has(.mc-play-area) > .mc-spectator-banner,

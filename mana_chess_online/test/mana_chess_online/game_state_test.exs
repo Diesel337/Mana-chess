@@ -31,6 +31,7 @@ defmodule ManaChessOnline.GameStateTest do
     assert practice.practice?
     assert practice.bot_enabled?
     assert practice.bot_ready_at == 2_200
+    assert practice.bot_color == :black
     assert practice.players == %{white: "player-1", black: "player-1"}
     assert practice.status == :playing
 
@@ -39,7 +40,7 @@ defmodule ManaChessOnline.GameStateTest do
     assert private.log == ["Sala privada creada. Comparte el link para invitar."]
   end
 
-  test "public snapshots trim logs and expose countdowns and cooldowns" do
+  test "public snapshots expose full logs, countdowns and cooldowns" do
     game =
       GameState.new_game("game_test", settings())
       |> Map.put(:status, {:starting, 15_000})
@@ -49,7 +50,7 @@ defmodule ManaChessOnline.GameStateTest do
     public = GameState.public_game(game, 10_000, 1.0)
 
     assert public.countdown_seconds == 5
-    assert length(public.log) == 8
+    assert public.log == Enum.map(1..12, &"log #{&1}")
     assert [%{at: {6, 4}, seconds: 3, remaining_ms: 2_500, total_ms: 1_250}] = public.cooldowns
   end
 
