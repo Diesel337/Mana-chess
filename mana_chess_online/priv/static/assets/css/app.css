@@ -2709,16 +2709,18 @@ body {
 }
 .mc-cooldown-ring {
   position: absolute;
-  right: 6px;
-  bottom: 6px;
+  right: 11%;
+  bottom: 11%;
+  z-index: 3;
   display: grid;
   place-items: center;
-  width: 26px;
-  height: 26px;
+  width: clamp(16px, 28%, 28px);
+  aspect-ratio: 1;
   border-radius: 999px;
   background: #10170f;
   border: 1px solid rgb(247 242 232 / 65%);
   box-shadow: 0 3px 10px #0008;
+  pointer-events: none;
 }
 .mc-cooldown-ring svg {
   width: 100%;
@@ -3658,10 +3660,9 @@ body {
 }
 
 .mc-cooldown-ring {
-  right: clamp(3px, 1.2cqw, 6px);
-  bottom: clamp(3px, 1.2cqw, 6px);
-  width: clamp(16px, 5.5cqw, 26px);
-  height: clamp(16px, 5.5cqw, 26px);
+  right: clamp(6px, 1.45cqw, 12px);
+  bottom: clamp(6px, 1.45cqw, 12px);
+  width: clamp(16px, 5.5cqw, 28px);
 }
 
 .mc-elixir-bottom-row {
@@ -5253,10 +5254,13 @@ html[data-desktop="true"] .mc-sound-volume input {
   opacity: .13;
 }
 
-.mc-game:has(.mc-play-area) .mc-square .mc-piece,
-.mc-game:has(.mc-play-area) .mc-cooldown-ring {
+.mc-game:has(.mc-play-area) .mc-square .mc-piece {
   position: relative;
   z-index: 1;
+}
+
+.mc-game:has(.mc-play-area) .mc-cooldown-ring {
+  z-index: 3;
 }
 
 .mc-game:has(.mc-play-area) .mc-piece {

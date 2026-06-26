@@ -1012,7 +1012,7 @@ defmodule ManaChessOnlineWeb.GameLive do
                       data-legal-moves={legal_moves_data(@game, @color, piece, r, c)}
                     >
                       <span class={piece_class(piece)}>{@symbols[piece]}</span>
-                      <span :if={cooldown_for(@game, {r, c})} class="mc-cooldown-ring" style={cooldown_style(@game, {r, c})}>
+                      <span :if={cooldown_for(@game, {r, c})} class="mc-cooldown-ring" style={cooldown_style(@game, {r, c})} aria-hidden="true">
                         <svg viewBox="0 0 26 26" aria-hidden="true">
                           <circle class="mc-cooldown-ring-track" cx="13" cy="13" r="10" pathLength="100" />
                           <circle class="mc-cooldown-ring-fill" cx="13" cy="13" r="10" pathLength="100" />

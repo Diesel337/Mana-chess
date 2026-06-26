@@ -29,7 +29,32 @@ defmodule ManaChessOnline.GameEngineTest do
     assert game.first_move_pending == nil
     assert game.elixir.white == 4.0
     assert game.cooldowns == %{{4, 4} => 11_000}
-    assert hd(game.log) == "Blancas movio una pieza."
+    assert hd(game.log) == "Blancas movio peon e2 -> e4."
+  end
+
+  test "logs captures with piece and algebraic squares" do
+    board = [
+      [".", ".", ".", ".", "k", ".", ".", "."],
+      [".", ".", ".", ".", ".", ".", ".", "."],
+      [".", ".", ".", ".", ".", ".", ".", "."],
+      [".", ".", ".", ".", "p", ".", ".", "."],
+      [".", ".", ".", "P", ".", ".", ".", "."],
+      [".", ".", ".", ".", ".", ".", ".", "."],
+      [".", ".", ".", ".", ".", ".", ".", "."],
+      [".", ".", ".", ".", "K", ".", ".", "."]
+    ]
+
+    game =
+      GameState.practice_game("practice_1", "player-1", settings(), 1_000, 1_200)
+      |> Map.put(:bot_enabled?, false)
+      |> Map.put(:board, board)
+      |> Map.put(:queue, [%{player_id: "player-1", color: :white, from: {4, 3}, to: {3, 4}}])
+
+    game = GameEngine.process_next_action(game, 10_000, 1.0)
+
+    assert GameRules.at(game.board, 4, 3) == "."
+    assert GameRules.at(game.board, 3, 4) == "P"
+    assert hd(game.log) == "Blancas movio peon d4 -> e5 y capturo peon."
   end
 
   test "discards queued moves when elixir is not enough" do
@@ -53,7 +78,11 @@ defmodule ManaChessOnline.GameEngineTest do
 
     active = %{waiting_for_first_move | first_move_pending: nil}
 
-    assert GameEngine.regen_elixir(waiting_for_first_move, 250).elixir == %{white: 5.0, black: 9.95}
+    assert GameEngine.regen_elixir(waiting_for_first_move, 250).elixir == %{
+             white: 5.0,
+             black: 9.95
+           }
+
     assert GameEngine.regen_elixir(active, 250).elixir == %{white: 5.25, black: 10.0}
   end
 

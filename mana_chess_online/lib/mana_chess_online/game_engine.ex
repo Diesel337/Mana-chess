@@ -3,9 +3,15 @@ defmodule ManaChessOnline.GameEngine do
 
   alias ManaChessOnline.{GameRules, GameState}
 
+  @files ~w(a b c d e f g h)
+
   def process_next_action(%{queue: []} = game, _now_ms, _default_cooldown_seconds), do: game
 
-  def process_next_action(%{promotion_pending: pending} = game, _now_ms, _default_cooldown_seconds)
+  def process_next_action(
+        %{promotion_pending: pending} = game,
+        _now_ms,
+        _default_cooldown_seconds
+      )
       when not is_nil(pending),
       do: game
 
@@ -19,20 +25,37 @@ defmodule ManaChessOnline.GameEngine do
       game.elixir[action.color] < piece_cost(game.settings, piece) ->
         %{game | queue: rest, log: ["Sin elixir para #{label(action.color)}." | game.log]}
 
-      action.to not in GameRules.legal_moves_for(game.board, elem(action.from, 0), elem(action.from, 1), action.color, game.castling_rights) ->
+      action.to not in GameRules.legal_moves_for(
+        game.board,
+        elem(action.from, 0),
+        elem(action.from, 1),
+        action.color,
+        game.castling_rights
+      ) ->
         %{game | queue: rest, log: ["Movimiento descartado: ya no es valido." | game.log]}
 
       true ->
         cost = piece_cost(game.settings, piece)
-        {board, captured} = GameRules.move(game.board, action.from, action.to, game.castling_rights)
-        castling_rights = GameRules.update_castling_rights(game.castling_rights, piece, action.from, captured, action.to)
+
+        {board, captured} =
+          GameRules.move(game.board, action.from, action.to, game.castling_rights)
+
+        castling_rights =
+          GameRules.update_castling_rights(
+            game.castling_rights,
+            piece,
+            action.from,
+            captured,
+            action.to
+          )
 
         cooldowns =
           game.cooldowns
           |> Map.delete(action.from)
           |> put_piece_cooldown(action.to, game.settings, now_ms, default_cooldown_seconds)
 
-        {board, promotion_pending, status} = resolve_promotion(board, piece, action, castling_rights)
+        {board, promotion_pending, status} =
+          resolve_promotion(board, piece, action, castling_rights)
 
         %{
           game
@@ -44,7 +67,7 @@ defmodule ManaChessOnline.GameEngine do
             first_move_pending: clear_first_move(game.first_move_pending, action.color),
             elixir: spend_and_refund_elixir(game, action.color, cost, captured),
             status: status || game.status,
-            log: [move_message(action, captured) | game.log]
+            log: [move_message(action, piece, captured) | game.log]
         }
     end
   end
@@ -62,7 +85,10 @@ defmodule ManaChessOnline.GameEngine do
   def regen_elixir(game, _tick_ms), do: game
 
   def clear_expired_cooldowns(game, now_ms) do
-    %{game | cooldowns: Map.reject(game.cooldowns, fn {_square, ready_at} -> ready_at <= now_ms end)}
+    %{
+      game
+      | cooldowns: Map.reject(game.cooldowns, fn {_square, ready_at} -> ready_at <= now_ms end)
+    }
   end
 
   def cooldown_active?(game, square, now_ms) do
@@ -83,10 +109,12 @@ defmodule ManaChessOnline.GameEngine do
 
   def terminal_status(board, castling_rights) do
     cond do
-      GameRules.in_check?(board, :white) and not GameRules.has_legal_moves?(board, :white, castling_rights) ->
+      GameRules.in_check?(board, :white) and
+          not GameRules.has_legal_moves?(board, :white, castling_rights) ->
         {:checkmate, :black, :white}
 
-      GameRules.in_check?(board, :black) and not GameRules.has_legal_moves?(board, :black, castling_rights) ->
+      GameRules.in_check?(board, :black) and
+          not GameRules.has_legal_moves?(board, :black, castling_rights) ->
         {:checkmate, :white, :black}
 
       not GameRules.has_legal_moves?(board, :white, castling_rights) and
@@ -152,10 +180,36 @@ defmodule ManaChessOnline.GameEngine do
   end
 
   defp capture_refund(_settings, "."), do: 0.0
-  defp capture_refund(settings, captured), do: piece_cost(settings, captured) * settings.capture_refund_percent / 100
 
-  defp move_message(action, "."), do: "#{label(action.color)} movio una pieza."
-  defp move_message(action, captured), do: "#{label(action.color)} capturo #{captured}."
+  defp capture_refund(settings, captured),
+    do: piece_cost(settings, captured) * settings.capture_refund_percent / 100
+
+  defp move_message(action, piece, ".") do
+    "#{label(action.color)} movio #{piece_label(piece)} #{square_name(action.from)} -> #{square_name(action.to)}."
+  end
+
+  defp move_message(action, piece, captured) do
+    "#{label(action.color)} movio #{piece_label(piece)} #{square_name(action.from)} -> #{square_name(action.to)} y capturo #{piece_label(captured)}."
+  end
+
+  defp piece_label(piece) do
+    case piece_type(piece) do
+      :pawn -> "peon"
+      :knight -> "caballo"
+      :bishop -> "alfil"
+      :rook -> "torre"
+      :queen -> "reina"
+      :king -> "rey"
+    end
+  end
+
+  defp square_name({row, col})
+       when is_integer(row) and is_integer(col) and row >= 0 and row <= 7 and col >= 0 and
+              col <= 7 do
+    "#{Enum.at(@files, col)}#{8 - row}"
+  end
+
+  defp square_name(square), do: inspect(square)
 
   defp label(:white), do: "Blancas"
   defp label(:black), do: "Negras"

@@ -91,7 +91,6 @@ defmodule ManaChessOnlineWeb.GameMatchComponents do
         >
           {@copy_label}
         </button>
-        <a class="mc-open-invite-link" href={@invite_path}>Abrir link</a>
       </div>
     </div>
     """
