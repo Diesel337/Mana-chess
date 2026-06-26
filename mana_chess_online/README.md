@@ -16,3 +16,20 @@ Ready to run in production? Please [check our deployment guides](https://hexdocs
 * Docs: https://hexdocs.pm/phoenix
 * Forum: https://elixirforum.com/c/phoenix-forum
 * Source: https://github.com/phoenixframework/phoenix
+
+## Lobby stress smoke
+
+Run a local logical-client stress pass against the in-app lobby process:
+
+```bash
+mix run scripts/lobby_stress.exs -- --players 100
+```
+
+Useful options:
+
+```bash
+mix run scripts/lobby_stress.exs -- --players 100 --practice 20 --private-pairs 40 --concurrency 32 --settle-ms 500
+mix run scripts/lobby_stress.exs -- --players 100 --json
+```
+
+This is an internal OTP/lobby smoke, not a replacement for real WebSocket or Steam-client load tests.
