@@ -45,7 +45,7 @@ defmodule ManaChessOnline.GameLobby do
   def watch(player_id, game_id), do: GenServer.call(__MODULE__, {:watch, player_id, game_id})
   def snapshot(game_id), do: GenServer.call(__MODULE__, {:snapshot, game_id})
   def lobby, do: GenServer.call(__MODULE__, :lobby)
-  def metrics, do: GenServer.call(__MODULE__, :metrics)
+  def metrics(timeout \\ 5_000), do: GenServer.call(__MODULE__, :metrics, timeout)
   def global_settings, do: GenServer.call(__MODULE__, :global_settings)
   def update_global_settings(params), do: GenServer.call(__MODULE__, {:update_global_settings, params})
   def apply_global_settings_to_practice(player_id), do: GenServer.call(__MODULE__, {:apply_global_settings_to_practice, player_id})
@@ -214,8 +214,15 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   def handle_call({:leave, player_id}, _from, state) do
+    previous_assignment = state.players[player_id]
+    previous_game = assigned_game(previous_assignment, state)
     state = remove_player(state, player_id)
-    broadcast_lobby(state)
+    sync_player_assignment(previous_assignment, state)
+
+    if public_lobby_game?(previous_game) do
+      broadcast_lobby_payload(state)
+    end
+
     {:reply, :ok, state}
   end
 
@@ -727,6 +734,10 @@ defmodule ManaChessOnline.GameLobby do
 
   defp broadcast_lobby(state) do
     sync_game_servers(state)
+    broadcast_lobby_payload(state)
+  end
+
+  defp broadcast_lobby_payload(state) do
     Phoenix.PubSub.broadcast(ManaChessOnline.PubSub, lobby_topic(), {:lobby_update, public_lobby(state)})
   end
 
@@ -743,6 +754,18 @@ defmodule ManaChessOnline.GameLobby do
       _error -> :ok
     end
   end
+
+  defp sync_player_assignment(%{game_id: game_id}, state) when is_binary(game_id) do
+    sync_game_server(state.games[game_id])
+  end
+
+  defp sync_player_assignment(_assignment, _state), do: :ok
+
+  defp assigned_game(%{game_id: game_id}, state) when is_binary(game_id), do: state.games[game_id]
+  defp assigned_game(_assignment, _state), do: nil
+
+  defp public_lobby_game?(%{practice?: false} = game), do: !Map.get(game, :private?, false)
+  defp public_lobby_game?(_game), do: false
 
   defp game_server_pids(games) do
     games

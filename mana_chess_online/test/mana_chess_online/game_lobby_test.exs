@@ -70,6 +70,18 @@ defmodule ManaChessOnline.GameLobbyTest do
     refute Enum.any?(black_view.lobby, &(&1.id == white_view.game_id))
   end
 
+  test "mirrors public seats when a player leaves" do
+    player_id = unique_player("mirror-public-leave")
+    view = GameLobby.sit(player_id, "game_1", :white)
+
+    assert view.game_id == "game_1"
+    assert {:ok, pid} = GameSupervisor.lookup_game("game_1")
+    assert GameServer.snapshot(pid).players.white == player_id
+
+    assert :ok = GameLobby.leave(player_id)
+    assert GameServer.snapshot(pid).players.white == nil
+  end
+
   test "practice games are isolated and removed when the player leaves" do
     player_id = unique_player("practice-player")
     view = GameLobby.start_practice(player_id)

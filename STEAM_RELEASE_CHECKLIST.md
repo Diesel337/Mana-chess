@@ -164,7 +164,7 @@ Release candidate target:
 - [~] Add rate limits for chat, joins, moves, private room creation, and reconnects. Chat, move spam, private room bursts, seat spam, and reconnect/watch bursts are limited; launch tuning still needed after load tests.
 - [~] Add metrics for websocket latency, process mailbox sizes, game count, memory, CPU, PubSub fanout, and bot CPU. Admin now exposes a first process/game/memory/mailbox snapshot; websocket latency, PubSub fanout, CPU detail, and bot CPU still need launch telemetry/load tooling.
 - [~] Load test 100 concurrent connections. Local logical-client lobby stress script exists and runs 100 players; real WebSocket/Steam-client load still pending.
-- [ ] Load test 500 concurrent connections.
+- [~] Load test 500 concurrent connections. Local logical-client profile 500 passes with 100 practice players, 150 private matches, 100 watchers, and cleanup under a 90s local gate; real WebSocket/Steam-client load and cleanup optimization still pending.
 - [ ] Load test 1000 concurrent connections before launch marketing push.
 
 ## 9. Persistence and operations

@@ -22,14 +22,16 @@ Ready to run in production? Please [check our deployment guides](https://hexdocs
 Run a local logical-client stress pass against the in-app lobby process:
 
 ```bash
-mix run scripts/lobby_stress.exs -- --players 100
+mix run scripts/lobby_stress.exs -- --profile 100
+mix run scripts/lobby_stress.exs -- --profile 500
 ```
 
 Useful options:
 
 ```bash
 mix run scripts/lobby_stress.exs -- --players 100 --practice 20 --private-pairs 40 --concurrency 32 --settle-ms 500
-mix run scripts/lobby_stress.exs -- --players 100 --json
+mix run scripts/lobby_stress.exs -- --profile 500 --max-total-ms 90000 --max-mailbox 10 --max-run-queue 20
+mix run scripts/lobby_stress.exs -- --profile 100 --operation-timeout-ms 30000 --json
 ```
 
-This is an internal OTP/lobby smoke, not a replacement for real WebSocket or Steam-client load tests.
+Profiles are local logical-client runs. Profile `500` uses 100 practice players, 150 private matches, and 100 watchers. This is an internal OTP/lobby smoke, not a replacement for real WebSocket or Steam-client load tests.
