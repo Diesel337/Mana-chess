@@ -3,7 +3,7 @@ defmodule ManaChessOnline.GameLobby do
 
   use GenServer
 
-  alias ManaChessOnline.{GameDirectory, GameEngine, GameRules, GameState, GameSupervisor}
+  alias ManaChessOnline.{GameDirectory, GameEngine, GameRules, GameState, GameSupervisor, GameTick}
 
   @max_games 4
   @tick_ms 250
@@ -469,12 +469,9 @@ defmodule ManaChessOnline.GameLobby do
         Map.new(games, fn {game_id, game} ->
           game =
             game
-            |> clear_expired_cooldowns()
-            |> regen_elixir()
-            |> maybe_finish_countdown()
+            |> tick_before_bot()
             |> maybe_enqueue_bot_move()
-            |> process_next_action()
-            |> refresh_terminal_status()
+            |> tick_after_bot()
 
           Phoenix.PubSub.broadcast(ManaChessOnline.PubSub, topic(game_id), {:game_update, public_game(game)})
           Phoenix.PubSub.broadcast(ManaChessOnline.PubSub, lobby_topic(), {:lobby_update, public_lobby(%{games: games, players: state.players})})
@@ -612,7 +609,9 @@ defmodule ManaChessOnline.GameLobby do
 
   defp process_next_action(game), do: GameEngine.process_next_action(game, now_ms(), @default_settings.cooldown_seconds)
 
-  defp regen_elixir(game), do: GameEngine.regen_elixir(game, @tick_ms)
+  defp tick_before_bot(game), do: GameTick.before_bot(game, now_ms(), @tick_ms)
+
+  defp tick_after_bot(game), do: GameTick.after_bot(game, now_ms(), @default_settings.cooldown_seconds)
 
   defp maybe_enqueue_bot_move(%{practice?: true, bot_enabled?: true, status: :playing, queue: [], promotion_pending: nil, first_move_pending: nil} = game) do
     now = now_ms()
@@ -792,39 +791,12 @@ defmodule ManaChessOnline.GameLobby do
     :erlang.phash2({action.from, action.to, now}, 11) / 100
   end
 
-  defp maybe_finish_countdown(%{status: {:starting, starts_at}} = game) do
-    if System.monotonic_time(:millisecond) >= starts_at do
-      start_playing(game)
-    else
-      game
-    end
-  end
-
-  defp maybe_finish_countdown(game), do: game
-
   defp maybe_start_when_everyone_ready(%{status: {:starting, _starts_at}} = game) do
-    seated_players = seated_players(game)
-
-    if seated_players != [] and Enum.all?(seated_players, &MapSet.member?(game.start_requests, &1)) do
-      start_playing(game)
-    else
-      game
-    end
+    GameTick.start_when_ready(game, seated_players(game))
   end
 
   defp maybe_start_when_everyone_ready(game), do: game
 
-  defp start_playing(game) do
-    %{
-      game
-      | status: :playing,
-        queue: [],
-        start_requests: MapSet.new(),
-        log: ["Partida iniciada. Blancas abren." | game.log]
-    }
-  end
-
-  defp clear_expired_cooldowns(game), do: GameEngine.clear_expired_cooldowns(game, now_ms())
 
   defp cooldown_active?(game, square), do: GameEngine.cooldown_active?(game, square, now_ms())
 

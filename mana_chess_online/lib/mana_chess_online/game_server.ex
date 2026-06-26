@@ -3,7 +3,7 @@ defmodule ManaChessOnline.GameServer do
 
   use GenServer
 
-  alias ManaChessOnline.GameEngine
+  alias ManaChessOnline.GameTick
 
   @default_tick_ms 250
   @default_cooldown_seconds 1.0
@@ -68,8 +68,7 @@ defmodule ManaChessOnline.GameServer do
     game =
       state.game
       |> Map.update!(:queue, &(&1 ++ [action]))
-      |> GameEngine.process_next_action(now_ms, state.default_cooldown_seconds)
-      |> GameEngine.refresh_terminal_status(now_ms)
+      |> GameTick.after_bot(now_ms, state.default_cooldown_seconds)
 
     {:reply, game, %{state | game: game}}
   end
@@ -77,12 +76,7 @@ defmodule ManaChessOnline.GameServer do
   def handle_call({:tick, now_ms}, _from, state) do
     now_ms = now_ms(state, now_ms)
 
-    game =
-      state.game
-      |> GameEngine.clear_expired_cooldowns(now_ms)
-      |> GameEngine.regen_elixir(state.tick_ms)
-      |> GameEngine.process_next_action(now_ms, state.default_cooldown_seconds)
-      |> GameEngine.refresh_terminal_status(now_ms)
+    game = GameTick.tick(state.game, now_ms, state.tick_ms, state.default_cooldown_seconds)
 
     {:reply, game, %{state | game: game}}
   end
