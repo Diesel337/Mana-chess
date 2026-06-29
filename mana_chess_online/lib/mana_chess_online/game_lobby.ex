@@ -188,7 +188,7 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   def handle_call(:lobby, _from, state) do
-    {:reply, public_lobby(state), state}
+    {:reply, public_live_lobby(state), state}
   end
 
   def handle_call(:global_settings, _from, state) do
@@ -196,7 +196,7 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   def handle_call(:metrics, _from, state) do
-    games = metrics_games(state)
+    games = server_backed_games(state)
 
     metrics =
       GameMetrics.snapshot(
@@ -791,7 +791,7 @@ defmodule ManaChessOnline.GameLobby do
       game_id: assignment.game_id,
       color: assignment.color,
       game: public_game(game),
-      lobby: public_lobby(state)
+      lobby: public_live_lobby(state)
     }
   end
 
@@ -809,7 +809,7 @@ defmodule ManaChessOnline.GameLobby do
       game_id: game_id,
       color: assignment.color,
       game: public_game(game),
-      lobby: public_lobby(state)
+      lobby: public_live_lobby(state)
     }
   end
 
@@ -861,7 +861,7 @@ defmodule ManaChessOnline.GameLobby do
 
   defp game_snapshot(_game_id, _state), do: nil
 
-  defp metrics_games(state) do
+  defp server_backed_games(state) do
     Map.new(state.games, fn {game_id, game} ->
       {game_id, game_snapshot(game_id, state) || game}
     end)
@@ -929,6 +929,9 @@ defmodule ManaChessOnline.GameLobby do
   defp public_lobby(state), do: public_lobby_at(state, now_ms())
 
   defp public_lobby_at(state, now), do: GameState.public_lobby(state, now)
+
+  defp public_live_lobby(state),
+    do: public_lobby_at(%{state | games: server_backed_games(state)}, now_ms())
 
   defp broadcast_game_update(game, now) do
     Phoenix.PubSub.broadcast(

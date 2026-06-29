@@ -1,7 +1,7 @@
 defmodule ManaChessOnline.GameLobbyTest do
   use ExUnit.Case, async: false
 
-  alias ManaChessOnline.{GameLobby, GameServer, GameSupervisor}
+  alias ManaChessOnline.{GameLobby, GameServer, GameState, GameSupervisor}
 
   defp unique_player(prefix) do
     prefix <> "-" <> Integer.to_string(System.unique_integer([:positive]))
@@ -181,6 +181,43 @@ defmodule ManaChessOnline.GameLobbyTest do
 
     spectator_view = GameLobby.watch(spectator_id, view.game_id)
     assert spectator_view.game.log == server_game.log
+  end
+
+  test "reads public lobby views from registered game servers" do
+    game_id = "live_lobby_" <> Integer.to_string(System.unique_integer([:positive]))
+    game = GameState.new_game(game_id, GameLobby.global_settings())
+
+    on_exit(fn ->
+      GameSupervisor.stop_game(game_id)
+
+      :sys.replace_state(GameLobby, fn state ->
+        %{state | games: Map.delete(state.games, game_id)}
+      end)
+    end)
+
+    :sys.replace_state(GameLobby, fn state ->
+      %{state | games: Map.put(state.games, game_id, game)}
+    end)
+
+    assert {:ok, pid} = GameSupervisor.upsert_game(game)
+
+    server_game =
+      GameServer.update(pid, fn game ->
+        %{
+          game
+          | players: %{white: "live-white", black: "live-black"},
+            status: :ready
+        }
+      end)
+
+    :sys.replace_state(GameLobby, fn state ->
+      %{state | games: Map.put(state.games, game_id, game)}
+    end)
+
+    lobby_entry = Enum.find(GameLobby.lobby(), &(&1.id == game_id))
+
+    assert lobby_entry.status == server_game.status
+    assert lobby_entry.players == server_game.players
   end
 
   test "private matches become ready when black joins without entering public lobby" do
