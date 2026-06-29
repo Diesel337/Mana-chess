@@ -222,6 +222,36 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert hd(server_game.log) == "Blancas pidio reiniciar la partida."
   end
 
+  test "mirrors agreed resets through the registered game server" do
+    white_id = unique_player("reset-agree-white")
+    black_id = unique_player("reset-agree-black")
+
+    on_exit(fn ->
+      GameLobby.leave(white_id)
+      GameLobby.leave(black_id)
+    end)
+
+    {:ok, white_view} = GameLobby.create_private(white_id)
+    black_view = GameLobby.sit(black_id, white_view.game_id, :black)
+    assert black_view.game.status == :ready
+    assert {:ok, pid} = GameSupervisor.lookup_game(white_view.game_id)
+    assert :ok = GameLobby.send_chat(white_id, white_view.game_id, "reinicio con chat")
+
+    assert :ok = GameLobby.reset(white_id)
+    assert :ok = GameLobby.reset(black_id)
+
+    lobby_game = :sys.get_state(GameLobby).games[white_view.game_id]
+    server_game = GameServer.snapshot(pid)
+
+    assert server_game == lobby_game
+    assert server_game.status == :ready
+    assert server_game.players == %{white: white_id, black: black_id}
+    assert server_game.reset_requests == MapSet.new()
+    assert server_game.queue == []
+    assert hd(server_game.log) == "Partida reiniciada por acuerdo."
+    assert [%{text: "reinicio con chat"} | _rest] = server_game.chat
+  end
+
   test "mirrors promotions through the registered game server" do
     player_id = unique_player("promote-player")
     on_exit(fn -> GameLobby.leave(player_id) end)
