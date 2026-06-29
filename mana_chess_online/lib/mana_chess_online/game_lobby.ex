@@ -294,11 +294,16 @@ defmodule ManaChessOnline.GameLobby do
         if reset_ready?(game, player_id) do
           reset_game(state, game_id, game)
         else
-          put_in(state.games[game_id], %{
-            game
-            | reset_requests: MapSet.put(game.reset_requests, player_id),
-              log: ["#{label(color)} pidio reiniciar la partida." | game.log]
-          })
+          game =
+            update_game_state(game, fn game ->
+              %{
+                game
+                | reset_requests: MapSet.put(game.reset_requests, player_id),
+                  log: ["#{label(color)} pidio reiniciar la partida." | game.log]
+              }
+            end)
+
+          put_in(state.games[game_id], game)
         end
       else
         _ -> state

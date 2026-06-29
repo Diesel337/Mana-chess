@@ -184,6 +184,31 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert server_game.log == lobby_game.log
   end
 
+  test "mirrors reset requests through the registered game server" do
+    white_id = unique_player("reset-white")
+    black_id = unique_player("reset-black")
+
+    on_exit(fn ->
+      GameLobby.leave(white_id)
+      GameLobby.leave(black_id)
+    end)
+
+    {:ok, white_view} = GameLobby.create_private(white_id)
+    black_view = GameLobby.sit(black_id, white_view.game_id, :black)
+    assert black_view.game.status == :ready
+    assert {:ok, pid} = GameSupervisor.lookup_game(white_view.game_id)
+
+    assert :ok = GameLobby.reset(white_id)
+
+    lobby_game = :sys.get_state(GameLobby).games[white_view.game_id]
+    server_game = GameServer.snapshot(pid)
+
+    assert server_game.reset_requests == lobby_game.reset_requests
+    assert MapSet.member?(server_game.reset_requests, white_id)
+    assert server_game.log == lobby_game.log
+    assert hd(server_game.log) == "Blancas pidio reiniciar la partida."
+  end
+
   test "mirrors player moves through the registered game server" do
     player_id = unique_player("mirror-move")
     on_exit(fn -> GameLobby.leave(player_id) end)
