@@ -197,6 +197,48 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert server_game.log == lobby_game.log
   end
 
+  test "mirrors global settings applied to practice through the registered game server" do
+    player_id = unique_player("mirror-global-practice-settings")
+    original_settings = GameLobby.global_settings()
+
+    on_exit(fn ->
+      :sys.replace_state(GameLobby, &%{&1 | global_settings: original_settings})
+      GameLobby.leave(player_id)
+    end)
+
+    view = GameLobby.start_practice(player_id)
+    assert {:ok, pid} = GameSupervisor.lookup_game(view.game_id)
+    settings = %{view.game.settings | max_elixir: 7.0, regen_per_second: 2.5}
+
+    :sys.replace_state(GameLobby, fn state ->
+      game = state.games[view.game_id]
+
+      game = %{
+        game
+        | elixir: %{white: 10.0, black: 4.0},
+          cooldowns: %{{6, 4} => 99_999},
+          log: ["Antes de admin." | game.log]
+      }
+
+      state
+      |> Map.put(:global_settings, settings)
+      |> put_in([:games, view.game_id], game)
+    end)
+
+    assert :ok = GameLobby.apply_global_settings_to_practice(player_id)
+
+    lobby_game = :sys.get_state(GameLobby).games[view.game_id]
+    server_game = GameServer.snapshot(pid)
+
+    assert server_game.settings == settings
+    assert server_game.settings == lobby_game.settings
+    assert server_game.elixir == %{white: 7.0, black: 4.0}
+    assert server_game.elixir == lobby_game.elixir
+    assert server_game.cooldowns == %{}
+    assert server_game.log == lobby_game.log
+    assert hd(server_game.log) == "Configuracion admin aplicada a la practica."
+  end
+
   test "mirrors reset requests through the registered game server" do
     white_id = unique_player("reset-white")
     black_id = unique_player("reset-black")

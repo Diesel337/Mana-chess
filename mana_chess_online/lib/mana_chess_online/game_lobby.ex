@@ -228,8 +228,8 @@ defmodule ManaChessOnline.GameLobby do
   def handle_call({:apply_global_settings_to_practice, player_id}, _from, state) do
     case state.players[player_id] do
       %{game_id: game_id, color: :practice} ->
-        state =
-          update_in(state.games[game_id], fn game ->
+        game =
+          update_game_state(state.games[game_id], fn game ->
             %{
               game
               | settings: state.global_settings,
@@ -238,6 +238,8 @@ defmodule ManaChessOnline.GameLobby do
                 log: ["Configuracion admin aplicada a la practica." | game.log]
             }
           end)
+
+        state = put_in(state.games[game_id], game)
 
         Phoenix.PubSub.broadcast(
           ManaChessOnline.PubSub,
