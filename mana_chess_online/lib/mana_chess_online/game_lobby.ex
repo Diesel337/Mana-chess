@@ -399,19 +399,21 @@ defmodule ManaChessOnline.GameLobby do
     state =
       with %{game_id: game_id, color: :practice} <- state.players[player_id],
            %{practice?: true} = game <- state.games[game_id] do
-        next_bot_color = game |> bot_color() |> opposite_color()
-        chat = Map.get(game, :chat, [])
-
         game =
-          practice_game(game_id, player_id, game.settings, next_bot_color)
-          |> Map.put(:chat, chat)
-          |> update_in(
-            [:log],
-            &[
-              "Ahora juegas #{label(opposite_color(next_bot_color))}; BOT controla #{label(next_bot_color)}."
-              | &1
-            ]
-          )
+          update_game_state(game, fn game ->
+            next_bot_color = game |> bot_color() |> opposite_color()
+            chat = Map.get(game, :chat, [])
+
+            practice_game(game_id, player_id, game.settings, next_bot_color)
+            |> Map.put(:chat, chat)
+            |> update_in(
+              [:log],
+              &[
+                "Ahora juegas #{label(opposite_color(next_bot_color))}; BOT controla #{label(next_bot_color)}."
+                | &1
+              ]
+            )
+          end)
 
         put_in(state.games[game_id], game)
       else
