@@ -135,6 +135,30 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert snapshot.log == server_game.log
   end
 
+  test "reads player views from the registered game server" do
+    owner_id = unique_player("view-owner")
+    spectator_id = unique_player("view-spectator")
+
+    on_exit(fn ->
+      GameLobby.leave(owner_id)
+      GameLobby.leave(spectator_id)
+    end)
+
+    {:ok, view} = GameLobby.create_private(owner_id)
+    assert {:ok, pid} = GameSupervisor.lookup_game(view.game_id)
+
+    server_game =
+      GameServer.update(pid, fn game ->
+        %{game | log: ["Vista desde servidor." | game.log]}
+      end)
+
+    lobby_game = :sys.get_state(GameLobby).games[view.game_id]
+    refute lobby_game.log == server_game.log
+
+    spectator_view = GameLobby.watch(spectator_id, view.game_id)
+    assert spectator_view.game.log == server_game.log
+  end
+
   test "private matches become ready when black joins without entering public lobby" do
     white_id = unique_player("private-white")
     black_id = unique_player("private-black")

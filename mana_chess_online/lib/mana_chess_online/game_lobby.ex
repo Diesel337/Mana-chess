@@ -782,7 +782,7 @@ defmodule ManaChessOnline.GameLobby do
 
   defp player_view(state, player_id) do
     assignment = state.players[player_id] || %{game_id: nil, color: nil}
-    game = assignment.game_id && state.games[assignment.game_id]
+    game = game_snapshot(assignment.game_id, state)
 
     %{
       player_id: player_id,
@@ -800,7 +800,7 @@ defmodule ManaChessOnline.GameLobby do
         _ -> %{game_id: game_id, color: nil}
       end
 
-    game = state.games[game_id]
+    game = game_snapshot(game_id, state)
 
     %{
       player_id: player_id,
