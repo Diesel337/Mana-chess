@@ -431,13 +431,18 @@ defmodule ManaChessOnline.GameLobby do
            game when game.practice? or game.status in [:waiting, :ready] <- state.games[game_id] do
         settings = sanitize_settings(params, game.settings)
 
-        put_in(state.games[game_id], %{
-          game
-          | settings: settings,
-            elixir: full_elixir(settings),
-            cooldowns: %{},
-            log: ["Blancas ajustaron la configuracion." | game.log]
-        })
+        game =
+          update_game_state(game, fn game ->
+            %{
+              game
+              | settings: settings,
+                elixir: full_elixir(settings),
+                cooldowns: %{},
+                log: ["Blancas ajustaron la configuracion." | game.log]
+            }
+          end)
+
+        put_in(state.games[game_id], game)
       else
         _ -> state
       end

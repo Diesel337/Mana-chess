@@ -158,6 +158,32 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert server_game.log == lobby_game.log
   end
 
+  test "mirrors practice settings updates through the registered game server" do
+    player_id = unique_player("mirror-settings")
+    on_exit(fn -> GameLobby.leave(player_id) end)
+
+    view = GameLobby.start_practice(player_id)
+    assert {:ok, pid} = GameSupervisor.lookup_game(view.game_id)
+
+    assert :ok =
+             GameLobby.update_settings(player_id, %{
+               "max_elixir" => "12",
+               "initial_elixir" => "6",
+               "regen_per_second" => "1.5",
+               "cooldown_seconds" => "2.25"
+             })
+
+    lobby_game = :sys.get_state(GameLobby).games[view.game_id]
+    server_game = GameServer.snapshot(pid)
+
+    assert server_game.settings == lobby_game.settings
+    assert server_game.settings.max_elixir == 12.0
+    assert server_game.elixir == %{white: 6.0, black: 6.0}
+    assert server_game.elixir == lobby_game.elixir
+    assert server_game.cooldowns == %{}
+    assert server_game.log == lobby_game.log
+  end
+
   test "mirrors player moves through the registered game server" do
     player_id = unique_player("mirror-move")
     on_exit(fn -> GameLobby.leave(player_id) end)
