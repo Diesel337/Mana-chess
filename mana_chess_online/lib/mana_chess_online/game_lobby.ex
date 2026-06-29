@@ -917,9 +917,16 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   defp tick_game_server(game, now) do
-    case GameSupervisor.upsert_game(game) do
-      {:ok, pid} -> GameServer.tick(pid, now)
-      _error -> GameTick.tick(game, now, @tick_ms, @default_settings.cooldown_seconds)
+    case GameSupervisor.lookup_game(game.id) do
+      {:ok, pid} ->
+        GameServer.tick(pid, now)
+
+      :error ->
+        case GameSupervisor.start_game(game) do
+          {:ok, pid} -> GameServer.tick(pid, now)
+          {:error, {:already_started, pid}} -> GameServer.tick(pid, now)
+          _error -> GameTick.tick(game, now, @tick_ms, @default_settings.cooldown_seconds)
+        end
     end
   end
 

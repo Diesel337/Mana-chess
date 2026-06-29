@@ -670,6 +670,31 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert "Broadcast no pisa estado vivo." in server_game.log
   end
 
+  test "lobby ticks do not overwrite live game server state" do
+    player_id = unique_player("tick-preserve")
+    on_exit(fn -> GameLobby.leave(player_id) end)
+
+    view = GameLobby.start_practice(player_id)
+    assert {:ok, pid} = GameSupervisor.lookup_game(view.game_id)
+
+    server_game =
+      GameServer.update(pid, fn game ->
+        %{game | log: ["Tick conserva estado vivo." | game.log]}
+      end)
+
+    lobby_game = :sys.get_state(GameLobby).games[view.game_id]
+    refute lobby_game.log == server_game.log
+
+    send(Process.whereis(GameLobby), :tick)
+    :sys.get_state(GameLobby)
+
+    server_game = GameServer.snapshot(pid)
+    lobby_game = :sys.get_state(GameLobby).games[view.game_id]
+
+    assert "Tick conserva estado vivo." in server_game.log
+    assert lobby_game.log == server_game.log
+  end
+
   test "starts games from the registered game server ready state" do
     white_id = unique_player("live-start-white")
     black_id = unique_player("live-start-black")
