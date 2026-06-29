@@ -671,10 +671,16 @@ defmodule ManaChessOnline.GameLobby do
     case state.games[game_id] do
       %{players: players} when color in [:white, :black] ->
         if is_nil(players[color]) do
-          state
-          |> put_in([:players, player_id], %{game_id: game_id, color: color})
-          |> put_in([:games, game_id, :players, color], player_id)
-          |> update_in([:games, game_id], &refresh_status/1)
+          state = put_in(state.players[player_id], %{game_id: game_id, color: color})
+
+          game =
+            update_game_state(state.games[game_id], fn game ->
+              game
+              |> put_in([:players, color], player_id)
+              |> refresh_status()
+            end)
+
+          put_in(state.games[game_id], game)
         else
           state
         end

@@ -101,6 +101,31 @@ defmodule ManaChessOnline.GameLobbyTest do
     refute Enum.any?(black_view.lobby, &(&1.id == white_view.game_id))
   end
 
+  test "mirrors private seats through the registered game server" do
+    white_id = unique_player("mirror-private-white")
+    black_id = unique_player("mirror-private-black")
+
+    on_exit(fn ->
+      GameLobby.leave(white_id)
+      GameLobby.leave(black_id)
+    end)
+
+    {:ok, white_view} = GameLobby.create_private(white_id)
+    assert {:ok, pid} = GameSupervisor.lookup_game(white_view.game_id)
+    assert GameServer.snapshot(pid).players.white == white_id
+
+    black_view = GameLobby.sit(black_id, white_view.game_id, :black)
+    lobby_game = :sys.get_state(GameLobby).games[white_view.game_id]
+    server_game = GameServer.snapshot(pid)
+
+    assert black_view.color == :black
+    assert server_game.players == lobby_game.players
+    assert server_game.players == %{white: white_id, black: black_id}
+    assert server_game.status == :ready
+    assert server_game.status == lobby_game.status
+    assert server_game.log == lobby_game.log
+  end
+
   test "mirrors public seats when a player leaves" do
     player_id = unique_player("mirror-public-leave")
     view = GameLobby.sit(player_id, "game_1", :white)
