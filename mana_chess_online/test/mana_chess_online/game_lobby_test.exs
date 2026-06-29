@@ -116,6 +116,25 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert server_game.log == ["Sala privada creada. Comparte el link para invitar."]
   end
 
+  test "reads snapshots from the registered game server" do
+    player_id = unique_player("snapshot-server")
+    on_exit(fn -> GameLobby.leave(player_id) end)
+
+    view = GameLobby.start_practice(player_id)
+    assert {:ok, pid} = GameSupervisor.lookup_game(view.game_id)
+
+    server_game =
+      GameServer.update(pid, fn game ->
+        %{game | log: ["Servidor manda snapshot." | game.log]}
+      end)
+
+    lobby_game = :sys.get_state(GameLobby).games[view.game_id]
+    refute lobby_game.log == server_game.log
+
+    snapshot = GameLobby.snapshot(view.game_id)
+    assert snapshot.log == server_game.log
+  end
+
   test "private matches become ready when black joins without entering public lobby" do
     white_id = unique_player("private-white")
     black_id = unique_player("private-black")

@@ -258,7 +258,7 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   def handle_call({:snapshot, game_id}, _from, state) do
-    {:reply, public_game(state.games[game_id]), state}
+    {:reply, public_game(game_snapshot(game_id, state)), state}
   end
 
   def handle_call({:leave, player_id}, _from, state) do
@@ -849,6 +849,15 @@ defmodule ManaChessOnline.GameLobby do
       _error -> game
     end
   end
+
+  defp game_snapshot(game_id, state) when is_binary(game_id) do
+    case GameSupervisor.lookup_game(game_id) do
+      {:ok, pid} -> GameServer.snapshot(pid)
+      :error -> state.games[game_id]
+    end
+  end
+
+  defp game_snapshot(_game_id, _state), do: nil
 
   defp append_chat_entry(game, entry), do: update_game_state(game, &put_chat_entry(&1, entry))
 
