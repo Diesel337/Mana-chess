@@ -462,16 +462,21 @@ defmodule ManaChessOnline.GameLobby do
            game when not is_nil(game) <- state.games[game_id],
            %{player_id: ^player_id, color: color, at: square} <- game.promotion_pending,
            true <- controls_color?(player_color, color) do
-        board = GameRules.promote(game.board, square, promotion_choice(choice, color), color)
-        status = GameEngine.terminal_status(board, game.castling_rights) || :playing
+        game =
+          update_game_state(game, fn game ->
+            board = GameRules.promote(game.board, square, promotion_choice(choice, color), color)
+            status = GameEngine.terminal_status(board, game.castling_rights) || :playing
 
-        put_in(state.games[game_id], %{
-          game
-          | board: board,
-            status: status,
-            promotion_pending: nil,
-            log: ["#{label(color)} promociono peon." | game.log]
-        })
+            %{
+              game
+              | board: board,
+                status: status,
+                promotion_pending: nil,
+                log: ["#{label(color)} promociono peon." | game.log]
+            }
+          end)
+
+        put_in(state.games[game_id], game)
       else
         _ -> state
       end

@@ -15,6 +15,19 @@ defmodule ManaChessOnline.GameLobbyTest do
     end
   end
 
+  defp promotion_board do
+    [
+      ["P", ".", ".", ".", "k", ".", ".", "."],
+      [".", ".", ".", ".", ".", ".", ".", "."],
+      [".", ".", ".", ".", ".", ".", ".", "."],
+      [".", ".", ".", ".", ".", ".", ".", "."],
+      [".", ".", ".", ".", ".", ".", ".", "."],
+      [".", ".", ".", ".", ".", ".", ".", "."],
+      [".", ".", ".", ".", ".", ".", ".", "."],
+      [".", ".", ".", ".", "K", ".", ".", "."]
+    ]
+  end
+
   test "exposes runtime metrics for admin health checks" do
     metrics = GameLobby.metrics()
 
@@ -207,6 +220,42 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert MapSet.member?(server_game.reset_requests, white_id)
     assert server_game.log == lobby_game.log
     assert hd(server_game.log) == "Blancas pidio reiniciar la partida."
+  end
+
+  test "mirrors promotions through the registered game server" do
+    player_id = unique_player("promote-player")
+    on_exit(fn -> GameLobby.leave(player_id) end)
+
+    view = GameLobby.start_practice(player_id)
+    assert {:ok, pid} = GameSupervisor.lookup_game(view.game_id)
+
+    :sys.replace_state(GameLobby, fn state ->
+      game = state.games[view.game_id]
+
+      game = %{
+        game
+        | board: promotion_board(),
+          status: :promotion,
+          promotion_pending: %{player_id: player_id, color: :white, at: {0, 0}},
+          log: ["Promocion pendiente." | game.log]
+      }
+
+      put_in(state.games[view.game_id], game)
+    end)
+
+    assert :ok = GameLobby.promote(player_id, "Q")
+
+    lobby_game = :sys.get_state(GameLobby).games[view.game_id]
+    server_game = GameServer.snapshot(pid)
+
+    assert server_game.board == lobby_game.board
+    assert server_game.status == :playing
+    assert server_game.status == lobby_game.status
+    assert server_game.promotion_pending == nil
+    assert server_game.promotion_pending == lobby_game.promotion_pending
+    assert server_game.log == lobby_game.log
+    assert hd(server_game.log) == "Blancas promociono peon."
+    assert server_game.board |> Enum.at(0) |> Enum.at(0) == "Q"
   end
 
   test "mirrors player moves through the registered game server" do
