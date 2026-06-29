@@ -288,12 +288,13 @@ defmodule ManaChessOnlineWeb.GameComponents do
         class={[
           "mc-panel-section mc-queue-panel",
           panel_empty?(queue) && "mc-panel-section-empty",
+          panel_empty?(queue) && "mc-queue-panel-compact",
           !panel_empty?(queue) && "mc-panel-section-active"
         ]}
         data-panel-state={panel_state(queue)}
       >
         <div class="mc-panel-heading">
-          <h2>Pendientes</h2>
+          <h2>En proceso</h2>
           <span>{queue_count_text(queue)}</span>
         </div>
 
@@ -309,7 +310,7 @@ defmodule ManaChessOnlineWeb.GameComponents do
             </span>
           </li>
 
-          <li :if={queue == []} class="mc-panel-empty">Sin movimientos pendientes</li>
+          <li :if={queue == []} class="mc-panel-empty">Sin movimientos por procesar</li>
         </ol>
       </section>
 

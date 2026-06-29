@@ -7543,6 +7543,18 @@ html[data-piece-skin="custom"] .mc-drag-ghost.mc-black {
     rgba(8, 16, 11, .46);
 }
 
+.mc-queue-panel-compact {
+  padding: 8px 10px;
+}
+
+.mc-queue-panel-compact .mc-panel-heading {
+  margin-bottom: 5px;
+}
+
+.mc-queue-panel-compact .mc-queue-list {
+  gap: 0;
+}
+
 .mc-panel-heading {
   display: flex;
   justify-content: space-between;
@@ -7776,6 +7788,19 @@ html[data-piece-skin="custom"] .mc-drag-ghost.mc-black {
   background: rgba(0, 0, 0, .12);
   font-size: .72rem;
   font-weight: 800;
+}
+
+.mc-queue-panel-compact .mc-panel-empty {
+  display: flex;
+  min-height: 0;
+  justify-content: flex-start;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  color: rgba(158, 172, 153, .86);
+  background: transparent;
+  font-size: .66rem;
+  text-align: left;
 }
 
 .mc-chat-panel .mc-panel-empty {
@@ -8022,17 +8047,17 @@ html[data-desktop="true"] .mc-chat-list {
   }
 
   .mc-panel-game .mc-queue-list {
-    max-height: clamp(72px, 14dvh, 120px);
+    max-height: clamp(54px, 10dvh, 96px);
     overflow: auto;
   }
 
   .mc-panel-game .mc-log-list {
-    max-height: clamp(220px, 36dvh, 460px);
+    max-height: clamp(240px, 40dvh, 520px);
     overflow: auto;
   }
 
   .mc-panel-game .mc-chat-list {
-    max-height: clamp(82px, 18dvh, 156px);
+    max-height: clamp(96px, 18dvh, 168px);
     overflow: auto;
   }
 
