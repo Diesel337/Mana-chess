@@ -279,7 +279,7 @@ defmodule ManaChessOnline.GameLobby do
 
           state
           |> update_in([:players], fn players -> Map.drop(players, player_ids) end)
-          |> put_in([:games, game_id], new_game(game_id, game.settings))
+          |> put_in([:games, game_id], replace_game_state(new_game(game_id, game.settings)))
 
         _ ->
           state

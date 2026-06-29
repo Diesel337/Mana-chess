@@ -147,6 +147,36 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert hd(server_game.log) == "Blancas dejo la partida."
   end
 
+  test "mirrors cleared public rooms through the registered game server" do
+    white_id = unique_player("clear-white")
+    black_id = unique_player("clear-black")
+    game_id = "game_2"
+
+    on_exit(fn -> GameLobby.clear_room(game_id) end)
+
+    GameLobby.clear_room(game_id)
+    white_view = GameLobby.sit(white_id, game_id, :white)
+    black_view = GameLobby.sit(black_id, game_id, :black)
+    assert white_view.game_id == game_id
+    assert black_view.game.status == :ready
+    assert {:ok, pid} = GameSupervisor.lookup_game(game_id)
+
+    assert :ok = GameLobby.clear_room(game_id)
+
+    state = :sys.get_state(GameLobby)
+    lobby_game = state.games[game_id]
+    server_game = GameServer.snapshot(pid)
+
+    refute Map.has_key?(state.players, white_id)
+    refute Map.has_key?(state.players, black_id)
+    assert server_game == lobby_game
+    assert server_game.status == :waiting
+    assert server_game.players == %{white: nil, black: nil}
+    assert server_game.queue == []
+    assert server_game.reset_requests == MapSet.new()
+    assert server_game.log == ["Esperando jugadores..."]
+  end
+
   test "practice games are isolated and removed when the player leaves" do
     player_id = unique_player("practice-player")
     view = GameLobby.start_practice(player_id)
