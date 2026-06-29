@@ -135,7 +135,16 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert GameServer.snapshot(pid).players.white == player_id
 
     assert :ok = GameLobby.leave(player_id)
-    assert GameServer.snapshot(pid).players.white == nil
+
+    lobby_game = :sys.get_state(GameLobby).games["game_1"]
+    server_game = GameServer.snapshot(pid)
+
+    assert server_game == lobby_game
+    assert server_game.players.white == nil
+    assert server_game.status == :waiting
+    assert server_game.queue == []
+    assert server_game.reset_requests == MapSet.new()
+    assert hd(server_game.log) == "Blancas dejo la partida."
   end
 
   test "practice games are isolated and removed when the player leaves" do

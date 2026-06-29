@@ -702,18 +702,23 @@ defmodule ManaChessOnline.GameLobby do
             |> update_in([:games], &Map.delete(&1, game_id))
 
           _game ->
+            state = update_in(state.players, &Map.delete(&1, player_id))
+
+            game =
+              update_game_state(state.games[game_id], fn game ->
+                game = put_in(game.players[color], nil)
+
+                %{
+                  game
+                  | status: :waiting,
+                    queue: [],
+                    reset_requests: MapSet.new(),
+                    log: ["#{label(color)} dejo la partida." | game.log]
+                }
+              end)
+
             state
-            |> update_in([:players], &Map.delete(&1, player_id))
-            |> put_in([:games, game_id, :players, color], nil)
-            |> update_in([:games, game_id], fn game ->
-              %{
-                game
-                | status: :waiting,
-                  queue: [],
-                  reset_requests: MapSet.new(),
-                  log: ["#{label(color)} dejo la partida." | game.log]
-              }
-            end)
+            |> put_in([:games, game_id], game)
             |> maybe_drop_empty_private_game(game_id)
         end
 
