@@ -193,6 +193,40 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert hd(server_game.chat).text == "hola desde server"
   end
 
+  test "mirrors countdown readiness through the registered game server" do
+    white_id = unique_player("start-white")
+    black_id = unique_player("start-black")
+
+    on_exit(fn ->
+      GameLobby.leave(white_id)
+      GameLobby.leave(black_id)
+    end)
+
+    {:ok, white_view} = GameLobby.create_private(white_id)
+    black_view = GameLobby.sit(black_id, white_view.game_id, :black)
+    assert black_view.game.status == :ready
+    assert {:ok, pid} = GameSupervisor.lookup_game(white_view.game_id)
+
+    assert :ok = GameLobby.start_game(white_id)
+
+    lobby_game = :sys.get_state(GameLobby).games[white_view.game_id]
+    server_game = GameServer.snapshot(pid)
+
+    assert server_game.status == lobby_game.status
+    assert MapSet.member?(server_game.start_requests, white_id)
+    assert server_game.log == lobby_game.log
+
+    assert :ok = GameLobby.ready_to_start(black_id)
+
+    lobby_game = :sys.get_state(GameLobby).games[white_view.game_id]
+    server_game = GameServer.snapshot(pid)
+
+    assert server_game.status == :playing
+    assert server_game.status == lobby_game.status
+    assert server_game.start_requests == MapSet.new()
+    assert server_game.log == lobby_game.log
+  end
+
   test "keeps only the latest room chat messages in newest-first order" do
     player_id = unique_player("chat-limit")
     on_exit(fn -> GameLobby.leave(player_id) end)

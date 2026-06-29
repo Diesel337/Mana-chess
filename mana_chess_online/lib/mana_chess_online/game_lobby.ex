@@ -314,14 +314,19 @@ defmodule ManaChessOnline.GameLobby do
            %{status: :ready} = game <- state.games[game_id] do
         starts_at = System.monotonic_time(:millisecond) + @countdown_ms
 
-        put_in(state.games[game_id], %{
-          game
-          | status: {:starting, starts_at},
-            queue: [],
-            reset_requests: MapSet.new(),
-            start_requests: MapSet.new([player_id]),
-            log: ["Cuenta regresiva iniciada." | game.log]
-        })
+        game =
+          update_game_state(game, fn game ->
+            %{
+              game
+              | status: {:starting, starts_at},
+                queue: [],
+                reset_requests: MapSet.new(),
+                start_requests: MapSet.new([player_id]),
+                log: ["Cuenta regresiva iniciada." | game.log]
+            }
+          end)
+
+        put_in(state.games[game_id], game)
       else
         _ -> state
       end
@@ -336,9 +341,11 @@ defmodule ManaChessOnline.GameLobby do
            %{status: {:starting, _starts_at}} = game <- state.games[game_id],
            true <- player_id in seated_players(game) do
         game =
-          game
-          |> update_in([:start_requests], &MapSet.put(&1, player_id))
-          |> maybe_start_when_everyone_ready()
+          update_game_state(game, fn game ->
+            game
+            |> update_in([:start_requests], &MapSet.put(&1, player_id))
+            |> maybe_start_when_everyone_ready()
+          end)
 
         put_in(state.games[game_id], game)
       else
@@ -780,15 +787,17 @@ defmodule ManaChessOnline.GameLobby do
     end
   end
 
-  defp append_chat_entry(game, entry) do
+  defp update_game_state(game, fun) when is_function(fun, 1) do
     case GameSupervisor.upsert_game(game) do
       {:ok, pid} ->
-        GameServer.update(pid, &put_chat_entry(&1, entry))
+        GameServer.update(pid, fun)
 
       _error ->
-        put_chat_entry(game, entry)
+        fun.(game)
     end
   end
+
+  defp append_chat_entry(game, entry), do: update_game_state(game, &put_chat_entry(&1, entry))
 
   defp put_chat_entry(game, entry) do
     chat =
