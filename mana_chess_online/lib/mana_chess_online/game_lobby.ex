@@ -214,7 +214,7 @@ defmodule ManaChessOnline.GameLobby do
       |> update_in([:games], fn games ->
         Map.new(games, fn {game_id, game} ->
           if empty_waiting_game?(game) do
-            {game_id, %{game | settings: settings, elixir: full_elixir(settings), cooldowns: %{}}}
+            {game_id, apply_global_settings_to_waiting_game(game, settings)}
           else
             {game_id, game}
           end
@@ -834,6 +834,12 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   defp append_chat_entry(game, entry), do: update_game_state(game, &put_chat_entry(&1, entry))
+
+  defp apply_global_settings_to_waiting_game(game, settings) do
+    update_game_state(game, fn game ->
+      %{game | settings: settings, elixir: full_elixir(settings), cooldowns: %{}}
+    end)
+  end
 
   defp put_chat_entry(game, entry) do
     chat =

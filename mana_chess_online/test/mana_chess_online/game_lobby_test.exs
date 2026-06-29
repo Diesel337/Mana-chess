@@ -28,6 +28,24 @@ defmodule ManaChessOnline.GameLobbyTest do
     ]
   end
 
+  defp settings_params(settings) do
+    %{
+      "max_elixir" => settings.max_elixir,
+      "initial_elixir" => settings.initial_elixir,
+      "regen_per_second" => settings.regen_per_second,
+      "capture_refund_percent" => settings.capture_refund_percent,
+      "cooldown_enabled" => settings.cooldown_enabled,
+      "cooldown_seconds" => settings.cooldown_seconds,
+      "bot_move_seconds" => settings.bot_move_seconds,
+      "pawn" => settings.costs.pawn,
+      "knight" => settings.costs.knight,
+      "bishop" => settings.costs.bishop,
+      "rook" => settings.costs.rook,
+      "queen" => settings.costs.queen,
+      "king" => settings.costs.king
+    }
+  end
+
   test "exposes runtime metrics for admin health checks" do
     metrics = GameLobby.metrics()
 
@@ -195,6 +213,37 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert server_game.elixir == lobby_game.elixir
     assert server_game.cooldowns == %{}
     assert server_game.log == lobby_game.log
+  end
+
+  test "mirrors global settings updates for waiting rooms through the registered game server" do
+    original_settings = GameLobby.global_settings()
+    on_exit(fn -> GameLobby.update_global_settings(settings_params(original_settings)) end)
+
+    {game_id, _game} =
+      :sys.get_state(GameLobby).games
+      |> Enum.find(fn {_game_id, game} ->
+        game.status == :waiting and game.players.white == nil
+      end)
+
+    assert {:ok, pid} = GameSupervisor.lookup_game(game_id)
+
+    settings =
+      GameLobby.update_global_settings(%{
+        "max_elixir" => "13",
+        "initial_elixir" => "5",
+        "regen_per_second" => "1.75",
+        "cooldown_seconds" => "2.5"
+      })
+
+    lobby_game = :sys.get_state(GameLobby).games[game_id]
+    server_game = GameServer.snapshot(pid)
+
+    assert server_game.settings == settings
+    assert server_game.settings == lobby_game.settings
+    assert server_game.elixir == %{white: 5.0, black: 5.0}
+    assert server_game.elixir == lobby_game.elixir
+    assert server_game.cooldowns == %{}
+    assert server_game.cooldowns == lobby_game.cooldowns
   end
 
   test "mirrors global settings applied to practice through the registered game server" do
