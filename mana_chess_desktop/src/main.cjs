@@ -77,6 +77,12 @@ function bindDesktopBridge() {
     return {ok: true, url: shareUrl}
   })
 
+  ipcMain.handle("mana-chess:open-share-link", (_event, url) => {
+    const shareUrl = cleanShareUrl(url) || cleanShareUrl(mainWindow?.webContents.getURL()) || DEFAULT_GAME_URL
+    shell.openExternal(shareUrl)
+    return {ok: true, url: shareUrl}
+  })
+
   ipcMain.handle("mana-chess:copy-deep-link", (_event, url) => copyDeepLinkForUrl(url || mainWindow?.webContents.getURL()))
 
   ipcMain.handle("mana-chess:get-desktop-state", () => readDesktopState())
@@ -653,53 +659,106 @@ function saveWindowStateNow() {
 
 function showOfflineScreen(retryUrl = DEFAULT_GAME_URL) {
   const retryTarget = JSON.stringify(desktopUrl(retryUrl))
+  const lobbyTarget = JSON.stringify(desktopUrl(DEFAULT_GAME_URL))
+  const browserTarget = JSON.stringify(cleanShareUrl(retryUrl) || DEFAULT_GAME_URL)
 
   mainWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(`
     <!doctype html>
     <html>
       <head>
         <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>Mana Chess</title>
         <style>
+          :root {
+            color-scheme: dark;
+            --bg: #111713;
+            --panel: #172019;
+            --panel-2: #1d281f;
+            --line: #344032;
+            --text: #f7f2e8;
+            --muted: #b7c3b3;
+            --gold: #e6bd68;
+            --gold-text: #171207;
+          }
+
+          * {
+            box-sizing: border-box;
+          }
+
           body {
             margin: 0;
             min-height: 100vh;
             display: grid;
             place-items: center;
-            background: #111713;
-            color: #f7f2e8;
-            font-family: Arial, sans-serif;
+            padding: 24px;
+            background: var(--bg);
+            color: var(--text);
+            font-family: Arial, Helvetica, sans-serif;
           }
 
           main {
-            width: min(520px, calc(100vw - 32px));
+            width: min(620px, 100%);
             display: grid;
-            gap: 16px;
-            padding: 24px;
-            background: #172019;
-            border: 1px solid #344032;
+            gap: 18px;
+            padding: clamp(20px, 4vw, 32px);
+            background: var(--panel);
+            border: 1px solid var(--line);
             border-radius: 8px;
           }
 
           h1 {
             margin: 0;
-            color: #e6bd68;
+            color: var(--gold);
+            font-size: clamp(28px, 5vw, 40px);
+            line-height: 1.05;
           }
 
           p {
             margin: 0;
-            color: #b7c3b3;
+            color: var(--muted);
             line-height: 1.45;
+          }
+
+          .actions {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
           }
 
           button {
             min-height: 42px;
-            border: 0;
+            width: 100%;
+            border: 1px solid transparent;
             border-radius: 8px;
-            background: #e6bd68;
-            color: #171207;
+            padding: 0 14px;
+            background: var(--gold);
+            color: var(--gold-text);
             cursor: pointer;
             font-weight: 900;
+            font-size: 14px;
+          }
+
+          button.secondary {
+            background: var(--panel-2);
+            border-color: var(--line);
+            color: var(--text);
+          }
+
+          .status {
+            min-height: 20px;
+            color: var(--gold);
+            font-size: 13px;
+          }
+
+          @media (max-width: 520px) {
+            body {
+              padding: 16px;
+            }
+
+            .actions {
+              grid-template-columns: 1fr;
+            }
           }
         </style>
       </head>
@@ -707,8 +766,37 @@ function showOfflineScreen(retryUrl = DEFAULT_GAME_URL) {
         <main>
           <h1>Mana Chess</h1>
           <p>No se pudo cargar el juego online. Revisa tu conexion a internet o intenta de nuevo.</p>
-          <button onclick='location.href=${retryTarget}'>Reintentar</button>
+          <div class="actions">
+            <button onclick="retryOnline()">Reintentar</button>
+            <button class="secondary" onclick="openInBrowser()">Abrir en navegador</button>
+            <button class="secondary" onclick="goLobby()">Volver al lobby</button>
+            <button class="secondary" onclick="copyLink()">Copiar link</button>
+          </div>
+          <p class="status" id="status" aria-live="polite"></p>
         </main>
+        <script>
+          const retryTarget = ${retryTarget};
+          const lobbyTarget = ${lobbyTarget};
+          const browserTarget = ${browserTarget};
+          const status = document.getElementById("status");
+
+          function retryOnline() {
+            location.href = retryTarget;
+          }
+
+          function goLobby() {
+            location.href = lobbyTarget;
+          }
+
+          async function openInBrowser() {
+            await window.ManaChessDesktop?.openShareLink(browserTarget);
+          }
+
+          async function copyLink() {
+            const result = await window.ManaChessDesktop?.copyShareLink(browserTarget);
+            status.textContent = result?.ok ? "Link copiado." : "No se pudo copiar el link.";
+          }
+        </script>
       </body>
     </html>
   `)}`)

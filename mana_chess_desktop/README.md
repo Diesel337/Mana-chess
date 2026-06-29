@@ -58,6 +58,7 @@ npm run pack:win
 - Desktop mode is forced with `?desktop=1` on every in-app navigation.
 - `manachess://` deep links can open lobby or game routes inside the desktop app.
 - External links open in the user's browser; Mana Chess links stay in the app window.
+- The offline/error screen offers retry, lobby, copy-link, and browser fallback actions.
 - The Windows build uses `build/icon.ico` and app id `com.diesel337.manachess`.
 - The web game can read `window.ManaChessDesktop.getInfo()` for desktop version, channel, platform, and origin.
 - The window title follows local presence, such as lobby, active match, playing, or result states.
@@ -93,6 +94,7 @@ window.ManaChessDesktop.copyState()
 window.ManaChessDesktop.openStateFolder()
 window.ManaChessDesktop.resetState()
 window.ManaChessDesktop.copyShareLink(window.location.href)
+window.ManaChessDesktop.openShareLink(window.location.href)
 window.ManaChessDesktop.copyDeepLink(window.location.href)
 window.ManaChessDesktop.sendEvent("match.finished", {result: "win"})
 ```
