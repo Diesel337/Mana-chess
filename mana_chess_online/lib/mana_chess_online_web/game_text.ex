@@ -2,6 +2,7 @@ defmodule ManaChessOnlineWeb.GameText do
   @moduledoc false
 
   def friendly_alert("casilla invalida."), do: "Suelta la pieza dentro del tablero."
+  def friendly_alert("destino no es legal."), do: "Ese destino no es legal para esa pieza."
   def friendly_alert("la partida no esta jugando."), do: "La partida todavia no esta jugando."
   def friendly_alert("hay una promocion pendiente."), do: "Primero termina la promocion."
   def friendly_alert("pieza sin color."), do: "Esa pieza no se puede mover ahora."

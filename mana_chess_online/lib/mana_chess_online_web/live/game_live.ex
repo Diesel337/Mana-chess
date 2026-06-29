@@ -132,14 +132,17 @@ defmodule ManaChessOnlineWeb.GameLive do
 
   def handle_event("move", %{"r" => r, "c" => c}, socket) do
     to = {String.to_integer(r), String.to_integer(c)}
-    blocked_square = if to in socket.assigns.valid_moves, do: nil, else: to
 
-    GameLobby.enqueue(socket.assigns.player_id, socket.assigns.selected, to)
+    if to in socket.assigns.valid_moves do
+      GameLobby.enqueue(socket.assigns.player_id, socket.assigns.selected, to)
 
-    {:noreply,
-     socket
-     |> refresh_assignment()
-     |> assign(local_alert: nil, blocked_square: blocked_square)}
+      {:noreply,
+       socket
+       |> refresh_assignment()
+       |> assign(local_alert: nil, blocked_square: nil)}
+    else
+      {:noreply, assign(socket, local_alert: invalid_destination_alert(), blocked_square: to)}
+    end
   end
 
   def handle_event(
@@ -153,25 +156,41 @@ defmodule ManaChessOnlineWeb.GameLive do
     piece_color = GameRules.color(piece)
     legal_moves = legal_moves_for(socket.assigns.game, piece_color, from)
 
-    local_alert =
-      if manual_control_allowed?(socket.assigns.game, socket.assigns.color, piece_color) do
+    cond do
+      not manual_control_allowed?(socket.assigns.game, socket.assigns.color, piece_color) ->
+        local_alert =
+          select_alert(
+            socket.assigns.game,
+            socket.assigns.color,
+            piece,
+            piece_color,
+            nil,
+            [],
+            from
+          )
+
+        {:noreply,
+         socket
+         |> refresh_assignment()
+         |> assign(local_alert: local_alert, blocked_square: from)}
+
+      to in legal_moves ->
         GameLobby.enqueue(socket.assigns.player_id, from, to)
-        nil
-      else
-        select_alert(socket.assigns.game, socket.assigns.color, piece, piece_color, nil, [], from)
-      end
 
-    blocked_square =
-      cond do
-        not is_nil(local_alert) -> from
-        to in legal_moves -> nil
-        true -> to
-      end
+        {:noreply,
+         socket
+         |> refresh_assignment()
+         |> assign(local_alert: nil, blocked_square: nil)}
 
-    {:noreply,
-     socket
-     |> refresh_assignment()
-     |> assign(local_alert: local_alert, blocked_square: blocked_square)}
+      true ->
+        {:noreply,
+         assign(socket,
+           selected: from,
+           valid_moves: legal_moves,
+           local_alert: invalid_destination_alert(),
+           blocked_square: to
+         )}
+    end
   end
 
   def handle_event("drag_invalid", %{"from_r" => from_r, "from_c" => from_c}, socket) do
@@ -373,6 +392,7 @@ defmodule ManaChessOnlineWeb.GameLive do
 
   defp blocked_square_for(nil, _square), do: nil
   defp blocked_square_for(_alert, square), do: square
+  defp invalid_destination_alert, do: GameText.friendly_alert("destino no es legal.")
 
   defp legal_moves_data(game, player_color, piece, r, c) do
     piece_color = GameRules.color(piece)
