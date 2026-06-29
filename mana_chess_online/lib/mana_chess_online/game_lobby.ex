@@ -586,11 +586,9 @@ defmodule ManaChessOnline.GameLobby do
 
       true ->
         action = %{player_id: player_id, color: color, from: from, to: to}
+        now = now_ms()
 
-        game =
-          %{game | queue: game.queue ++ [action]}
-          |> process_next_action()
-          |> refresh_terminal_status()
+        game = enqueue_game_action(game, action, now)
 
         {put_in(state.games[game_id], game), game_id}
     end
@@ -768,9 +766,6 @@ defmodule ManaChessOnline.GameLobby do
     }
   end
 
-  defp process_next_action(game),
-    do: GameEngine.process_next_action(game, now_ms(), @default_settings.cooldown_seconds)
-
   defp take_rate_limit(state, key, {max_hits, window_ms}) do
     case RateLimiter.hit(state.rate_limits, key, now_ms(), max_hits, window_ms) do
       {:ok, rate_limits} ->
@@ -778,6 +773,18 @@ defmodule ManaChessOnline.GameLobby do
 
       {{:error, :rate_limited}, rate_limits} ->
         {:error, :rate_limited, %{state | rate_limits: rate_limits}}
+    end
+  end
+
+  defp enqueue_game_action(game, action, now) do
+    case GameSupervisor.upsert_game(game) do
+      {:ok, pid} ->
+        GameServer.enqueue(pid, action, now)
+
+      _error ->
+        game
+        |> Map.update!(:queue, &(&1 ++ [action]))
+        |> GameTick.after_bot(now, @default_settings.cooldown_seconds)
     end
   end
 
@@ -818,8 +825,6 @@ defmodule ManaChessOnline.GameLobby do
        do: %{game | status: :ready, queue: [], log: ["Ambos jugadores sentados." | game.log]}
 
   defp refresh_status(game), do: game
-
-  defp refresh_terminal_status(game), do: GameEngine.refresh_terminal_status(game, now_ms())
 
   defp public_game(game), do: public_game_at(game, now_ms())
 
