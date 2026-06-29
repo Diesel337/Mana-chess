@@ -835,13 +835,22 @@ defmodule ManaChessOnline.GameLobby do
     end
   end
 
-  defp update_game_state(game, fun) when is_function(fun, 1) do
-    case GameSupervisor.upsert_game(game) do
+  defp update_game_state(%{id: game_id} = game, fun) when is_function(fun, 1) do
+    case GameSupervisor.lookup_game(game_id) do
       {:ok, pid} ->
         GameServer.update(pid, fun)
 
-      _error ->
-        fun.(game)
+      :error ->
+        update_unregistered_game_state(game, fun)
+    end
+  end
+
+  defp update_game_state(game, fun) when is_function(fun, 1), do: fun.(game)
+
+  defp update_unregistered_game_state(game, fun) do
+    case GameSupervisor.upsert_game(game) do
+      {:ok, pid} -> GameServer.update(pid, fun)
+      _error -> fun.(game)
     end
   end
 

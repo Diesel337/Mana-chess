@@ -470,19 +470,17 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert {:ok, pid} = GameSupervisor.lookup_game(view.game_id)
     settings = %{view.game.settings | max_elixir: 7.0, regen_per_second: 2.5}
 
-    :sys.replace_state(GameLobby, fn state ->
-      game = state.games[view.game_id]
-
-      game = %{
+    GameServer.update(pid, fn game ->
+      %{
         game
         | elixir: %{white: 10.0, black: 4.0},
           cooldowns: %{{6, 4} => 99_999},
           log: ["Antes de admin." | game.log]
       }
+    end)
 
-      state
-      |> Map.put(:global_settings, settings)
-      |> put_in([:games, view.game_id], game)
+    :sys.replace_state(GameLobby, fn state ->
+      Map.put(state, :global_settings, settings)
     end)
 
     assert :ok = GameLobby.apply_global_settings_to_practice(player_id)
@@ -678,6 +676,32 @@ defmodule ManaChessOnline.GameLobbyTest do
 
     assert server_game.chat == lobby_game.chat
     assert hd(server_game.chat).text == "hola desde server"
+  end
+
+  test "updates registered game servers without overwriting live state" do
+    player_id = unique_player("chat-preserve")
+    on_exit(fn -> GameLobby.leave(player_id) end)
+
+    {:ok, view} = GameLobby.create_private(player_id)
+    assert {:ok, pid} = GameSupervisor.lookup_game(view.game_id)
+
+    server_game =
+      GameServer.update(pid, fn game ->
+        %{game | log: ["Estado vivo preservado." | game.log]}
+      end)
+
+    lobby_game = :sys.get_state(GameLobby).games[view.game_id]
+    refute lobby_game.log == server_game.log
+
+    assert :ok = GameLobby.send_chat(player_id, view.game_id, "no pisar server")
+
+    server_game = GameServer.snapshot(pid)
+    lobby_game = :sys.get_state(GameLobby).games[view.game_id]
+
+    assert "Estado vivo preservado." in server_game.log
+    assert hd(server_game.chat).text == "no pisar server"
+    assert lobby_game.log == server_game.log
+    assert lobby_game.chat == server_game.chat
   end
 
   test "mirrors countdown readiness through the registered game server" do
