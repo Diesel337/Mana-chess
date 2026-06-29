@@ -554,7 +554,7 @@ defmodule ManaChessOnline.GameLobby do
 
   defp enqueue_move(state, player_id, from, to) do
     with %{game_id: game_id, color: player_color} <- state.players[player_id],
-         game when not is_nil(game) <- state.games[game_id] do
+         game when not is_nil(game) <- game_snapshot(game_id, state) do
       cond do
         not valid_square?(from) or not valid_square?(to) ->
           reject_move(state, game_id, "Movimiento rechazado: casilla invalida.")

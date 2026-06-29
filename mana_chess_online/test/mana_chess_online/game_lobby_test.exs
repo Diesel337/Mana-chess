@@ -633,6 +633,48 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert lobby_game.board == server_game.board
   end
 
+  test "validates player moves against the registered game server state" do
+    player_id = unique_player("move-live-validation")
+    on_exit(fn -> GameLobby.leave(player_id) end)
+
+    view = GameLobby.start_practice(player_id)
+    assert {:ok, pid} = GameSupervisor.lookup_game(view.game_id)
+
+    GameServer.enqueue(
+      pid,
+      %{player_id: player_id, color: :white, from: {6, 4}, to: {4, 4}},
+      10_000
+    )
+
+    server_game =
+      GameServer.update(pid, fn game ->
+        %{
+          game
+          | bot_enabled?: false,
+            bot_ready_at: nil,
+            cooldowns: %{},
+            log: ["Servidor vivo adelanto el tablero." | game.log]
+        }
+      end)
+
+    lobby_game = :sys.get_state(GameLobby).games[view.game_id]
+    refute lobby_game.board == server_game.board
+    assert lobby_game.board |> Enum.at(4) |> Enum.at(4) == "."
+    assert server_game.board |> Enum.at(4) |> Enum.at(4) == "P"
+
+    assert :ok = GameLobby.enqueue(player_id, {4, 4}, {3, 4})
+
+    server_game = GameServer.snapshot(pid)
+    lobby_game = :sys.get_state(GameLobby).games[view.game_id]
+
+    assert server_game.board |> Enum.at(3) |> Enum.at(4) == "P"
+    assert server_game.board |> Enum.at(4) |> Enum.at(4) == "."
+    assert String.starts_with?(hd(server_game.log), "Blancas movio peon")
+    assert "Servidor vivo adelanto el tablero." in server_game.log
+    assert lobby_game.board == server_game.board
+    assert lobby_game.log == server_game.log
+  end
+
   test "mirrors rejected moves through the registered game server" do
     player_id = unique_player("mirror-rejected-move")
     on_exit(fn -> GameLobby.leave(player_id) end)
