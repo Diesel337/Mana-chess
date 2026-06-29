@@ -177,6 +177,22 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert is_integer(sent_at)
   end
 
+  test "mirrors room chat through the registered game server" do
+    player_id = unique_player("chat-mirror")
+    on_exit(fn -> GameLobby.leave(player_id) end)
+
+    view = GameLobby.start_practice(player_id)
+    assert {:ok, pid} = GameSupervisor.lookup_game(view.game_id)
+
+    assert :ok = GameLobby.send_chat(player_id, view.game_id, "hola desde server")
+
+    lobby_game = :sys.get_state(GameLobby).games[view.game_id]
+    server_game = GameServer.snapshot(pid)
+
+    assert server_game.chat == lobby_game.chat
+    assert hd(server_game.chat).text == "hola desde server"
+  end
+
   test "keeps only the latest room chat messages in newest-first order" do
     player_id = unique_player("chat-limit")
     on_exit(fn -> GameLobby.leave(player_id) end)

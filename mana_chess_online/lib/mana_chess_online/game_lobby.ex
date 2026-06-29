@@ -493,16 +493,8 @@ defmodule ManaChessOnline.GameLobby do
         text: text
       }
 
-      state =
-        update_in(state.games[game_id], fn game ->
-          chat =
-            [entry | Map.get(game, :chat, [])]
-            |> Enum.take(24)
-
-          Map.put(game, :chat, chat)
-        end)
-
-      sync_game_server(state.games[game_id])
+      game = append_chat_entry(game, entry)
+      state = put_in(state.games[game_id], game)
 
       Phoenix.PubSub.broadcast(
         ManaChessOnline.PubSub,
@@ -786,6 +778,24 @@ defmodule ManaChessOnline.GameLobby do
         |> Map.update!(:queue, &(&1 ++ [action]))
         |> GameTick.after_bot(now, @default_settings.cooldown_seconds)
     end
+  end
+
+  defp append_chat_entry(game, entry) do
+    case GameSupervisor.upsert_game(game) do
+      {:ok, pid} ->
+        GameServer.update(pid, &put_chat_entry(&1, entry))
+
+      _error ->
+        put_chat_entry(game, entry)
+    end
+  end
+
+  defp put_chat_entry(game, entry) do
+    chat =
+      [entry | Map.get(game, :chat, [])]
+      |> Enum.take(24)
+
+    Map.put(game, :chat, chat)
   end
 
   defp tick_game_server(game, now) do
