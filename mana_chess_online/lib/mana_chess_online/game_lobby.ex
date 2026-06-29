@@ -375,13 +375,16 @@ defmodule ManaChessOnline.GameLobby do
            %{practice?: true} = game <- state.games[game_id] do
         enabled? = not game.bot_enabled?
 
-        game = %{
-          game
-          | bot_enabled?: enabled?,
-            bot_ready_at:
-              if(enabled?, do: now_ms() + GameBot.move_delay_ms(game.settings), else: nil),
-            log: [bot_toggle_message(enabled?, bot_color(game)) | game.log]
-        }
+        game =
+          update_game_state(game, fn game ->
+            %{
+              game
+              | bot_enabled?: enabled?,
+                bot_ready_at:
+                  if(enabled?, do: now_ms() + GameBot.move_delay_ms(game.settings), else: nil),
+                log: [bot_toggle_message(enabled?, bot_color(game)) | game.log]
+            }
+          end)
 
         put_in(state.games[game_id], game)
       else

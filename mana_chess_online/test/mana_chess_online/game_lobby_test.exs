@@ -121,6 +121,24 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert GameSupervisor.lookup_game(view.game_id) == :error
   end
 
+  test "mirrors practice bot toggles through the registered game server" do
+    player_id = unique_player("mirror-bot-toggle")
+    on_exit(fn -> GameLobby.leave(player_id) end)
+
+    view = GameLobby.start_practice(player_id)
+    assert {:ok, pid} = GameSupervisor.lookup_game(view.game_id)
+
+    view = GameLobby.toggle_practice_bot(player_id)
+    lobby_game = :sys.get_state(GameLobby).games[view.game_id]
+    server_game = GameServer.snapshot(pid)
+
+    refute server_game.bot_enabled?
+    assert server_game.bot_ready_at == nil
+    assert server_game.bot_enabled? == lobby_game.bot_enabled?
+    assert server_game.bot_ready_at == lobby_game.bot_ready_at
+    assert server_game.log == lobby_game.log
+  end
+
   test "mirrors player moves through the registered game server" do
     player_id = unique_player("mirror-move")
     on_exit(fn -> GameLobby.leave(player_id) end)
