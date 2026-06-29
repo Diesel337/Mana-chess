@@ -430,12 +430,23 @@ defmodule ManaChessOnlineWeb.GameLive do
   defp seat_label(nil, _player_id), do: "Libre"
   defp seat_label(_player_id, _current_player_id), do: "Ocupado"
 
-  defp match_phase(%{status: :waiting, private?: true}),
-    do: %{
-      title: "Privado por link",
-      detail: "Comparte el enlace y espera a que el rival tome asiento.",
-      tone: :waiting
-    }
+  defp match_phase(%{status: :waiting, private?: true} = game, player_id) do
+    if private_link_guest?(game, player_id) do
+      %{
+        title: "Elige asiento",
+        detail: "Llegaste por invitacion: toma Blancas o Negras para jugar.",
+        tone: :waiting
+      }
+    else
+      %{
+        title: "Invitacion lista",
+        detail: "Copia el link privado y espera a que el rival tome asiento.",
+        tone: :waiting
+      }
+    end
+  end
+
+  defp match_phase(game, _player_id), do: match_phase(game)
 
   defp match_phase(%{status: :waiting}),
     do: %{
@@ -518,16 +529,18 @@ defmodule ManaChessOnlineWeb.GameLive do
   defp player_role_hint(_game, _color), do: "Observando"
 
   defp invite_title(%{private?: true} = game, player_id) do
-    if private_link_guest?(game, player_id), do: "Llegaste por link", else: "Invitacion privada"
+    if private_link_guest?(game, player_id),
+      do: "Invitacion recibida",
+      else: "Invitacion privada"
   end
 
   defp invite_title(_game, _player_id), do: "Link de sala"
 
   defp invite_hint(%{private?: true} = game, player_id) do
     if private_link_guest?(game, player_id) do
-      "Toma un asiento libre para jugar, o quedate mirando."
+      "Elige un color libre para entrar a la partida, o quedate mirando."
     else
-      "Comparte este enlace; el rival entra y toma el asiento libre."
+      "Copia este link y mandalo a tu rival; al entrar podra tomar un asiento libre."
     end
   end
 
@@ -546,24 +559,24 @@ defmodule ManaChessOnlineWeb.GameLive do
   defp invite_copy_success_label(_game, _player_id), do: "Link copiado"
 
   defp invite_badge(%{private?: true} = game, player_id) do
-    if private_link_guest?(game, player_id), do: "Invitado", else: "Privado"
+    if private_link_guest?(game, player_id), do: "Por link", else: "Privado"
   end
 
   defp invite_badge(_game, _player_id), do: nil
 
   defp waiting_seat_hint(%{private?: true} = game, player_id) do
     if private_link_guest?(game, player_id) do
-      "Entraste por invitacion: elige un asiento libre para jugar."
+      "Entraste por invitacion: elige un color libre para jugar."
     else
-      "Privado listo: comparte el link y el rival puede tomar el asiento libre."
+      "Privado listo: comparte el link y el rival puede tomar un asiento libre."
     end
   end
 
   defp waiting_seat_hint(_game, _player_id),
     do: "Blancas no puede iniciar hasta que Negras se siente. Para jugar solo usa Modo practica."
 
-  defp seat_cta_label(%{private?: true}, :white), do: "Tomar Blancas"
-  defp seat_cta_label(%{private?: true}, :black), do: "Tomar Negras"
+  defp seat_cta_label(%{private?: true}, :white), do: "Jugar Blancas"
+  defp seat_cta_label(%{private?: true}, :black), do: "Jugar Negras"
   defp seat_cta_label(_game, :white), do: "Sentarme como Blancas"
   defp seat_cta_label(_game, :black), do: "Sentarme como Negras"
 
@@ -1054,7 +1067,7 @@ defmodule ManaChessOnlineWeb.GameLive do
             <strong>Reconectado</strong>
             <span>Recuperaste tu asiento como {color_label(@color)}.</span>
           </div>
-          <% phase = match_phase(@game) %>
+          <% phase = match_phase(@game, @player_id) %>
           <.match_status
             phase={phase}
             phase_class={match_phase_class(phase)}
