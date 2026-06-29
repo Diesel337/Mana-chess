@@ -607,6 +607,32 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert server_game.log == lobby_game.log
   end
 
+  test "enqueues registered game server actions without overwriting live state" do
+    player_id = unique_player("move-preserve")
+    on_exit(fn -> GameLobby.leave(player_id) end)
+
+    view = GameLobby.start_practice(player_id)
+    assert {:ok, pid} = GameSupervisor.lookup_game(view.game_id)
+
+    server_game =
+      GameServer.update(pid, fn game ->
+        %{game | log: ["Movimiento conserva estado vivo." | game.log]}
+      end)
+
+    lobby_game = :sys.get_state(GameLobby).games[view.game_id]
+    refute lobby_game.log == server_game.log
+
+    assert :ok = GameLobby.enqueue(player_id, {6, 4}, {4, 4})
+
+    server_game = GameServer.snapshot(pid)
+    lobby_game = :sys.get_state(GameLobby).games[view.game_id]
+
+    assert "Movimiento conserva estado vivo." in server_game.log
+    assert String.starts_with?(hd(server_game.log), "Blancas movio peon")
+    assert lobby_game.log == server_game.log
+    assert lobby_game.board == server_game.board
+  end
+
   test "mirrors rejected moves through the registered game server" do
     player_id = unique_player("mirror-rejected-move")
     on_exit(fn -> GameLobby.leave(player_id) end)

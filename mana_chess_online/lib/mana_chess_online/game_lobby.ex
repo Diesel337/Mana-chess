@@ -823,16 +823,30 @@ defmodule ManaChessOnline.GameLobby do
     end
   end
 
-  defp enqueue_game_action(game, action, now) do
-    case GameSupervisor.upsert_game(game) do
+  defp enqueue_game_action(%{id: game_id} = game, action, now) do
+    case GameSupervisor.lookup_game(game_id) do
       {:ok, pid} ->
         GameServer.enqueue(pid, action, now)
 
-      _error ->
-        game
-        |> Map.update!(:queue, &(&1 ++ [action]))
-        |> GameTick.after_bot(now, @default_settings.cooldown_seconds)
+      :error ->
+        enqueue_unregistered_game_action(game, action, now)
     end
+  end
+
+  defp enqueue_game_action(game, action, now),
+    do: enqueue_local_game_action(game, action, now)
+
+  defp enqueue_unregistered_game_action(game, action, now) do
+    case GameSupervisor.upsert_game(game) do
+      {:ok, pid} -> GameServer.enqueue(pid, action, now)
+      _error -> enqueue_local_game_action(game, action, now)
+    end
+  end
+
+  defp enqueue_local_game_action(game, action, now) do
+    game
+    |> Map.update!(:queue, &(&1 ++ [action]))
+    |> GameTick.after_bot(now, @default_settings.cooldown_seconds)
   end
 
   defp update_game_state(%{id: game_id} = game, fun) when is_function(fun, 1) do
