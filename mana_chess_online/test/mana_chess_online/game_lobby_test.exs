@@ -87,6 +87,35 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert spectator_view.game.private?
   end
 
+  test "mirrors lazy private rooms through the registered game server" do
+    spectator_id = unique_player("lazy-spectator")
+    game_id = "private_lazy_" <> Integer.to_string(System.unique_integer([:positive]))
+
+    on_exit(fn ->
+      GameSupervisor.stop_game(game_id)
+
+      :sys.replace_state(GameLobby, fn state ->
+        %{state | games: Map.delete(state.games, game_id)}
+      end)
+    end)
+
+    refute Map.has_key?(:sys.get_state(GameLobby).games, game_id)
+
+    view = GameLobby.watch(spectator_id, game_id)
+    assert view.game_id == game_id
+    assert view.color == nil
+    assert view.game.private?
+    assert {:ok, pid} = GameSupervisor.lookup_game(game_id)
+
+    lobby_game = :sys.get_state(GameLobby).games[game_id]
+    server_game = GameServer.snapshot(pid)
+
+    assert server_game == lobby_game
+    assert server_game.players == %{white: nil, black: nil}
+    assert server_game.status == :waiting
+    assert server_game.log == ["Sala privada creada. Comparte el link para invitar."]
+  end
+
   test "private matches become ready when black joins without entering public lobby" do
     white_id = unique_player("private-white")
     black_id = unique_player("private-black")

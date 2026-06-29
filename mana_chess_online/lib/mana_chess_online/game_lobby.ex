@@ -1193,8 +1193,7 @@ defmodule ManaChessOnline.GameLobby do
 
   defp ensure_private_game(state, game_id) do
     if private_game_id?(game_id) and is_nil(state.games[game_id]) do
-      game = private_game(game_id, state.global_settings)
-      sync_game_server(game)
+      game = replace_game_state(private_game(game_id, state.global_settings))
       put_in(state.games[game_id], game)
     else
       state
