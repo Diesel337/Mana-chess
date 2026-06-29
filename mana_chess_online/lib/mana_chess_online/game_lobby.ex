@@ -162,7 +162,10 @@ defmodule ManaChessOnline.GameLobby do
         state =
           state
           |> remove_player(player_id)
-          |> put_in([:games, game_id], private_game(game_id, state.global_settings))
+          |> put_in(
+            [:games, game_id],
+            replace_game_state(private_game(game_id, state.global_settings))
+          )
           |> assign_player(player_id, game_id, :white)
 
         broadcast_lobby(state)
