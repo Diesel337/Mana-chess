@@ -249,7 +249,7 @@ defmodule ManaChessOnline.GameLobby do
         Phoenix.PubSub.broadcast(
           ManaChessOnline.PubSub,
           topic(game_id),
-          {:game_update, public_game(state.games[game_id])}
+          {:game_update, public_game_snapshot(game_id, state)}
         )
 
         {:reply, :ok, state}
@@ -504,7 +504,7 @@ defmodule ManaChessOnline.GameLobby do
           Phoenix.PubSub.broadcast(
             ManaChessOnline.PubSub,
             topic(game_id),
-            {:game_update, public_game(state.games[game_id])}
+            {:game_update, public_game_snapshot(game_id, state)}
           )
 
           broadcast_lobby(state)
@@ -536,7 +536,7 @@ defmodule ManaChessOnline.GameLobby do
       Phoenix.PubSub.broadcast(
         ManaChessOnline.PubSub,
         topic(game_id),
-        {:game_update, public_game(state.games[game_id])}
+        {:game_update, public_game_snapshot(game_id, state)}
       )
 
       {:reply, :ok, state}
@@ -926,7 +926,7 @@ defmodule ManaChessOnline.GameLobby do
   defp public_game_at(game, now),
     do: GameState.public_game(game, now, @default_settings.cooldown_seconds)
 
-  defp public_lobby(state), do: public_lobby_at(state, now_ms())
+  defp public_game_snapshot(game_id, state), do: public_game(game_snapshot(game_id, state))
 
   defp public_lobby_at(state, now), do: GameState.public_lobby(state, now)
 
@@ -966,7 +966,7 @@ defmodule ManaChessOnline.GameLobby do
     Phoenix.PubSub.broadcast(
       ManaChessOnline.PubSub,
       lobby_topic(),
-      {:lobby_update, public_lobby(state)}
+      {:lobby_update, public_live_lobby(state)}
     )
   end
 
