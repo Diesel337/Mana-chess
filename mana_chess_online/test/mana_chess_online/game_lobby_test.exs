@@ -457,6 +457,58 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert server_game.cooldowns == lobby_game.cooldowns
   end
 
+  test "global settings skip rooms that are occupied in the registered game server" do
+    original_settings = GameLobby.global_settings()
+    game_id = "live_global_skip_" <> Integer.to_string(System.unique_integer([:positive]))
+    game = GameState.new_game(game_id, original_settings)
+
+    on_exit(fn ->
+      GameLobby.update_global_settings(settings_params(original_settings))
+      GameSupervisor.stop_game(game_id)
+
+      :sys.replace_state(GameLobby, fn state ->
+        %{state | games: Map.delete(state.games, game_id)}
+      end)
+    end)
+
+    :sys.replace_state(GameLobby, fn state ->
+      %{state | games: Map.put(state.games, game_id, game)}
+    end)
+
+    assert {:ok, pid} = GameSupervisor.upsert_game(game)
+
+    server_game =
+      GameServer.update(pid, fn game ->
+        %{
+          game
+          | players: %{white: "live-white", black: nil},
+            status: :waiting,
+            log: ["Servidor ocupado." | game.log]
+        }
+      end)
+
+    lobby_game = :sys.get_state(GameLobby).games[game_id]
+    assert lobby_game.players.white == nil
+    assert server_game.players.white == "live-white"
+
+    settings =
+      GameLobby.update_global_settings(%{
+        "max_elixir" => "14",
+        "initial_elixir" => "6",
+        "regen_per_second" => "1.25"
+      })
+
+    server_game = GameServer.snapshot(pid)
+    lobby_game = :sys.get_state(GameLobby).games[game_id]
+
+    refute server_game.settings == settings
+    assert server_game.settings == original_settings
+    assert server_game.players.white == "live-white"
+    assert "Servidor ocupado." in server_game.log
+    assert lobby_game.settings == server_game.settings
+    assert lobby_game.players == server_game.players
+  end
+
   test "mirrors global settings applied to practice through the registered game server" do
     player_id = unique_player("mirror-global-practice-settings")
     original_settings = GameLobby.global_settings()
@@ -559,19 +611,19 @@ defmodule ManaChessOnline.GameLobbyTest do
     view = GameLobby.start_practice(player_id)
     assert {:ok, pid} = GameSupervisor.lookup_game(view.game_id)
 
-    :sys.replace_state(GameLobby, fn state ->
-      game = state.games[view.game_id]
+    server_game =
+      GameServer.update(pid, fn game ->
+        %{
+          game
+          | board: promotion_board(),
+            status: :promotion,
+            promotion_pending: %{player_id: player_id, color: :white, at: {0, 0}},
+            log: ["Promocion pendiente." | game.log]
+        }
+      end)
 
-      game = %{
-        game
-        | board: promotion_board(),
-          status: :promotion,
-          promotion_pending: %{player_id: player_id, color: :white, at: {0, 0}},
-          log: ["Promocion pendiente." | game.log]
-      }
-
-      put_in(state.games[view.game_id], game)
-    end)
+    lobby_game = :sys.get_state(GameLobby).games[view.game_id]
+    refute lobby_game.promotion_pending == server_game.promotion_pending
 
     assert :ok = GameLobby.promote(player_id, "Q")
 
@@ -586,6 +638,129 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert server_game.log == lobby_game.log
     assert hd(server_game.log) == "Blancas promociono peon."
     assert server_game.board |> Enum.at(0) |> Enum.at(0) == "Q"
+  end
+
+  test "lobby broadcasts do not overwrite live game server state" do
+    player_id = unique_player("broadcast-preserve")
+    other_id = unique_player("broadcast-other")
+
+    on_exit(fn ->
+      GameLobby.leave(player_id)
+      GameLobby.leave(other_id)
+    end)
+
+    view = GameLobby.start_practice(player_id)
+    assert {:ok, pid} = GameSupervisor.lookup_game(view.game_id)
+
+    server_game =
+      GameServer.update(pid, fn game ->
+        %{
+          game
+          | log: ["Broadcast no pisa estado vivo." | game.log]
+        }
+      end)
+
+    lobby_game = :sys.get_state(GameLobby).games[view.game_id]
+    refute lobby_game.log == server_game.log
+
+    GameLobby.start_practice(other_id)
+
+    server_game = GameServer.snapshot(pid)
+
+    assert "Broadcast no pisa estado vivo." in server_game.log
+  end
+
+  test "starts games from the registered game server ready state" do
+    white_id = unique_player("live-start-white")
+    black_id = unique_player("live-start-black")
+
+    {:ok, view} = GameLobby.create_private(white_id)
+    game_id = view.game_id
+
+    on_exit(fn ->
+      GameSupervisor.stop_game(game_id)
+
+      :sys.replace_state(GameLobby, fn state ->
+        %{
+          state
+          | games: Map.delete(state.games, game_id),
+            players: Map.drop(state.players, [white_id, black_id])
+        }
+      end)
+    end)
+
+    assert {:ok, pid} = GameSupervisor.lookup_game(game_id)
+
+    server_game =
+      GameServer.update(pid, fn game ->
+        %{
+          game
+          | players: %{white: white_id, black: black_id},
+            status: :ready,
+            log: ["Servidor marco listo." | game.log]
+        }
+      end)
+
+    lobby_game = :sys.get_state(GameLobby).games[game_id]
+    refute lobby_game.status == server_game.status
+
+    assert :ok = GameLobby.start_game(white_id)
+
+    server_game = GameServer.snapshot(pid)
+    lobby_game = :sys.get_state(GameLobby).games[game_id]
+
+    assert match?({:starting, _starts_at}, server_game.status)
+    assert server_game.status == lobby_game.status
+    assert "Servidor marco listo." in server_game.log
+  end
+
+  test "does not update settings when the registered game server is already playing" do
+    player_id = unique_player("live-settings-player")
+
+    {:ok, view} = GameLobby.create_private(player_id)
+    game_id = view.game_id
+
+    on_exit(fn ->
+      GameSupervisor.stop_game(game_id)
+
+      :sys.replace_state(GameLobby, fn state ->
+        %{
+          state
+          | games: Map.delete(state.games, game_id),
+            players: Map.delete(state.players, player_id)
+        }
+      end)
+    end)
+
+    assert {:ok, pid} = GameSupervisor.lookup_game(game_id)
+
+    server_game =
+      GameServer.update(pid, fn game ->
+        %{
+          game
+          | status: :playing,
+            first_move_pending: :white,
+            log: ["Servidor ya esta jugando." | game.log]
+        }
+      end)
+
+    lobby_game = :sys.get_state(GameLobby).games[game_id]
+    assert lobby_game.status == :waiting
+    assert server_game.status == :playing
+
+    assert :ok =
+             GameLobby.update_settings(player_id, %{
+               "max_elixir" => "18",
+               "initial_elixir" => "9"
+             })
+
+    server_game = GameServer.snapshot(pid)
+
+    assert server_game.settings == view.game.settings
+    assert server_game.status == :playing
+    assert "Servidor ya esta jugando." in server_game.log
+    refute hd(server_game.log) == "Blancas ajustaron la configuracion."
+    assert GameLobby.snapshot(game_id).status == :playing
   end
 
   test "mirrors player moves through the registered game server" do
