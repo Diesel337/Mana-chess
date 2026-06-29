@@ -209,8 +209,13 @@ defmodule ManaChessOnline.GameLobbyTest do
     view = GameLobby.start_practice(player_id)
 
     assert {:ok, pid} = GameSupervisor.lookup_game(view.game_id)
-    assert GameServer.snapshot(pid).id == view.game_id
-    assert GameServer.snapshot(pid).players.white == player_id
+    lobby_game = :sys.get_state(GameLobby).games[view.game_id]
+    server_game = GameServer.snapshot(pid)
+
+    assert server_game == lobby_game
+    assert server_game.id == view.game_id
+    assert server_game.players.white == player_id
+    assert server_game.players.black == player_id
 
     assert :ok = GameLobby.leave(player_id)
     assert GameSupervisor.lookup_game(view.game_id) == :error

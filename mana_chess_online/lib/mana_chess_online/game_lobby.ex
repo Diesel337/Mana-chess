@@ -369,7 +369,10 @@ defmodule ManaChessOnline.GameLobby do
     state =
       state
       |> remove_player(player_id)
-      |> put_in([:games, game_id], practice_game(game_id, player_id, state.global_settings))
+      |> put_in(
+        [:games, game_id],
+        replace_game_state(practice_game(game_id, player_id, state.global_settings))
+      )
       |> put_in([:players, player_id], %{game_id: game_id, color: :practice})
 
     broadcast_lobby(state)
