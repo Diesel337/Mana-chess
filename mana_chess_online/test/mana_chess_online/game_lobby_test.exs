@@ -57,6 +57,30 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert is_integer(metrics.game_server_mailbox_total)
   end
 
+  test "reads runtime metrics from registered game servers" do
+    player_id = unique_player("metrics-owner")
+
+    on_exit(fn ->
+      GameLobby.leave(player_id)
+    end)
+
+    {:ok, view} = GameLobby.create_private(player_id)
+    assert {:ok, pid} = GameSupervisor.lookup_game(view.game_id)
+
+    before = GameLobby.metrics()
+
+    server_game =
+      GameServer.update(pid, fn game ->
+        %{game | bot_enabled?: true}
+      end)
+
+    lobby_game = :sys.get_state(GameLobby).games[view.game_id]
+    refute lobby_game.bot_enabled? == server_game.bot_enabled?
+
+    metrics = GameLobby.metrics()
+    assert metrics.bot_game_count == before.bot_game_count + 1
+  end
+
   test "creates private games outside the public lobby and lets spectators watch by link" do
     player_id = unique_player("private-owner")
     on_exit(fn -> GameLobby.leave(player_id) end)

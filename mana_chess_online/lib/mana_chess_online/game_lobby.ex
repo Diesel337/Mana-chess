@@ -196,10 +196,12 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   def handle_call(:metrics, _from, state) do
+    games = metrics_games(state)
+
     metrics =
       GameMetrics.snapshot(
-        state.games,
-        game_server_pids(state.games),
+        games,
+        game_server_pids(games),
         GameSupervisor.child_count(),
         state.rate_limits
       )
@@ -858,6 +860,12 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   defp game_snapshot(_game_id, _state), do: nil
+
+  defp metrics_games(state) do
+    Map.new(state.games, fn {game_id, game} ->
+      {game_id, game_snapshot(game_id, state) || game}
+    end)
+  end
 
   defp append_chat_entry(game, entry), do: update_game_state(game, &put_chat_entry(&1, entry))
 
