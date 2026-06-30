@@ -17,11 +17,13 @@ const WINDOW_MODE_FULLSCREEN = "fullscreen"
 const WINDOW_MODE_MAXIMIZED = "maximized"
 const WINDOW_MODE_WINDOWED = "windowed"
 const WINDOW_MODES = new Set([WINDOW_MODE_FULLSCREEN, WINDOW_MODE_MAXIMIZED, WINDOW_MODE_WINDOWED])
+const DEFAULT_OFFLINE_RETRY_SECONDS = 20
 
 let mainWindow = null
 let pendingGameUrl = gameUrlFromDeepLink(findDeepLink(process.argv))
 let saveWindowStateTimer = null
 let lastNormalBounds = null
+let desktopConnectionWasOffline = false
 
 app.setAppUserModelId("com.diesel337.manachess")
 registerProtocol()
@@ -207,13 +209,26 @@ function bindNavigationGuards() {
     applyDesktopPresence(readDesktopState().presence)
   })
 
-  mainWindow.webContents.on("did-fail-load", (_event, _errorCode, _errorDescription, validatedURL, isMainFrame) => {
+  mainWindow.webContents.on("did-fail-load", (_event, errorCode, errorDescription, validatedURL, isMainFrame) => {
     if (!isMainFrame) return
 
     const parsed = safeUrl(validatedURL)
     if (parsed?.origin !== GAME_ORIGIN) return
 
-    showOfflineScreen(validatedURL)
+    showOfflineScreen(validatedURL, {errorCode, errorDescription})
+  })
+
+  mainWindow.webContents.on("did-finish-load", () => {
+    if (!desktopConnectionWasOffline) return
+
+    const parsed = safeUrl(mainWindow.webContents.getURL())
+    if (parsed?.origin !== GAME_ORIGIN) return
+
+    desktopConnectionWasOffline = false
+    recordDesktopEvent({
+      name: "desktop.reconnected",
+      payload: {url: cleanShareUrl(parsed.toString()) || DEFAULT_GAME_URL}
+    })
   })
 }
 
@@ -406,6 +421,16 @@ function updateDesktopState(state, event) {
     next.presence = desktopPresence("lobby", payload, at)
   }
 
+  if (name === "desktop.offline") {
+    incrementCounter(next, "offlineScreens")
+    next.presence = desktopPresence("offline", payload, at)
+  }
+
+  if (name === "desktop.reconnected") {
+    incrementCounter(next, "reconnections")
+    next.presence = desktopPresence("lobby", payload, at)
+  }
+
   if (name === "screen.viewed") {
     next.presence = desktopPresence(payload.screen || "lobby", payload, at)
   }
@@ -452,6 +477,7 @@ function updateDesktopState(state, event) {
 function desktopPresence(kind, payload = {}, at = new Date().toISOString()) {
   const labels = {
     lobby: "En lobby",
+    offline: "Sin conexion",
     game: "En partida",
     playing: "Jugando partida",
     result: resultPresenceLabel(payload.result)
@@ -628,6 +654,27 @@ function normalizeWindowMode(value) {
   return WINDOW_MODES.has(mode) ? mode : ""
 }
 
+function offlineRetrySeconds(argv = process.argv, env = process.env) {
+  const argValue = readLaunchArg(argv, "--offline-retry-seconds")
+  const rawValue = argValue || env.MANA_CHESS_OFFLINE_RETRY_SECONDS
+  if (typeof rawValue === "undefined" || rawValue === "") return DEFAULT_OFFLINE_RETRY_SECONDS
+
+  const seconds = Number(rawValue)
+  if (!Number.isFinite(seconds) || seconds < 0) return DEFAULT_OFFLINE_RETRY_SECONDS
+
+  return Math.round(seconds)
+}
+
+function readLaunchArg(argv = [], name) {
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index]
+    if (arg === name) return argv[index + 1]
+    if (typeof arg === "string" && arg.startsWith(`${name}=`)) return arg.slice(name.length + 1)
+  }
+
+  return ""
+}
+
 function defaultWindowState() {
   const {width, height} = screen.getPrimaryDisplay().workAreaSize
 
@@ -705,10 +752,25 @@ function saveWindowStateNow() {
   }
 }
 
-function showOfflineScreen(retryUrl = DEFAULT_GAME_URL) {
+function showOfflineScreen(retryUrl = DEFAULT_GAME_URL, failure = {}) {
   const retryTarget = JSON.stringify(desktopUrl(retryUrl))
   const lobbyTarget = JSON.stringify(desktopUrl(DEFAULT_GAME_URL))
   const browserTarget = JSON.stringify(cleanShareUrl(retryUrl) || DEFAULT_GAME_URL)
+  const retrySeconds = offlineRetrySeconds()
+  const retryDelayMs = retrySeconds * 1000
+  const retryDelayTarget = JSON.stringify(retryDelayMs)
+  const failureSummary = JSON.stringify(offlineFailureSummary(failure))
+
+  desktopConnectionWasOffline = true
+  recordDesktopEvent({
+    name: "desktop.offline",
+    payload: {
+      url: cleanShareUrl(retryUrl) || DEFAULT_GAME_URL,
+      errorCode: failure.errorCode || "",
+      errorDescription: failure.errorDescription || "",
+      retrySeconds
+    }
+  })
 
   mainWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(`
     <!doctype html>
@@ -728,6 +790,7 @@ function showOfflineScreen(retryUrl = DEFAULT_GAME_URL) {
             --muted: #b7c3b3;
             --gold: #e6bd68;
             --gold-text: #171207;
+            --danger: #ef8a6b;
           }
 
           * {
@@ -746,9 +809,9 @@ function showOfflineScreen(retryUrl = DEFAULT_GAME_URL) {
           }
 
           main {
-            width: min(620px, 100%);
+            width: min(680px, 100%);
             display: grid;
-            gap: 18px;
+            gap: 16px;
             padding: clamp(20px, 4vw, 32px);
             background: var(--panel);
             border: 1px solid var(--line);
@@ -768,10 +831,23 @@ function showOfflineScreen(retryUrl = DEFAULT_GAME_URL) {
             line-height: 1.45;
           }
 
+          .eyebrow {
+            margin: 0;
+            color: var(--danger);
+            font-size: 12px;
+            font-weight: 900;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+          }
+
           .actions {
             display: grid;
             grid-template-columns: repeat(2, minmax(0, 1fr));
             gap: 10px;
+          }
+
+          .actions button:last-child:nth-child(odd) {
+            grid-column: 1 / -1;
           }
 
           button {
@@ -793,10 +869,22 @@ function showOfflineScreen(retryUrl = DEFAULT_GAME_URL) {
             color: var(--text);
           }
 
+          button:disabled {
+            cursor: default;
+            opacity: .62;
+          }
+
           .status {
             min-height: 20px;
             color: var(--gold);
             font-size: 13px;
+          }
+
+          .details {
+            min-height: 18px;
+            color: var(--muted);
+            font-size: 12px;
+            overflow-wrap: anywhere;
           }
 
           @media (max-width: 520px) {
@@ -812,27 +900,40 @@ function showOfflineScreen(retryUrl = DEFAULT_GAME_URL) {
       </head>
       <body>
         <main>
+          <p class="eyebrow">Modo online no disponible</p>
           <h1>Mana Chess</h1>
-          <p>No se pudo cargar el juego online. Revisa tu conexion a internet o intenta de nuevo.</p>
+          <p>No se pudo cargar el juego online. El launcher seguira intentando reconectar automaticamente.</p>
           <div class="actions">
-            <button onclick="retryOnline()">Reintentar</button>
+            <button onclick="retryOnline()">Reintentar ahora</button>
+            <button class="secondary" id="pauseButton" onclick="toggleAutoRetry()">Pausar reintentos</button>
             <button class="secondary" onclick="openInBrowser()">Abrir en navegador</button>
             <button class="secondary" onclick="goLobby()">Volver al lobby</button>
             <button class="secondary" onclick="copyLink()">Copiar link</button>
           </div>
           <p class="status" id="status" aria-live="polite"></p>
+          <p class="details" id="details"></p>
         </main>
         <script>
           const retryTarget = ${retryTarget};
           const lobbyTarget = ${lobbyTarget};
           const browserTarget = ${browserTarget};
+          const retryDelayMs = ${retryDelayTarget};
+          const failureSummary = ${failureSummary};
           const status = document.getElementById("status");
+          const details = document.getElementById("details");
+          const pauseButton = document.getElementById("pauseButton");
+          let retryTimer = null;
+          let retryStartedAt = 0;
+          let retryPaused = retryDelayMs <= 0;
 
           function retryOnline() {
+            clearRetryTimer();
+            status.textContent = "Reintentando conexion...";
             location.href = retryTarget;
           }
 
           function goLobby() {
+            clearRetryTimer();
             location.href = lobbyTarget;
           }
 
@@ -844,10 +945,81 @@ function showOfflineScreen(retryUrl = DEFAULT_GAME_URL) {
             const result = await window.ManaChessDesktop?.copyShareLink(browserTarget);
             status.textContent = result?.ok ? "Link copiado." : "No se pudo copiar el link.";
           }
+
+          function toggleAutoRetry() {
+            retryPaused = !retryPaused;
+            pauseButton.textContent = retryPaused ? "Continuar reintentos" : "Pausar reintentos";
+
+            if (retryPaused) {
+              clearRetryTimer();
+              status.textContent = "Reintentos automaticos pausados.";
+              return;
+            }
+
+            startRetryTimer();
+          }
+
+          function startRetryTimer() {
+            clearRetryTimer();
+
+            if (retryDelayMs <= 0) {
+              status.textContent = "Reintento automatico desactivado.";
+              pauseButton.textContent = "Reintento desactivado";
+              pauseButton.disabled = true;
+              return;
+            }
+
+            retryStartedAt = Date.now();
+            retryTimer = window.setInterval(updateRetryStatus, 250);
+            updateRetryStatus();
+          }
+
+          function updateRetryStatus() {
+            const remainingMs = Math.max(0, retryDelayMs - (Date.now() - retryStartedAt));
+            const remainingSeconds = Math.ceil(remainingMs / 1000);
+            status.textContent = remainingSeconds > 0
+              ? "Reintentando en " + remainingSeconds + " s..."
+              : "Reintentando conexion...";
+
+            if (remainingMs <= 0) retryOnline();
+          }
+
+          function clearRetryTimer() {
+            if (!retryTimer) return;
+            window.clearInterval(retryTimer);
+            retryTimer = null;
+          }
+
+          window.addEventListener("online", () => {
+            status.textContent = "Conexion detectada. Reintentando...";
+            retryOnline();
+          });
+
+          window.addEventListener("offline", () => {
+            status.textContent = "Sin conexion local detectada.";
+          });
+
+          details.textContent = failureSummary;
+          window.ManaChessDesktop?.sendEvent("desktop.offline_screen_viewed", {
+            retryDelayMs,
+            failureSummary,
+            online: navigator.onLine
+          });
+          startRetryTimer();
         </script>
       </body>
     </html>
   `)}`)
+}
+
+function offlineFailureSummary(failure = {}) {
+  const description = typeof failure.errorDescription === "string" ? failure.errorDescription.trim() : ""
+  const code = Number.isFinite(failure.errorCode) ? failure.errorCode : ""
+
+  if (description && code !== "") return `Fallo: ${description} (${code})`
+  if (description) return `Fallo: ${description}`
+  if (code !== "") return `Fallo de carga (${code})`
+  return "Esperando conexion con el servidor de Mana Chess."
 }
 
 const gotLock = app.requestSingleInstanceLock()

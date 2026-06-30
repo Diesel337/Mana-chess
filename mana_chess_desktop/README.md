@@ -33,6 +33,19 @@ npm start -- --window-mode=windowed
 npm start -- --fullscreen
 ```
 
+Tune the offline retry loop for Steam/QA:
+
+```powershell
+$env:MANA_CHESS_OFFLINE_RETRY_SECONDS="20"
+npm start
+```
+
+Use `0` to disable automatic retry. Launch args are also supported:
+
+```powershell
+npm start -- --offline-retry-seconds=0
+```
+
 ## Commands
 
 Install dependencies:
@@ -73,7 +86,7 @@ npm run pack:win
 - Desktop mode is forced with `?desktop=1` on every in-app navigation.
 - `manachess://` deep links can open lobby or game routes inside the desktop app.
 - External links open in the user's browser; Mana Chess links stay in the app window.
-- The offline/error screen offers retry, lobby, copy-link, and browser fallback actions.
+- The offline/error screen offers automatic retry, pause/resume, lobby, copy-link, and browser fallback actions.
 - The Windows build uses the shared Mana Chess icon, app id `com.diesel337.manachess`, and explicit shortcut/uninstall metadata.
 - The web game can read `window.ManaChessDesktop.getInfo()` for desktop version, channel, platform, and origin.
 - The window title follows local presence, such as lobby, active match, playing, or result states.
@@ -116,7 +129,7 @@ window.ManaChessDesktop.sendEvent("match.finished", {result: "win"})
 
 `sendEvent` is intentionally a no-op sink for now. It gives us a stable place to attach Steamworks achievements, rich presence, and cloud-save hooks later.
 
-Emitted event names currently include `screen.viewed`, `match.opened`, `match.status_changed`, `match.started`, and `match.finished`.
+Emitted event names currently include `screen.viewed`, `desktop.offline`, `desktop.offline_screen_viewed`, `desktop.reconnected`, `match.opened`, `match.status_changed`, `match.started`, and `match.finished`.
 
 Desktop state is stored locally in Electron user data as `desktop-state.json`. It tracks session counters, a small event log, current presence, and local achievement flags that can later map to Steamworks achievements. Use the Desktop menu to copy the state, open the data folder, or reset the local state during QA.
 
