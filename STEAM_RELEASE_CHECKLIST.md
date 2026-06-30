@@ -85,7 +85,7 @@ Official reference:
 
 - [~] Electron desktop wrapper exists.
 - [x] Windows unpacked build works.
-- [~] Deep links `manachess://` exist.
+- [~] Deep links `manachess://` exist. `npm run smoke:win:deep-link` now verifies the packaged executable resolves a startup game link to the expected desktop route; real Steam client/deep-link QA still pending.
 - [~] Desktop bridge exists.
 - [~] Local desktop QA state exists.
 - [~] Final app icon is approved. `npm run verify:win:installer` now validates `build/icon.png`, `build/icon.ico`, and package icon wiring; final visual approval still pending.

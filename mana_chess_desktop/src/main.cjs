@@ -41,7 +41,8 @@ const DESKTOP_CHANNEL = process.env.MANA_CHESS_DESKTOP_CHANNEL || DESKTOP_BUILD_
 const DESKTOP_STEAM_CONTEXT = steamLaunchContext()
 
 let mainWindow = null
-let pendingGameUrl = gameUrlFromDeepLink(findDeepLink(process.argv))
+let pendingDeepLink = findDeepLink(process.argv)
+let pendingGameUrl = gameUrlFromDeepLink(pendingDeepLink)
 let saveWindowStateTimer = null
 let lastNormalBounds = null
 let desktopConnectionWasOffline = false
@@ -100,9 +101,12 @@ function createWindow() {
     mainWindow.show()
   })
 
+  const initialDeepLink = pendingDeepLink
   const initialUrl = pendingGameUrl || DEFAULT_GAME_URL
+  pendingDeepLink = null
   pendingGameUrl = null
   loadGameUrl(initialUrl)
+  logDeepLinkOpened(initialDeepLink, initialUrl, "startup")
 }
 
 function bindDesktopBridge() {
@@ -347,9 +351,26 @@ function openDeepLink(url) {
   const targetUrl = gameUrlFromDeepLink(url)
   if (!targetUrl) return false
 
+  if (!mainWindow) {
+    pendingDeepLink = url
+    pendingGameUrl = targetUrl
+    return true
+  }
+
   loadGameUrl(targetUrl)
+  logDeepLinkOpened(url, targetUrl, "runtime")
   focusMainWindow()
   return true
+}
+
+function logDeepLinkOpened(url, targetUrl, phase) {
+  if (!url) return
+
+  appendDesktopLog("info", "desktop.deep_link_opened", {
+    source: String(url || "").slice(0, 300),
+    target: cleanShareUrl(targetUrl) || String(targetUrl || "").slice(0, 300),
+    phase
+  })
 }
 
 function focusMainWindow() {

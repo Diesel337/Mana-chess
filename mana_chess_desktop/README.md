@@ -102,12 +102,14 @@ npm run smoke:win -- --mode=maximized
 npm run smoke:win -- --mode=fullscreen
 npm run smoke:win:steam
 npm run smoke:win:modes
+npm run smoke:win:deep-link
 npm run smoke:win:offline
 ```
 
 `smoke:win` launches `dist/win-unpacked/Mana Chess.exe`, waits for a fresh `desktop.session_started` log entry, and closes the launched process. It defaults to the `desktop-smoke` channel so QA can spot smoke runs in `desktop-log.jsonl`.
 `smoke:win:steam` launches one windowed smoke with simulated Steam environment variables and verifies they are captured in the session diagnostics.
 `smoke:win:modes` runs the same startup smoke through `windowed`, `maximized`, and `fullscreen` in sequence.
+`smoke:win:deep-link` launches the packaged app with a `manachess://game/private_smoke_deep_link` URL and verifies the launcher resolves it to a game route in the desktop QA log.
 `smoke:win:offline` launches the app against an unreachable local URL, disables auto-retry, waits for `desktop.offline`, and closes the process.
 
 Run the full Windows release preflight before a Steam candidate:
@@ -140,6 +142,7 @@ The real `.vdf` files, SteamCMD logs, and Steam build output are ignored locally
 - Steam/QA can force startup with `MANA_CHESS_WINDOW_MODE`, `--window-mode`, `--fullscreen`, `--maximized`, or `--windowed`.
 - `npm run smoke:win:modes` verifies the packaged executable can start and write QA logs in `windowed`, `maximized`, and `fullscreen` launch modes.
 - `npm run smoke:win:steam` verifies the packaged executable records Steam launch context when Steam-like environment variables are present.
+- `npm run smoke:win:deep-link` verifies the packaged executable resolves a startup `manachess://` game link to the expected desktop route.
 - Desktop mode is forced with `?desktop=1` on every in-app navigation.
 - `manachess://` deep links can open lobby or game routes inside the desktop app.
 - External links open in the user's browser; Mana Chess links stay in the app window.
