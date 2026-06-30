@@ -6878,3 +6878,102 @@ html[data-desktop="true"] .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-skin-opti
 .mc-chat-form button:disabled:not([data-phx-disable-with]) {
   color: rgba(25, 16, 0, .72);
 }
+
+/* Game table and journal fit pass */
+.mc-panel-game {
+  padding-top: 0;
+  min-height: 0;
+  align-content: stretch;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.mc-panel-game .mc-queue-panel,
+.mc-panel-game .mc-log-panel,
+.mc-panel-game .mc-chat-panel {
+  min-height: 0;
+}
+
+.mc-panel-game .mc-log-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.mc-panel-game .mc-queue-list,
+.mc-panel-game .mc-log-list,
+.mc-panel-game .mc-chat-list {
+  min-height: 0;
+}
+
+@media (min-width: 1000px) {
+  .mc-shell:has(.mc-play-area) {
+    --mc-game-control-rail: clamp(216px, 13vw, 248px);
+    --mc-game-log-rail: clamp(250px, 16vw, 300px);
+    --mc-game-rail: var(--mc-game-control-rail);
+    --mc-game-board: clamp(400px, min(calc(100dvh - 210px), 48vw), 820px);
+    --mc-game-width: calc(var(--mc-game-control-rail) + var(--mc-game-gap) + var(--mc-game-board) + var(--mc-game-gap) + var(--mc-game-log-rail));
+    grid-template-columns:
+      minmax(0, calc(var(--mc-game-control-rail) + var(--mc-game-gap) + var(--mc-game-board)))
+      var(--mc-game-log-rail);
+  }
+
+  html[data-desktop="true"] .mc-shell:has(.mc-play-area) {
+    grid-template-columns:
+      minmax(0, calc(var(--mc-game-control-rail) + var(--mc-game-gap) + var(--mc-game-board)))
+      var(--mc-game-log-rail);
+    width: min(var(--mc-game-width), calc(100vw - 24px));
+  }
+
+  .mc-shell:has(.mc-play-area) > .mc-panel,
+  html[data-desktop="true"] .mc-shell:has(.mc-play-area) > .mc-panel {
+    max-width: var(--mc-game-log-rail);
+    height: calc(100dvh - 28px);
+    max-height: calc(100dvh - 28px);
+    overflow: hidden;
+  }
+
+  .mc-game:has(.mc-play-area) > .mc-play-area,
+  html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-play-area {
+    grid-template-columns: minmax(0, var(--mc-game-board));
+    width: 100%;
+    max-width: var(--mc-game-board);
+  }
+
+  html[data-desktop="true"] .mc-panel-game {
+    padding-top: 0;
+    gap: 8px;
+  }
+
+  .mc-panel-game .mc-queue-list {
+    max-height: clamp(48px, 9dvh, 86px);
+    overflow: auto;
+  }
+
+  .mc-panel-game .mc-log-list {
+    max-height: none;
+    overflow: auto;
+    padding-right: 3px;
+  }
+
+  .mc-panel-game .mc-chat-list {
+    max-height: clamp(108px, 18dvh, 180px);
+    overflow: auto;
+  }
+}
+
+@media (min-width: 1000px) and (max-width: 1320px) {
+  .mc-shell:has(.mc-play-area) {
+    --mc-game-control-rail: 216px;
+    --mc-game-log-rail: 240px;
+    --mc-game-board: clamp(400px, min(calc(100dvh - 210px), 46vw), 600px);
+  }
+}
+
+@media (max-width: 999px) {
+  .mc-panel-game {
+    grid-template-rows: none;
+  }
+
+  .mc-panel-game .mc-log-list {
+    max-height: min(320px, 42dvh);
+  }
+}
