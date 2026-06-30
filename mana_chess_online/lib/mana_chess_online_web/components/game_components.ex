@@ -154,9 +154,69 @@ defmodule ManaChessOnlineWeb.GameComponents do
           </div>
         </div>
 
-        <div class="mc-cosmetic-group mc-preset-group">
+        <div class="mc-cosmetic-group mc-pack-group">
           <span class="mc-cosmetic-group-label">Conjuntos</span>
-          <div class="mc-palette-presets mc-conjunto-options" aria-label="Conjuntos de color">
+          <div class="mc-pack-options" aria-label="Conjuntos visuales">
+            <button
+              type="button"
+              class="mc-skin-option mc-pack-option"
+              data-cosmetic-pack="classic"
+              data-sound-action="skin"
+              aria-pressed="false"
+            >
+              <span class="mc-pack-preview" aria-hidden="true">
+                <i></i><i></i><i></i><i></i>
+                <b class="mc-pack-piece-black">{@symbols["q"]}</b>
+                <b class="mc-pack-piece-white">{@symbols["K"]}</b>
+              </span>
+              <strong>Base</strong>
+              <small data-cosmetic-status data-cosmetic-pack-status data-cosmetic-state="included">
+                Incluido
+              </small>
+            </button>
+            <button
+              type="button"
+              class="mc-skin-option mc-pack-option"
+              data-cosmetic-pack="mana"
+              data-sound-action="skin"
+              aria-pressed="false"
+            >
+              <span class="mc-pack-preview mc-pack-preview-mana" aria-hidden="true">
+                <i></i><i></i><i></i><i></i>
+                <b class="mc-pack-piece-black">{@symbols["q"]}</b>
+                <b class="mc-pack-piece-white">{@symbols["K"]}</b>
+              </span>
+              <strong>Mana</strong>
+              <small data-cosmetic-status data-cosmetic-pack-status data-cosmetic-state="included">
+                Incluido
+              </small>
+            </button>
+            <button
+              type="button"
+              class="mc-skin-option mc-pack-option mc-skin-locked"
+              data-cosmetic-pack="arcane"
+              data-cosmetic-premium="pack:arcane"
+              data-sound-action="skin"
+              title="Probar y desbloquear conjunto localmente"
+              aria-disabled="false"
+              aria-pressed="false"
+            >
+              <span class="mc-pack-preview mc-pack-preview-arcane" aria-hidden="true">
+                <i></i><i></i><i></i><i></i>
+                <b class="mc-pack-piece-black">{@symbols["q"]}</b>
+                <b class="mc-pack-piece-white">{@symbols["K"]}</b>
+              </span>
+              <strong>Arcano</strong>
+              <small data-cosmetic-status data-cosmetic-pack-status data-cosmetic-state="premium">
+                Premium proximamente
+              </small>
+            </button>
+          </div>
+        </div>
+
+        <div class="mc-cosmetic-group mc-preset-group">
+          <span class="mc-cosmetic-group-label">Paletas</span>
+          <div class="mc-palette-presets mc-conjunto-options" aria-label="Paletas de color">
             <button type="button" data-palette-reset data-sound-action="skin" aria-pressed="false">
               Base
             </button>

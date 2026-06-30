@@ -3987,6 +3987,19 @@ html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-elixir-bottom-track::a
   min-height: 68px;
 }
 
+.mc-skin-option[data-cosmetic-rank] {
+  transition:
+    transform .14s ease,
+    filter .14s ease,
+    border-color .14s ease,
+    box-shadow .14s ease;
+}
+
+.mc-pack-option [data-cosmetic-pack-status] {
+  grid-column: 2;
+  grid-row: 2;
+}
+
 .mc-pack-preview {
   --pack-frame: #f7f2e8;
   --pack-light: #f3eee2;
@@ -6827,6 +6840,37 @@ html[data-desktop="true"] .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-skin-opti
 
 .mc-conjunto-options {
   grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+@media (max-width: 480px) {
+  .mc-menu .mc-pack-option {
+    grid-template-columns: 34px minmax(0, 1fr) !important;
+    justify-items: stretch;
+    min-height: 52px;
+    text-align: left;
+  }
+
+  .mc-menu .mc-pack-option > .mc-pack-preview {
+    grid-column: 1 !important;
+    grid-row: 1 / span 2 !important;
+    justify-self: center;
+  }
+
+  .mc-menu .mc-pack-option > strong {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    align-self: end;
+    justify-self: start;
+    text-align: left;
+    white-space: normal;
+  }
+
+  .mc-menu .mc-pack-option > small[data-cosmetic-pack-status] {
+    grid-column: 2 !important;
+    grid-row: 2 !important;
+    justify-self: start;
+    width: max-content !important;
+  }
 }
 
 .mc-palette-presets [data-palette-reset]:not(.mc-palette-selected) {
