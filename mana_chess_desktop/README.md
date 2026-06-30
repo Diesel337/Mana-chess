@@ -72,6 +72,14 @@ Create a Windows installer:
 npm run dist:win
 ```
 
+Verify the Windows installer artifact without launching it:
+
+```powershell
+npm run verify:win:installer
+```
+
+`verify:win:installer` checks the Electron entry files, writes build metadata, creates the NSIS installer, and verifies `dist/Mana Chess Setup <version>.exe`, `dist/latest.yml`, and the installer block map.
+
 Create an unpacked Windows app for quick testing:
 
 ```powershell
@@ -138,6 +146,7 @@ The real `.vdf` files, SteamCMD logs, and Steam build output are ignored locally
 - The offline/error screen offers automatic retry, pause/resume, lobby, copy-link, and browser fallback actions.
 - `npm run smoke:win:offline` verifies the packaged executable reaches the offline/error path and writes a QA log entry.
 - The Windows build uses the shared Mana Chess icon, app id `com.diesel337.manachess`, and explicit shortcut/uninstall metadata.
+- `npm run verify:win:installer` verifies the NSIS installer artifact exists and has a Windows executable header, without installing it.
 - The web game can read `window.ManaChessDesktop.getInfo()` for desktop version, channel, platform, origin, and Steam launch detection.
 - The window title follows local presence, such as lobby, active match, playing, or result states.
 - The desktop menu can copy, open, or reset local desktop QA state.
