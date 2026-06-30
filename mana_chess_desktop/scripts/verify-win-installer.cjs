@@ -6,6 +6,7 @@ const desktopRoot = path.resolve(__dirname, "..")
 const node = process.execPath
 const packageJson = JSON.parse(fs.readFileSync(path.join(desktopRoot, "package.json"), "utf8"))
 const electronBuilder = path.join(desktopRoot, "node_modules", "electron-builder", "cli.js")
+const exePath = path.join(desktopRoot, "dist", "win-unpacked", "Mana Chess.exe")
 const installerPath = path.join(desktopRoot, "dist", `Mana Chess Setup ${packageJson.version}.exe`)
 const latestYmlPath = path.join(desktopRoot, "dist", "latest.yml")
 const blockMapPath = `${installerPath}.blockmap`
@@ -38,6 +39,7 @@ if (!fs.existsSync(electronBuilder)) {
 
 run(node, [electronBuilder, "--win", "nsis", "--x64"])
 
+assertFile(exePath, "unpacked Windows executable")
 const installerStat = assertFile(installerPath, "Windows installer")
 assertFile(latestYmlPath, "installer update metadata")
 assertFile(blockMapPath, "installer block map")
@@ -58,4 +60,5 @@ if (header.toString("ascii") !== "MZ") {
   throw new Error("Installer does not have a Windows executable MZ header.")
 }
 
+console.log(`Verified ${path.relative(desktopRoot, exePath)}`)
 console.log(`Verified ${path.relative(desktopRoot, installerPath)} (${Math.round(installerStat.size / 1024 / 1024)} MB)`)

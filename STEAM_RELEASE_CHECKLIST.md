@@ -97,7 +97,7 @@ Official reference:
 - [x] Desktop build has a clear app version strategy.
 - [x] Crash/error logs are accessible for QA.
 - [~] Steam overlay compatibility is checked. Desktop diagnostics now record Steam launch context and `npm run smoke:win:steam` verifies the packaged app captures Steam-like environment variables; real Steam client overlay QA still pending.
-- [~] Build can be reproduced from a clean checkout. `npm run verify:win` now checks entry files, writes build metadata, builds unpacked Windows, and verifies the exe; `npm run verify:win:installer` verifies the NSIS installer artifact; `npm run release:win:preflight` chains build plus window, Steam-env, and offline smokes. Still needs a clean-machine pass.
+- [~] Build can be reproduced from a clean checkout. `npm run verify:win` now checks entry files, writes build metadata, builds unpacked Windows, and verifies the exe; `npm run verify:win:installer` verifies the unpacked exe plus NSIS installer artifact; `npm run release:win:preflight` chains installer/build verification plus window, Steam-env, and offline smokes. Still needs a clean-machine pass.
 
 ## 5. SteamPipe and depots
 

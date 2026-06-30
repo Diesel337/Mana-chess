@@ -78,7 +78,7 @@ Verify the Windows installer artifact without launching it:
 npm run verify:win:installer
 ```
 
-`verify:win:installer` checks the Electron entry files, writes build metadata, creates the NSIS installer, and verifies `dist/Mana Chess Setup <version>.exe`, `dist/latest.yml`, and the installer block map.
+`verify:win:installer` checks the Electron entry files, writes build metadata, creates the unpacked app plus NSIS installer, and verifies `dist/win-unpacked/Mana Chess.exe`, `dist/Mana Chess Setup <version>.exe`, `dist/latest.yml`, and the installer block map.
 
 Create an unpacked Windows app for quick testing:
 
@@ -116,7 +116,7 @@ Run the full Windows release preflight before a Steam candidate:
 npm run release:win:preflight
 ```
 
-`release:win:preflight` validates the non-secret SteamPipe templates, rebuilds the unpacked Windows app with `verify:win`, then runs the window mode, Steam environment, and offline smoke tests.
+`release:win:preflight` validates the non-secret SteamPipe templates, builds and verifies the unpacked app plus NSIS installer with `verify:win:installer`, then runs the window mode, Steam environment, and offline smoke tests.
 
 ## SteamPipe templates
 

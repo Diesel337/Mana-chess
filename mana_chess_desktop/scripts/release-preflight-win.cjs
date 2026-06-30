@@ -74,7 +74,7 @@ function main() {
   }
 
   validateSteamPipeTemplates()
-  run("Windows build verification", node, ["scripts/verify-win-build.cjs"])
+  run("Windows installer and build verification", node, ["scripts/verify-win-installer.cjs"])
 
   if (!fs.existsSync(exePath)) {
     throw new Error(`Expected Windows executable at ${exePath}`)
