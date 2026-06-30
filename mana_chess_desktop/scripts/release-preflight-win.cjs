@@ -81,6 +81,7 @@ function main() {
   }
 
   run("Window mode smoke tests", node, ["scripts/smoke-win-app.cjs", "--all-modes"])
+  run("Steam env smoke test", node, ["scripts/smoke-win-app.cjs", "--mode=windowed", "--steam-env"])
   run("Offline smoke test", node, ["scripts/smoke-win-offline.cjs"])
   console.log("\nWindows release preflight passed.")
 }

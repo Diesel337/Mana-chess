@@ -96,8 +96,8 @@ Official reference:
 - [~] Steam launch option points to the correct executable. SteamPipe docs identify `Mana Chess.exe`; Steamworks launch option still needs live app config.
 - [x] Desktop build has a clear app version strategy.
 - [x] Crash/error logs are accessible for QA.
-- [ ] Steam overlay compatibility is checked.
-- [~] Build can be reproduced from a clean checkout. `npm run verify:win` now checks entry files, writes build metadata, builds unpacked Windows, and verifies the exe; `npm run release:win:preflight` chains build plus release smokes. Still needs a clean-machine pass.
+- [~] Steam overlay compatibility is checked. Desktop diagnostics now record Steam launch context and `npm run smoke:win:steam` verifies the packaged app captures Steam-like environment variables; real Steam client overlay QA still pending.
+- [~] Build can be reproduced from a clean checkout. `npm run verify:win` now checks entry files, writes build metadata, builds unpacked Windows, and verifies the exe; `npm run release:win:preflight` chains build plus window, Steam-env, and offline smokes. Still needs a clean-machine pass.
 
 ## 5. SteamPipe and depots
 

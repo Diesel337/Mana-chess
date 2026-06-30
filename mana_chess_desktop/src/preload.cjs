@@ -18,6 +18,11 @@ const desktopInfo = Object.freeze({
     dirty: readArg("mana-chess-build-dirty") || "unknown",
     builtAt: readArg("mana-chess-build-time") || "",
     source: readArg("mana-chess-build-source") || "runtime"
+  },
+  steam: {
+    detected: readArg("mana-chess-steam-detected") === "1",
+    appId: readArg("mana-chess-steam-app-id") || "",
+    gameId: readArg("mana-chess-steam-game-id") || ""
   }
 })
 

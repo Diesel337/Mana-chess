@@ -12,6 +12,21 @@ const DESKTOP_LOG_FILE = "desktop-log.jsonl"
 const EVENT_LOG_LIMIT = 40
 const DESKTOP_LOG_READ_LIMIT = 80
 const DESKTOP_LOG_MAX_BYTES = 512 * 1024
+const STEAM_ENV_NAMES = [
+  "SteamAppId",
+  "SteamGameId",
+  "SteamOverlayGameId",
+  "STEAM_APP_ID",
+  "STEAM_APPID",
+  "STEAM_GAME_ID",
+  "STEAM_GAMEID",
+  "STEAM_OVERLAY_GAME_ID",
+  "SteamClientLaunch",
+  "SteamEnv",
+  "SteamPath",
+  "SteamDeck",
+  "SteamTenfoot"
+]
 const MIN_WINDOW_WIDTH = 1024
 const MIN_WINDOW_HEIGHT = 720
 const DEFAULT_WINDOW_WIDTH = 1440
@@ -23,6 +38,7 @@ const WINDOW_MODES = new Set([WINDOW_MODE_FULLSCREEN, WINDOW_MODE_MAXIMIZED, WIN
 const DEFAULT_OFFLINE_RETRY_SECONDS = 20
 const DESKTOP_BUILD_INFO = loadDesktopBuildInfo()
 const DESKTOP_CHANNEL = process.env.MANA_CHESS_DESKTOP_CHANNEL || DESKTOP_BUILD_INFO.channel || "desktop"
+const DESKTOP_STEAM_CONTEXT = steamLaunchContext()
 
 let mainWindow = null
 let pendingGameUrl = gameUrlFromDeepLink(findDeepLink(process.argv))
@@ -62,7 +78,10 @@ function createWindow() {
         `--mana-chess-build-commit=${DESKTOP_BUILD_INFO.commit}`,
         `--mana-chess-build-dirty=${DESKTOP_BUILD_INFO.dirty}`,
         `--mana-chess-build-time=${DESKTOP_BUILD_INFO.builtAt}`,
-        `--mana-chess-build-source=${DESKTOP_BUILD_INFO.source}`
+        `--mana-chess-build-source=${DESKTOP_BUILD_INFO.source}`,
+        `--mana-chess-steam-detected=${DESKTOP_STEAM_CONTEXT.detected ? "1" : "0"}`,
+        `--mana-chess-steam-app-id=${DESKTOP_STEAM_CONTEXT.appId}`,
+        `--mana-chess-steam-game-id=${DESKTOP_STEAM_CONTEXT.gameId}`
       ],
       contextIsolation: true,
       nodeIntegration: false,
@@ -414,7 +433,8 @@ function desktopDiagnostics() {
       channel: DESKTOP_CHANNEL,
       platform: process.platform,
       origin: GAME_ORIGIN,
-      build: desktopBuildInfo()
+      build: desktopBuildInfo(),
+      steam: DESKTOP_STEAM_CONTEXT
     },
     window: currentWindowDiagnostics(),
     paths: {
@@ -478,7 +498,7 @@ function resetDesktopState() {
   writeDesktopState(normalizeDesktopState({}))
   return recordDesktopEvent({
     name: "desktop.session_started",
-    payload: {version: app.getVersion(), channel: DESKTOP_CHANNEL, reset: true}
+    payload: {version: app.getVersion(), channel: DESKTOP_CHANNEL, reset: true, steam: DESKTOP_STEAM_CONTEXT}
   }) || readDesktopState()
 }
 
@@ -670,6 +690,47 @@ function desktopBuildInfo() {
     version: DESKTOP_BUILD_INFO.version || app.getVersion(),
     channel: DESKTOP_CHANNEL
   }
+}
+
+function steamLaunchContext(env = process.env) {
+  const appId = cleanSteamId(readEnv(env, ["SteamAppId", "STEAM_APP_ID", "STEAM_APPID"]))
+  const gameId = cleanSteamId(readEnv(env, ["SteamGameId", "STEAM_GAME_ID", "STEAM_GAMEID"]))
+  const overlayGameId = cleanSteamId(readEnv(env, ["SteamOverlayGameId", "STEAM_OVERLAY_GAME_ID"]))
+  const presentKeys = presentSteamEnvKeys(env)
+
+  return {
+    detected: Boolean(appId || gameId || overlayGameId || presentKeys.length > 0),
+    appId,
+    gameId,
+    overlayGameId,
+    clientLaunch: Boolean(readEnv(env, ["SteamClientLaunch"])),
+    steamEnv: Boolean(readEnv(env, ["SteamEnv"])),
+    steamPath: Boolean(readEnv(env, ["SteamPath"])),
+    steamDeck: Boolean(readEnv(env, ["SteamDeck"])),
+    steamTenfoot: Boolean(readEnv(env, ["SteamTenfoot"])),
+    presentKeys
+  }
+}
+
+function presentSteamEnvKeys(env = process.env) {
+  return STEAM_ENV_NAMES.filter(name => readEnv(env, [name]))
+}
+
+function readEnv(env = process.env, names = []) {
+  for (const name of names) {
+    if (Object.prototype.hasOwnProperty.call(env, name)) return String(env[name] || "").trim()
+
+    const normalizedName = String(name || "").toLowerCase()
+    const actualName = Object.keys(env).find(key => key.toLowerCase() === normalizedName)
+    if (actualName) return String(env[actualName] || "").trim()
+  }
+
+  return ""
+}
+
+function cleanSteamId(value) {
+  const text = String(value || "").trim()
+  return /^[0-9]{1,32}$/.test(text) ? text : ""
 }
 
 function bindProcessDiagnostics() {
@@ -1286,7 +1347,10 @@ if (!gotLock) {
   app.whenReady().then(() => {
     Menu.setApplicationMenu(buildMenu())
     bindDesktopBridge()
-    recordDesktopEvent({name: "desktop.session_started", payload: {version: app.getVersion(), channel: DESKTOP_CHANNEL}})
+    recordDesktopEvent({
+      name: "desktop.session_started",
+      payload: {version: app.getVersion(), channel: DESKTOP_CHANNEL, steam: DESKTOP_STEAM_CONTEXT}
+    })
     createWindow()
 
     app.on("activate", () => {

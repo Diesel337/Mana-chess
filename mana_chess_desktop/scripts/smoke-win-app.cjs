@@ -11,7 +11,8 @@ const modes = readFlag("--all-modes")
   ? smokeModes
   : [normalizeMode(readArg("--mode") || process.env.MANA_CHESS_SMOKE_MODE || "windowed")]
 const timeoutMs = normalizeTimeout(readArg("--timeout-ms") || process.env.MANA_CHESS_SMOKE_TIMEOUT_MS || "12000")
-const channel = process.env.MANA_CHESS_DESKTOP_CHANNEL || "desktop-smoke"
+const simulateSteamEnv = readFlag("--steam-env")
+const channel = process.env.MANA_CHESS_DESKTOP_CHANNEL || (simulateSteamEnv ? "desktop-steam-smoke" : "desktop-smoke")
 const appData = process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming")
 const logPath = path.join(appData, "Mana Chess", "desktop-log.jsonl")
 
@@ -98,6 +99,31 @@ function stopLaunchedProcess() {
   }
 }
 
+function fakeSteamEnv() {
+  if (!simulateSteamEnv) return {}
+
+  return {
+    SteamAppId: "111111",
+    SteamGameId: "111111",
+    SteamOverlayGameId: "111111",
+    SteamClientLaunch: "1",
+    SteamEnv: "1"
+  }
+}
+
+function validateSteamPayload(entry) {
+  if (!simulateSteamEnv) return
+
+  const steam = entry?.payload?.steam || {}
+  if (steam.detected !== true) {
+    throw new Error("Expected desktop.session_started payload.steam.detected to be true.")
+  }
+
+  if (steam.appId !== "111111") {
+    throw new Error(`Expected simulated SteamAppId 111111, received ${steam.appId || "empty"}.`)
+  }
+}
+
 async function smokeMode(mode) {
   const startTime = Date.now()
   child = spawn(exePath, [`--${mode}`], {
@@ -107,7 +133,8 @@ async function smokeMode(mode) {
     env: {
       ...process.env,
       MANA_CHESS_DESKTOP_CHANNEL: channel,
-      MANA_CHESS_OFFLINE_RETRY_SECONDS: process.env.MANA_CHESS_OFFLINE_RETRY_SECONDS || "0"
+      MANA_CHESS_OFFLINE_RETRY_SECONDS: process.env.MANA_CHESS_OFFLINE_RETRY_SECONDS || "0",
+      ...fakeSteamEnv()
     }
   })
 
@@ -115,8 +142,10 @@ async function smokeMode(mode) {
 
   try {
     const entry = await waitForSessionLog(startTime)
+    validateSteamPayload(entry)
     console.log(`Smoke launched ${path.relative(desktopRoot, exePath)} in ${mode} mode.`)
     console.log(`Log: ${entry.name} ${entry.version || ""} ${entry.commit || ""} ${entry.channel}`)
+    if (simulateSteamEnv) console.log(`Steam env: appId ${entry.payload.steam.appId} detected=${entry.payload.steam.detected}`)
   } finally {
     stopLaunchedProcess()
     child = null

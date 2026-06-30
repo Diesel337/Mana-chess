@@ -92,11 +92,13 @@ Smoke-test the unpacked app startup:
 npm run smoke:win
 npm run smoke:win -- --mode=maximized
 npm run smoke:win -- --mode=fullscreen
+npm run smoke:win:steam
 npm run smoke:win:modes
 npm run smoke:win:offline
 ```
 
 `smoke:win` launches `dist/win-unpacked/Mana Chess.exe`, waits for a fresh `desktop.session_started` log entry, and closes the launched process. It defaults to the `desktop-smoke` channel so QA can spot smoke runs in `desktop-log.jsonl`.
+`smoke:win:steam` launches one windowed smoke with simulated Steam environment variables and verifies they are captured in the session diagnostics.
 `smoke:win:modes` runs the same startup smoke through `windowed`, `maximized`, and `fullscreen` in sequence.
 `smoke:win:offline` launches the app against an unreachable local URL, disables auto-retry, waits for `desktop.offline`, and closes the process.
 
@@ -106,7 +108,7 @@ Run the full Windows release preflight before a Steam candidate:
 npm run release:win:preflight
 ```
 
-`release:win:preflight` validates the non-secret SteamPipe templates, rebuilds the unpacked Windows app with `verify:win`, then runs the window mode and offline smoke tests.
+`release:win:preflight` validates the non-secret SteamPipe templates, rebuilds the unpacked Windows app with `verify:win`, then runs the window mode, Steam environment, and offline smoke tests.
 
 ## SteamPipe templates
 
@@ -129,13 +131,14 @@ The real `.vdf` files, SteamCMD logs, and Steam build output are ignored locally
 - Window size, position, maximized state, and fullscreen state are restored between sessions.
 - Steam/QA can force startup with `MANA_CHESS_WINDOW_MODE`, `--window-mode`, `--fullscreen`, `--maximized`, or `--windowed`.
 - `npm run smoke:win:modes` verifies the packaged executable can start and write QA logs in `windowed`, `maximized`, and `fullscreen` launch modes.
+- `npm run smoke:win:steam` verifies the packaged executable records Steam launch context when Steam-like environment variables are present.
 - Desktop mode is forced with `?desktop=1` on every in-app navigation.
 - `manachess://` deep links can open lobby or game routes inside the desktop app.
 - External links open in the user's browser; Mana Chess links stay in the app window.
 - The offline/error screen offers automatic retry, pause/resume, lobby, copy-link, and browser fallback actions.
 - `npm run smoke:win:offline` verifies the packaged executable reaches the offline/error path and writes a QA log entry.
 - The Windows build uses the shared Mana Chess icon, app id `com.diesel337.manachess`, and explicit shortcut/uninstall metadata.
-- The web game can read `window.ManaChessDesktop.getInfo()` for desktop version, channel, platform, and origin.
+- The web game can read `window.ManaChessDesktop.getInfo()` for desktop version, channel, platform, origin, and Steam launch detection.
 - The window title follows local presence, such as lobby, active match, playing, or result states.
 - The desktop menu can copy, open, or reset local desktop QA state.
 - The desktop menu can copy QA diagnostics and open the local log folder.
@@ -185,7 +188,7 @@ Emitted event names currently include `screen.viewed`, `desktop.offline`, `deskt
 
 Desktop state is stored locally in Electron user data as `desktop-state.json`. It tracks session counters, a small event log, current presence, and local achievement flags that can later map to Steamworks achievements. Use the Desktop menu to copy the state, open the data folder, or reset the local state during QA.
 
-Desktop diagnostics are stored in the same Electron user data folder as `desktop-log.jsonl`. The log is capped at 512 KB and records session events, offline load failures, renderer process exits, window unresponsive/responsive events, and renderer console errors. Use `Mana Chess > Desktop > Copiar diagnostico QA` for a clipboard bundle with app/window/state/log context.
+Desktop diagnostics are stored in the same Electron user data folder as `desktop-log.jsonl`. The log is capped at 512 KB and records session events, Steam launch context when present, offline load failures, renderer process exits, window unresponsive/responsive events, and renderer console errors. Use `Mana Chess > Desktop > Copiar diagnostico QA` for a clipboard bundle with app/window/state/log context.
 
 ## Version and build metadata
 
