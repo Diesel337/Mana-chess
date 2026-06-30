@@ -1272,6 +1272,7 @@ defmodule ManaChessOnline.GameLobby do
           put_in(state.games[game_id], game)
 
         game ->
+          game = replace_game_state(game)
           put_in(state.games[game_id], game)
       end
     else

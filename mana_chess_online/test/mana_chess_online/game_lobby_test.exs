@@ -140,6 +140,42 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert server_game.log == ["Sala privada creada. Comparte el link para invitar."]
   end
 
+  test "watching a mirrored private room restarts a missing game server" do
+    spectator_id = unique_player("restart-private-spectator")
+    game_id = "private_restart_" <> Integer.to_string(System.unique_integer([:positive]))
+
+    game =
+      GameState.private_game(game_id, GameLobby.global_settings())
+      |> Map.put(:players, %{white: "mirror-white", black: nil})
+      |> Map.put(:log, ["Mirror conserva sala privada."])
+
+    on_exit(fn ->
+      GameSupervisor.stop_game(game_id)
+
+      :sys.replace_state(GameLobby, fn state ->
+        %{state | games: Map.delete(state.games, game_id)}
+      end)
+    end)
+
+    GameSupervisor.stop_game(game_id)
+
+    :sys.replace_state(GameLobby, fn state ->
+      %{state | games: Map.put(state.games, game_id, game)}
+    end)
+
+    assert GameSupervisor.lookup_game(game_id) == :error
+
+    view = GameLobby.watch(spectator_id, game_id)
+    assert {:ok, pid} = GameSupervisor.lookup_game(game_id)
+
+    lobby_game = :sys.get_state(GameLobby).games[game_id]
+    server_game = GameServer.snapshot(pid)
+
+    assert view.game.log == ["Mirror conserva sala privada."]
+    assert server_game == lobby_game
+    assert server_game == game
+  end
+
   test "watching a private room preserves an existing live game server" do
     spectator_id = unique_player("live-private-spectator")
     game_id = "private_live_" <> Integer.to_string(System.unique_integer([:positive]))
