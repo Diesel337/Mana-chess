@@ -2,9 +2,17 @@
   "name": "mana-chess-desktop",
   "version": "0.2.0",
   "private": true,
-  "description": "Desktop wrapper for Mana Chess.",
-  "author": "Diesel337",
+  "productName": "Mana Chess",
+  "description": "Mana Chess desktop build for real-time chess with mana, cooldowns, bots, private matches, and local cosmetics.",
+  "author": {
+    "name": "Diesel337"
+  },
+  "license": "UNLICENSED",
   "homepage": "https://mana-chess-production.up.railway.app/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Diesel337/Mana-chess.git"
+  },
   "main": "src/main.cjs",
   "scripts": {
     "check": "node --check src/main.cjs && node --check src/preload.cjs",
@@ -19,6 +27,8 @@
   "build": {
     "appId": "com.diesel337.manachess",
     "productName": "Mana Chess",
+    "executableName": "Mana Chess",
+    "copyright": "Copyright (C) 2026 Diesel337",
     "artifactName": "Mana Chess Setup ${version}.${ext}",
     "directories": {
       "output": "dist"
@@ -31,7 +41,9 @@
     "win": {
       "icon": "build/icon.ico",
       "signAndEditExecutable": false,
-      "publisherName": "Diesel337",
+      "signtoolOptions": {
+        "publisherName": "Diesel337"
+      },
       "target": [
         "nsis"
       ]
@@ -46,7 +58,9 @@
     ],
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "Mana Chess",
+      "uninstallDisplayName": "Mana Chess"
     }
   }
 }
