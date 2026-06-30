@@ -23,7 +23,8 @@
     "smoke:win": "node scripts/smoke-win-app.cjs",
     "smoke:win:modes": "node scripts/smoke-win-app.cjs --all-modes",
     "smoke:win:offline": "node scripts/smoke-win-offline.cjs",
-    "verify:win": "node scripts/verify-win-build.cjs"
+    "verify:win": "node scripts/verify-win-build.cjs",
+    "release:win:preflight": "node scripts/release-preflight-win.cjs"
   },
   "devDependencies": {
     "electron": "^33.4.11",

@@ -91,19 +91,19 @@ Official reference:
 - [ ] Final app icon is approved.
 - [ ] Installer is tested on a clean Windows machine.
 - [ ] Uninstall behavior is tested.
-- [~] Window restore, maximize, fullscreen, and relaunch behavior are tested. `npm run smoke:win:modes` now covers packaged launch/log smoke for windowed, maximized, and fullscreen; manual restore and relaunch QA still needed.
-- [~] Offline/error screen is acceptable for online-required launch. `npm run smoke:win:offline` verifies the packaged app reaches the offline path and writes QA logs; visual/copy review still needed.
+- [~] Window restore, maximize, fullscreen, and relaunch behavior are tested. `npm run smoke:win:modes` now covers packaged launch/log smoke for windowed, maximized, and fullscreen; `npm run release:win:preflight` includes it for release candidates. Manual restore and relaunch QA still needed.
+- [~] Offline/error screen is acceptable for online-required launch. `npm run smoke:win:offline` verifies the packaged app reaches the offline path and writes QA logs; `npm run release:win:preflight` includes it for release candidates. Visual/copy review still needed.
 - [~] Steam launch option points to the correct executable. SteamPipe docs identify `Mana Chess.exe`; Steamworks launch option still needs live app config.
 - [x] Desktop build has a clear app version strategy.
 - [x] Crash/error logs are accessible for QA.
 - [ ] Steam overlay compatibility is checked.
-- [~] Build can be reproduced from a clean checkout. `npm run verify:win` now checks entry files, writes build metadata, builds unpacked Windows, and verifies the exe; still needs a clean-machine pass.
+- [~] Build can be reproduced from a clean checkout. `npm run verify:win` now checks entry files, writes build metadata, builds unpacked Windows, and verifies the exe; `npm run release:win:preflight` chains build plus release smokes. Still needs a clean-machine pass.
 
 ## 5. SteamPipe and depots
 
 - [ ] SteamCMD is installed for release build upload.
 - [~] Windows depot is configured. Non-secret SteamPipe templates point at `mana_chess_desktop/dist/win-unpacked`; real Steamworks app/depot IDs still pending.
-- [~] Build scripts are created and stored outside secrets. Templates live in `mana_chess_desktop/steam/`, while copied real `.vdf` files, logs, and build output are ignored.
+- [~] Build scripts are created and stored outside secrets. Templates live in `mana_chess_desktop/steam/`, copied real `.vdf` files, logs, and build output are ignored, and `npm run release:win:preflight` validates the template shape.
 - [ ] Internal branch receives first uploaded build.
 - [ ] Launch branch policy is defined.
 - [ ] Steam build launches successfully from Steam client.

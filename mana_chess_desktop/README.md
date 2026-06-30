@@ -100,6 +100,14 @@ npm run smoke:win:offline
 `smoke:win:modes` runs the same startup smoke through `windowed`, `maximized`, and `fullscreen` in sequence.
 `smoke:win:offline` launches the app against an unreachable local URL, disables auto-retry, waits for `desktop.offline`, and closes the process.
 
+Run the full Windows release preflight before a Steam candidate:
+
+```powershell
+npm run release:win:preflight
+```
+
+`release:win:preflight` validates the non-secret SteamPipe templates, rebuilds the unpacked Windows app with `verify:win`, then runs the window mode and offline smoke tests.
+
 ## SteamPipe templates
 
 Non-secret upload templates live in `steam/`. They assume the packaged Windows payload is `dist/win-unpacked` and the Steam launch executable is `Mana Chess.exe`.
