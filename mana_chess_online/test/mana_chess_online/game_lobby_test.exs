@@ -934,6 +934,37 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert hd(server_game.log) == "Movimiento rechazado: no hay pieza en origen {4, 4}."
   end
 
+  test "rejected moves use the registered game server when the lobby mirror is missing" do
+    player_id = unique_player("rejected-live-move")
+    on_exit(fn -> GameLobby.leave(player_id) end)
+
+    view = GameLobby.start_practice(player_id)
+    assert {:ok, pid} = GameSupervisor.lookup_game(view.game_id)
+
+    server_game =
+      GameServer.update(pid, fn game ->
+        %{game | log: ["Servidor vivo antes del rechazo." | game.log]}
+      end)
+
+    :sys.replace_state(GameLobby, fn state ->
+      %{state | games: Map.delete(state.games, view.game_id)}
+    end)
+
+    refute Map.has_key?(:sys.get_state(GameLobby).games, view.game_id)
+
+    assert :ok = GameLobby.enqueue(player_id, {4, 4}, {3, 4})
+
+    lobby_game = :sys.get_state(GameLobby).games[view.game_id]
+    server_game_after_reject = GameServer.snapshot(pid)
+
+    assert hd(server_game_after_reject.log) ==
+             "Movimiento rechazado: no hay pieza en origen {4, 4}."
+
+    assert "Servidor vivo antes del rechazo." in server_game_after_reject.log
+    assert lobby_game == server_game_after_reject
+    assert server_game_after_reject.board == server_game.board
+  end
+
   test "idle ticks do not broadcast unchanged lobby or room payloads" do
     Phoenix.PubSub.subscribe(ManaChessOnline.PubSub, GameLobby.lobby_topic())
     Phoenix.PubSub.subscribe(ManaChessOnline.PubSub, GameLobby.topic("game_1"))

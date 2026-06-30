@@ -627,12 +627,16 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   defp reject_move(state, game_id, message) do
-    game =
-      update_game_state(state.games[game_id], &update_in(&1.log, fn log -> [message | log] end))
+    case game_snapshot(game_id, state) do
+      nil ->
+        {state, nil}
 
-    state = put_in(state.games[game_id], game)
+      game ->
+        game = update_game_state(game, &update_in(&1.log, fn log -> [message | log] end))
+        state = put_in(state.games[game_id], game)
 
-    {state, game_id}
+        {state, game_id}
+    end
   end
 
   @impl true
