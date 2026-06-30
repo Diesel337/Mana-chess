@@ -86,11 +86,22 @@ npm run verify:win
 
 `verify:win` checks the Electron entry files, writes build metadata, creates the unpacked Windows build, and verifies `dist/win-unpacked/Mana Chess.exe`.
 
+Smoke-test the unpacked app startup:
+
+```powershell
+npm run smoke:win
+npm run smoke:win -- --mode=maximized
+npm run smoke:win -- --mode=fullscreen
+```
+
+`smoke:win` launches `dist/win-unpacked/Mana Chess.exe`, waits for a fresh `desktop.session_started` log entry, and closes the launched process. It defaults to the `desktop-smoke` channel so QA can spot smoke runs in `desktop-log.jsonl`.
+
 ## Desktop v2 notes
 
 - The app keeps one Mana Chess window open and focuses it when launched again.
 - Window size, position, maximized state, and fullscreen state are restored between sessions.
 - Steam/QA can force startup with `MANA_CHESS_WINDOW_MODE`, `--window-mode`, `--fullscreen`, `--maximized`, or `--windowed`.
+- `npm run smoke:win -- --mode=windowed|maximized|fullscreen` verifies the packaged executable can start and write QA logs in each launch mode.
 - Desktop mode is forced with `?desktop=1` on every in-app navigation.
 - `manachess://` deep links can open lobby or game routes inside the desktop app.
 - External links open in the user's browser; Mana Chess links stay in the app window.

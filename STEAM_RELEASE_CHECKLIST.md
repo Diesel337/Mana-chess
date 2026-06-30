@@ -91,7 +91,7 @@ Official reference:
 - [ ] Final app icon is approved.
 - [ ] Installer is tested on a clean Windows machine.
 - [ ] Uninstall behavior is tested.
-- [ ] Window restore, maximize, fullscreen, and relaunch behavior are tested.
+- [~] Window restore, maximize, fullscreen, and relaunch behavior are tested. `npm run smoke:win -- --mode=windowed|maximized|fullscreen` now covers packaged launch/log smoke; manual restore and relaunch QA still needed.
 - [ ] Offline/error screen is acceptable for online-required launch.
 - [ ] Steam launch option points to the correct executable.
 - [x] Desktop build has a clear app version strategy.

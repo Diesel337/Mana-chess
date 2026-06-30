@@ -20,6 +20,7 @@
     "start": "electron .",
     "pack:win": "node scripts/write-build-info.cjs && electron-builder --dir --win --x64",
     "dist:win": "node scripts/write-build-info.cjs && electron-builder --win nsis --x64",
+    "smoke:win": "node scripts/smoke-win-app.cjs",
     "verify:win": "node scripts/verify-win-build.cjs"
   },
   "devDependencies": {
