@@ -88,7 +88,7 @@ Official reference:
 - [~] Deep links `manachess://` exist.
 - [~] Desktop bridge exists.
 - [~] Local desktop QA state exists.
-- [ ] Final app icon is approved.
+- [~] Final app icon is approved. `npm run verify:win:installer` now validates `build/icon.png`, `build/icon.ico`, and package icon wiring; final visual approval still pending.
 - [~] Installer is tested on a clean Windows machine. `npm run verify:win:installer` now builds and verifies the NSIS installer artifact without launching it and writes local SHA256 release hashes; clean-machine install pass still pending.
 - [ ] Uninstall behavior is tested.
 - [~] Window restore, maximize, fullscreen, and relaunch behavior are tested. `npm run smoke:win:modes` now covers packaged launch/log smoke for windowed, maximized, and fullscreen; `npm run release:win:preflight` includes it for release candidates. Manual restore and relaunch QA still needed.

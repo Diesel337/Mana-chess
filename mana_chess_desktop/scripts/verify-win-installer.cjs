@@ -8,6 +8,8 @@ const node = process.execPath
 const packageJson = JSON.parse(fs.readFileSync(path.join(desktopRoot, "package.json"), "utf8"))
 const electronBuilder = path.join(desktopRoot, "node_modules", "electron-builder", "cli.js")
 const buildInfoPath = path.join(desktopRoot, "src", "build-info.generated.json")
+const iconPngPath = path.join(desktopRoot, "build", "icon.png")
+const iconIcoPath = path.join(desktopRoot, "build", "icon.ico")
 const exePath = path.join(desktopRoot, "dist", "win-unpacked", "Mana Chess.exe")
 const installerPath = path.join(desktopRoot, "dist", `Mana Chess Setup ${packageJson.version}.exe`)
 const latestYmlPath = path.join(desktopRoot, "dist", "latest.yml")
@@ -88,6 +90,54 @@ function writeReleaseManifest(artifacts) {
   return manifest
 }
 
+function validateIconAssets() {
+  if (packageJson.build?.win?.icon !== "build/icon.ico") {
+    throw new Error("package.json build.win.icon must point to build/icon.ico")
+  }
+
+  if (!Array.isArray(packageJson.build?.files) || !packageJson.build.files.includes("build/icon.png")) {
+    throw new Error("package.json build.files must include build/icon.png")
+  }
+
+  const png = fs.readFileSync(iconPngPath)
+  const pngSignature = png.subarray(0, 8).toString("hex")
+  if (pngSignature !== "89504e470d0a1a0a") {
+    throw new Error("build/icon.png is not a PNG file.")
+  }
+
+  const pngWidth = png.readUInt32BE(16)
+  const pngHeight = png.readUInt32BE(20)
+  if (pngWidth !== 256 || pngHeight !== 256) {
+    throw new Error(`build/icon.png must be 256x256, found ${pngWidth}x${pngHeight}.`)
+  }
+
+  const ico = fs.readFileSync(iconIcoPath)
+  if (ico.length < 22 || ico.readUInt16LE(0) !== 0 || ico.readUInt16LE(2) !== 1) {
+    throw new Error("build/icon.ico is not a valid ICO file.")
+  }
+
+  const icoCount = ico.readUInt16LE(4)
+  const icoEntries = []
+  for (let index = 0; index < icoCount; index += 1) {
+    const offset = 6 + index * 16
+    if (offset + 15 >= ico.length) {
+      throw new Error("build/icon.ico has a truncated icon directory.")
+    }
+
+    icoEntries.push({
+      width: ico[offset] || 256,
+      height: ico[offset + 1] || 256,
+      bytes: ico.readUInt32LE(offset + 8)
+    })
+  }
+
+  const hasLargeIcon = icoEntries.some(entry => entry.width >= 256 && entry.height >= 256 && entry.bytes > 0)
+  if (!hasLargeIcon) {
+    throw new Error("build/icon.ico must include a 256x256 icon entry.")
+  }
+}
+
+validateIconAssets()
 run(node, ["--check", "src/main.cjs"])
 run(node, ["--check", "src/preload.cjs"])
 run(node, ["scripts/write-build-info.cjs"])
@@ -99,6 +149,8 @@ if (!fs.existsSync(electronBuilder)) {
 run(node, [electronBuilder, "--win", "nsis", "--x64"])
 
 const artifacts = [
+  artifactInfo("desktop-icon-png", iconPngPath),
+  artifactInfo("desktop-icon-ico", iconIcoPath),
   artifactInfo("unpacked-windows-executable", exePath),
   artifactInfo("windows-installer", installerPath),
   artifactInfo("installer-update-metadata", latestYmlPath),
