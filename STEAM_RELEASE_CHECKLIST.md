@@ -92,7 +92,7 @@ Official reference:
 - [ ] Installer is tested on a clean Windows machine.
 - [ ] Uninstall behavior is tested.
 - [~] Window restore, maximize, fullscreen, and relaunch behavior are tested. `npm run smoke:win:modes` now covers packaged launch/log smoke for windowed, maximized, and fullscreen; manual restore and relaunch QA still needed.
-- [ ] Offline/error screen is acceptable for online-required launch.
+- [~] Offline/error screen is acceptable for online-required launch. `npm run smoke:win:offline` verifies the packaged app reaches the offline path and writes QA logs; visual/copy review still needed.
 - [ ] Steam launch option points to the correct executable.
 - [x] Desktop build has a clear app version strategy.
 - [x] Crash/error logs are accessible for QA.

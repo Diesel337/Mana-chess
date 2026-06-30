@@ -93,10 +93,12 @@ npm run smoke:win
 npm run smoke:win -- --mode=maximized
 npm run smoke:win -- --mode=fullscreen
 npm run smoke:win:modes
+npm run smoke:win:offline
 ```
 
 `smoke:win` launches `dist/win-unpacked/Mana Chess.exe`, waits for a fresh `desktop.session_started` log entry, and closes the launched process. It defaults to the `desktop-smoke` channel so QA can spot smoke runs in `desktop-log.jsonl`.
 `smoke:win:modes` runs the same startup smoke through `windowed`, `maximized`, and `fullscreen` in sequence.
+`smoke:win:offline` launches the app against an unreachable local URL, disables auto-retry, waits for `desktop.offline`, and closes the process.
 
 ## Desktop v2 notes
 
@@ -108,6 +110,7 @@ npm run smoke:win:modes
 - `manachess://` deep links can open lobby or game routes inside the desktop app.
 - External links open in the user's browser; Mana Chess links stay in the app window.
 - The offline/error screen offers automatic retry, pause/resume, lobby, copy-link, and browser fallback actions.
+- `npm run smoke:win:offline` verifies the packaged executable reaches the offline/error path and writes a QA log entry.
 - The Windows build uses the shared Mana Chess icon, app id `com.diesel337.manachess`, and explicit shortcut/uninstall metadata.
 - The web game can read `window.ManaChessDesktop.getInfo()` for desktop version, channel, platform, and origin.
 - The window title follows local presence, such as lobby, active match, playing, or result states.
