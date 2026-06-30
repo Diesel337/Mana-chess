@@ -5,7 +5,7 @@ const {app, BrowserWindow, Menu, clipboard, ipcMain, screen, shell} = require("e
 const DEFAULT_GAME_URL = process.env.MANA_CHESS_URL || "https://mana-chess-production.up.railway.app/"
 const GAME_ORIGIN = new URL(DEFAULT_GAME_URL).origin
 const PROTOCOL_SCHEME = "manachess"
-const DESKTOP_CHANNEL = process.env.MANA_CHESS_DESKTOP_CHANNEL || "desktop"
+const DESKTOP_BUILD_INFO_FILE = "build-info.generated.json"
 const WINDOW_STATE_FILE = "window-state.json"
 const DESKTOP_STATE_FILE = "desktop-state.json"
 const DESKTOP_LOG_FILE = "desktop-log.jsonl"
@@ -21,6 +21,8 @@ const WINDOW_MODE_MAXIMIZED = "maximized"
 const WINDOW_MODE_WINDOWED = "windowed"
 const WINDOW_MODES = new Set([WINDOW_MODE_FULLSCREEN, WINDOW_MODE_MAXIMIZED, WINDOW_MODE_WINDOWED])
 const DEFAULT_OFFLINE_RETRY_SECONDS = 20
+const DESKTOP_BUILD_INFO = loadDesktopBuildInfo()
+const DESKTOP_CHANNEL = process.env.MANA_CHESS_DESKTOP_CHANNEL || DESKTOP_BUILD_INFO.channel || "desktop"
 
 let mainWindow = null
 let pendingGameUrl = gameUrlFromDeepLink(findDeepLink(process.argv))
@@ -56,7 +58,11 @@ function createWindow() {
       additionalArguments: [
         `--mana-chess-version=${app.getVersion()}`,
         `--mana-chess-channel=${DESKTOP_CHANNEL}`,
-        `--mana-chess-origin=${GAME_ORIGIN}`
+        `--mana-chess-origin=${GAME_ORIGIN}`,
+        `--mana-chess-build-commit=${DESKTOP_BUILD_INFO.commit}`,
+        `--mana-chess-build-dirty=${DESKTOP_BUILD_INFO.dirty}`,
+        `--mana-chess-build-time=${DESKTOP_BUILD_INFO.builtAt}`,
+        `--mana-chess-build-source=${DESKTOP_BUILD_INFO.source}`
       ],
       contextIsolation: true,
       nodeIntegration: false,
@@ -407,7 +413,8 @@ function desktopDiagnostics() {
       version: app.getVersion(),
       channel: DESKTOP_CHANNEL,
       platform: process.platform,
-      origin: GAME_ORIGIN
+      origin: GAME_ORIGIN,
+      build: desktopBuildInfo()
     },
     window: currentWindowDiagnostics(),
     paths: {
@@ -628,6 +635,43 @@ function unlockAchievement(state, id, title, at) {
   state.achievements[id] = {id, title, unlockedAt: at}
 }
 
+function loadDesktopBuildInfo() {
+  const fallback = {
+    version: "",
+    channel: "desktop",
+    commit: process.env.MANA_CHESS_BUILD_COMMIT || "dev",
+    dirty: process.env.MANA_CHESS_BUILD_DIRTY || "unknown",
+    builtAt: process.env.MANA_CHESS_BUILD_TIME || "",
+    source: "runtime"
+  }
+
+  try {
+    const buildInfoPath = path.join(__dirname, DESKTOP_BUILD_INFO_FILE)
+    return normalizeDesktopBuildInfo(JSON.parse(fs.readFileSync(buildInfoPath, "utf8")), fallback)
+  } catch (_error) {
+    return normalizeDesktopBuildInfo({}, fallback)
+  }
+}
+
+function normalizeDesktopBuildInfo(info, fallback = {}) {
+  return {
+    version: String(info.version || fallback.version || ""),
+    channel: String(info.channel || fallback.channel || "desktop"),
+    commit: String(info.commit || fallback.commit || "dev").slice(0, 80),
+    dirty: String(info.dirty || fallback.dirty || "unknown").slice(0, 16),
+    builtAt: String(info.builtAt || fallback.builtAt || "").slice(0, 80),
+    source: String(info.source || fallback.source || "runtime").slice(0, 40)
+  }
+}
+
+function desktopBuildInfo() {
+  return {
+    ...DESKTOP_BUILD_INFO,
+    version: DESKTOP_BUILD_INFO.version || app.getVersion(),
+    channel: DESKTOP_CHANNEL
+  }
+}
+
 function bindProcessDiagnostics() {
   process.on("uncaughtException", error => {
     appendDesktopLog("fatal", "main.uncaught_exception", errorPayload(error))
@@ -684,6 +728,7 @@ function appendDesktopLog(level, name, payload = {}) {
       name: String(name || "desktop.event").slice(0, 100),
       version: app.getVersion(),
       channel: DESKTOP_CHANNEL,
+      commit: DESKTOP_BUILD_INFO.commit,
       payload: cloneJson(payload)
     })}\n`)
   } catch (_error) {

@@ -78,6 +78,14 @@ Create an unpacked Windows app for quick testing:
 npm run pack:win
 ```
 
+Run the desktop release sanity check:
+
+```powershell
+npm run verify:win
+```
+
+`verify:win` checks the Electron entry files, writes build metadata, creates the unpacked Windows build, and verifies `dist/win-unpacked/Mana Chess.exe`.
+
 ## Desktop v2 notes
 
 - The app keeps one Mana Chess window open and focuses it when launched again.
@@ -93,6 +101,7 @@ npm run pack:win
 - The desktop menu can copy, open, or reset local desktop QA state.
 - The desktop menu can copy QA diagnostics and open the local log folder.
 - The desktop menu can copy the current `manachess://` deep link and open the current clean web link in the browser.
+- Windows builds include generated release metadata with app version, channel, git commit, dirty state, and optional build time.
 
 Deep link examples:
 
@@ -138,6 +147,18 @@ Emitted event names currently include `screen.viewed`, `desktop.offline`, `deskt
 Desktop state is stored locally in Electron user data as `desktop-state.json`. It tracks session counters, a small event log, current presence, and local achievement flags that can later map to Steamworks achievements. Use the Desktop menu to copy the state, open the data folder, or reset the local state during QA.
 
 Desktop diagnostics are stored in the same Electron user data folder as `desktop-log.jsonl`. The log is capped at 512 KB and records session events, offline load failures, renderer process exits, window unresponsive/responsive events, and renderer console errors. Use `Mana Chess > Desktop > Copiar diagnostico QA` for a clipboard bundle with app/window/state/log context.
+
+## Version and build metadata
+
+The app version comes from `package.json` and Electron's `app.getVersion()`. Before `pack:win`, `dist:win`, or `verify:win`, `scripts/write-build-info.cjs` writes `src/build-info.generated.json` with:
+
+- `version`: the package version.
+- `channel`: `MANA_CHESS_DESKTOP_CHANNEL` or `desktop`.
+- `commit`: the current git commit, or `MANA_CHESS_BUILD_COMMIT`.
+- `dirty`: whether the checkout had local changes, or `MANA_CHESS_BUILD_DIRTY`.
+- `builtAt`: empty by default for reproducible output, or `MANA_CHESS_BUILD_TIME` / `SOURCE_DATE_EPOCH`.
+
+The generated file is ignored by git but packaged into release builds. At runtime, this data is available through `window.ManaChessDesktop.getInfo().build` and in QA diagnostics.
 
 ## Notes
 

@@ -94,10 +94,10 @@ Official reference:
 - [ ] Window restore, maximize, fullscreen, and relaunch behavior are tested.
 - [ ] Offline/error screen is acceptable for online-required launch.
 - [ ] Steam launch option points to the correct executable.
-- [ ] Desktop build has a clear app version strategy.
+- [x] Desktop build has a clear app version strategy.
 - [x] Crash/error logs are accessible for QA.
 - [ ] Steam overlay compatibility is checked.
-- [ ] Build can be reproduced from a clean checkout.
+- [~] Build can be reproduced from a clean checkout. `npm run verify:win` now checks entry files, writes build metadata, builds unpacked Windows, and verifies the exe; still needs a clean-machine pass.
 
 ## 5. SteamPipe and depots
 

@@ -12,7 +12,13 @@ const desktopInfo = Object.freeze({
   version: readArg("mana-chess-version") || "0.2.0",
   channel: readArg("mana-chess-channel") || "desktop",
   origin: readArg("mana-chess-origin") || "",
-  platform: process.platform
+  platform: process.platform,
+  build: {
+    commit: readArg("mana-chess-build-commit") || "dev",
+    dirty: readArg("mana-chess-build-dirty") || "unknown",
+    builtAt: readArg("mana-chess-build-time") || "",
+    source: readArg("mana-chess-build-source") || "runtime"
+  }
 })
 
 function clonePayload(payload) {

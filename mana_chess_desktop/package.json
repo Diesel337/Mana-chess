@@ -16,9 +16,11 @@
   "main": "src/main.cjs",
   "scripts": {
     "check": "node --check src/main.cjs && node --check src/preload.cjs",
+    "build-info": "node scripts/write-build-info.cjs",
     "start": "electron .",
-    "pack:win": "electron-builder --dir --win --x64",
-    "dist:win": "electron-builder --win nsis --x64"
+    "pack:win": "node scripts/write-build-info.cjs && electron-builder --dir --win --x64",
+    "dist:win": "node scripts/write-build-info.cjs && electron-builder --win nsis --x64",
+    "verify:win": "node scripts/verify-win-build.cjs"
   },
   "devDependencies": {
     "electron": "^33.4.11",
