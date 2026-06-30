@@ -100,6 +100,21 @@ npm run smoke:win:offline
 `smoke:win:modes` runs the same startup smoke through `windowed`, `maximized`, and `fullscreen` in sequence.
 `smoke:win:offline` launches the app against an unreachable local URL, disables auto-retry, waits for `desktop.offline`, and closes the process.
 
+## SteamPipe templates
+
+Non-secret upload templates live in `steam/`. They assume the packaged Windows payload is `dist/win-unpacked` and the Steam launch executable is `Mana Chess.exe`.
+
+```powershell
+npm run verify:win
+cd steam
+copy app_build_steam_app.vdf.example app_build_steam_app.vdf
+copy depot_build_windows.vdf.example depot_build_windows.vdf
+# Edit placeholders with Steamworks app/depot IDs, then:
+steamcmd +login <steam_username> +run_app_build .\app_build_steam_app.vdf +quit
+```
+
+The real `.vdf` files, SteamCMD logs, and Steam build output are ignored locally. Keep Steam credentials and unpublished app/depot IDs outside git.
+
 ## Desktop v2 notes
 
 - The app keeps one Mana Chess window open and focuses it when launched again.
