@@ -166,9 +166,9 @@ For launch, the Steam app can still load the online Phoenix client, but the publ
 
 Needed before release candidate:
 
-- Production mode flag such as `MANA_CHESS_STEAM_REQUIRED=true`.
+- `MANA_CHESS_LAUNCH_ACCESS=steam_required` is enabled only for launch rehearsals or release mode.
 - Desktop/Steam-authenticated sessions can play.
-- QA sessions require explicit admin/QA bypass.
+- QA sessions require explicit `MANA_CHESS_QA_BYPASS_KEY` access.
 - Direct public web access gets a Steam-required screen or limited non-commercial preview.
 - Cosmetic paid state comes from Steam ownership/DLC/inventory, not local storage.
 
@@ -183,7 +183,7 @@ See `STEAM_RELEASE_CHECKLIST.md` for the operational Steam release gate list.
 3. Extract a `GameServer` module behind the existing `GameLobby` API.
 4. Split practice/private game ownership into per-game processes.
 5. Add Ecto/Postgres for Steam users and entitlement records.
-6. Add a production gate for Steam-required access while preserving QA/staging access.
+6. Wire real Steamworks identity into the `steam_required` launch gate.
 7. Integrate real Steamworks identity and achievements.
 8. Convert local cosmetic unlocks into Steam entitlement-aware unlocks.
 9. Run load tests and tune infrastructure before release.

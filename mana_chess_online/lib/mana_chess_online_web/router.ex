@@ -5,6 +5,7 @@ defmodule ManaChessOnlineWeb.Router do
     plug :accepts, ["html"]
     plug :fetch_session
     plug :ensure_player_id
+    plug ManaChessOnlineWeb.LaunchAccessPlug
     plug :fetch_live_flash
     plug :put_root_layout, html: {ManaChessOnlineWeb.Layouts, :root}
     plug :protect_from_forgery

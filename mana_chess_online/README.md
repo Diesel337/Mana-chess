@@ -9,6 +9,23 @@ Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
 
 Ready to run in production? Please [check our deployment guides](https://hexdocs.pm/phoenix/deployment.html).
 
+## Steam launch access gate
+
+Mana Chess remains open by default for web QA/staging:
+
+```bash
+MANA_CHESS_LAUNCH_ACCESS=open
+```
+
+For a Steam-only launch rehearsal, set:
+
+```bash
+MANA_CHESS_LAUNCH_ACCESS=steam_required
+MANA_CHESS_QA_BYPASS_KEY=<private qa key>
+```
+
+In `steam_required` mode, public lobby/game routes return a Steam-required page unless the request has a future Steam-verified session or the QA bypass key is provided with `?qa_key=...` or `x-mana-chess-qa-key`. `/admin` remains reachable for its existing admin login.
+
 ## Learn more
 
 * Official website: https://www.phoenixframework.org/

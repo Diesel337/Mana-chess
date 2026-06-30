@@ -120,9 +120,9 @@ Official reference:
 - [ ] Desktop app can read Steam identity.
 - [ ] Backend can verify a Steam-authenticated session.
 - [ ] Player identity binds to SteamID.
-- [ ] Web QA bypass is explicit and protected.
-- [ ] Production launch mode blocks full commercial play without Steam context.
-- [ ] Public web URL shows Steam-required or limited QA-safe surface.
+- [~] Web QA bypass is explicit and protected. `MANA_CHESS_LAUNCH_ACCESS=steam_required` now requires `MANA_CHESS_QA_BYPASS_KEY` for web QA access; real Steam-authenticated sessions still pending.
+- [~] Production launch mode blocks full commercial play without Steam context. The launch gate is implemented but stays off by default until Steam identity is wired.
+- [~] Public web URL shows Steam-required or limited QA-safe surface. The launch gate returns a Steam-required page in `steam_required` mode; final launch copy and Steam session wiring still pending.
 - [ ] Steam ownership/DLC/inventory state controls paid cosmetics.
 - [ ] Local cosmetic unlocks are marked preview/dev only or disabled in launch mode.
 
