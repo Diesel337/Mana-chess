@@ -5,14 +5,21 @@ const {execFileSync, spawn} = require("node:child_process")
 
 const desktopRoot = path.resolve(__dirname, "..")
 const exePath = path.join(desktopRoot, "dist", "win-unpacked", "Mana Chess.exe")
-const allowedModes = new Set(["windowed", "maximized", "fullscreen"])
-const mode = normalizeMode(readArg("--mode") || process.env.MANA_CHESS_SMOKE_MODE || "windowed")
+const smokeModes = ["windowed", "maximized", "fullscreen"]
+const allowedModes = new Set(smokeModes)
+const modes = readFlag("--all-modes")
+  ? smokeModes
+  : [normalizeMode(readArg("--mode") || process.env.MANA_CHESS_SMOKE_MODE || "windowed")]
 const timeoutMs = normalizeTimeout(readArg("--timeout-ms") || process.env.MANA_CHESS_SMOKE_TIMEOUT_MS || "12000")
 const channel = process.env.MANA_CHESS_DESKTOP_CHANNEL || "desktop-smoke"
 const appData = process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming")
 const logPath = path.join(appData, "Mana Chess", "desktop-log.jsonl")
 
 let child = null
+
+function readFlag(name) {
+  return process.argv.includes(name)
+}
 
 function readArg(name) {
   const withEquals = process.argv.find(arg => typeof arg === "string" && arg.startsWith(`${name}=`))
@@ -91,15 +98,7 @@ function stopLaunchedProcess() {
   }
 }
 
-async function main() {
-  if (process.platform !== "win32") {
-    throw new Error("smoke:win only runs on Windows.")
-  }
-
-  if (!fs.existsSync(exePath)) {
-    throw new Error(`Missing ${exePath}. Run npm run pack:win or npm run verify:win first.`)
-  }
-
+async function smokeMode(mode) {
   const startTime = Date.now()
   child = spawn(exePath, [`--${mode}`], {
     cwd: desktopRoot,
@@ -120,8 +119,25 @@ async function main() {
     console.log(`Log: ${entry.name} ${entry.version || ""} ${entry.commit || ""} ${entry.channel}`)
   } finally {
     stopLaunchedProcess()
+    child = null
     await wait(750)
   }
+}
+
+async function main() {
+  if (process.platform !== "win32") {
+    throw new Error("smoke:win only runs on Windows.")
+  }
+
+  if (!fs.existsSync(exePath)) {
+    throw new Error(`Missing ${exePath}. Run npm run pack:win or npm run verify:win first.`)
+  }
+
+  for (const mode of modes) {
+    await smokeMode(mode)
+  }
+
+  console.log(`Smoke completed for ${modes.join(", ")}.`)
 }
 
 main().catch(error => {

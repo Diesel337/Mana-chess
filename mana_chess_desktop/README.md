@@ -92,16 +92,18 @@ Smoke-test the unpacked app startup:
 npm run smoke:win
 npm run smoke:win -- --mode=maximized
 npm run smoke:win -- --mode=fullscreen
+npm run smoke:win:modes
 ```
 
 `smoke:win` launches `dist/win-unpacked/Mana Chess.exe`, waits for a fresh `desktop.session_started` log entry, and closes the launched process. It defaults to the `desktop-smoke` channel so QA can spot smoke runs in `desktop-log.jsonl`.
+`smoke:win:modes` runs the same startup smoke through `windowed`, `maximized`, and `fullscreen` in sequence.
 
 ## Desktop v2 notes
 
 - The app keeps one Mana Chess window open and focuses it when launched again.
 - Window size, position, maximized state, and fullscreen state are restored between sessions.
 - Steam/QA can force startup with `MANA_CHESS_WINDOW_MODE`, `--window-mode`, `--fullscreen`, `--maximized`, or `--windowed`.
-- `npm run smoke:win -- --mode=windowed|maximized|fullscreen` verifies the packaged executable can start and write QA logs in each launch mode.
+- `npm run smoke:win:modes` verifies the packaged executable can start and write QA logs in `windowed`, `maximized`, and `fullscreen` launch modes.
 - Desktop mode is forced with `?desktop=1` on every in-app navigation.
 - `manachess://` deep links can open lobby or game routes inside the desktop app.
 - External links open in the user's browser; Mana Chess links stay in the app window.

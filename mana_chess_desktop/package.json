@@ -21,6 +21,7 @@
     "pack:win": "node scripts/write-build-info.cjs && electron-builder --dir --win --x64",
     "dist:win": "node scripts/write-build-info.cjs && electron-builder --win nsis --x64",
     "smoke:win": "node scripts/smoke-win-app.cjs",
+    "smoke:win:modes": "node scripts/smoke-win-app.cjs --all-modes",
     "verify:win": "node scripts/verify-win-build.cjs"
   },
   "devDependencies": {
