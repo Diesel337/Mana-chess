@@ -84,7 +84,7 @@ Official reference:
 ## 4. Desktop build
 
 - [~] Electron desktop wrapper exists.
-- [~] Windows unpacked build works.
+- [x] Windows unpacked build works.
 - [~] Deep links `manachess://` exist.
 - [~] Desktop bridge exists.
 - [~] Local desktop QA state exists.
@@ -95,7 +95,7 @@ Official reference:
 - [ ] Offline/error screen is acceptable for online-required launch.
 - [ ] Steam launch option points to the correct executable.
 - [ ] Desktop build has a clear app version strategy.
-- [ ] Crash/error logs are accessible for QA.
+- [x] Crash/error logs are accessible for QA.
 - [ ] Steam overlay compatibility is checked.
 - [ ] Build can be reproduced from a clean checkout.
 

@@ -8,7 +8,10 @@ const PROTOCOL_SCHEME = "manachess"
 const DESKTOP_CHANNEL = process.env.MANA_CHESS_DESKTOP_CHANNEL || "desktop"
 const WINDOW_STATE_FILE = "window-state.json"
 const DESKTOP_STATE_FILE = "desktop-state.json"
+const DESKTOP_LOG_FILE = "desktop-log.jsonl"
 const EVENT_LOG_LIMIT = 40
+const DESKTOP_LOG_READ_LIMIT = 80
+const DESKTOP_LOG_MAX_BYTES = 512 * 1024
 const MIN_WINDOW_WIDTH = 1024
 const MIN_WINDOW_HEIGHT = 720
 const DEFAULT_WINDOW_WIDTH = 1440
@@ -27,6 +30,7 @@ let desktopConnectionWasOffline = false
 
 app.setAppUserModelId("com.diesel337.manachess")
 registerProtocol()
+bindProcessDiagnostics()
 
 app.on("open-url", (event, url) => {
   event.preventDefault()
@@ -93,9 +97,15 @@ function bindDesktopBridge() {
 
   ipcMain.handle("mana-chess:get-desktop-state", () => readDesktopState())
 
+  ipcMain.handle("mana-chess:get-desktop-diagnostics", () => desktopDiagnostics())
+
   ipcMain.handle("mana-chess:copy-desktop-state", () => copyDesktopState())
 
+  ipcMain.handle("mana-chess:copy-desktop-diagnostics", () => copyDesktopDiagnostics())
+
   ipcMain.handle("mana-chess:open-desktop-state-folder", () => openDesktopStateFolder())
+
+  ipcMain.handle("mana-chess:open-desktop-log-folder", () => openDesktopLogFolder())
 
   ipcMain.handle("mana-chess:reset-desktop-state", () => resetDesktopState())
 
@@ -129,8 +139,16 @@ function buildMenu() {
               click: () => copyDesktopState()
             },
             {
+              label: "Copiar diagnostico QA",
+              click: () => copyDesktopDiagnostics()
+            },
+            {
               label: "Abrir datos desktop",
               click: () => openDesktopStateFolder()
+            },
+            {
+              label: "Abrir logs desktop",
+              click: () => openDesktopLogFolder()
             },
             {
               label: "Reiniciar estado local",
@@ -215,6 +233,7 @@ function bindNavigationGuards() {
     const parsed = safeUrl(validatedURL)
     if (parsed?.origin !== GAME_ORIGIN) return
 
+    appendDesktopLog("warn", "desktop.did_fail_load", {errorCode, errorDescription, url: cleanShareUrl(validatedURL)})
     showOfflineScreen(validatedURL, {errorCode, errorDescription})
   })
 
@@ -229,6 +248,35 @@ function bindNavigationGuards() {
       name: "desktop.reconnected",
       payload: {url: cleanShareUrl(parsed.toString()) || DEFAULT_GAME_URL}
     })
+  })
+
+  mainWindow.webContents.on("render-process-gone", (_event, details) => {
+    appendDesktopLog("error", "desktop.render_process_gone", details)
+  })
+
+  mainWindow.webContents.on("console-message", (_event, level, message, line, sourceId) => {
+    const renderedMessage = String(message || "")
+    const numericLevel = Number(level)
+    const shouldLog = Number.isFinite(numericLevel)
+      ? numericLevel >= 2
+      : /error|failed|exception|unhandled/i.test(renderedMessage)
+
+    if (!shouldLog) return
+
+    appendDesktopLog("renderer", "desktop.console_message", {
+      level,
+      message: renderedMessage.slice(0, 1000),
+      line,
+      sourceId: cleanShareUrl(sourceId) || String(sourceId || "").slice(0, 240)
+    })
+  })
+
+  mainWindow.on("unresponsive", () => {
+    appendDesktopLog("warn", "desktop.window_unresponsive", {url: currentShareUrl()})
+  })
+
+  mainWindow.on("responsive", () => {
+    appendDesktopLog("info", "desktop.window_responsive", {url: currentShareUrl()})
   })
 }
 
@@ -309,7 +357,8 @@ function openCurrentWebLink() {
 }
 
 function desktopStatePath() {
-  return path.join(app.getPath("userData"), DESKTOP_STATE_FILE)
+  const dataPath = desktopUserDataPath()
+  return dataPath ? path.join(dataPath, DESKTOP_STATE_FILE) : DESKTOP_STATE_FILE
 }
 
 function readDesktopState() {
@@ -322,7 +371,10 @@ function readDesktopState() {
 
 function writeDesktopState(state) {
   try {
-    fs.mkdirSync(app.getPath("userData"), {recursive: true})
+    const dataPath = desktopUserDataPath()
+    if (!dataPath) return
+
+    fs.mkdirSync(dataPath, {recursive: true})
     fs.writeFileSync(desktopStatePath(), JSON.stringify(normalizeDesktopState(state), null, 2))
   } catch (_error) {
     // Desktop state should never block gameplay or app launch.
@@ -347,12 +399,69 @@ function copyDesktopState() {
   return {ok: true, state}
 }
 
+function desktopDiagnostics() {
+  return {
+    ok: true,
+    app: {
+      name: app.getName(),
+      version: app.getVersion(),
+      channel: DESKTOP_CHANNEL,
+      platform: process.platform,
+      origin: GAME_ORIGIN
+    },
+    window: currentWindowDiagnostics(),
+    paths: {
+      userData: desktopUserDataPath(),
+      state: desktopStatePath(),
+      log: desktopLogPath()
+    },
+    state: readDesktopState(),
+    recentLog: readDesktopLogLines()
+  }
+}
+
+function currentWindowDiagnostics() {
+  if (!mainWindow || mainWindow.isDestroyed()) {
+    return {exists: false}
+  }
+
+  return {
+    exists: true,
+    url: cleanShareUrl(mainWindow.webContents.getURL()) || "",
+    title: mainWindow.getTitle(),
+    bounds: mainWindow.getBounds(),
+    isMaximized: mainWindow.isMaximized(),
+    isFullScreen: mainWindow.isFullScreen(),
+    isMinimized: mainWindow.isMinimized()
+  }
+}
+
+function copyDesktopDiagnostics() {
+  const diagnostics = desktopDiagnostics()
+  clipboard.writeText(JSON.stringify(diagnostics, null, 2))
+  appendDesktopLog("info", "desktop.diagnostics_copied", {url: diagnostics.window.url})
+  return {ok: true, diagnostics}
+}
+
 async function openDesktopStateFolder() {
   try {
-    const dataPath = app.getPath("userData")
+    const dataPath = desktopUserDataPath()
     fs.mkdirSync(dataPath, {recursive: true})
     const error = await shell.openPath(dataPath)
     return {ok: !error, path: dataPath, error}
+  } catch (error) {
+    return {ok: false, error: String(error?.message || error)}
+  }
+}
+
+async function openDesktopLogFolder() {
+  try {
+    const dataPath = desktopUserDataPath()
+    fs.mkdirSync(dataPath, {recursive: true})
+    ensureDesktopLogFile()
+    const error = await shell.openPath(dataPath)
+    appendDesktopLog(error ? "warn" : "info", "desktop.log_folder_opened", {path: dataPath, error})
+    return {ok: !error, path: dataPath, log: desktopLogPath(), error}
   } catch (error) {
     return {ok: false, error: String(error?.message || error)}
   }
@@ -380,6 +489,7 @@ function recordDesktopEvent(event) {
   const normalizedEvent = normalizeDesktopEvent(event)
   if (!normalizedEvent) return null
 
+  appendDesktopLog("event", normalizedEvent.name, normalizedEvent.payload)
   const state = updateDesktopState(readDesktopState(), normalizedEvent)
   writeDesktopState(state)
   applyDesktopPresence(state.presence)
@@ -516,6 +626,101 @@ function markSeen(state, bucket, value) {
 function unlockAchievement(state, id, title, at) {
   if (state.achievements[id]) return
   state.achievements[id] = {id, title, unlockedAt: at}
+}
+
+function bindProcessDiagnostics() {
+  process.on("uncaughtException", error => {
+    appendDesktopLog("fatal", "main.uncaught_exception", errorPayload(error))
+  })
+
+  process.on("unhandledRejection", reason => {
+    appendDesktopLog("fatal", "main.unhandled_rejection", errorPayload(reason))
+  })
+
+  app.on("child-process-gone", (_event, details) => {
+    appendDesktopLog("error", "desktop.child_process_gone", details)
+  })
+}
+
+function errorPayload(error) {
+  return {
+    message: String(error?.message || error || "").slice(0, 1000),
+    stack: String(error?.stack || "").slice(0, 4000)
+  }
+}
+
+function desktopUserDataPath() {
+  try {
+    return app.getPath("userData")
+  } catch (_error) {
+    return ""
+  }
+}
+
+function desktopLogPath() {
+  const dataPath = desktopUserDataPath()
+  return dataPath ? path.join(dataPath, DESKTOP_LOG_FILE) : ""
+}
+
+function ensureDesktopLogFile() {
+  const logPath = desktopLogPath()
+  if (!logPath) return ""
+
+  fs.mkdirSync(path.dirname(logPath), {recursive: true})
+  if (!fs.existsSync(logPath)) fs.writeFileSync(logPath, "")
+  return logPath
+}
+
+function appendDesktopLog(level, name, payload = {}) {
+  const logPath = desktopLogPath()
+  if (!logPath) return
+
+  try {
+    fs.mkdirSync(path.dirname(logPath), {recursive: true})
+    trimDesktopLogFile(logPath)
+    fs.appendFileSync(logPath, `${JSON.stringify({
+      at: new Date().toISOString(),
+      level: String(level || "info").slice(0, 24),
+      name: String(name || "desktop.event").slice(0, 100),
+      version: app.getVersion(),
+      channel: DESKTOP_CHANNEL,
+      payload: cloneJson(payload)
+    })}\n`)
+  } catch (_error) {
+    // Diagnostics should never block gameplay or app launch.
+  }
+}
+
+function trimDesktopLogFile(logPath = desktopLogPath()) {
+  if (!logPath) return
+
+  try {
+    const stat = fs.statSync(logPath)
+    if (stat.size <= DESKTOP_LOG_MAX_BYTES) return
+
+    const keepBytes = Math.floor(DESKTOP_LOG_MAX_BYTES * 0.75)
+    const buffer = fs.readFileSync(logPath)
+    const tail = buffer.subarray(Math.max(0, buffer.length - keepBytes))
+    const firstNewline = tail.indexOf(10)
+    const trimmedTail = firstNewline >= 0 ? tail.subarray(firstNewline + 1) : tail
+    fs.writeFileSync(logPath, trimmedTail)
+  } catch (_error) {
+    // Missing logs are fine; they will be recreated on the next write.
+  }
+}
+
+function readDesktopLogLines(limit = DESKTOP_LOG_READ_LIMIT) {
+  const logPath = desktopLogPath()
+  if (!logPath) return []
+
+  try {
+    const text = fs.readFileSync(logPath, "utf8").trim()
+    if (!text) return []
+
+    return text.split(/\r?\n/).slice(-limit)
+  } catch (_error) {
+    return []
+  }
 }
 
 function cleanShareUrl(url) {

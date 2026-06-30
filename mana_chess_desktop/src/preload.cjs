@@ -26,8 +26,11 @@ function clonePayload(payload) {
 contextBridge.exposeInMainWorld("ManaChessDesktop", {
   getInfo: () => ({...desktopInfo}),
   getState: () => ipcRenderer.invoke("mana-chess:get-desktop-state"),
+  getDiagnostics: () => ipcRenderer.invoke("mana-chess:get-desktop-diagnostics"),
   copyState: () => ipcRenderer.invoke("mana-chess:copy-desktop-state"),
+  copyDiagnostics: () => ipcRenderer.invoke("mana-chess:copy-desktop-diagnostics"),
   openStateFolder: () => ipcRenderer.invoke("mana-chess:open-desktop-state-folder"),
+  openLogFolder: () => ipcRenderer.invoke("mana-chess:open-desktop-log-folder"),
   resetState: () => ipcRenderer.invoke("mana-chess:reset-desktop-state"),
   copyShareLink: (url = "") => ipcRenderer.invoke("mana-chess:copy-share-link", String(url || "")),
   openShareLink: (url = "") => ipcRenderer.invoke("mana-chess:open-share-link", String(url || "")),

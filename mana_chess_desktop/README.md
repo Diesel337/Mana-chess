@@ -91,6 +91,7 @@ npm run pack:win
 - The web game can read `window.ManaChessDesktop.getInfo()` for desktop version, channel, platform, and origin.
 - The window title follows local presence, such as lobby, active match, playing, or result states.
 - The desktop menu can copy, open, or reset local desktop QA state.
+- The desktop menu can copy QA diagnostics and open the local log folder.
 - The desktop menu can copy the current `manachess://` deep link and open the current clean web link in the browser.
 
 Deep link examples:
@@ -118,8 +119,11 @@ The preload exposes a small, future-safe API to the remote game:
 ```js
 window.ManaChessDesktop.getInfo()
 window.ManaChessDesktop.getState()
+window.ManaChessDesktop.getDiagnostics()
 window.ManaChessDesktop.copyState()
+window.ManaChessDesktop.copyDiagnostics()
 window.ManaChessDesktop.openStateFolder()
+window.ManaChessDesktop.openLogFolder()
 window.ManaChessDesktop.resetState()
 window.ManaChessDesktop.copyShareLink(window.location.href)
 window.ManaChessDesktop.openShareLink(window.location.href)
@@ -132,6 +136,8 @@ window.ManaChessDesktop.sendEvent("match.finished", {result: "win"})
 Emitted event names currently include `screen.viewed`, `desktop.offline`, `desktop.offline_screen_viewed`, `desktop.reconnected`, `match.opened`, `match.status_changed`, `match.started`, and `match.finished`.
 
 Desktop state is stored locally in Electron user data as `desktop-state.json`. It tracks session counters, a small event log, current presence, and local achievement flags that can later map to Steamworks achievements. Use the Desktop menu to copy the state, open the data folder, or reset the local state during QA.
+
+Desktop diagnostics are stored in the same Electron user data folder as `desktop-log.jsonl`. The log is capped at 512 KB and records session events, offline load failures, renderer process exits, window unresponsive/responsive events, and renderer console errors. Use `Mana Chess > Desktop > Copiar diagnostico QA` for a clipboard bundle with app/window/state/log context.
 
 ## Notes
 
