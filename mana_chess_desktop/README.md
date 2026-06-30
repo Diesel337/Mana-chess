@@ -78,7 +78,7 @@ Verify the Windows installer artifact without launching it:
 npm run verify:win:installer
 ```
 
-`verify:win:installer` checks the Electron entry files, writes build metadata, creates the unpacked app plus NSIS installer, and verifies `dist/win-unpacked/Mana Chess.exe`, `dist/Mana Chess Setup <version>.exe`, `dist/latest.yml`, and the installer block map.
+`verify:win:installer` checks the Electron entry files, writes build metadata, creates the unpacked app plus NSIS installer, verifies `dist/win-unpacked/Mana Chess.exe`, `dist/Mana Chess Setup <version>.exe`, `dist/latest.yml`, and the installer block map, then writes `dist/release-manifest.json` with sizes and SHA256 hashes.
 
 Create an unpacked Windows app for quick testing:
 
@@ -146,7 +146,7 @@ The real `.vdf` files, SteamCMD logs, and Steam build output are ignored locally
 - The offline/error screen offers automatic retry, pause/resume, lobby, copy-link, and browser fallback actions.
 - `npm run smoke:win:offline` verifies the packaged executable reaches the offline/error path and writes a QA log entry.
 - The Windows build uses the shared Mana Chess icon, app id `com.diesel337.manachess`, and explicit shortcut/uninstall metadata.
-- `npm run verify:win:installer` verifies the NSIS installer artifact exists and has a Windows executable header, without installing it.
+- `npm run verify:win:installer` verifies the NSIS installer artifact exists and has a Windows executable header, without installing it, and writes a local release manifest with artifact hashes.
 - The web game can read `window.ManaChessDesktop.getInfo()` for desktop version, channel, platform, origin, and Steam launch detection.
 - The window title follows local presence, such as lobby, active match, playing, or result states.
 - The desktop menu can copy, open, or reset local desktop QA state.
@@ -209,7 +209,7 @@ The app version comes from `package.json` and Electron's `app.getVersion()`. Bef
 - `dirty`: whether the checkout had local changes, or `MANA_CHESS_BUILD_DIRTY`.
 - `builtAt`: empty by default for reproducible output, or `MANA_CHESS_BUILD_TIME` / `SOURCE_DATE_EPOCH`.
 
-The generated file is ignored by git but packaged into release builds. At runtime, this data is available through `window.ManaChessDesktop.getInfo().build` and in QA diagnostics.
+The generated file is ignored by git but packaged into release builds. At runtime, this data is available through `window.ManaChessDesktop.getInfo().build` and in QA diagnostics. Release artifact hashes are written separately to ignored `dist/release-manifest.json` by `npm run verify:win:installer`.
 
 ## Notes
 

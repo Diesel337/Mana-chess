@@ -89,7 +89,7 @@ Official reference:
 - [~] Desktop bridge exists.
 - [~] Local desktop QA state exists.
 - [ ] Final app icon is approved.
-- [~] Installer is tested on a clean Windows machine. `npm run verify:win:installer` now builds and verifies the NSIS installer artifact without launching it; clean-machine install pass still pending.
+- [~] Installer is tested on a clean Windows machine. `npm run verify:win:installer` now builds and verifies the NSIS installer artifact without launching it and writes local SHA256 release hashes; clean-machine install pass still pending.
 - [ ] Uninstall behavior is tested.
 - [~] Window restore, maximize, fullscreen, and relaunch behavior are tested. `npm run smoke:win:modes` now covers packaged launch/log smoke for windowed, maximized, and fullscreen; `npm run release:win:preflight` includes it for release candidates. Manual restore and relaunch QA still needed.
 - [~] Offline/error screen is acceptable for online-required launch. `npm run smoke:win:offline` verifies the packaged app reaches the offline path and writes QA logs; `npm run release:win:preflight` includes it for release candidates. Visual/copy review still needed.
@@ -97,7 +97,7 @@ Official reference:
 - [x] Desktop build has a clear app version strategy.
 - [x] Crash/error logs are accessible for QA.
 - [~] Steam overlay compatibility is checked. Desktop diagnostics now record Steam launch context and `npm run smoke:win:steam` verifies the packaged app captures Steam-like environment variables; real Steam client overlay QA still pending.
-- [~] Build can be reproduced from a clean checkout. `npm run verify:win` now checks entry files, writes build metadata, builds unpacked Windows, and verifies the exe; `npm run verify:win:installer` verifies the unpacked exe plus NSIS installer artifact; `npm run release:win:preflight` chains installer/build verification plus window, Steam-env, and offline smokes. Still needs a clean-machine pass.
+- [~] Build can be reproduced from a clean checkout. `npm run verify:win` now checks entry files, writes build metadata, builds unpacked Windows, and verifies the exe; `npm run verify:win:installer` verifies the unpacked exe plus NSIS installer artifact and writes `dist/release-manifest.json`; `npm run release:win:preflight` chains installer/build verification plus window, Steam-env, and offline smokes. Still needs a clean-machine pass.
 
 ## 5. SteamPipe and depots
 
