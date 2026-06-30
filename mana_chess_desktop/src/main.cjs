@@ -13,6 +13,10 @@ const MIN_WINDOW_WIDTH = 1024
 const MIN_WINDOW_HEIGHT = 720
 const DEFAULT_WINDOW_WIDTH = 1440
 const DEFAULT_WINDOW_HEIGHT = 960
+const WINDOW_MODE_FULLSCREEN = "fullscreen"
+const WINDOW_MODE_MAXIMIZED = "maximized"
+const WINDOW_MODE_WINDOWED = "windowed"
+const WINDOW_MODES = new Set([WINDOW_MODE_FULLSCREEN, WINDOW_MODE_MAXIMIZED, WINDOW_MODE_WINDOWED])
 
 let mainWindow = null
 let pendingGameUrl = gameUrlFromDeepLink(findDeepLink(process.argv))
@@ -574,10 +578,54 @@ function readWindowState() {
   try {
     const savedState = JSON.parse(fs.readFileSync(windowStatePath(), "utf8"))
     const normalizedState = normalizeWindowState(savedState, defaultState)
-    return boundsAreVisible(normalizedState.bounds) ? normalizedState : defaultState
+    const visibleState = boundsAreVisible(normalizedState.bounds) ? normalizedState : defaultState
+    return applyLaunchWindowMode(visibleState)
   } catch (_error) {
-    return defaultState
+    return applyLaunchWindowMode(defaultState)
   }
+}
+
+function applyLaunchWindowMode(windowState, mode = launchWindowMode()) {
+  if (mode === WINDOW_MODE_FULLSCREEN) {
+    return {...windowState, isMaximized: false, isFullScreen: true}
+  }
+
+  if (mode === WINDOW_MODE_MAXIMIZED) {
+    return {...windowState, isMaximized: true, isFullScreen: false}
+  }
+
+  if (mode === WINDOW_MODE_WINDOWED) {
+    return {...windowState, isMaximized: false, isFullScreen: false}
+  }
+
+  return windowState
+}
+
+function launchWindowMode(argv = process.argv, env = process.env) {
+  const argMode = launchWindowModeFromArgv(argv)
+  if (argMode) return argMode
+
+  return normalizeWindowMode(env.MANA_CHESS_WINDOW_MODE)
+}
+
+function launchWindowModeFromArgv(argv = []) {
+  for (let index = 0; index < argv.length; index += 1) {
+    const arg = argv[index]
+    if (typeof arg !== "string") continue
+
+    if (arg === "--fullscreen") return WINDOW_MODE_FULLSCREEN
+    if (arg === "--maximized") return WINDOW_MODE_MAXIMIZED
+    if (arg === "--windowed") return WINDOW_MODE_WINDOWED
+    if (arg === "--window-mode") return normalizeWindowMode(argv[index + 1])
+    if (arg.startsWith("--window-mode=")) return normalizeWindowMode(arg.slice("--window-mode=".length))
+  }
+
+  return ""
+}
+
+function normalizeWindowMode(value) {
+  const mode = String(value || "").trim().toLowerCase()
+  return WINDOW_MODES.has(mode) ? mode : ""
 }
 
 function defaultWindowState() {

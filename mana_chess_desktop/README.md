@@ -19,6 +19,20 @@ $env:MANA_CHESS_URL="http://localhost:4000/"
 npm start
 ```
 
+Force a launch window mode for Steam/QA:
+
+```powershell
+$env:MANA_CHESS_WINDOW_MODE="fullscreen"
+npm start
+```
+
+Supported modes are `fullscreen`, `maximized`, and `windowed`. Launch args are also supported:
+
+```powershell
+npm start -- --window-mode=windowed
+npm start -- --fullscreen
+```
+
 ## Commands
 
 Install dependencies:
@@ -55,6 +69,7 @@ npm run pack:win
 
 - The app keeps one Mana Chess window open and focuses it when launched again.
 - Window size, position, maximized state, and fullscreen state are restored between sessions.
+- Steam/QA can force startup with `MANA_CHESS_WINDOW_MODE`, `--window-mode`, `--fullscreen`, `--maximized`, or `--windowed`.
 - Desktop mode is forced with `?desktop=1` on every in-app navigation.
 - `manachess://` deep links can open lobby or game routes inside the desktop app.
 - External links open in the user's browser; Mana Chess links stay in the app window.
