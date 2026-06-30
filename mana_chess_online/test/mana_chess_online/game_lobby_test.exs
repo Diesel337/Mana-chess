@@ -140,6 +140,45 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert server_game.log == ["Sala privada creada. Comparte el link para invitar."]
   end
 
+  test "watching a private room preserves an existing live game server" do
+    spectator_id = unique_player("live-private-spectator")
+    game_id = "private_live_" <> Integer.to_string(System.unique_integer([:positive]))
+    game = GameState.private_game(game_id, GameLobby.global_settings())
+
+    on_exit(fn ->
+      GameSupervisor.stop_game(game_id)
+
+      :sys.replace_state(GameLobby, fn state ->
+        %{state | games: Map.delete(state.games, game_id)}
+      end)
+    end)
+
+    assert {:ok, pid} = GameSupervisor.upsert_game(game)
+
+    server_game =
+      GameServer.update(pid, fn game ->
+        %{
+          game
+          | players: %{white: "live-white", black: nil},
+            log: ["Servidor privado vivo." | game.log]
+        }
+      end)
+
+    :sys.replace_state(GameLobby, fn state ->
+      %{state | games: Map.delete(state.games, game_id)}
+    end)
+
+    view = GameLobby.watch(spectator_id, game_id)
+
+    lobby_game = :sys.get_state(GameLobby).games[game_id]
+    server_game_after_watch = GameServer.snapshot(pid)
+
+    assert view.game_id == game_id
+    assert view.game.log == server_game.log
+    assert server_game_after_watch == server_game
+    assert lobby_game == server_game
+  end
+
   test "reads snapshots from the registered game server" do
     player_id = unique_player("snapshot-server")
     on_exit(fn -> GameLobby.leave(player_id) end)
@@ -716,18 +755,20 @@ defmodule ManaChessOnline.GameLobbyTest do
 
     assert {:ok, pid} = GameSupervisor.lookup_game(game_id)
 
-    server_game =
-      GameServer.update(pid, fn game ->
-        %{
-          game
-          | players: %{white: white_id, black: black_id},
-            status: :ready,
-            log: ["Servidor marco listo." | game.log]
-        }
-      end)
+    GameServer.update(pid, fn game ->
+      %{
+        game
+        | players: %{white: white_id, black: black_id},
+          status: :ready,
+          log: ["Servidor marco listo." | game.log]
+      }
+    end)
 
-    lobby_game = :sys.get_state(GameLobby).games[game_id]
-    refute lobby_game.status == server_game.status
+    :sys.replace_state(GameLobby, fn state ->
+      %{state | games: Map.delete(state.games, game_id)}
+    end)
+
+    refute Map.has_key?(:sys.get_state(GameLobby).games, game_id)
 
     assert :ok = GameLobby.start_game(white_id)
 

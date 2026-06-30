@@ -1261,9 +1261,15 @@ defmodule ManaChessOnline.GameLobby do
     do: "practice_" <> Integer.to_string(:erlang.phash2(player_id))
 
   defp ensure_private_game(state, game_id) do
-    if private_game_id?(game_id) and is_nil(state.games[game_id]) do
-      game = replace_game_state(private_game(game_id, state.global_settings))
-      put_in(state.games[game_id], game)
+    if private_game_id?(game_id) do
+      case game_snapshot(game_id, state) do
+        nil ->
+          game = replace_game_state(private_game(game_id, state.global_settings))
+          put_in(state.games[game_id], game)
+
+        game ->
+          put_in(state.games[game_id], game)
+      end
     else
       state
     end
