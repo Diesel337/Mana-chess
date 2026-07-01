@@ -86,7 +86,7 @@ Official reference:
 - [~] Electron desktop wrapper exists.
 - [x] Windows unpacked build works.
 - [~] Deep links `manachess://` exist. `npm run smoke:win:deep-link` now verifies the packaged executable resolves a startup game link to the expected desktop route; real Steam client/deep-link QA still pending.
-- [~] Desktop bridge exists.
+- [~] Desktop bridge exists. `npm run smoke:win:bridge` now verifies the packaged executable exposes `window.ManaChessDesktop`, reads desktop state/diagnostics, marks desktop mode, and records bridge IPC events.
 - [~] Local desktop QA state exists.
 - [~] Final app icon is approved. `npm run verify:win:installer` now validates `build/icon.png`, `build/icon.ico`, and package icon wiring; final visual approval still pending.
 - [~] Installer is tested on a clean Windows machine. `npm run verify:win:installer` now builds and verifies the NSIS installer artifact without launching it and writes local SHA256 release hashes; clean-machine install pass still pending.
