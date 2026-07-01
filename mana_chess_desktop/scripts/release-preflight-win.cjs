@@ -83,6 +83,7 @@ function main() {
   run("Window mode smoke tests", node, ["scripts/smoke-win-app.cjs", "--all-modes"])
   run("Steam env smoke test", node, ["scripts/smoke-win-app.cjs", "--mode=windowed", "--steam-env"])
   run("Deep link smoke test", node, ["scripts/smoke-win-deep-link.cjs"])
+  run("Second instance deep link smoke test", node, ["scripts/smoke-win-second-instance.cjs"])
   run("Desktop bridge smoke test", node, ["scripts/smoke-win-bridge.cjs"])
   run("Reconnect smoke test", node, ["scripts/smoke-win-reconnect.cjs"])
   run("Offline smoke test", node, ["scripts/smoke-win-offline.cjs"])
