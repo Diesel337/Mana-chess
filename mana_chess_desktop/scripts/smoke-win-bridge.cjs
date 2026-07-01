@@ -91,6 +91,8 @@ function bridgeSmokePage() {
         let copyShareLinkUrl = "";
         let copyDeepLinkOk = false;
         let copyDeepLinkUrl = "";
+        let resetStateOk = false;
+        let resetSessionOk = false;
         const shareTarget = new URL("/game/private_bridge_smoke?desktop=1", window.location.origin).toString();
 
         try {
@@ -125,6 +127,15 @@ function bridgeSmokePage() {
           copyDeepLinkUrl = result?.url || "";
         } catch (_error) {}
 
+        try {
+          const state = await bridge?.resetState?.();
+          resetStateOk = state?.version === 1 && Boolean(state?.presence);
+          resetSessionOk = Boolean(
+            state?.counters?.sessions >= 1 &&
+            state?.lastEvents?.some?.((event) => event?.name === "desktop.session_started" && event?.payload?.reset === true)
+          );
+        } catch (_error) {}
+
         bridge?.sendEvent?.("desktop.bridge_smoke", {
           bridge: Boolean(bridge),
           isDesktop: info.isDesktop === true,
@@ -138,6 +149,8 @@ function bridgeSmokePage() {
           copyShareLinkUrl,
           copyDeepLinkOk,
           copyDeepLinkUrl,
+          resetStateOk,
+          resetSessionOk,
           datasetDesktop: document.documentElement.dataset.desktop === "true"
         });
       });
@@ -179,6 +192,8 @@ function validateBridgePayload(entry) {
   if (payload.copyDeepLinkUrl !== "manachess://game/private_bridge_smoke") {
     throw new Error(`Expected private game deep link, received ${payload.copyDeepLinkUrl || "empty"}.`)
   }
+  if (payload.resetStateOk !== true) throw new Error("Expected bridge resetState() to return normalized desktop state.")
+  if (payload.resetSessionOk !== true) throw new Error("Expected bridge resetState() to record a reset session event.")
   if (payload.datasetDesktop !== true) throw new Error("Expected preload to mark documentElement dataset.desktop=true.")
 }
 
