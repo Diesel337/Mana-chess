@@ -112,7 +112,7 @@ npm run smoke:win:offline
 `smoke:win:steam` launches one windowed smoke with simulated Steam environment variables and verifies they are captured in the session diagnostics.
 `smoke:win:modes` runs the same startup smoke through `windowed`, `maximized`, and `fullscreen` in sequence.
 `smoke:win:deep-link` launches the packaged app with a `manachess://game/private_smoke_deep_link` URL and verifies the launcher resolves it to a game route in the desktop QA log.
-`smoke:win:bridge` launches the packaged app against a local QA page and verifies `window.ManaChessDesktop` can report desktop info, read local desktop state, read diagnostics, mark desktop mode, and send an IPC event back to the main process.
+`smoke:win:bridge` launches the packaged app against a local QA page and verifies `window.ManaChessDesktop` can report desktop info, read/copy local desktop state and diagnostics, copy share/deep links, mark desktop mode, and send an IPC event back to the main process.
 `smoke:win:reconnect` launches the packaged app against a temporarily unavailable local URL, waits for `desktop.offline`, brings the local server online, and verifies `desktop.reconnected`.
 `smoke:win:offline` launches the app against an unreachable local URL, disables auto-retry, waits for `desktop.offline`, and closes the process.
 
@@ -147,7 +147,7 @@ The real `.vdf` files, SteamCMD logs, and Steam build output are ignored locally
 - `npm run smoke:win:modes` verifies the packaged executable can start and write QA logs in `windowed`, `maximized`, and `fullscreen` launch modes.
 - `npm run smoke:win:steam` verifies the packaged executable records Steam launch context when Steam-like environment variables are present.
 - `npm run smoke:win:deep-link` verifies the packaged executable resolves a startup `manachess://` game link to the expected desktop route.
-- `npm run smoke:win:bridge` verifies the packaged executable exposes the desktop bridge to renderer code and records bridge IPC events.
+- `npm run smoke:win:bridge` verifies the packaged executable exposes the desktop bridge to renderer code, handles QA copy actions, and records bridge IPC events.
 - `npm run smoke:win:reconnect` verifies the packaged executable can recover from the offline screen when the service comes back.
 - Desktop mode is forced with `?desktop=1` on every in-app navigation.
 - `manachess://` deep links can open lobby or game routes inside the desktop app.

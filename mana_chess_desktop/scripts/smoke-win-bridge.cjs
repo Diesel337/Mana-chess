@@ -85,6 +85,13 @@ function bridgeSmokePage() {
         const info = bridge?.getInfo?.() || {};
         let stateOk = false;
         let diagnosticsOk = false;
+        let copyStateOk = false;
+        let copyDiagnosticsOk = false;
+        let copyShareLinkOk = false;
+        let copyShareLinkUrl = "";
+        let copyDeepLinkOk = false;
+        let copyDeepLinkUrl = "";
+        const shareTarget = new URL("/game/private_bridge_smoke?desktop=1", window.location.origin).toString();
 
         try {
           const state = await bridge?.getState?.();
@@ -96,6 +103,28 @@ function bridgeSmokePage() {
           diagnosticsOk = Boolean(diagnostics?.window);
         } catch (_error) {}
 
+        try {
+          const result = await bridge?.copyState?.();
+          copyStateOk = result?.ok === true && Boolean(result?.state);
+        } catch (_error) {}
+
+        try {
+          const result = await bridge?.copyDiagnostics?.();
+          copyDiagnosticsOk = result?.ok === true && Boolean(result?.diagnostics?.window);
+        } catch (_error) {}
+
+        try {
+          const result = await bridge?.copyShareLink?.(shareTarget);
+          copyShareLinkOk = result?.ok === true;
+          copyShareLinkUrl = result?.url || "";
+        } catch (_error) {}
+
+        try {
+          const result = await bridge?.copyDeepLink?.(shareTarget);
+          copyDeepLinkOk = result?.ok === true;
+          copyDeepLinkUrl = result?.url || "";
+        } catch (_error) {}
+
         bridge?.sendEvent?.("desktop.bridge_smoke", {
           bridge: Boolean(bridge),
           isDesktop: info.isDesktop === true,
@@ -103,6 +132,12 @@ function bridgeSmokePage() {
           version: info.version || "",
           stateOk,
           diagnosticsOk,
+          copyStateOk,
+          copyDiagnosticsOk,
+          copyShareLinkOk,
+          copyShareLinkUrl,
+          copyDeepLinkOk,
+          copyDeepLinkUrl,
           datasetDesktop: document.documentElement.dataset.desktop === "true"
         });
       });
@@ -134,6 +169,16 @@ function validateBridgePayload(entry) {
   if (payload.channel !== channel) throw new Error(`Expected channel ${channel}, received ${payload.channel || "empty"}.`)
   if (payload.stateOk !== true) throw new Error("Expected bridge getState() to return desktop state.")
   if (payload.diagnosticsOk !== true) throw new Error("Expected bridge getDiagnostics() to return window diagnostics.")
+  if (payload.copyStateOk !== true) throw new Error("Expected bridge copyState() to return desktop state.")
+  if (payload.copyDiagnosticsOk !== true) throw new Error("Expected bridge copyDiagnostics() to return diagnostics.")
+  if (payload.copyShareLinkOk !== true) throw new Error("Expected bridge copyShareLink() to succeed.")
+  if (!String(payload.copyShareLinkUrl || "").endsWith("/game/private_bridge_smoke")) {
+    throw new Error(`Expected share link without desktop query, received ${payload.copyShareLinkUrl || "empty"}.`)
+  }
+  if (payload.copyDeepLinkOk !== true) throw new Error("Expected bridge copyDeepLink() to succeed.")
+  if (payload.copyDeepLinkUrl !== "manachess://game/private_bridge_smoke") {
+    throw new Error(`Expected private game deep link, received ${payload.copyDeepLinkUrl || "empty"}.`)
+  }
   if (payload.datasetDesktop !== true) throw new Error("Expected preload to mark documentElement dataset.desktop=true.")
 }
 
@@ -190,6 +235,7 @@ async function main() {
     validateBridgePayload(entry)
     console.log(`Bridge smoke loaded ${smokeUrl}`)
     console.log(`Bridge: isDesktop=${entry.payload.isDesktop} channel=${entry.payload.channel} stateOk=${entry.payload.stateOk}`)
+    console.log(`Bridge copy: share=${entry.payload.copyShareLinkUrl} deep=${entry.payload.copyDeepLinkUrl}`)
   } finally {
     stopLaunchedProcess()
     await stopBridgeServer()
