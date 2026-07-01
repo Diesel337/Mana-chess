@@ -92,7 +92,7 @@ Official reference:
 - [~] Installer is tested on a clean Windows machine. `npm run verify:win:installer` now builds and verifies the NSIS installer artifact without launching it and writes local SHA256 release hashes; clean-machine install pass still pending.
 - [ ] Uninstall behavior is tested.
 - [~] Window restore, maximize, fullscreen, and relaunch behavior are tested. `npm run smoke:win:modes` now covers packaged launch/log smoke for windowed, maximized, and fullscreen; `npm run release:win:preflight` includes it for release candidates. Manual restore and relaunch QA still needed.
-- [~] Offline/error screen is acceptable for online-required launch. `npm run smoke:win:offline` verifies the packaged app reaches the offline path and writes QA logs; `npm run release:win:preflight` includes it for release candidates. Visual/copy review still needed.
+- [~] Offline/error screen is acceptable for online-required launch. `npm run smoke:win:offline` verifies the packaged app reaches the offline path and writes QA logs; `npm run smoke:win:reconnect` verifies auto-recovery when the service comes back; `npm run release:win:preflight` includes both for release candidates. Visual/copy review still needed.
 - [~] Steam launch option points to the correct executable. SteamPipe docs identify `Mana Chess.exe`; Steamworks launch option still needs live app config.
 - [x] Desktop build has a clear app version strategy.
 - [x] Crash/error logs are accessible for QA.

@@ -26,6 +26,7 @@
     "smoke:win:offline": "node scripts/smoke-win-offline.cjs",
     "smoke:win:deep-link": "node scripts/smoke-win-deep-link.cjs",
     "smoke:win:bridge": "node scripts/smoke-win-bridge.cjs",
+    "smoke:win:reconnect": "node scripts/smoke-win-reconnect.cjs",
     "verify:win": "node scripts/verify-win-build.cjs",
     "verify:win:installer": "node scripts/verify-win-installer.cjs",
     "release:win:preflight": "node scripts/release-preflight-win.cjs"
