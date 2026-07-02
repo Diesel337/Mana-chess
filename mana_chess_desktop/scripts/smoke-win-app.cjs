@@ -15,6 +15,8 @@ const simulateSteamEnv = readFlag("--steam-env")
 const channel = process.env.MANA_CHESS_DESKTOP_CHANNEL || (simulateSteamEnv ? "desktop-steam-smoke" : "desktop-smoke")
 const appData = process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming")
 const logPath = path.join(appData, "Mana Chess", "desktop-log.jsonl")
+const fakeSteamId = "111111"
+const fakeSteamKeys = ["SteamAppId", "SteamGameId", "SteamOverlayGameId", "SteamClientLaunch", "SteamEnv"]
 
 let child = null
 
@@ -103,9 +105,9 @@ function fakeSteamEnv() {
   if (!simulateSteamEnv) return {}
 
   return {
-    SteamAppId: "111111",
-    SteamGameId: "111111",
-    SteamOverlayGameId: "111111",
+    SteamAppId: fakeSteamId,
+    SteamGameId: fakeSteamId,
+    SteamOverlayGameId: fakeSteamId,
     SteamClientLaunch: "1",
     SteamEnv: "1"
   }
@@ -119,8 +121,25 @@ function validateSteamPayload(entry) {
     throw new Error("Expected desktop.session_started payload.steam.detected to be true.")
   }
 
-  if (steam.appId !== "111111") {
-    throw new Error(`Expected simulated SteamAppId 111111, received ${steam.appId || "empty"}.`)
+  for (const field of ["appId", "gameId", "overlayGameId"]) {
+    if (steam[field] !== fakeSteamId) {
+      throw new Error(`Expected simulated Steam ${field} ${fakeSteamId}, received ${steam[field] || "empty"}.`)
+    }
+  }
+
+  if (steam.clientLaunch !== true) {
+    throw new Error("Expected desktop.session_started payload.steam.clientLaunch to be true.")
+  }
+
+  if (steam.steamEnv !== true) {
+    throw new Error("Expected desktop.session_started payload.steam.steamEnv to be true.")
+  }
+
+  const presentKeys = new Set(Array.isArray(steam.presentKeys) ? steam.presentKeys : [])
+  for (const key of fakeSteamKeys) {
+    if (!presentKeys.has(key)) {
+      throw new Error(`Expected desktop.session_started payload.steam.presentKeys to include ${key}.`)
+    }
   }
 }
 
