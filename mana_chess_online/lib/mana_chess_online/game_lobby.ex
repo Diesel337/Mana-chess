@@ -157,7 +157,7 @@ defmodule ManaChessOnline.GameLobby do
   def handle_call({:create_private, player_id}, _from, state) do
     case take_rate_limit(state, {:private_room, player_id}, @private_room_rate_limit) do
       {:ok, state} ->
-        game_id = unique_private_game_id(state.games)
+        game_id = unique_private_game_id(server_backed_games(state))
 
         state =
           state

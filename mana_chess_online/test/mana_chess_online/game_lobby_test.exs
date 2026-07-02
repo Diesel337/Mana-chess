@@ -330,6 +330,50 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert lobby_entry.players == server_game.players
   end
 
+  test "sits anywhere in public game servers missing from the mirror" do
+    player_id = unique_player("live-anywhere-player")
+    game_id = "aaa_live_anywhere_" <> Integer.to_string(System.unique_integer([:positive]))
+    game = GameState.new_game(game_id, GameLobby.global_settings())
+
+    on_exit(fn ->
+      GameLobby.leave(player_id)
+      GameSupervisor.stop_game(game_id)
+
+      :sys.replace_state(GameLobby, fn state ->
+        %{
+          state
+          | games: Map.delete(state.games, game_id),
+            players: Map.delete(state.players, player_id)
+        }
+      end)
+    end)
+
+    assert {:ok, pid} = GameSupervisor.upsert_game(game)
+
+    GameServer.update(pid, fn game ->
+      %{
+        game
+        | players: %{white: "live-anywhere-white", black: nil},
+          status: :waiting
+      }
+    end)
+
+    :sys.replace_state(GameLobby, fn state ->
+      %{state | games: Map.delete(state.games, game_id)}
+    end)
+
+    refute Map.has_key?(:sys.get_state(GameLobby).games, game_id)
+
+    view = GameLobby.sit_anywhere(player_id)
+    lobby_game = :sys.get_state(GameLobby).games[game_id]
+    server_game = GameServer.snapshot(pid)
+
+    assert view.game_id == game_id
+    assert view.color == :black
+    assert lobby_game == server_game
+    assert server_game.players == %{white: "live-anywhere-white", black: player_id}
+  end
+
   test "private matches become ready when black joins without entering public lobby" do
     white_id = unique_player("private-white")
     black_id = unique_player("private-black")
