@@ -55,4 +55,24 @@ defmodule ManaChessOnline.GameSupervisorTest do
     assert :ok = GameSupervisor.stop_game(game_id)
     assert GameSupervisor.lookup_game(game_id) == :error
   end
+
+  test "lists live game snapshots from supervised servers" do
+    game_id = "snapshot_" <> Integer.to_string(System.unique_integer([:positive]))
+    game = GameState.new_game(game_id, settings())
+
+    {:ok, pid} = GameSupervisor.start_game(game, id: {__MODULE__, game_id})
+
+    on_exit(fn ->
+      if Process.alive?(pid), do: GenServer.stop(pid)
+    end)
+
+    GameServer.update(pid, fn game ->
+      %{game | log: ["Snapshot vivo." | game.log]}
+    end)
+
+    snapshots = GameSupervisor.game_snapshots()
+
+    assert snapshots[game_id].id == game_id
+    assert "Snapshot vivo." in snapshots[game_id].log
+  end
 end

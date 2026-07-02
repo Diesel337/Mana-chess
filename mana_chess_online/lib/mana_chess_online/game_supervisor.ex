@@ -54,6 +54,21 @@ defmodule ManaChessOnline.GameSupervisor do
 
   def child_count, do: DynamicSupervisor.count_children(__MODULE__)
 
+  def game_snapshots do
+    __MODULE__
+    |> DynamicSupervisor.which_children()
+    |> Enum.reduce(%{}, fn
+      {_id, pid, :worker, _modules}, games when is_pid(pid) ->
+        case safe_game_snapshot(pid) do
+          %{id: game_id} = game when is_binary(game_id) -> Map.put(games, game_id, game)
+          _game -> games
+        end
+
+      _child, games ->
+        games
+    end)
+  end
+
   defp wait_until_unregistered(_game_id, 0), do: :ok
 
   defp wait_until_unregistered(game_id, attempts) do
@@ -64,6 +79,14 @@ defmodule ManaChessOnline.GameSupervisor do
       {:ok, _pid} ->
         Process.sleep(10)
         wait_until_unregistered(game_id, attempts - 1)
+    end
+  end
+
+  defp safe_game_snapshot(pid) do
+    try do
+      GameServer.snapshot(pid)
+    catch
+      :exit, _reason -> nil
     end
   end
 

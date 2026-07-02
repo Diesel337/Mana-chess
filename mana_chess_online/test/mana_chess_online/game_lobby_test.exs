@@ -295,6 +295,41 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert lobby_entry.players == server_game.players
   end
 
+  test "reads public lobby views from registered game servers missing from the mirror" do
+    game_id = "live_only_lobby_" <> Integer.to_string(System.unique_integer([:positive]))
+    game = GameState.new_game(game_id, GameLobby.global_settings())
+
+    on_exit(fn ->
+      GameSupervisor.stop_game(game_id)
+
+      :sys.replace_state(GameLobby, fn state ->
+        %{state | games: Map.delete(state.games, game_id)}
+      end)
+    end)
+
+    assert {:ok, pid} = GameSupervisor.upsert_game(game)
+
+    server_game =
+      GameServer.update(pid, fn game ->
+        %{
+          game
+          | players: %{white: "live-only-white", black: "live-only-black"},
+            status: :ready
+        }
+      end)
+
+    :sys.replace_state(GameLobby, fn state ->
+      %{state | games: Map.delete(state.games, game_id)}
+    end)
+
+    refute Map.has_key?(:sys.get_state(GameLobby).games, game_id)
+
+    lobby_entry = Enum.find(GameLobby.lobby(), &(&1.id == game_id))
+
+    assert lobby_entry.status == server_game.status
+    assert lobby_entry.players == server_game.players
+  end
+
   test "private matches become ready when black joins without entering public lobby" do
     white_id = unique_player("private-white")
     black_id = unique_player("private-black")

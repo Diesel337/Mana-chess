@@ -895,9 +895,7 @@ defmodule ManaChessOnline.GameLobby do
   defp game_snapshot(_game_id, _state), do: nil
 
   defp server_backed_games(state) do
-    Map.new(state.games, fn {game_id, game} ->
-      {game_id, game_snapshot(game_id, state) || game}
-    end)
+    Map.merge(state.games, GameSupervisor.game_snapshots())
   end
 
   defp append_chat_entry(game, entry), do: update_game_state(game, &put_chat_entry(&1, entry))
