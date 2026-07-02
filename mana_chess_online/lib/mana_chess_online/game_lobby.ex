@@ -1285,7 +1285,7 @@ defmodule ManaChessOnline.GameLobby do
   defp private_game_id?(_game_id), do: false
 
   defp maybe_drop_empty_private_game(state, game_id) do
-    case state.games[game_id] do
+    case game_snapshot(game_id, state) do
       %{private?: true, players: %{white: nil, black: nil}} ->
         stop_game_server(game_id)
         update_in(state.games, &Map.delete(&1, game_id))
