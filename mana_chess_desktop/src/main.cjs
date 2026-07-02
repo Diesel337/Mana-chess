@@ -10,6 +10,7 @@ const WINDOW_STATE_FILE = "window-state.json"
 const DESKTOP_STATE_FILE = "desktop-state.json"
 const DESKTOP_LOG_FILE = "desktop-log.jsonl"
 const EVENT_LOG_LIMIT = 40
+const DESKTOP_EVENT_PAYLOAD_MAX_BYTES = 4096
 const DESKTOP_LOG_READ_LIMIT = 80
 const DESKTOP_LOG_MAX_BYTES = 512 * 1024
 const STEAM_ENV_NAMES = [
@@ -570,8 +571,22 @@ function normalizeDesktopEvent(event) {
 
   return {
     name,
-    payload: cloneJson(event.payload),
+    payload: normalizeDesktopEventPayload(event.payload),
     at: new Date().toISOString()
+  }
+}
+
+function normalizeDesktopEventPayload(payload) {
+  const cloned = cloneJson(payload)
+  const serialized = JSON.stringify(cloned)
+  const bytes = Buffer.byteLength(serialized || "{}", "utf8")
+
+  if (bytes <= DESKTOP_EVENT_PAYLOAD_MAX_BYTES) return cloned
+
+  return {
+    truncated: true,
+    originalBytes: bytes,
+    maxBytes: DESKTOP_EVENT_PAYLOAD_MAX_BYTES
   }
 }
 

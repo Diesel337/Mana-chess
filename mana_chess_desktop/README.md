@@ -217,7 +217,7 @@ window.ManaChessDesktop.sendEvent("match.finished", {result: "win"})
 
 `getInfo()` returns a fresh serializable snapshot each time, so renderer-side mutations cannot alter the bridge's cached desktop, build, or Steam metadata.
 
-`sendEvent` is intentionally a no-op sink for now. It gives us a stable place to attach Steamworks achievements, rich presence, and cloud-save hooks later.
+`sendEvent` records local desktop events for QA state, presence, and future Steamworks hooks. Oversized event payloads are capped to a small truncation summary before they are written to local state or diagnostics.
 
 Emitted event names currently include `screen.viewed`, `desktop.offline`, `desktop.offline_screen_viewed`, `desktop.reconnected`, `match.opened`, `match.status_changed`, `match.started`, and `match.finished`.
 

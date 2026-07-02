@@ -97,6 +97,7 @@ function bridgeSmokePage() {
         let resetStateOk = false;
         let resetSessionOk = false;
         let infoSnapshotOk = false;
+        let largePayloadCappedOk = false;
         const steam = info.steam || {};
         const steamInfoOk = Boolean(
           steam.detected === true &&
@@ -164,6 +165,22 @@ function bridgeSmokePage() {
           );
         } catch (_error) {}
 
+        try {
+          bridge?.sendEvent?.("desktop.bridge_large_payload", {text: "x".repeat(9000)});
+          await new Promise((resolve) => setTimeout(resolve, 500));
+
+          const state = await bridge?.getState?.();
+          largePayloadCappedOk = Boolean(
+            state?.lastEvents?.some?.((event) =>
+              event?.name === "desktop.bridge_large_payload" &&
+              event?.payload?.truncated === true &&
+              event?.payload?.originalBytes > event?.payload?.maxBytes &&
+              event?.payload?.maxBytes === 4096 &&
+              event?.payload?.text === undefined
+            )
+          );
+        } catch (_error) {}
+
         bridge?.sendEvent?.("desktop.bridge_smoke", {
           bridge: Boolean(bridge),
           isDesktop: info.isDesktop === true,
@@ -181,6 +198,7 @@ function bridgeSmokePage() {
           copyDeepLinkUrl,
           resetStateOk,
           resetSessionOk,
+          largePayloadCappedOk,
           qaKeyApplied,
           datasetDesktop: document.documentElement.dataset.desktop === "true"
         });
@@ -230,6 +248,7 @@ function validateBridgePayload(entry) {
   }
   if (payload.resetStateOk !== true) throw new Error("Expected bridge resetState() to return normalized desktop state.")
   if (payload.resetSessionOk !== true) throw new Error("Expected bridge resetState() to record a reset session event.")
+  if (payload.largePayloadCappedOk !== true) throw new Error("Expected bridge sendEvent() to cap oversized payloads.")
   if (payload.qaKeyApplied !== true) throw new Error("Expected desktop URL to include QA bypass key for protected launch smoke.")
   if (payload.datasetDesktop !== true) throw new Error("Expected preload to mark documentElement dataset.desktop=true.")
 }
