@@ -110,6 +110,7 @@ npm run smoke:win:offline
 ```
 
 `smoke:win` launches `dist/win-unpacked/Mana Chess.exe`, waits for a fresh `desktop.session_started` log entry, and closes the launched process. It defaults to the `desktop-smoke` channel so QA can spot smoke runs in `desktop-log.jsonl`.
+It also verifies that the launcher records the expected `launchMode` for the requested window mode.
 `smoke:win:steam` launches one windowed smoke with simulated Steam environment variables and verifies they are captured in the session diagnostics.
 `smoke:win:modes` runs the same startup smoke through `windowed`, `maximized`, and `fullscreen` in sequence.
 `smoke:win:deep-link` launches the packaged app with a `manachess://game/private_smoke_deep_link` URL and verifies the launcher resolves it to a game route in the desktop QA log.

@@ -124,6 +124,13 @@ function validateSteamPayload(entry) {
   }
 }
 
+function validateLaunchModePayload(entry, mode) {
+  const launchMode = entry?.payload?.launchMode || ""
+  if (launchMode !== mode) {
+    throw new Error(`Expected desktop.session_started payload.launchMode ${mode}, received ${launchMode || "empty"}.`)
+  }
+}
+
 async function smokeMode(mode) {
   const startTime = Date.now()
   child = spawn(exePath, [`--${mode}`], {
@@ -143,6 +150,7 @@ async function smokeMode(mode) {
   try {
     const entry = await waitForSessionLog(startTime)
     validateSteamPayload(entry)
+    validateLaunchModePayload(entry, mode)
     console.log(`Smoke launched ${path.relative(desktopRoot, exePath)} in ${mode} mode.`)
     console.log(`Log: ${entry.name} ${entry.version || ""} ${entry.commit || ""} ${entry.channel}`)
     if (simulateSteamEnv) console.log(`Steam env: appId ${entry.payload.steam.appId} detected=${entry.payload.steam.detected}`)

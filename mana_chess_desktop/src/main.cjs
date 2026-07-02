@@ -519,7 +519,7 @@ function resetDesktopState() {
   writeDesktopState(normalizeDesktopState({}))
   return recordDesktopEvent({
     name: "desktop.session_started",
-    payload: {version: app.getVersion(), channel: DESKTOP_CHANNEL, reset: true, steam: DESKTOP_STEAM_CONTEXT}
+    payload: desktopSessionPayload({reset: true})
   }) || readDesktopState()
 }
 
@@ -542,6 +542,16 @@ function recordDesktopEvent(event) {
   writeDesktopState(state)
   applyDesktopPresence(state.presence)
   return state
+}
+
+function desktopSessionPayload(extra = {}) {
+  return {
+    version: app.getVersion(),
+    channel: DESKTOP_CHANNEL,
+    launchMode: launchWindowMode() || "saved",
+    steam: DESKTOP_STEAM_CONTEXT,
+    ...extra
+  }
 }
 
 function normalizeDesktopEvent(event) {
@@ -1370,7 +1380,7 @@ if (!gotLock) {
     bindDesktopBridge()
     recordDesktopEvent({
       name: "desktop.session_started",
-      payload: {version: app.getVersion(), channel: DESKTOP_CHANNEL, steam: DESKTOP_STEAM_CONTEXT}
+      payload: desktopSessionPayload()
     })
     createWindow()
 
