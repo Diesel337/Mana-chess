@@ -1,6 +1,7 @@
 const fs = require("node:fs")
 const path = require("node:path")
 const os = require("node:os")
+const http = require("node:http")
 const {execFileSync, spawn} = require("node:child_process")
 
 const desktopRoot = path.resolve(__dirname, "..")
@@ -19,6 +20,7 @@ const fakeSteamId = "111111"
 const fakeSteamKeys = ["SteamAppId", "SteamGameId", "SteamOverlayGameId", "SteamClientLaunch", "SteamEnv"]
 
 let child = null
+let server = null
 
 function readFlag(name) {
   return process.argv.includes(name)
@@ -75,6 +77,15 @@ function isFreshSmokeSession(entry, startTime) {
   return Number.isFinite(at) && at >= startTime - 1000
 }
 
+function isFreshModeSmoke(entry, startTime, mode) {
+  if (!entry || entry.name !== "desktop.mode_smoke") return false
+  if (entry.channel !== channel) return false
+  if (entry.payload?.mode !== mode) return false
+
+  const at = Date.parse(entry.at || "")
+  return Number.isFinite(at) && at >= startTime - 1000
+}
+
 async function waitForSessionLog(startTime) {
   const deadline = Date.now() + timeoutMs
 
@@ -85,6 +96,18 @@ async function waitForSessionLog(startTime) {
   }
 
   throw new Error(`Timed out waiting for desktop.session_started in ${logPath}`)
+}
+
+async function waitForModeSmokeLog(startTime, mode) {
+  const deadline = Date.now() + timeoutMs
+
+  while (Date.now() < deadline) {
+    const match = readLogEntries().reverse().find(entry => isFreshModeSmoke(entry, startTime, mode))
+    if (match) return match
+    await wait(500)
+  }
+
+  throw new Error(`Timed out waiting for desktop.mode_smoke ${mode} in ${logPath}`)
 }
 
 function stopLaunchedProcess() {
@@ -99,6 +122,87 @@ function stopLaunchedProcess() {
   } catch (_error) {
     // The app may have exited on its own after handing off to an existing instance.
   }
+}
+
+function modeSmokePage() {
+  return `<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Mana Chess Desktop Mode Smoke</title>
+  </head>
+  <body>
+    <script>
+      const expectedMode = new URLSearchParams(window.location.search).get("mode") || "";
+
+      function modeMatchesWindow(mode, windowInfo) {
+        if (!windowInfo?.exists) return false;
+        if (mode === "fullscreen") return windowInfo.isFullScreen === true;
+        if (mode === "maximized") return windowInfo.isMaximized === true && windowInfo.isFullScreen !== true;
+        if (mode === "windowed") return windowInfo.isMaximized !== true && windowInfo.isFullScreen !== true;
+        return false;
+      }
+
+      async function modeDiagnostics(bridge) {
+        let lastDiagnostics = {};
+
+        for (let attempt = 0; attempt < 20; attempt += 1) {
+          try {
+            lastDiagnostics = await bridge?.getDiagnostics?.() || {};
+            if (modeMatchesWindow(expectedMode, lastDiagnostics.window)) break;
+          } catch (_error) {}
+
+          await new Promise((resolve) => setTimeout(resolve, 250));
+        }
+
+        return lastDiagnostics;
+      }
+
+      window.addEventListener("DOMContentLoaded", async () => {
+        const bridge = window.ManaChessDesktop;
+        const diagnostics = await modeDiagnostics(bridge);
+        const windowInfo = diagnostics.window || {};
+
+        bridge?.sendEvent?.("desktop.mode_smoke", {
+          mode: expectedMode,
+          bridge: Boolean(bridge),
+          datasetDesktop: document.documentElement.dataset.desktop === "true",
+          modeOk: modeMatchesWindow(expectedMode, windowInfo),
+          window: {
+            exists: windowInfo.exists === true,
+            isMaximized: windowInfo.isMaximized === true,
+            isFullScreen: windowInfo.isFullScreen === true,
+            isMinimized: windowInfo.isMinimized === true,
+            bounds: windowInfo.bounds || {}
+          }
+        });
+      });
+    </script>
+  </body>
+</html>`
+}
+
+function startModeServer() {
+  return new Promise((resolve, reject) => {
+    server = http.createServer((_request, response) => {
+      response.writeHead(200, {"content-type": "text/html; charset=utf-8"})
+      response.end(modeSmokePage())
+    })
+
+    server.once("error", reject)
+    server.listen(0, "127.0.0.1", () => {
+      const address = server.address()
+      resolve(`http://127.0.0.1:${address.port}/`)
+    })
+  })
+}
+
+function stopModeServer() {
+  return new Promise(resolve => {
+    if (!server) return resolve()
+    server.close(() => resolve())
+    server = null
+  })
 }
 
 function fakeSteamEnv() {
@@ -150,14 +254,27 @@ function validateLaunchModePayload(entry, mode) {
   }
 }
 
-async function smokeMode(mode) {
+function validateModeSmokePayload(entry, mode) {
+  const payload = entry?.payload || {}
+  const windowInfo = payload.window || {}
+
+  if (payload.bridge !== true) throw new Error("Expected ManaChessDesktop bridge to exist during mode smoke.")
+  if (payload.datasetDesktop !== true) throw new Error("Expected preload to mark documentElement dataset.desktop=true.")
+  if (payload.modeOk !== true) {
+    throw new Error(`Expected ${mode} window diagnostics, received maximized=${windowInfo.isMaximized} fullscreen=${windowInfo.isFullScreen}.`)
+  }
+}
+
+async function smokeMode(mode, serverUrl) {
   const startTime = Date.now()
+  const smokeUrl = `${serverUrl}?mode=${encodeURIComponent(mode)}`
   child = spawn(exePath, [`--${mode}`], {
     cwd: desktopRoot,
     detached: false,
     stdio: "ignore",
     env: {
       ...process.env,
+      MANA_CHESS_URL: smokeUrl,
       MANA_CHESS_DESKTOP_CHANNEL: channel,
       MANA_CHESS_OFFLINE_RETRY_SECONDS: process.env.MANA_CHESS_OFFLINE_RETRY_SECONDS || "0",
       ...fakeSteamEnv()
@@ -170,8 +287,11 @@ async function smokeMode(mode) {
     const entry = await waitForSessionLog(startTime)
     validateSteamPayload(entry)
     validateLaunchModePayload(entry, mode)
+    const modeEntry = await waitForModeSmokeLog(startTime, mode)
+    validateModeSmokePayload(modeEntry, mode)
     console.log(`Smoke launched ${path.relative(desktopRoot, exePath)} in ${mode} mode.`)
     console.log(`Log: ${entry.name} ${entry.version || ""} ${entry.commit || ""} ${entry.channel}`)
+    console.log(`Window: maximized=${modeEntry.payload.window.isMaximized} fullscreen=${modeEntry.payload.window.isFullScreen}`)
     if (simulateSteamEnv) console.log(`Steam env: appId ${entry.payload.steam.appId} detected=${entry.payload.steam.detected}`)
   } finally {
     stopLaunchedProcess()
@@ -189,15 +309,22 @@ async function main() {
     throw new Error(`Missing ${exePath}. Run npm run pack:win or npm run verify:win first.`)
   }
 
-  for (const mode of modes) {
-    await smokeMode(mode)
+  const serverUrl = await startModeServer()
+
+  try {
+    for (const mode of modes) {
+      await smokeMode(mode, serverUrl)
+    }
+  } finally {
+    await stopModeServer()
   }
 
   console.log(`Smoke completed for ${modes.join(", ")}.`)
 }
 
-main().catch(error => {
+main().catch(async error => {
   stopLaunchedProcess()
+  await stopModeServer()
   console.error(error.message || error)
   process.exit(1)
 })
