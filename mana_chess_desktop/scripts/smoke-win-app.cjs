@@ -8,9 +8,11 @@ const desktopRoot = path.resolve(__dirname, "..")
 const exePath = path.join(desktopRoot, "dist", "win-unpacked", "Mana Chess.exe")
 const smokeModes = ["windowed", "maximized", "fullscreen"]
 const allowedModes = new Set(smokeModes)
+const allowedModeSources = new Set(["flag", "env", "window-mode-arg"])
 const modes = readFlag("--all-modes")
   ? smokeModes
   : [normalizeMode(readArg("--mode") || process.env.MANA_CHESS_SMOKE_MODE || "windowed")]
+const modeSource = normalizeModeSource(readArg("--mode-source") || process.env.MANA_CHESS_SMOKE_MODE_SOURCE || "flag")
 const timeoutMs = normalizeTimeout(readArg("--timeout-ms") || process.env.MANA_CHESS_SMOKE_TIMEOUT_MS || "12000")
 const simulateSteamEnv = readFlag("--steam-env")
 const channel = process.env.MANA_CHESS_DESKTOP_CHANNEL || (simulateSteamEnv ? "desktop-steam-smoke" : "desktop-smoke")
@@ -38,6 +40,12 @@ function normalizeMode(value) {
   const normalized = String(value || "").trim().toLowerCase()
   if (allowedModes.has(normalized)) return normalized
   throw new Error(`Unsupported smoke mode "${value}". Use windowed, maximized, or fullscreen.`)
+}
+
+function normalizeModeSource(value) {
+  const normalized = String(value || "").trim().toLowerCase()
+  if (allowedModeSources.has(normalized)) return normalized
+  throw new Error(`Unsupported smoke mode source "${value}". Use flag, env, or window-mode-arg.`)
 }
 
 function normalizeTimeout(value) {
@@ -81,6 +89,7 @@ function isFreshModeSmoke(entry, startTime, mode) {
   if (!entry || entry.name !== "desktop.mode_smoke") return false
   if (entry.channel !== channel) return false
   if (entry.payload?.mode !== mode) return false
+  if (entry.payload?.source !== modeSource) return false
 
   const at = Date.parse(entry.at || "")
   return Number.isFinite(at) && at >= startTime - 1000
@@ -134,6 +143,7 @@ function modeSmokePage() {
   <body>
     <script>
       const expectedMode = new URLSearchParams(window.location.search).get("mode") || "";
+      const expectedSource = new URLSearchParams(window.location.search).get("source") || "";
 
       function modeMatchesWindow(mode, windowInfo) {
         if (!windowInfo?.exists) return false;
@@ -165,6 +175,7 @@ function modeSmokePage() {
 
         bridge?.sendEvent?.("desktop.mode_smoke", {
           mode: expectedMode,
+          source: expectedSource,
           bridge: Boolean(bridge),
           datasetDesktop: document.documentElement.dataset.desktop === "true",
           modeOk: modeMatchesWindow(expectedMode, windowInfo),
@@ -258,6 +269,7 @@ function validateModeSmokePayload(entry, mode) {
   const payload = entry?.payload || {}
   const windowInfo = payload.window || {}
 
+  if (payload.source !== modeSource) throw new Error(`Expected mode smoke source ${modeSource}, received ${payload.source || "empty"}.`)
   if (payload.bridge !== true) throw new Error("Expected ManaChessDesktop bridge to exist during mode smoke.")
   if (payload.datasetDesktop !== true) throw new Error("Expected preload to mark documentElement dataset.desktop=true.")
   if (payload.modeOk !== true) {
@@ -265,20 +277,31 @@ function validateModeSmokePayload(entry, mode) {
   }
 }
 
+function launchArgsForMode(mode) {
+  if (modeSource === "env") return []
+  if (modeSource === "window-mode-arg") return [`--window-mode=${mode}`]
+  return [`--${mode}`]
+}
+
+function launchEnvForMode(mode, smokeUrl) {
+  return {
+    ...process.env,
+    MANA_CHESS_URL: smokeUrl,
+    MANA_CHESS_DESKTOP_CHANNEL: channel,
+    MANA_CHESS_OFFLINE_RETRY_SECONDS: process.env.MANA_CHESS_OFFLINE_RETRY_SECONDS || "0",
+    ...(modeSource === "env" ? {MANA_CHESS_WINDOW_MODE: mode} : {}),
+    ...fakeSteamEnv()
+  }
+}
+
 async function smokeMode(mode, serverUrl) {
   const startTime = Date.now()
-  const smokeUrl = `${serverUrl}?mode=${encodeURIComponent(mode)}`
-  child = spawn(exePath, [`--${mode}`], {
+  const smokeUrl = `${serverUrl}?mode=${encodeURIComponent(mode)}&source=${encodeURIComponent(modeSource)}`
+  child = spawn(exePath, launchArgsForMode(mode), {
     cwd: desktopRoot,
     detached: false,
     stdio: "ignore",
-    env: {
-      ...process.env,
-      MANA_CHESS_URL: smokeUrl,
-      MANA_CHESS_DESKTOP_CHANNEL: channel,
-      MANA_CHESS_OFFLINE_RETRY_SECONDS: process.env.MANA_CHESS_OFFLINE_RETRY_SECONDS || "0",
-      ...fakeSteamEnv()
-    }
+    env: launchEnvForMode(mode, smokeUrl)
   })
 
   child.unref()
@@ -289,7 +312,7 @@ async function smokeMode(mode, serverUrl) {
     validateLaunchModePayload(entry, mode)
     const modeEntry = await waitForModeSmokeLog(startTime, mode)
     validateModeSmokePayload(modeEntry, mode)
-    console.log(`Smoke launched ${path.relative(desktopRoot, exePath)} in ${mode} mode.`)
+    console.log(`Smoke launched ${path.relative(desktopRoot, exePath)} in ${mode} mode via ${modeSource}.`)
     console.log(`Log: ${entry.name} ${entry.version || ""} ${entry.commit || ""} ${entry.channel}`)
     console.log(`Window: maximized=${modeEntry.payload.window.isMaximized} fullscreen=${modeEntry.payload.window.isFullScreen}`)
     if (simulateSteamEnv) console.log(`Steam env: appId ${entry.payload.steam.appId} detected=${entry.payload.steam.detected}`)
@@ -319,7 +342,7 @@ async function main() {
     await stopModeServer()
   }
 
-  console.log(`Smoke completed for ${modes.join(", ")}.`)
+  console.log(`Smoke completed for ${modes.join(", ")} via ${modeSource}.`)
 }
 
 main().catch(async error => {

@@ -81,6 +81,8 @@ function main() {
   }
 
   run("Window mode smoke tests", node, ["scripts/smoke-win-app.cjs", "--all-modes"])
+  run("Window env mode smoke test", node, ["scripts/smoke-win-app.cjs", "--mode=maximized", "--mode-source=env"])
+  run("Window mode option smoke test", node, ["scripts/smoke-win-app.cjs", "--mode=fullscreen", "--mode-source=window-mode-arg"])
   run("Steam env smoke test", node, ["scripts/smoke-win-app.cjs", "--mode=windowed", "--steam-env"])
   run("Deep link smoke test", node, ["scripts/smoke-win-deep-link.cjs"])
   run("Second instance deep link smoke test", node, ["scripts/smoke-win-second-instance.cjs"])

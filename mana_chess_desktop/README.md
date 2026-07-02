@@ -109,6 +109,8 @@ Smoke-test the unpacked app startup:
 npm run smoke:win
 npm run smoke:win -- --mode=maximized
 npm run smoke:win -- --mode=fullscreen
+npm run smoke:win -- --mode=maximized --mode-source=env
+npm run smoke:win -- --mode=fullscreen --mode-source=window-mode-arg
 npm run smoke:win:steam
 npm run smoke:win:modes
 npm run smoke:win:deep-link
@@ -119,7 +121,7 @@ npm run smoke:win:offline
 ```
 
 `smoke:win` launches `dist/win-unpacked/Mana Chess.exe` against a local QA page, waits for fresh `desktop.session_started` and `desktop.mode_smoke` log entries, and closes the launched process. It defaults to the `desktop-smoke` channel so QA can spot smoke runs in `desktop-log.jsonl`.
-It also verifies that the launcher records the expected `launchMode` and that bridge diagnostics report the requested window state.
+It also verifies that the launcher records the expected `launchMode` and that bridge diagnostics report the requested window state. Use `--mode-source=env` to test `MANA_CHESS_WINDOW_MODE`, or `--mode-source=window-mode-arg` to test `--window-mode=...`.
 `smoke:win:steam` launches one windowed smoke with simulated Steam environment variables and verifies app/game/overlay IDs, client launch flags, and present Steam keys are captured in the session diagnostics.
 `smoke:win:modes` runs the same startup smoke through `windowed`, `maximized`, and `fullscreen` in sequence.
 `smoke:win:deep-link` launches the packaged app with a `manachess://game/private_smoke_deep_link` URL and verifies the launcher resolves it to a game route in the desktop QA log.
@@ -134,7 +136,7 @@ Run the full Windows release preflight before a Steam candidate:
 npm run release:win:preflight
 ```
 
-`release:win:preflight` validates the non-secret SteamPipe templates, builds and verifies the unpacked app plus NSIS installer with `verify:win:installer`, then runs the window mode, Steam environment, and offline smoke tests.
+`release:win:preflight` validates the non-secret SteamPipe templates, builds and verifies the unpacked app plus NSIS installer with `verify:win:installer`, then runs the window mode, env/long-arg launch mode, Steam environment, and offline smoke tests.
 
 ## SteamPipe templates
 
@@ -156,7 +158,7 @@ The real `.vdf` files, SteamCMD logs, and Steam build output are ignored locally
 - The app keeps one Mana Chess window open and focuses it when launched again.
 - Window size, position, maximized state, and fullscreen state are restored between sessions.
 - Steam/QA can force startup with `MANA_CHESS_WINDOW_MODE`, `--window-mode`, `--fullscreen`, `--maximized`, or `--windowed`.
-- `npm run smoke:win:modes` verifies the packaged executable can start, report matching bridge window diagnostics, and write QA logs in `windowed`, `maximized`, and `fullscreen` launch modes.
+- `npm run smoke:win:modes` verifies the packaged executable can start, report matching bridge window diagnostics, and write QA logs in `windowed`, `maximized`, and `fullscreen` launch modes. The release preflight also verifies `MANA_CHESS_WINDOW_MODE` and `--window-mode=...`.
 - `npm run smoke:win:steam` verifies the packaged executable records Steam launch context when Steam-like environment variables are present.
 - `npm run smoke:win:deep-link` verifies the packaged executable resolves a startup `manachess://` game link to the expected desktop route.
 - `npm run smoke:win:second-instance` verifies relaunch/single-instance handoff for runtime `manachess://` links.
