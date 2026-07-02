@@ -124,7 +124,7 @@ It also verifies that the launcher records the expected `launchMode` for the req
 `smoke:win:modes` runs the same startup smoke through `windowed`, `maximized`, and `fullscreen` in sequence.
 `smoke:win:deep-link` launches the packaged app with a `manachess://game/private_smoke_deep_link` URL and verifies the launcher resolves it to a game route in the desktop QA log.
 `smoke:win:second-instance` opens the packaged app, launches a second copy with a `manachess://` game link, and verifies the first instance receives the runtime handoff.
-`smoke:win:bridge` launches the packaged app against a local QA page and verifies `window.ManaChessDesktop` can report desktop info, read/copy/reset local desktop state, read/copy diagnostics, copy share/deep links without leaking `qa_key`, mark desktop mode, apply a QA launch bypass key, and send an IPC event back to the main process.
+`smoke:win:bridge` launches the packaged app against a local QA page and verifies `window.ManaChessDesktop` can report desktop and Steam info, read/copy/reset local desktop state, read/copy diagnostics, copy share/deep links without leaking `qa_key`, mark desktop mode, apply a QA launch bypass key, and send an IPC event back to the main process.
 `smoke:win:reconnect` launches the packaged app against a temporarily unavailable local URL, waits for `desktop.offline`, brings the local server online, and verifies `desktop.reconnected`.
 `smoke:win:offline` launches the app against an unreachable local URL, disables auto-retry, waits for `desktop.offline`, and closes the process.
 
@@ -171,7 +171,7 @@ The real `.vdf` files, SteamCMD logs, and Steam build output are ignored locally
 - The Windows build uses the shared Mana Chess icon, app id `com.diesel337.manachess`, and explicit shortcut/uninstall metadata.
 - `npm run verify:win:installer` verifies `build/icon.png`, `build/icon.ico`, and package icon wiring before creating release artifacts.
 - `npm run verify:win:installer` verifies the NSIS installer artifact exists and has a Windows executable header, without installing it, and writes a local release manifest with artifact hashes.
-- The web game can read `window.ManaChessDesktop.getInfo()` for desktop version, channel, platform, origin, and Steam launch detection.
+- The web game can read `window.ManaChessDesktop.getInfo()` for desktop version, channel, platform, origin, build metadata, and full Steam launch context.
 - The window title follows local presence, such as lobby, active match, playing, or result states.
 - The desktop menu can copy, open, or reset local desktop QA state.
 - The desktop menu can copy QA diagnostics and open the local log folder.

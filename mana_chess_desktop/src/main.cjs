@@ -83,7 +83,14 @@ function createWindow() {
         `--mana-chess-build-source=${DESKTOP_BUILD_INFO.source}`,
         `--mana-chess-steam-detected=${DESKTOP_STEAM_CONTEXT.detected ? "1" : "0"}`,
         `--mana-chess-steam-app-id=${DESKTOP_STEAM_CONTEXT.appId}`,
-        `--mana-chess-steam-game-id=${DESKTOP_STEAM_CONTEXT.gameId}`
+        `--mana-chess-steam-game-id=${DESKTOP_STEAM_CONTEXT.gameId}`,
+        `--mana-chess-steam-overlay-game-id=${DESKTOP_STEAM_CONTEXT.overlayGameId}`,
+        `--mana-chess-steam-client-launch=${DESKTOP_STEAM_CONTEXT.clientLaunch ? "1" : "0"}`,
+        `--mana-chess-steam-env=${DESKTOP_STEAM_CONTEXT.steamEnv ? "1" : "0"}`,
+        `--mana-chess-steam-path=${DESKTOP_STEAM_CONTEXT.steamPath ? "1" : "0"}`,
+        `--mana-chess-steam-deck=${DESKTOP_STEAM_CONTEXT.steamDeck ? "1" : "0"}`,
+        `--mana-chess-steam-tenfoot=${DESKTOP_STEAM_CONTEXT.steamTenfoot ? "1" : "0"}`,
+        `--mana-chess-steam-present-keys=${DESKTOP_STEAM_CONTEXT.presentKeys.join(",")}`
       ],
       contextIsolation: true,
       nodeIntegration: false,

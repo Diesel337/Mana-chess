@@ -6,6 +6,10 @@ const readArg = (name) => {
   return value ? value.slice(prefix.length) : ""
 }
 
+const readBoolArg = (name) => readArg(name) === "1"
+
+const readListArg = (name) => readArg(name).split(",").filter(Boolean)
+
 const desktopInfo = Object.freeze({
   isDesktop: true,
   appName: "Mana Chess",
@@ -20,9 +24,16 @@ const desktopInfo = Object.freeze({
     source: readArg("mana-chess-build-source") || "runtime"
   },
   steam: {
-    detected: readArg("mana-chess-steam-detected") === "1",
+    detected: readBoolArg("mana-chess-steam-detected"),
     appId: readArg("mana-chess-steam-app-id") || "",
-    gameId: readArg("mana-chess-steam-game-id") || ""
+    gameId: readArg("mana-chess-steam-game-id") || "",
+    overlayGameId: readArg("mana-chess-steam-overlay-game-id") || "",
+    clientLaunch: readBoolArg("mana-chess-steam-client-launch"),
+    steamEnv: readBoolArg("mana-chess-steam-env"),
+    steamPath: readBoolArg("mana-chess-steam-path"),
+    steamDeck: readBoolArg("mana-chess-steam-deck"),
+    steamTenfoot: readBoolArg("mana-chess-steam-tenfoot"),
+    presentKeys: readListArg("mana-chess-steam-present-keys")
   }
 })
 

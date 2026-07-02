@@ -11,6 +11,8 @@ const channel = process.env.MANA_CHESS_DESKTOP_CHANNEL || "desktop-bridge-smoke"
 const appData = process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming")
 const logPath = path.join(appData, "Mana Chess", "desktop-log.jsonl")
 const qaBypassKey = "bridge-qa-smoke"
+const fakeSteamId = "111111"
+const fakeSteamKeys = ["SteamAppId", "SteamGameId", "SteamOverlayGameId", "SteamClientLaunch", "SteamEnv"]
 
 let child = null
 let server = null
@@ -94,6 +96,16 @@ function bridgeSmokePage() {
         let copyDeepLinkUrl = "";
         let resetStateOk = false;
         let resetSessionOk = false;
+        const steam = info.steam || {};
+        const steamInfoOk = Boolean(
+          steam.detected === true &&
+          steam.appId === ${JSON.stringify(fakeSteamId)} &&
+          steam.gameId === ${JSON.stringify(fakeSteamId)} &&
+          steam.overlayGameId === ${JSON.stringify(fakeSteamId)} &&
+          steam.clientLaunch === true &&
+          steam.steamEnv === true &&
+          ${JSON.stringify(fakeSteamKeys)}.every((key) => Array.isArray(steam.presentKeys) && steam.presentKeys.includes(key))
+        );
         const qaKeyApplied = new URLSearchParams(window.location.search).get("qa_key") === ${JSON.stringify(qaBypassKey)};
         const shareTarget = new URL("/game/private_bridge_smoke?desktop=1&qa_key=${qaBypassKey}", window.location.origin).toString();
 
@@ -143,6 +155,7 @@ function bridgeSmokePage() {
           isDesktop: info.isDesktop === true,
           channel: info.channel || "",
           version: info.version || "",
+          steamInfoOk,
           stateOk,
           diagnosticsOk,
           copyStateOk,
@@ -183,6 +196,7 @@ function validateBridgePayload(entry) {
   if (payload.bridge !== true) throw new Error("Expected ManaChessDesktop bridge to exist.")
   if (payload.isDesktop !== true) throw new Error("Expected bridge info isDesktop=true.")
   if (payload.channel !== channel) throw new Error(`Expected channel ${channel}, received ${payload.channel || "empty"}.`)
+  if (payload.steamInfoOk !== true) throw new Error("Expected bridge getInfo().steam to expose simulated Steam launch context.")
   if (payload.stateOk !== true) throw new Error("Expected bridge getState() to return desktop state.")
   if (payload.diagnosticsOk !== true) throw new Error("Expected bridge getDiagnostics() to return window diagnostics.")
   if (payload.copyStateOk !== true) throw new Error("Expected bridge copyState() to return desktop state.")
@@ -226,6 +240,16 @@ function stopBridgeServer() {
   })
 }
 
+function fakeSteamEnv() {
+  return {
+    SteamAppId: fakeSteamId,
+    SteamGameId: fakeSteamId,
+    SteamOverlayGameId: fakeSteamId,
+    SteamClientLaunch: "1",
+    SteamEnv: "1"
+  }
+}
+
 async function main() {
   if (process.platform !== "win32") {
     throw new Error("smoke:win:bridge only runs on Windows.")
@@ -247,7 +271,8 @@ async function main() {
       MANA_CHESS_URL: smokeUrl,
       MANA_CHESS_QA_BYPASS_KEY: qaBypassKey,
       MANA_CHESS_DESKTOP_CHANNEL: channel,
-      MANA_CHESS_OFFLINE_RETRY_SECONDS: "0"
+      MANA_CHESS_OFFLINE_RETRY_SECONDS: "0",
+      ...fakeSteamEnv()
     }
   })
 
