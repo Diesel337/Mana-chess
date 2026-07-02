@@ -643,9 +643,10 @@ defmodule ManaChessOnline.GameLobby do
   def handle_info(:tick, state) do
     Process.send_after(self(), :tick, @tick_ms)
     now = now_ms()
+    live_games = server_backed_games(state)
 
     {games, changed_game_ids} =
-      Enum.reduce(state.games, {%{}, []}, fn {game_id, game}, {games, changed_game_ids} ->
+      Enum.reduce(live_games, {%{}, []}, fn {game_id, game}, {games, changed_game_ids} ->
         ticked_game = tick_game_server(game, now)
 
         changed_game_ids =

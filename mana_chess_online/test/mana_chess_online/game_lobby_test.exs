@@ -841,6 +841,47 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert lobby_game.log == server_game.log
   end
 
+  test "lobby ticks restore registered game servers missing from the mirror" do
+    game_id = "live_tick_" <> Integer.to_string(System.unique_integer([:positive]))
+    game = GameState.new_game(game_id, GameLobby.global_settings())
+
+    on_exit(fn ->
+      GameSupervisor.stop_game(game_id)
+
+      :sys.replace_state(GameLobby, fn state ->
+        %{state | games: Map.delete(state.games, game_id)}
+      end)
+    end)
+
+    assert {:ok, pid} = GameSupervisor.upsert_game(game)
+
+    server_game =
+      GameServer.update(pid, fn game ->
+        %{
+          game
+          | players: %{white: "live-tick-white", black: "live-tick-black"},
+            status: :ready,
+            log: ["Servidor vivo antes del tick." | game.log]
+        }
+      end)
+
+    :sys.replace_state(GameLobby, fn state ->
+      %{state | games: Map.delete(state.games, game_id)}
+    end)
+
+    refute Map.has_key?(:sys.get_state(GameLobby).games, game_id)
+
+    send(Process.whereis(GameLobby), :tick)
+    state = :sys.get_state(GameLobby)
+
+    lobby_game = state.games[game_id]
+    server_game_after_tick = GameServer.snapshot(pid)
+
+    assert lobby_game == server_game_after_tick
+    assert lobby_game.players == server_game.players
+    assert "Servidor vivo antes del tick." in lobby_game.log
+  end
+
   test "starts games from the registered game server ready state" do
     white_id = unique_player("live-start-white")
     black_id = unique_player("live-start-black")
