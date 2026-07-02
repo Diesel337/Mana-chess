@@ -19,7 +19,16 @@ const channel = process.env.MANA_CHESS_DESKTOP_CHANNEL || (simulateSteamEnv ? "d
 const appData = process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming")
 const logPath = path.join(appData, "Mana Chess", "desktop-log.jsonl")
 const fakeSteamId = "111111"
-const fakeSteamKeys = ["SteamAppId", "SteamGameId", "SteamOverlayGameId", "SteamClientLaunch", "SteamEnv"]
+const fakeSteamKeys = [
+  "SteamAppId",
+  "SteamGameId",
+  "SteamOverlayGameId",
+  "SteamClientLaunch",
+  "SteamEnv",
+  "SteamPath",
+  "SteamDeck",
+  "SteamTenfoot"
+]
 
 let child = null
 let server = null
@@ -224,7 +233,10 @@ function fakeSteamEnv() {
     SteamGameId: fakeSteamId,
     SteamOverlayGameId: fakeSteamId,
     SteamClientLaunch: "1",
-    SteamEnv: "1"
+    SteamEnv: "1",
+    SteamPath: "C:\\Program Files (x86)\\Steam",
+    SteamDeck: "1",
+    SteamTenfoot: "1"
   }
 }
 
@@ -248,6 +260,12 @@ function validateSteamPayload(entry) {
 
   if (steam.steamEnv !== true) {
     throw new Error("Expected desktop.session_started payload.steam.steamEnv to be true.")
+  }
+
+  for (const field of ["steamPath", "steamDeck", "steamTenfoot"]) {
+    if (steam[field] !== true) {
+      throw new Error(`Expected desktop.session_started payload.steam.${field} to be true.`)
+    }
   }
 
   const presentKeys = new Set(Array.isArray(steam.presentKeys) ? steam.presentKeys : [])

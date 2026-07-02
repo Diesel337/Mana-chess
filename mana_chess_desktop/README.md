@@ -122,7 +122,7 @@ npm run smoke:win:offline
 
 `smoke:win` launches `dist/win-unpacked/Mana Chess.exe` against a local QA page, waits for fresh `desktop.session_started` and `desktop.mode_smoke` log entries, and closes the launched process. It defaults to the `desktop-smoke` channel so QA can spot smoke runs in `desktop-log.jsonl`.
 It also verifies that the launcher records the expected `launchMode` and that bridge diagnostics report the requested window state. Use `--mode-source=env` to test `MANA_CHESS_WINDOW_MODE`, or `--mode-source=window-mode-arg` to test `--window-mode=...`.
-`smoke:win:steam` launches one windowed smoke with simulated Steam environment variables and verifies app/game/overlay IDs, client launch flags, and present Steam keys are captured in the session diagnostics.
+`smoke:win:steam` launches one windowed smoke with simulated Steam environment variables and verifies app/game/overlay IDs, client launch flags, Steam path, Deck/Tenfoot flags, and present Steam keys are captured in the session diagnostics.
 `smoke:win:modes` runs the same startup smoke through `windowed`, `maximized`, and `fullscreen` in sequence.
 `smoke:win:deep-link` launches the packaged app with a `manachess://game/private_smoke_deep_link` URL and verifies the launcher resolves it to a game route in the desktop QA log.
 `smoke:win:second-instance` opens the packaged app, launches a second copy with a `manachess://` game link, and verifies the first instance receives the runtime handoff.
@@ -159,7 +159,7 @@ The real `.vdf` files, SteamCMD logs, and Steam build output are ignored locally
 - Window size, position, maximized state, and fullscreen state are restored between sessions.
 - Steam/QA can force startup with `MANA_CHESS_WINDOW_MODE`, `--window-mode`, `--fullscreen`, `--maximized`, or `--windowed`.
 - `npm run smoke:win:modes` verifies the packaged executable can start, report matching bridge window diagnostics, and write QA logs in `windowed`, `maximized`, and `fullscreen` launch modes. The release preflight also verifies `MANA_CHESS_WINDOW_MODE` and `--window-mode=...`.
-- `npm run smoke:win:steam` verifies the packaged executable records Steam launch context when Steam-like environment variables are present.
+- `npm run smoke:win:steam` verifies the packaged executable records Steam launch context, including Steam path, Deck, and Tenfoot flags, when Steam-like environment variables are present.
 - `npm run smoke:win:deep-link` verifies the packaged executable resolves a startup `manachess://` game link to the expected desktop route.
 - `npm run smoke:win:second-instance` verifies relaunch/single-instance handoff for runtime `manachess://` links.
 - `npm run smoke:win:bridge` verifies the packaged executable exposes the desktop bridge to renderer code, handles QA copy/reset actions, and records bridge IPC events.

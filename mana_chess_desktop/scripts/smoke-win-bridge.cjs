@@ -12,7 +12,16 @@ const appData = process.env.APPDATA || path.join(os.homedir(), "AppData", "Roami
 const logPath = path.join(appData, "Mana Chess", "desktop-log.jsonl")
 const qaBypassKey = "bridge-qa-smoke"
 const fakeSteamId = "111111"
-const fakeSteamKeys = ["SteamAppId", "SteamGameId", "SteamOverlayGameId", "SteamClientLaunch", "SteamEnv"]
+const fakeSteamKeys = [
+  "SteamAppId",
+  "SteamGameId",
+  "SteamOverlayGameId",
+  "SteamClientLaunch",
+  "SteamEnv",
+  "SteamPath",
+  "SteamDeck",
+  "SteamTenfoot"
+]
 
 let child = null
 let server = null
@@ -106,6 +115,9 @@ function bridgeSmokePage() {
           steam.overlayGameId === ${JSON.stringify(fakeSteamId)} &&
           steam.clientLaunch === true &&
           steam.steamEnv === true &&
+          steam.steamPath === true &&
+          steam.steamDeck === true &&
+          steam.steamTenfoot === true &&
           ${JSON.stringify(fakeSteamKeys)}.every((key) => Array.isArray(steam.presentKeys) && steam.presentKeys.includes(key))
         );
         const qaKeyApplied = new URLSearchParams(window.location.search).get("qa_key") === ${JSON.stringify(qaBypassKey)};
@@ -281,7 +293,10 @@ function fakeSteamEnv() {
     SteamGameId: fakeSteamId,
     SteamOverlayGameId: fakeSteamId,
     SteamClientLaunch: "1",
-    SteamEnv: "1"
+    SteamEnv: "1",
+    SteamPath: "C:\\Program Files (x86)\\Steam",
+    SteamDeck: "1",
+    SteamTenfoot: "1"
   }
 }
 
