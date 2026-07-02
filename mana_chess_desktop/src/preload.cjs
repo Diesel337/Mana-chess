@@ -46,7 +46,7 @@ function clonePayload(payload) {
 }
 
 contextBridge.exposeInMainWorld("ManaChessDesktop", {
-  getInfo: () => ({...desktopInfo}),
+  getInfo: () => clonePayload(desktopInfo),
   getState: () => ipcRenderer.invoke("mana-chess:get-desktop-state"),
   getDiagnostics: () => ipcRenderer.invoke("mana-chess:get-desktop-diagnostics"),
   copyState: () => ipcRenderer.invoke("mana-chess:copy-desktop-state"),

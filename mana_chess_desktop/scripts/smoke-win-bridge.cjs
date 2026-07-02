@@ -96,6 +96,7 @@ function bridgeSmokePage() {
         let copyDeepLinkUrl = "";
         let resetStateOk = false;
         let resetSessionOk = false;
+        let infoSnapshotOk = false;
         const steam = info.steam || {};
         const steamInfoOk = Boolean(
           steam.detected === true &&
@@ -108,6 +109,19 @@ function bridgeSmokePage() {
         );
         const qaKeyApplied = new URLSearchParams(window.location.search).get("qa_key") === ${JSON.stringify(qaBypassKey)};
         const shareTarget = new URL("/game/private_bridge_smoke?desktop=1&qa_key=${qaBypassKey}", window.location.origin).toString();
+
+        try {
+          if (Array.isArray(info.steam?.presentKeys)) info.steam.presentKeys.push("mutated-by-smoke");
+          if (info.steam) info.steam.detected = false;
+          if (info.build) info.build.commit = "mutated-by-smoke";
+
+          const nextInfo = bridge?.getInfo?.() || {};
+          infoSnapshotOk = Boolean(
+            nextInfo.steam?.detected === true &&
+            !nextInfo.steam?.presentKeys?.includes?.("mutated-by-smoke") &&
+            nextInfo.build?.commit !== "mutated-by-smoke"
+          );
+        } catch (_error) {}
 
         try {
           const state = await bridge?.getState?.();
@@ -156,6 +170,7 @@ function bridgeSmokePage() {
           channel: info.channel || "",
           version: info.version || "",
           steamInfoOk,
+          infoSnapshotOk,
           stateOk,
           diagnosticsOk,
           copyStateOk,
@@ -197,6 +212,7 @@ function validateBridgePayload(entry) {
   if (payload.isDesktop !== true) throw new Error("Expected bridge info isDesktop=true.")
   if (payload.channel !== channel) throw new Error(`Expected channel ${channel}, received ${payload.channel || "empty"}.`)
   if (payload.steamInfoOk !== true) throw new Error("Expected bridge getInfo().steam to expose simulated Steam launch context.")
+  if (payload.infoSnapshotOk !== true) throw new Error("Expected bridge getInfo() to return an immutable snapshot per call.")
   if (payload.stateOk !== true) throw new Error("Expected bridge getState() to return desktop state.")
   if (payload.diagnosticsOk !== true) throw new Error("Expected bridge getDiagnostics() to return window diagnostics.")
   if (payload.copyStateOk !== true) throw new Error("Expected bridge copyState() to return desktop state.")
