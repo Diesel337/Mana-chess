@@ -40,6 +40,7 @@ const DEFAULT_OFFLINE_RETRY_SECONDS = 20
 const DESKTOP_BUILD_INFO = loadDesktopBuildInfo()
 const DESKTOP_CHANNEL = process.env.MANA_CHESS_DESKTOP_CHANNEL || DESKTOP_BUILD_INFO.channel || "desktop"
 const DESKTOP_QA_BYPASS_KEY = cleanQaBypassKey(process.env.MANA_CHESS_QA_BYPASS_KEY)
+const DESKTOP_DISABLE_EXTERNAL_OPEN = process.env.MANA_CHESS_DISABLE_EXTERNAL_OPEN === "1"
 const DESKTOP_STEAM_CONTEXT = steamLaunchContext()
 
 let mainWindow = null
@@ -125,10 +126,9 @@ function bindDesktopBridge() {
     return {ok: true, url: shareUrl}
   })
 
-  ipcMain.handle("mana-chess:open-share-link", (_event, url) => {
+  ipcMain.handle("mana-chess:open-share-link", async (_event, url) => {
     const shareUrl = cleanShareUrl(url) || cleanShareUrl(mainWindow?.webContents.getURL()) || DEFAULT_GAME_URL
-    shell.openExternal(shareUrl)
-    return {ok: true, url: shareUrl}
+    return openExternalUrl(shareUrl, "bridge.openShareLink")
   })
 
   ipcMain.handle("mana-chess:copy-deep-link", (_event, url) => copyDeepLinkForUrl(url || mainWindow?.webContents.getURL()))
@@ -237,7 +237,7 @@ function bindNavigationGuards() {
       return {action: "deny"}
     }
 
-    shell.openExternal(url)
+    void openExternalUrl(url, "navigation.window_open")
     return {action: "deny"}
   })
 
@@ -257,7 +257,7 @@ function bindNavigationGuards() {
     }
 
     event.preventDefault()
-    shell.openExternal(url)
+    void openExternalUrl(url, "navigation.will_navigate")
   })
 
   mainWindow.webContents.on("page-title-updated", event => {
@@ -408,7 +408,43 @@ function copyCurrentDeepLink() {
 }
 
 function openCurrentWebLink() {
-  shell.openExternal(currentShareUrl())
+  void openExternalUrl(currentShareUrl(), "menu.openCurrentWebLink")
+}
+
+async function openExternalUrl(url, source = "desktop") {
+  const parsed = safeUrl(String(url || ""))
+  const safeLogUrl = externalLogUrl(url)
+
+  if (!parsed) {
+    const error = "invalid_url"
+    appendDesktopLog("warn", "desktop.external_link_failed", {source, url: "", error})
+    return {ok: false, url: "", error}
+  }
+
+  try {
+    if (DESKTOP_DISABLE_EXTERNAL_OPEN) {
+      appendDesktopLog("info", "desktop.external_link_opened", {source, url: safeLogUrl, skipped: true})
+      return {ok: true, url: parsed.toString(), skipped: true}
+    }
+
+    await shell.openExternal(parsed.toString())
+    appendDesktopLog("info", "desktop.external_link_opened", {source, url: safeLogUrl})
+    return {ok: true, url: parsed.toString()}
+  } catch (error) {
+    const message = String(error?.message || error || "").slice(0, 1000)
+    appendDesktopLog("warn", "desktop.external_link_failed", {source, url: safeLogUrl, error: message})
+    return {ok: false, url: parsed.toString(), error: message}
+  }
+}
+
+function externalLogUrl(url) {
+  const shareUrl = cleanShareUrl(url)
+  if (shareUrl) return shareUrl.slice(0, 300)
+
+  const parsed = safeUrl(String(url || ""))
+  if (!parsed) return ""
+
+  return `${parsed.origin}${parsed.pathname}`.slice(0, 300)
 }
 
 function desktopStatePath() {

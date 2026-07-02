@@ -101,6 +101,9 @@ function bridgeSmokePage() {
         let copyDiagnosticsOk = false;
         let copyShareLinkOk = false;
         let copyShareLinkUrl = "";
+        let openShareLinkOk = false;
+        let openShareLinkLoggedOk = false;
+        let openShareLinkUrl = "";
         let copyDeepLinkOk = false;
         let copyDeepLinkUrl = "";
         let resetStateOk = false;
@@ -163,6 +166,21 @@ function bridgeSmokePage() {
         } catch (_error) {}
 
         try {
+          const result = await bridge?.openShareLink?.(shareTarget);
+          openShareLinkOk = result?.ok === true && result?.skipped === true;
+          openShareLinkUrl = result?.url || "";
+
+          const diagnostics = await bridge?.getDiagnostics?.();
+          openShareLinkLoggedOk = Boolean(
+            diagnostics?.recentLog?.some?.((line) =>
+              String(line || "").includes('"name":"desktop.external_link_opened"') &&
+              String(line || "").includes('"skipped":true') &&
+              String(line || "").includes('/game/private_bridge_smoke')
+            )
+          );
+        } catch (_error) {}
+
+        try {
           const result = await bridge?.copyDeepLink?.(shareTarget);
           copyDeepLinkOk = result?.ok === true;
           copyDeepLinkUrl = result?.url || "";
@@ -206,6 +224,9 @@ function bridgeSmokePage() {
           copyDiagnosticsOk,
           copyShareLinkOk,
           copyShareLinkUrl,
+          openShareLinkOk,
+          openShareLinkLoggedOk,
+          openShareLinkUrl,
           copyDeepLinkOk,
           copyDeepLinkUrl,
           resetStateOk,
@@ -253,6 +274,14 @@ function validateBridgePayload(entry) {
   }
   if (String(payload.copyShareLinkUrl || "").includes("qa_key")) {
     throw new Error(`Expected share link to strip qa_key, received ${payload.copyShareLinkUrl || "empty"}.`)
+  }
+  if (payload.openShareLinkOk !== true) throw new Error("Expected bridge openShareLink() to succeed without launching a browser in QA.")
+  if (payload.openShareLinkLoggedOk !== true) throw new Error("Expected bridge openShareLink() to write an external-link diagnostic log.")
+  if (!String(payload.openShareLinkUrl || "").endsWith("/game/private_bridge_smoke")) {
+    throw new Error(`Expected opened share link without desktop or qa_key query, received ${payload.openShareLinkUrl || "empty"}.`)
+  }
+  if (String(payload.openShareLinkUrl || "").includes("qa_key")) {
+    throw new Error(`Expected opened share link to strip qa_key, received ${payload.openShareLinkUrl || "empty"}.`)
   }
   if (payload.copyDeepLinkOk !== true) throw new Error("Expected bridge copyDeepLink() to succeed.")
   if (payload.copyDeepLinkUrl !== "manachess://game/private_bridge_smoke") {
@@ -320,6 +349,7 @@ async function main() {
       ...process.env,
       MANA_CHESS_URL: smokeUrl,
       MANA_CHESS_QA_BYPASS_KEY: qaBypassKey,
+      MANA_CHESS_DISABLE_EXTERNAL_OPEN: "1",
       MANA_CHESS_DESKTOP_CHANNEL: channel,
       MANA_CHESS_OFFLINE_RETRY_SECONDS: "0",
       ...fakeSteamEnv()
