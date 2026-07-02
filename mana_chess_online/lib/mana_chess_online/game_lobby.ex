@@ -1036,7 +1036,9 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   defp sync_player_assignment(%{game_id: game_id}, state) when is_binary(game_id) do
-    sync_game_server(state.games[game_id])
+    game_id
+    |> game_snapshot(state)
+    |> sync_game_server()
   end
 
   defp sync_player_assignment(_assignment, _state), do: :ok
