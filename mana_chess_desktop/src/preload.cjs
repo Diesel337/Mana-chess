@@ -1,5 +1,7 @@
 const {contextBridge, ipcRenderer} = require("electron")
 
+const DESKTOP_EVENT_PAYLOAD_MAX_BYTES = 4096
+
 const readArg = (name) => {
   const prefix = `--${name}=`
   const value = process.argv.find(arg => typeof arg === "string" && arg.startsWith(prefix))
@@ -37,16 +39,30 @@ const desktopInfo = Object.freeze({
   }
 })
 
-function clonePayload(payload) {
+function cloneSerializable(value) {
   try {
-    return JSON.parse(JSON.stringify(payload || {}))
+    return JSON.parse(JSON.stringify(value || {}))
   } catch (_error) {
     return {}
   }
 }
 
+function normalizeEventPayload(payload) {
+  const cloned = cloneSerializable(payload)
+  const serialized = JSON.stringify(cloned)
+  const bytes = Buffer.byteLength(serialized || "{}", "utf8")
+
+  if (bytes <= DESKTOP_EVENT_PAYLOAD_MAX_BYTES) return cloned
+
+  return {
+    truncated: true,
+    originalBytes: bytes,
+    maxBytes: DESKTOP_EVENT_PAYLOAD_MAX_BYTES
+  }
+}
+
 contextBridge.exposeInMainWorld("ManaChessDesktop", {
-  getInfo: () => clonePayload(desktopInfo),
+  getInfo: () => cloneSerializable(desktopInfo),
   getState: () => ipcRenderer.invoke("mana-chess:get-desktop-state"),
   getDiagnostics: () => ipcRenderer.invoke("mana-chess:get-desktop-diagnostics"),
   copyState: () => ipcRenderer.invoke("mana-chess:copy-desktop-state"),
@@ -61,7 +77,7 @@ contextBridge.exposeInMainWorld("ManaChessDesktop", {
     if (typeof name !== "string" || name.trim().length === 0) return
     ipcRenderer.send("mana-chess:desktop-event", {
       name: name.trim().slice(0, 80),
-      payload: clonePayload(payload)
+      payload: normalizeEventPayload(payload)
     })
   }
 })
