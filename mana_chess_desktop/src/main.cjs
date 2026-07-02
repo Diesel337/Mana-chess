@@ -38,6 +38,7 @@ const WINDOW_MODES = new Set([WINDOW_MODE_FULLSCREEN, WINDOW_MODE_MAXIMIZED, WIN
 const DEFAULT_OFFLINE_RETRY_SECONDS = 20
 const DESKTOP_BUILD_INFO = loadDesktopBuildInfo()
 const DESKTOP_CHANNEL = process.env.MANA_CHESS_DESKTOP_CHANNEL || DESKTOP_BUILD_INFO.channel || "desktop"
+const DESKTOP_QA_BYPASS_KEY = cleanQaBypassKey(process.env.MANA_CHESS_QA_BYPASS_KEY)
 const DESKTOP_STEAM_CONTEXT = steamLaunchContext()
 
 let mainWindow = null
@@ -864,6 +865,7 @@ function cleanShareUrl(url) {
   const parsed = safeUrl(String(url || ""))
   if (!parsed || parsed.origin !== GAME_ORIGIN) return null
   parsed.searchParams.delete("desktop")
+  parsed.searchParams.delete("qa_key")
   return parsed.toString()
 }
 
@@ -886,7 +888,12 @@ function deepLinkForGameUrl(url) {
 function desktopUrl(url) {
   const parsed = new URL(url, DEFAULT_GAME_URL)
   parsed.searchParams.set("desktop", "1")
+  if (DESKTOP_QA_BYPASS_KEY) parsed.searchParams.set("qa_key", DESKTOP_QA_BYPASS_KEY)
   return parsed.toString()
+}
+
+function cleanQaBypassKey(value) {
+  return String(value || "").trim().slice(0, 256)
 }
 
 function safeUrl(url) {

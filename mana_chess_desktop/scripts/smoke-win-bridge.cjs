@@ -10,6 +10,7 @@ const timeoutMs = normalizeTimeout(readArg("--timeout-ms") || process.env.MANA_C
 const channel = process.env.MANA_CHESS_DESKTOP_CHANNEL || "desktop-bridge-smoke"
 const appData = process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming")
 const logPath = path.join(appData, "Mana Chess", "desktop-log.jsonl")
+const qaBypassKey = "bridge-qa-smoke"
 
 let child = null
 let server = null
@@ -93,7 +94,8 @@ function bridgeSmokePage() {
         let copyDeepLinkUrl = "";
         let resetStateOk = false;
         let resetSessionOk = false;
-        const shareTarget = new URL("/game/private_bridge_smoke?desktop=1", window.location.origin).toString();
+        const qaKeyApplied = new URLSearchParams(window.location.search).get("qa_key") === ${JSON.stringify(qaBypassKey)};
+        const shareTarget = new URL("/game/private_bridge_smoke?desktop=1&qa_key=${qaBypassKey}", window.location.origin).toString();
 
         try {
           const state = await bridge?.getState?.();
@@ -151,6 +153,7 @@ function bridgeSmokePage() {
           copyDeepLinkUrl,
           resetStateOk,
           resetSessionOk,
+          qaKeyApplied,
           datasetDesktop: document.documentElement.dataset.desktop === "true"
         });
       });
@@ -186,7 +189,10 @@ function validateBridgePayload(entry) {
   if (payload.copyDiagnosticsOk !== true) throw new Error("Expected bridge copyDiagnostics() to return diagnostics.")
   if (payload.copyShareLinkOk !== true) throw new Error("Expected bridge copyShareLink() to succeed.")
   if (!String(payload.copyShareLinkUrl || "").endsWith("/game/private_bridge_smoke")) {
-    throw new Error(`Expected share link without desktop query, received ${payload.copyShareLinkUrl || "empty"}.`)
+    throw new Error(`Expected share link without desktop or qa_key query, received ${payload.copyShareLinkUrl || "empty"}.`)
+  }
+  if (String(payload.copyShareLinkUrl || "").includes("qa_key")) {
+    throw new Error(`Expected share link to strip qa_key, received ${payload.copyShareLinkUrl || "empty"}.`)
   }
   if (payload.copyDeepLinkOk !== true) throw new Error("Expected bridge copyDeepLink() to succeed.")
   if (payload.copyDeepLinkUrl !== "manachess://game/private_bridge_smoke") {
@@ -194,6 +200,7 @@ function validateBridgePayload(entry) {
   }
   if (payload.resetStateOk !== true) throw new Error("Expected bridge resetState() to return normalized desktop state.")
   if (payload.resetSessionOk !== true) throw new Error("Expected bridge resetState() to record a reset session event.")
+  if (payload.qaKeyApplied !== true) throw new Error("Expected desktop URL to include QA bypass key for protected launch smoke.")
   if (payload.datasetDesktop !== true) throw new Error("Expected preload to mark documentElement dataset.desktop=true.")
 }
 
@@ -238,6 +245,7 @@ async function main() {
     env: {
       ...process.env,
       MANA_CHESS_URL: smokeUrl,
+      MANA_CHESS_QA_BYPASS_KEY: qaBypassKey,
       MANA_CHESS_DESKTOP_CHANNEL: channel,
       MANA_CHESS_OFFLINE_RETRY_SECONDS: "0"
     }
