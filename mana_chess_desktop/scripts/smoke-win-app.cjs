@@ -1,11 +1,12 @@
 const fs = require("node:fs")
 const path = require("node:path")
-const os = require("node:os")
 const http = require("node:http")
 const {execFileSync, spawn} = require("node:child_process")
+const {desktopLogPath, smokeUserDataDir} = require("./smoke-user-data.cjs")
 
 const desktopRoot = path.resolve(__dirname, "..")
 const exePath = path.join(desktopRoot, "dist", "win-unpacked", "Mana Chess.exe")
+const userDataDir = smokeUserDataDir("app")
 const smokeModes = ["windowed", "maximized", "fullscreen"]
 const allowedModes = new Set(smokeModes)
 const allowedModeSources = new Set(["flag", "env", "window-mode-arg"])
@@ -16,8 +17,7 @@ const modeSource = normalizeModeSource(readArg("--mode-source") || process.env.M
 const timeoutMs = normalizeTimeout(readArg("--timeout-ms") || process.env.MANA_CHESS_SMOKE_TIMEOUT_MS || "12000")
 const simulateSteamEnv = readFlag("--steam-env")
 const channel = process.env.MANA_CHESS_DESKTOP_CHANNEL || (simulateSteamEnv ? "desktop-steam-smoke" : "desktop-smoke")
-const appData = process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming")
-const logPath = path.join(appData, "Mana Chess", "desktop-log.jsonl")
+const logPath = desktopLogPath(userDataDir)
 const fakeSteamId = "111111"
 const fakeSteamKeys = [
   "SteamAppId",
@@ -305,6 +305,7 @@ function launchEnvForMode(mode, smokeUrl) {
   return {
     ...process.env,
     MANA_CHESS_URL: smokeUrl,
+    MANA_CHESS_USER_DATA_DIR: userDataDir,
     MANA_CHESS_DESKTOP_CHANNEL: channel,
     MANA_CHESS_OFFLINE_RETRY_SECONDS: process.env.MANA_CHESS_OFFLINE_RETRY_SECONDS || "0",
     ...(modeSource === "env" ? {MANA_CHESS_WINDOW_MODE: mode} : {}),

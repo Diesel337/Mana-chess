@@ -63,6 +63,14 @@ $env:MANA_CHESS_DISABLE_EXTERNAL_OPEN="1"
 
 When this is set, `openShareLink` records the external-link diagnostic but skips `shell.openExternal`.
 
+Use an isolated Electron data folder for QA:
+
+```powershell
+$env:MANA_CHESS_USER_DATA_DIR="$env:TEMP\mana-chess-qa-user-data"
+```
+
+The Windows smoke scripts set an isolated user data folder automatically so they do not reuse the user's real `window-state.json`, `desktop-state.json`, single-instance lock, or QA logs.
+
 ## Commands
 
 Install dependencies:

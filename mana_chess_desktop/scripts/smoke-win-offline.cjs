@@ -1,15 +1,15 @@
 const fs = require("node:fs")
 const path = require("node:path")
-const os = require("node:os")
 const {execFileSync, spawn} = require("node:child_process")
+const {desktopLogPath, smokeUserDataDir} = require("./smoke-user-data.cjs")
 
 const desktopRoot = path.resolve(__dirname, "..")
 const exePath = path.join(desktopRoot, "dist", "win-unpacked", "Mana Chess.exe")
+const userDataDir = smokeUserDataDir("offline")
 const timeoutMs = normalizeTimeout(readArg("--timeout-ms") || process.env.MANA_CHESS_SMOKE_TIMEOUT_MS || "15000")
 const channel = process.env.MANA_CHESS_DESKTOP_CHANNEL || "desktop-offline-smoke"
 const offlineUrl = readArg("--url") || process.env.MANA_CHESS_SMOKE_OFFLINE_URL || "http://127.0.0.1:65535/"
-const appData = process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming")
-const logPath = path.join(appData, "Mana Chess", "desktop-log.jsonl")
+const logPath = desktopLogPath(userDataDir)
 
 let child = null
 
@@ -101,6 +101,7 @@ async function main() {
     env: {
       ...process.env,
       MANA_CHESS_URL: offlineUrl,
+      MANA_CHESS_USER_DATA_DIR: userDataDir,
       MANA_CHESS_DESKTOP_CHANNEL: channel,
       MANA_CHESS_OFFLINE_RETRY_SECONDS: "0"
     }

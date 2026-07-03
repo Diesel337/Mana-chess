@@ -41,6 +41,7 @@ const DESKTOP_BUILD_INFO = loadDesktopBuildInfo()
 const DESKTOP_CHANNEL = process.env.MANA_CHESS_DESKTOP_CHANNEL || DESKTOP_BUILD_INFO.channel || "desktop"
 const DESKTOP_QA_BYPASS_KEY = cleanQaBypassKey(process.env.MANA_CHESS_QA_BYPASS_KEY)
 const DESKTOP_DISABLE_EXTERNAL_OPEN = process.env.MANA_CHESS_DISABLE_EXTERNAL_OPEN === "1"
+const DESKTOP_USER_DATA_DIR = cleanUserDataDir(process.env.MANA_CHESS_USER_DATA_DIR)
 const DESKTOP_STEAM_CONTEXT = steamLaunchContext()
 
 let mainWindow = null
@@ -50,6 +51,7 @@ let saveWindowStateTimer = null
 let lastNormalBounds = null
 let desktopConnectionWasOffline = false
 
+applyDesktopUserDataPath()
 app.setAppUserModelId("com.diesel337.manachess")
 registerProtocol()
 bindProcessDiagnostics()
@@ -460,6 +462,21 @@ function externalLogUrl(url) {
 
 function externalProtocolAllowed(parsed) {
   return parsed?.protocol === "http:" || parsed?.protocol === "https:"
+}
+
+function applyDesktopUserDataPath() {
+  if (!DESKTOP_USER_DATA_DIR) return
+
+  try {
+    app.setPath("userData", DESKTOP_USER_DATA_DIR)
+  } catch (_error) {
+    // QA path overrides should never block a normal desktop launch.
+  }
+}
+
+function cleanUserDataDir(value) {
+  const dataPath = String(value || "").trim()
+  return dataPath ? path.resolve(dataPath) : ""
 }
 
 function desktopStatePath() {

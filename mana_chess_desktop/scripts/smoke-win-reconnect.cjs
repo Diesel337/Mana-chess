@@ -1,16 +1,16 @@
 const fs = require("node:fs")
 const path = require("node:path")
-const os = require("node:os")
 const http = require("node:http")
 const {execFileSync, spawn} = require("node:child_process")
+const {desktopLogPath, smokeUserDataDir} = require("./smoke-user-data.cjs")
 
 const desktopRoot = path.resolve(__dirname, "..")
 const exePath = path.join(desktopRoot, "dist", "win-unpacked", "Mana Chess.exe")
+const userDataDir = smokeUserDataDir("reconnect")
 const timeoutMs = normalizeTimeout(readArg("--timeout-ms") || process.env.MANA_CHESS_SMOKE_TIMEOUT_MS || "22000")
 const retrySeconds = normalizeRetrySeconds(readArg("--retry-seconds") || process.env.MANA_CHESS_SMOKE_RETRY_SECONDS || "1")
 const channel = process.env.MANA_CHESS_DESKTOP_CHANNEL || "desktop-reconnect-smoke"
-const appData = process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming")
-const logPath = path.join(appData, "Mana Chess", "desktop-log.jsonl")
+const logPath = desktopLogPath(userDataDir)
 
 let child = null
 let server = null
@@ -182,6 +182,7 @@ async function main() {
     env: {
       ...process.env,
       MANA_CHESS_URL: smokeUrl,
+      MANA_CHESS_USER_DATA_DIR: userDataDir,
       MANA_CHESS_DESKTOP_CHANNEL: channel,
       MANA_CHESS_OFFLINE_RETRY_SECONDS: String(retrySeconds)
     }
