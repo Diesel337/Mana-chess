@@ -1306,6 +1306,60 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert server_game.board |> Enum.at(0) |> Enum.at(0) == "Q"
   end
 
+  test "promotes using registered game server state over stale mirrors" do
+    player_id = unique_player("promote-stale-player")
+    on_exit(fn -> GameLobby.leave(player_id) end)
+
+    view = GameLobby.start_practice(player_id)
+    assert {:ok, pid} = GameSupervisor.lookup_game(view.game_id)
+
+    server_game =
+      GameServer.update(pid, fn game ->
+        %{
+          game
+          | board: promotion_board(),
+            status: :promotion,
+            promotion_pending: %{player_id: player_id, color: :white, at: {0, 0}},
+            log: ["Promocion viva del servidor." | game.log]
+        }
+      end)
+
+    stale_board =
+      promotion_board()
+      |> List.update_at(0, &List.replace_at(&1, 0, "."))
+      |> List.update_at(7, &List.replace_at(&1, 7, "p"))
+
+    stale_game = %{
+      server_game
+      | board: stale_board,
+        promotion_pending: %{player_id: player_id, color: :black, at: {7, 7}},
+        log: ["Mirror stale de promocion."]
+    }
+
+    :sys.replace_state(GameLobby, fn state ->
+      %{state | games: Map.put(state.games, view.game_id, stale_game)}
+    end)
+
+    lobby_game = :sys.get_state(GameLobby).games[view.game_id]
+
+    assert lobby_game.promotion_pending == %{player_id: player_id, color: :black, at: {7, 7}}
+    assert lobby_game.board |> Enum.at(7) |> Enum.at(7) == "p"
+
+    assert :ok = GameLobby.promote(player_id, "R")
+
+    lobby_game = :sys.get_state(GameLobby).games[view.game_id]
+    server_game = GameServer.snapshot(pid)
+
+    assert server_game == lobby_game
+    assert server_game.status == :playing
+    assert server_game.promotion_pending == nil
+    assert hd(server_game.log) == "Blancas promociono peon."
+    assert "Promocion viva del servidor." in server_game.log
+    refute "Mirror stale de promocion." in server_game.log
+    assert server_game.board |> Enum.at(0) |> Enum.at(0) == "R"
+    assert server_game.board |> Enum.at(7) |> Enum.at(7) == "."
+  end
+
   test "lobby broadcasts do not overwrite live game server state" do
     player_id = unique_player("broadcast-preserve")
     other_id = unique_player("broadcast-other")
