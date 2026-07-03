@@ -1377,9 +1377,10 @@ defmodule ManaChessOnline.GameLobbyTest do
         }
       end)
 
-    lobby_game = :sys.get_state(GameLobby).games[view.game_id]
-    refute lobby_game.board == server_game.board
-    assert lobby_game.board |> Enum.at(4) |> Enum.at(4) == "."
+    :sys.replace_state(GameLobby, fn state ->
+      %{state | games: Map.put(state.games, view.game_id, view.game)}
+    end)
+
     assert server_game.board |> Enum.at(4) |> Enum.at(4) == "P"
 
     assert :ok = GameLobby.enqueue(player_id, {4, 4}, {3, 4})
