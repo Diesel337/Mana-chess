@@ -448,6 +448,50 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert GameLobby.snapshot(game_id) == nil
   end
 
+  test "drops empty private rooms from registered game server when the lobby mirror is missing" do
+    white_id = unique_player("drop-live-private-white")
+    black_id = unique_player("drop-live-private-black")
+
+    {:ok, white_view} = GameLobby.create_private(white_id)
+    game_id = white_view.game_id
+
+    on_exit(fn ->
+      GameSupervisor.stop_game(game_id)
+
+      :sys.replace_state(GameLobby, fn state ->
+        %{
+          state
+          | games: Map.delete(state.games, game_id),
+            players: Map.drop(state.players, [white_id, black_id])
+        }
+      end)
+    end)
+
+    black_view = GameLobby.sit(black_id, game_id, :black)
+    assert black_view.game.status == :ready
+    assert {:ok, pid} = GameSupervisor.lookup_game(game_id)
+
+    assert :ok = GameLobby.leave(black_id)
+    assert {:ok, ^pid} = GameSupervisor.lookup_game(game_id)
+    assert GameServer.snapshot(pid).players == %{white: white_id, black: nil}
+
+    :sys.replace_state(GameLobby, fn state ->
+      %{state | games: Map.delete(state.games, game_id)}
+    end)
+
+    refute Map.has_key?(:sys.get_state(GameLobby).games, game_id)
+
+    assert :ok = GameLobby.leave(white_id)
+
+    state = :sys.get_state(GameLobby)
+
+    refute Map.has_key?(state.games, game_id)
+    refute Map.has_key?(state.players, white_id)
+    refute Map.has_key?(state.players, black_id)
+    assert GameSupervisor.lookup_game(game_id) == :error
+    assert GameLobby.snapshot(game_id) == nil
+  end
+
   test "mirrors public seats when a player leaves" do
     player_id = unique_player("mirror-public-leave")
     view = GameLobby.sit(player_id, "game_1", :white)

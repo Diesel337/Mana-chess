@@ -738,7 +738,7 @@ defmodule ManaChessOnline.GameLobby do
 
             state
             |> put_in([:games, game_id], game)
-            |> maybe_drop_empty_private_game(game_id)
+            |> maybe_drop_empty_private_game(game_id, game)
         end
 
       _ ->
@@ -1290,8 +1290,8 @@ defmodule ManaChessOnline.GameLobby do
   defp private_game_id?("private_" <> rest), do: byte_size(rest) >= 6
   defp private_game_id?(_game_id), do: false
 
-  defp maybe_drop_empty_private_game(state, game_id) do
-    case game_snapshot(game_id, state) do
+  defp maybe_drop_empty_private_game(state, game_id, game) do
+    case game do
       %{private?: true, players: %{white: nil, black: nil}} ->
         stop_game_server(game_id)
         update_in(state.games, &Map.delete(&1, game_id))
