@@ -50,24 +50,52 @@ function readLogEntries() {
   }
 }
 
-function isFreshOfflineEvent(entry, startTime) {
-  if (!entry || entry.name !== "desktop.offline") return false
+function isFreshEvent(name, entry, startTime) {
+  if (!entry || entry.name !== name) return false
   if (entry.channel !== channel) return false
 
   const at = Date.parse(entry.at || "")
   return Number.isFinite(at) && at >= startTime - 1000
 }
 
-async function waitForOfflineLog(startTime) {
+async function waitForLog(name, startTime) {
   const deadline = Date.now() + timeoutMs
 
   while (Date.now() < deadline) {
-    const match = readLogEntries().reverse().find(entry => isFreshOfflineEvent(entry, startTime))
+    const match = readLogEntries().reverse().find(entry => isFreshEvent(name, entry, startTime))
     if (match) return match
     await wait(500)
   }
 
-  throw new Error(`Timed out waiting for desktop.offline in ${logPath}`)
+  throw new Error(`Timed out waiting for ${name} in ${logPath}`)
+}
+
+function validateOffline(entry) {
+  const payload = entry?.payload || {}
+
+  if (payload.retrySeconds !== 0) {
+    throw new Error(`Expected retrySeconds=0, received ${payload.retrySeconds}.`)
+  }
+
+  if (payload.url !== offlineUrl) {
+    throw new Error(`Expected offline URL ${offlineUrl}, received ${payload.url || "empty"}.`)
+  }
+}
+
+function validateOfflineScreen(entry) {
+  const payload = entry?.payload || {}
+
+  if (payload.retryDelayMs !== 0) {
+    throw new Error(`Expected offline screen retryDelayMs=0, received ${payload.retryDelayMs}.`)
+  }
+
+  if (typeof payload.failureSummary !== "string" || !payload.failureSummary.includes("Fallo")) {
+    throw new Error(`Expected offline screen failure summary, received ${payload.failureSummary || "empty"}.`)
+  }
+
+  if (typeof payload.online !== "boolean") {
+    throw new Error(`Expected offline screen navigator online boolean, received ${payload.online}.`)
+  }
 }
 
 function stopLaunchedProcess() {
@@ -110,10 +138,15 @@ async function main() {
   child.unref()
 
   try {
-    const entry = await waitForOfflineLog(startTime)
+    const entry = await waitForLog("desktop.offline", startTime)
+    validateOffline(entry)
+    const screenEntry = await waitForLog("desktop.offline_screen_viewed", startTime)
+    validateOfflineScreen(screenEntry)
+
     const payload = entry.payload || {}
     console.log(`Offline smoke loaded ${offlineUrl}`)
     console.log(`Log: ${entry.name} ${entry.version || ""} ${entry.commit || ""} ${entry.channel}`)
+    console.log(`Screen: retryDelayMs=${screenEntry.payload.retryDelayMs} online=${screenEntry.payload.online}`)
     console.log(`Failure: ${payload.errorDescription || "load failed"} ${payload.errorCode || ""}`.trim())
   } finally {
     stopLaunchedProcess()

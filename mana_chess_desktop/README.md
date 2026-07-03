@@ -144,7 +144,7 @@ It also verifies that the launcher records the expected `launchMode` and that br
 `smoke:win:second-instance` opens the packaged app, launches a second copy with a `manachess://` game link, and verifies the first instance receives the runtime handoff.
 `smoke:win:bridge` launches the packaged app against a local QA page and verifies `window.ManaChessDesktop` can report desktop and Steam info, read/copy/reset local desktop state, read/copy diagnostics, copy/open share links and deep links without leaking `qa_key`, mark desktop mode, apply a QA launch bypass key, and send an IPC event back to the main process.
 `smoke:win:reconnect` launches the packaged app against a temporarily unavailable local URL, waits for `desktop.offline`, brings the local server online, and verifies `desktop.reconnected`.
-`smoke:win:offline` launches the app against an unreachable local URL, disables auto-retry, waits for `desktop.offline`, and closes the process.
+`smoke:win:offline` launches the app against an unreachable local URL, disables auto-retry, waits for `desktop.offline` plus `desktop.offline_screen_viewed`, and closes the process.
 
 Run the full Windows release preflight before a Steam candidate:
 
@@ -187,7 +187,7 @@ The real `.vdf` files, SteamCMD logs, and Steam build output are ignored locally
 - Desktop deep links only accept `game_...` and `private_...` game ids; malformed game links fall back to the lobby and are covered by the Windows preflight.
 - External `http`/`https` links open in the user's browser; unsafe external protocols are blocked and logged, and Mana Chess links stay in the app window.
 - The offline/error screen offers automatic retry, pause/resume, lobby, copy-link, and browser fallback actions.
-- `npm run smoke:win:offline` verifies the packaged executable reaches the offline/error path and writes a QA log entry.
+- `npm run smoke:win:offline` verifies the packaged executable reaches the offline/error path, renders the offline recovery screen, and writes QA log entries.
 - The Windows build uses the shared Mana Chess icon, app id `com.diesel337.manachess`, and explicit shortcut/uninstall metadata.
 - `npm run verify:win:installer` verifies `build/icon.png`, `build/icon.ico`, and package icon wiring before creating release artifacts.
 - `npm run verify:win:installer` verifies the NSIS installer artifact exists and has a Windows executable header, without installing it, and writes a local release manifest with artifact hashes.
