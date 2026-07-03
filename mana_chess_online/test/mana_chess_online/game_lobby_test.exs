@@ -961,12 +961,14 @@ defmodule ManaChessOnline.GameLobbyTest do
     server_game = GameServer.snapshot(pid)
 
     assert server_game == lobby_game
+    assert server_game.private?
     assert server_game.status == :ready
     assert server_game.players == %{white: white_id, black: black_id}
     assert server_game.reset_requests == MapSet.new()
     assert server_game.queue == []
     assert hd(server_game.log) == "Partida reiniciada por acuerdo."
     assert [%{text: "reinicio con chat"} | _rest] = server_game.chat
+    refute Enum.any?(GameLobby.lobby(), &(&1.id == white_view.game_id))
   end
 
   test "agreed resets use the registered game server when the lobby mirror is missing" do
@@ -1011,11 +1013,13 @@ defmodule ManaChessOnline.GameLobbyTest do
     server_game = GameServer.snapshot(pid)
 
     assert server_game == lobby_game
+    assert server_game.private?
     assert server_game.status == :ready
     assert server_game.players == %{white: white_id, black: black_id}
     assert server_game.reset_requests == MapSet.new()
     assert hd(server_game.log) == "Partida reiniciada por acuerdo."
     assert [%{text: "chat vivo entre votos"} | _rest] = server_game.chat
+    refute Enum.any?(GameLobby.lobby(), &(&1.id == game_id))
   end
 
   test "mirrors promotions through the registered game server" do
@@ -1458,6 +1462,49 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert hd(server_game.chat).text == "no pisar server"
     assert lobby_game.log == server_game.log
     assert lobby_game.chat == server_game.chat
+  end
+
+  test "sends chat through the registered game server when the lobby mirror is missing" do
+    player_id = unique_player("chat-live-missing")
+
+    {:ok, view} = GameLobby.create_private(player_id)
+    game_id = view.game_id
+
+    on_exit(fn ->
+      GameSupervisor.stop_game(game_id)
+
+      :sys.replace_state(GameLobby, fn state ->
+        %{
+          state
+          | games: Map.delete(state.games, game_id),
+            players: Map.delete(state.players, player_id)
+        }
+      end)
+    end)
+
+    assert {:ok, pid} = GameSupervisor.lookup_game(game_id)
+
+    server_game =
+      GameServer.update(pid, fn game ->
+        %{game | log: ["Server vivo antes del chat." | game.log]}
+      end)
+
+    :sys.replace_state(GameLobby, fn state ->
+      %{state | games: Map.delete(state.games, game_id)}
+    end)
+
+    refute Map.has_key?(:sys.get_state(GameLobby).games, game_id)
+
+    assert :ok = GameLobby.send_chat(player_id, game_id, "desde server vivo")
+
+    lobby_game = :sys.get_state(GameLobby).games[game_id]
+    server_game_after_chat = GameServer.snapshot(pid)
+
+    assert hd(server_game_after_chat.chat).text == "desde server vivo"
+    assert hd(server_game_after_chat.chat).role == "Blancas"
+    assert "Server vivo antes del chat." in server_game_after_chat.log
+    assert lobby_game == server_game_after_chat
+    assert server_game_after_chat.players == server_game.players
   end
 
   test "mirrors countdown readiness through the registered game server" do
