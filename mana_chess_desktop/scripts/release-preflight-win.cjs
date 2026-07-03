@@ -73,6 +73,7 @@ function main() {
     throw new Error("release:win:preflight only runs on Windows.")
   }
 
+  run("Desktop syntax check", node, ["scripts/check-syntax.cjs"])
   validateSteamPipeTemplates()
   run("Windows installer and build verification", node, ["scripts/verify-win-installer.cjs"])
 

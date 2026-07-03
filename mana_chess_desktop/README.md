@@ -154,7 +154,7 @@ Run the full Windows release preflight before a Steam candidate:
 npm run release:win:preflight
 ```
 
-`release:win:preflight` validates the non-secret SteamPipe templates, builds and verifies the unpacked app plus NSIS installer with `verify:win:installer`, then runs the window mode, env/long-arg launch mode, Steam environment, and offline smoke tests.
+`release:win:preflight` runs the desktop syntax check, validates the non-secret SteamPipe templates, builds and verifies the unpacked app plus NSIS installer with `verify:win:installer`, then runs the window mode, env/long-arg launch mode, Steam environment, and offline smoke tests.
 
 ## SteamPipe templates
 
