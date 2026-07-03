@@ -746,12 +746,10 @@ defmodule ManaChessOnline.GameLobby do
     end
   end
 
-  defp keep_player_if_present(state, nil, _game_id, _color), do: state
+  defp keep_player_assignment_if_present(state, nil, _game_id, _color), do: state
 
-  defp keep_player_if_present(state, player_id, game_id, color) do
-    state
-    |> put_in([:players, player_id], %{game_id: game_id, color: color})
-    |> put_in([:games, game_id, :players, color], player_id)
+  defp keep_player_assignment_if_present(state, player_id, game_id, color) do
+    put_in(state.players[player_id], %{game_id: game_id, color: color})
   end
 
   defp reset_ready?(game, player_id) do
@@ -762,29 +760,37 @@ defmodule ManaChessOnline.GameLobby do
   defp reset_game(state, game_id, old_game) do
     chat = Map.get(old_game, :chat, [])
 
-    state =
+    {state, reset_game} =
       if old_game.practice? do
         player_id = old_game.players.white
 
-        state
-        |> put_in(
-          [:games, game_id],
+        reset_game =
           practice_game(game_id, player_id, old_game.settings, bot_color(old_game))
-        )
-        |> put_in([:players, player_id], %{game_id: game_id, color: :practice})
-        |> put_in([:games, game_id, :chat], chat)
-        |> update_in([:games, game_id, :log], &["Practica reiniciada." | &1])
+          |> Map.put(:chat, chat)
+          |> update_in([:log], &["Practica reiniciada." | &1])
+
+        {
+          put_in(state.players[player_id], %{game_id: game_id, color: :practice}),
+          reset_game
+        }
       else
-        state
-        |> put_in([:games, game_id], new_game(game_id, old_game.settings))
-        |> keep_player_if_present(old_game.players.white, game_id, :white)
-        |> keep_player_if_present(old_game.players.black, game_id, :black)
-        |> put_in([:games, game_id, :chat], chat)
-        |> update_in([:games, game_id], &refresh_status/1)
-        |> update_in([:games, game_id, :log], &["Partida reiniciada por acuerdo." | &1])
+        reset_game =
+          new_game(game_id, old_game.settings)
+          |> put_in([:players, :white], old_game.players.white)
+          |> put_in([:players, :black], old_game.players.black)
+          |> Map.put(:chat, chat)
+          |> refresh_status()
+          |> update_in([:log], &["Partida reiniciada por acuerdo." | &1])
+
+        state =
+          state
+          |> keep_player_assignment_if_present(old_game.players.white, game_id, :white)
+          |> keep_player_assignment_if_present(old_game.players.black, game_id, :black)
+
+        {state, reset_game}
       end
 
-    put_in(state.games[game_id], replace_game_state(state.games[game_id]))
+    put_in(state.games[game_id], replace_game_state(reset_game))
   end
 
   defp empty_waiting_game?(game), do: GameDirectory.empty_waiting_game?(game)

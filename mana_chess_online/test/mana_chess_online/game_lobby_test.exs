@@ -820,6 +820,55 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert [%{text: "reinicio con chat"} | _rest] = server_game.chat
   end
 
+  test "agreed resets use the registered game server when the lobby mirror is missing" do
+    white_id = unique_player("reset-live-white")
+    black_id = unique_player("reset-live-black")
+
+    on_exit(fn ->
+      GameLobby.leave(white_id)
+      GameLobby.leave(black_id)
+    end)
+
+    {:ok, white_view} = GameLobby.create_private(white_id)
+    black_view = GameLobby.sit(black_id, white_view.game_id, :black)
+    game_id = white_view.game_id
+
+    assert black_view.game.status == :ready
+    assert {:ok, pid} = GameSupervisor.lookup_game(game_id)
+
+    assert :ok = GameLobby.reset(white_id)
+
+    live_chat = %{
+      player_id: white_id,
+      name: "Jugador LIVE",
+      role: "Blancas",
+      sent_at: System.system_time(:millisecond),
+      text: "chat vivo entre votos"
+    }
+
+    GameServer.update(pid, fn game ->
+      %{game | chat: [live_chat | game.chat]}
+    end)
+
+    :sys.replace_state(GameLobby, fn state ->
+      %{state | games: Map.delete(state.games, game_id)}
+    end)
+
+    refute Map.has_key?(:sys.get_state(GameLobby).games, game_id)
+
+    assert :ok = GameLobby.reset(black_id)
+
+    lobby_game = :sys.get_state(GameLobby).games[game_id]
+    server_game = GameServer.snapshot(pid)
+
+    assert server_game == lobby_game
+    assert server_game.status == :ready
+    assert server_game.players == %{white: white_id, black: black_id}
+    assert server_game.reset_requests == MapSet.new()
+    assert hd(server_game.log) == "Partida reiniciada por acuerdo."
+    assert [%{text: "chat vivo entre votos"} | _rest] = server_game.chat
+  end
+
   test "mirrors promotions through the registered game server" do
     player_id = unique_player("promote-player")
     on_exit(fn -> GameLobby.leave(player_id) end)
