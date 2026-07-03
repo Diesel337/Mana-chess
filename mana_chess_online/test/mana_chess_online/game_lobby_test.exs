@@ -1541,6 +1541,40 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert server_game.log == lobby_game.log
   end
 
+  test "countdown readiness uses the registered game server when the lobby mirror is missing" do
+    white_id = unique_player("live-ready-white")
+    black_id = unique_player("live-ready-black")
+
+    on_exit(fn ->
+      GameLobby.leave(white_id)
+      GameLobby.leave(black_id)
+    end)
+
+    {:ok, white_view} = GameLobby.create_private(white_id)
+    game_id = white_view.game_id
+    assert %{game: %{status: :ready}} = GameLobby.sit(black_id, game_id, :black)
+    assert {:ok, pid} = GameSupervisor.lookup_game(game_id)
+
+    assert :ok = GameLobby.start_game(white_id)
+    assert match?({:starting, _starts_at}, GameServer.snapshot(pid).status)
+
+    :sys.replace_state(GameLobby, fn state ->
+      %{state | games: Map.delete(state.games, game_id)}
+    end)
+
+    refute Map.has_key?(:sys.get_state(GameLobby).games, game_id)
+
+    assert :ok = GameLobby.ready_to_start(black_id)
+
+    lobby_game = :sys.get_state(GameLobby).games[game_id]
+    server_game = GameServer.snapshot(pid)
+
+    assert server_game == lobby_game
+    assert server_game.status == :playing
+    assert server_game.start_requests == MapSet.new()
+    assert hd(server_game.log) == "Partida iniciada. Blancas abren."
+  end
+
   test "keeps only the latest room chat messages in newest-first order" do
     player_id = unique_player("chat-limit")
     on_exit(fn -> GameLobby.leave(player_id) end)
