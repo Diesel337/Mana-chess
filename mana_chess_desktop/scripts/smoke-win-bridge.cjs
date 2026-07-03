@@ -182,14 +182,18 @@ function bridgeSmokePage() {
         } catch (_error) {}
 
         try {
-          window.open("file:///C:/mana-chess-blocked-protocol-smoke", "_blank");
+          const blockedLink = document.createElement("a");
+          blockedLink.href = "mailto:mana-chess-blocked-protocol-smoke@example.invalid";
+          blockedLink.target = "_blank";
+          document.body.appendChild(blockedLink);
+          blockedLink.click();
           await new Promise((resolve) => setTimeout(resolve, 500));
 
           const diagnostics = await bridge?.getDiagnostics?.();
           blockedExternalProtocolOk = Boolean(
             diagnostics?.recentLog?.some?.((line) =>
               String(line || "").includes('"name":"desktop.external_link_blocked"') &&
-              String(line || "").includes('"protocol":"file:"') &&
+              String(line || "").includes('"protocol":"mailto:"') &&
               String(line || "").includes('"error":"blocked_protocol"')
             )
           );
