@@ -767,6 +767,7 @@ defmodule ManaChessOnline.GameLobby do
 
         reset_game =
           practice_game(game_id, player_id, old_game.settings, bot_color(old_game))
+          |> preserve_practice_bot_state(old_game)
           |> Map.put(:chat, chat)
           |> update_in([:log], &["Practica reiniciada." | &1])
 

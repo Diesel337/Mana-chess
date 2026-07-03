@@ -883,6 +883,37 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert hd(server_game.log) == "Configuracion admin aplicada a la practica."
   end
 
+  test "practice resets keep the live bot disabled state" do
+    player_id = unique_player("reset-practice-bot-disabled")
+    on_exit(fn -> GameLobby.leave(player_id) end)
+
+    view = GameLobby.start_practice(player_id)
+    assert {:ok, pid} = GameSupervisor.lookup_game(view.game_id)
+
+    assert :ok = GameLobby.send_chat(player_id, view.game_id, "bot apagado antes de reset")
+    view = GameLobby.toggle_practice_bot(player_id)
+    refute view.game.bot_enabled?
+
+    :sys.replace_state(GameLobby, fn state ->
+      %{state | games: Map.delete(state.games, view.game_id)}
+    end)
+
+    refute Map.has_key?(:sys.get_state(GameLobby).games, view.game_id)
+
+    assert :ok = GameLobby.reset(player_id)
+
+    lobby_game = :sys.get_state(GameLobby).games[view.game_id]
+    server_game = GameServer.snapshot(pid)
+
+    assert server_game == lobby_game
+    refute server_game.bot_enabled?
+    assert server_game.bot_ready_at == nil
+    assert server_game.bot_color == :black
+    assert server_game.status == :playing
+    assert hd(server_game.log) == "Practica reiniciada."
+    assert [%{text: "bot apagado antes de reset"} | _rest] = server_game.chat
+  end
+
   test "mirrors reset requests through the registered game server" do
     white_id = unique_player("reset-white")
     black_id = unique_player("reset-black")
