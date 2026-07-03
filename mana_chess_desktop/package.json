@@ -15,7 +15,7 @@
   },
   "main": "src/main.cjs",
   "scripts": {
-    "check": "node --check src/main.cjs && node --check src/preload.cjs",
+    "check": "node scripts/check-syntax.cjs",
     "build-info": "node scripts/write-build-info.cjs",
     "start": "electron .",
     "pack:win": "node scripts/write-build-info.cjs && electron-builder --dir --win --x64",

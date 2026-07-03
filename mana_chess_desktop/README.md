@@ -85,11 +85,13 @@ Run locally:
 npm start
 ```
 
-Check the Electron entry files:
+Check the Electron entry files and desktop QA/build scripts:
 
 ```powershell
 npm run check
 ```
+
+`check` runs syntax validation across `src/` and `scripts/`.
 
 Create a Windows installer:
 
