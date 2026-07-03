@@ -16,11 +16,15 @@ Mana Chess.exe
 
 ## Local upload flow
 
-Install SteamCMD outside this repository, then create the unpacked Windows build:
+Install SteamCMD outside this repository, then run the full Windows release preflight:
 
 ```powershell
-npm run verify:win
+npm run release:win:preflight
 ```
+
+The preflight validates syntax, SteamPipe templates, icons, the unpacked Windows executable, the NSIS installer, launch window modes, simulated Steam environment data, deep links, second-instance handoff, desktop bridge IPC, reconnect, and offline recovery.
+
+Steam uploads use the unpacked payload in `../dist/win-unpacked`. The NSIS installer and release manifest are QA/release evidence and are not the Steam depot payload.
 
 Copy the templates to local, ignored VDF files:
 
@@ -49,3 +53,5 @@ For QA-only launch options, the packaged app also accepts:
 --maximized
 --fullscreen
 ```
+
+Keep the public Steam branch on the default launch option unless a QA branch is intentionally testing one of those modes.
