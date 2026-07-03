@@ -143,7 +143,7 @@ It also verifies that the launcher records the expected `launchMode` and that br
 `smoke:win:deep-link` launches the packaged app with a `manachess://game/private_smoke_deep_link` URL and verifies the launcher resolves it to a game route in the desktop QA log.
 `smoke:win:second-instance` opens the packaged app, launches a second copy with a `manachess://` game link, and verifies the first instance receives the runtime handoff.
 `smoke:win:bridge` launches the packaged app against a local QA page and verifies `window.ManaChessDesktop` can report desktop and Steam info, read/copy/reset local desktop state, read/copy diagnostics, copy/open share links and deep links without leaking `qa_key`, mark desktop mode, apply a QA launch bypass key, and send an IPC event back to the main process.
-`smoke:win:reconnect` launches the packaged app against a temporarily unavailable local URL, waits for `desktop.offline`, brings the local server online, and verifies `desktop.reconnected`.
+`smoke:win:reconnect` launches the packaged app against a temporarily unavailable local URL, waits for `desktop.offline` plus `desktop.offline_screen_viewed`, brings the local server online, and verifies `desktop.reconnected`.
 `smoke:win:offline` launches the app against an unreachable local URL, disables auto-retry, waits for `desktop.offline` plus `desktop.offline_screen_viewed`, and closes the process.
 
 Run the full Windows release preflight before a Steam candidate:
@@ -181,7 +181,7 @@ The real `.vdf` files, SteamCMD logs, and Steam build output are ignored locally
 - `npm run smoke:win:bridge` verifies the packaged executable exposes the desktop bridge to renderer code, handles QA copy/reset actions, and records bridge IPC events.
 - `MANA_CHESS_QA_BYPASS_KEY` lets QA desktop builds open web deployments protected by `steam_required` without leaking `qa_key` into copied share/deep links.
 - `MANA_CHESS_DISABLE_EXTERNAL_OPEN=1` lets QA verify external-link diagnostics without opening a browser.
-- `npm run smoke:win:reconnect` verifies the packaged executable can recover from the offline screen when the service comes back.
+- `npm run smoke:win:reconnect` verifies the packaged executable renders the offline recovery screen and can recover when the service comes back.
 - Desktop mode is forced with `?desktop=1` on every in-app navigation.
 - `manachess://` deep links can open lobby or game routes inside the desktop app.
 - Desktop deep links only accept `game_...` and `private_...` game ids; malformed game links fall back to the lobby and are covered by the Windows preflight.

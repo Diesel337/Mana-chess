@@ -132,6 +132,23 @@ function validateOffline(entry, smokeUrl) {
   }
 }
 
+function validateOfflineScreen(entry) {
+  const payload = entry?.payload || {}
+  const expectedRetryDelayMs = retrySeconds * 1000
+
+  if (payload.retryDelayMs !== expectedRetryDelayMs) {
+    throw new Error(`Expected offline screen retryDelayMs=${expectedRetryDelayMs}, received ${payload.retryDelayMs}.`)
+  }
+
+  if (typeof payload.failureSummary !== "string" || !payload.failureSummary.includes("Fallo")) {
+    throw new Error(`Expected offline screen failure summary, received ${payload.failureSummary || "empty"}.`)
+  }
+
+  if (typeof payload.online !== "boolean") {
+    throw new Error(`Expected offline screen navigator online boolean, received ${payload.online}.`)
+  }
+}
+
 function validateReconnected(entry, smokeUrl) {
   const payload = entry?.payload || {}
 
@@ -194,6 +211,9 @@ async function main() {
     const offline = await waitForLog("desktop.offline", startTime)
     validateOffline(offline, smokeUrl)
 
+    const offlineScreen = await waitForLog("desktop.offline_screen_viewed", startTime)
+    validateOfflineScreen(offlineScreen)
+
     await startServer(port)
 
     const reconnected = await waitForLog("desktop.reconnected", startTime)
@@ -201,6 +221,7 @@ async function main() {
 
     console.log(`Reconnect smoke recovered ${smokeUrl}`)
     console.log(`Offline: retrySeconds=${offline.payload.retrySeconds} error=${offline.payload.errorDescription || "load failed"}`)
+    console.log(`Screen: retryDelayMs=${offlineScreen.payload.retryDelayMs} online=${offlineScreen.payload.online}`)
     console.log(`Reconnected: ${reconnected.payload.url}`)
   } finally {
     stopLaunchedProcess()
