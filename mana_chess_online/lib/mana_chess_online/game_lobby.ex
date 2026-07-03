@@ -286,7 +286,7 @@ defmodule ManaChessOnline.GameLobby do
 
           state
           |> update_in([:players], fn players -> Map.drop(players, player_ids) end)
-          |> put_in([:games, game_id], replace_game_state(new_game(game_id, game.settings)))
+          |> put_in([:games, game_id], replace_game_state(cleared_game_state(game_id, game)))
 
         _ ->
           state
@@ -798,6 +798,11 @@ defmodule ManaChessOnline.GameLobby do
   defp seated_players(game), do: GameDirectory.seated_players(game)
 
   defp find_slot(games), do: GameDirectory.find_open_slot(games)
+
+  defp cleared_game_state(game_id, %{private?: true, settings: settings}),
+    do: private_game(game_id, settings)
+
+  defp cleared_game_state(game_id, %{settings: settings}), do: new_game(game_id, settings)
 
   defp player_view(state, player_id) do
     assignment = state.players[player_id] || %{game_id: nil, color: nil}

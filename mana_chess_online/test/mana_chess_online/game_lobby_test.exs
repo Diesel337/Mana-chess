@@ -579,6 +579,50 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert server_game.log == ["Esperando jugadores..."]
   end
 
+  test "clears private rooms from registered game server without exposing them in lobby" do
+    white_id = unique_player("clear-live-private-white")
+    black_id = unique_player("clear-live-private-black")
+
+    {:ok, white_view} = GameLobby.create_private(white_id)
+    game_id = white_view.game_id
+
+    on_exit(fn ->
+      GameSupervisor.stop_game(game_id)
+
+      :sys.replace_state(GameLobby, fn state ->
+        %{
+          state
+          | games: Map.delete(state.games, game_id),
+            players: Map.drop(state.players, [white_id, black_id])
+        }
+      end)
+    end)
+
+    assert %{game: %{status: :ready}} = GameLobby.sit(black_id, game_id, :black)
+    assert {:ok, pid} = GameSupervisor.lookup_game(game_id)
+
+    :sys.replace_state(GameLobby, fn state ->
+      %{state | games: Map.delete(state.games, game_id)}
+    end)
+
+    refute Map.has_key?(:sys.get_state(GameLobby).games, game_id)
+
+    assert :ok = GameLobby.clear_room(game_id)
+
+    state = :sys.get_state(GameLobby)
+    lobby_game = state.games[game_id]
+    server_game = GameServer.snapshot(pid)
+
+    refute Map.has_key?(state.players, white_id)
+    refute Map.has_key?(state.players, black_id)
+    assert server_game == lobby_game
+    assert server_game.private?
+    assert server_game.status == :waiting
+    assert server_game.players == %{white: nil, black: nil}
+    assert server_game.log == ["Sala privada creada. Comparte el link para invitar."]
+    refute Enum.any?(GameLobby.lobby(), &(&1.id == game_id))
+  end
+
   test "practice games are isolated and removed when the player leaves" do
     player_id = unique_player("practice-player")
     view = GameLobby.start_practice(player_id)
