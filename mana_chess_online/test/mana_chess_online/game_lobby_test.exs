@@ -791,6 +791,46 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert server_game.cooldowns == lobby_game.cooldowns
   end
 
+  test "global settings keep live private rooms private and outside the public lobby" do
+    original_settings = GameLobby.global_settings()
+    game_id = "private_global_" <> Integer.to_string(System.unique_integer([:positive]))
+    game = GameState.private_game(game_id, original_settings)
+
+    on_exit(fn ->
+      GameLobby.update_global_settings(settings_params(original_settings))
+      GameSupervisor.stop_game(game_id)
+
+      :sys.replace_state(GameLobby, fn state ->
+        %{state | games: Map.delete(state.games, game_id)}
+      end)
+    end)
+
+    assert {:ok, pid} = GameSupervisor.upsert_game(game)
+
+    :sys.replace_state(GameLobby, fn state ->
+      %{state | games: Map.delete(state.games, game_id)}
+    end)
+
+    refute Map.has_key?(:sys.get_state(GameLobby).games, game_id)
+    refute Enum.any?(GameLobby.lobby(), &(&1.id == game_id))
+
+    settings =
+      GameLobby.update_global_settings(%{
+        "max_elixir" => "15",
+        "initial_elixir" => "4",
+        "regen_per_second" => "1.5"
+      })
+
+    lobby_game = :sys.get_state(GameLobby).games[game_id]
+    server_game = GameServer.snapshot(pid)
+
+    assert server_game == lobby_game
+    assert server_game.private?
+    assert server_game.settings == settings
+    assert server_game.elixir == %{white: 4.0, black: 4.0}
+    refute Enum.any?(GameLobby.lobby(), &(&1.id == game_id))
+  end
+
   test "global settings skip rooms that are occupied in the registered game server" do
     original_settings = GameLobby.global_settings()
     game_id = "live_global_skip_" <> Integer.to_string(System.unique_integer([:positive]))
