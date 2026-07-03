@@ -105,7 +105,7 @@ Verify the Windows installer artifact without launching it:
 npm run verify:win:installer
 ```
 
-`verify:win:installer` checks the icon assets, Electron entry files, writes build metadata, creates the unpacked app plus NSIS installer, verifies `dist/win-unpacked/Mana Chess.exe`, `dist/Mana Chess Setup <version>.exe`, `dist/latest.yml`, and the installer block map, then writes `dist/release-manifest.json` with sizes and SHA256 hashes.
+`verify:win:installer` checks the icon assets, runs the desktop syntax check, writes build metadata, creates the unpacked app plus NSIS installer, verifies `dist/win-unpacked/Mana Chess.exe`, `dist/Mana Chess Setup <version>.exe`, `dist/latest.yml`, and the installer block map, then writes `dist/release-manifest.json` with sizes and SHA256 hashes.
 
 Create an unpacked Windows app for quick testing:
 
@@ -119,7 +119,7 @@ Run the desktop release sanity check:
 npm run verify:win
 ```
 
-`verify:win` checks the Electron entry files, writes build metadata, creates the unpacked Windows build, and verifies `dist/win-unpacked/Mana Chess.exe`.
+`verify:win` runs the desktop syntax check, writes build metadata, creates the unpacked Windows build, and verifies `dist/win-unpacked/Mana Chess.exe`.
 
 Smoke-test the unpacked app startup:
 

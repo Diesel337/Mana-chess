@@ -138,8 +138,7 @@ function validateIconAssets() {
 }
 
 validateIconAssets()
-run(node, ["--check", "src/main.cjs"])
-run(node, ["--check", "src/preload.cjs"])
+run(node, ["scripts/check-syntax.cjs"])
 run(node, ["scripts/write-build-info.cjs"])
 
 if (!fs.existsSync(electronBuilder)) {
