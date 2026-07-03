@@ -518,16 +518,16 @@ defmodule ManaChessOnline.GameLobbyTest do
     black_id = unique_player("clear-black")
     game_id = "game_2"
 
-    on_exit(fn -> GameLobby.clear_room(game_id) end)
+    on_exit(fn -> GameLobby.force_clear_room(game_id) end)
 
-    GameLobby.clear_room(game_id)
+    GameLobby.force_clear_room(game_id)
     white_view = GameLobby.sit(white_id, game_id, :white)
     black_view = GameLobby.sit(black_id, game_id, :black)
     assert white_view.game_id == game_id
     assert black_view.game.status == :ready
     assert {:ok, pid} = GameSupervisor.lookup_game(game_id)
 
-    assert :ok = GameLobby.clear_room(game_id)
+    assert :ok = GameLobby.clear_room(white_id, game_id)
 
     state = :sys.get_state(GameLobby)
     lobby_game = state.games[game_id]
@@ -543,14 +543,33 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert server_game.log == ["Esperando jugadores..."]
   end
 
+  test "rejects clearing rooms by players who are not seated there" do
+    white_id = unique_player("clear-owner")
+    intruder_id = unique_player("clear-intruder")
+    game_id = "game_2"
+
+    on_exit(fn -> GameLobby.force_clear_room(game_id) end)
+
+    GameLobby.force_clear_room(game_id)
+    assert %{game_id: ^game_id} = GameLobby.sit(white_id, game_id, :white)
+    before_game = GameLobby.snapshot(game_id)
+
+    assert {:error, :forbidden} = GameLobby.clear_room(intruder_id, game_id)
+
+    after_game = GameLobby.snapshot(game_id)
+
+    assert after_game.players == before_game.players
+    assert after_game.status == before_game.status
+  end
+
   test "clears public rooms from registered game server when the lobby mirror is missing" do
     white_id = unique_player("clear-live-white")
     black_id = unique_player("clear-live-black")
     game_id = "game_3"
 
-    on_exit(fn -> GameLobby.clear_room(game_id) end)
+    on_exit(fn -> GameLobby.force_clear_room(game_id) end)
 
-    GameLobby.clear_room(game_id)
+    GameLobby.force_clear_room(game_id)
     assert %{game_id: ^game_id} = GameLobby.sit(white_id, game_id, :white)
     assert %{game: %{status: :ready}} = GameLobby.sit(black_id, game_id, :black)
     assert {:ok, pid} = GameSupervisor.lookup_game(game_id)
@@ -565,7 +584,7 @@ defmodule ManaChessOnline.GameLobbyTest do
 
     refute Map.has_key?(:sys.get_state(GameLobby).games, game_id)
 
-    assert :ok = GameLobby.clear_room(game_id)
+    assert :ok = GameLobby.clear_room(white_id, game_id)
 
     state = :sys.get_state(GameLobby)
     lobby_game = state.games[game_id]
@@ -607,7 +626,7 @@ defmodule ManaChessOnline.GameLobbyTest do
 
     refute Map.has_key?(:sys.get_state(GameLobby).games, game_id)
 
-    assert :ok = GameLobby.clear_room(game_id)
+    assert :ok = GameLobby.clear_room(white_id, game_id)
 
     state = :sys.get_state(GameLobby)
     lobby_game = state.games[game_id]
@@ -1154,8 +1173,8 @@ defmodule ManaChessOnline.GameLobbyTest do
   end
 
   test "lobby ticks restore registered game servers missing from the mirror" do
-    game_id = "live_tick_" <> Integer.to_string(System.unique_integer([:positive]))
-    game = GameState.new_game(game_id, GameLobby.global_settings())
+    game_id = "private_live_tick_" <> Integer.to_string(System.unique_integer([:positive]))
+    game = GameState.private_game(game_id, GameLobby.global_settings())
 
     on_exit(fn ->
       GameSupervisor.stop_game(game_id)

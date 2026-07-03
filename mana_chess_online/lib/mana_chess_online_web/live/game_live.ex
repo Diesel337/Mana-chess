@@ -266,8 +266,13 @@ defmodule ManaChessOnlineWeb.GameLive do
   end
 
   def handle_event("clear_room", %{"game" => game_id}, socket) do
-    :ok = GameLobby.clear_room(game_id)
-    {:noreply, assign_view(socket, GameLobby.join(socket.assigns.player_id))}
+    case GameLobby.clear_room(socket.assigns.player_id, game_id) do
+      :ok ->
+        {:noreply, assign_view(socket, GameLobby.join(socket.assigns.player_id))}
+
+      {:error, _reason} ->
+        {:noreply, put_flash(socket, :error, "No puedes limpiar esa sala.")}
+    end
   end
 
   def handle_event("promote", %{"piece" => piece}, socket) do
@@ -1473,7 +1478,7 @@ defmodule ManaChessOnlineWeb.GameLive do
                       Copiar
                     </button>
                     <button
-                      :if={clearable_room?(game)}
+                      :if={clearable_room?(game) && seated_in?(game, @player_id)}
                       type="button"
                       phx-click="clear_room"
                       phx-value-game={game.id}

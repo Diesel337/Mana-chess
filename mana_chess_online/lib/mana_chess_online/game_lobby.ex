@@ -69,7 +69,11 @@ defmodule ManaChessOnline.GameLobby do
     do: GenServer.call(__MODULE__, {:apply_global_settings_to_practice, player_id})
 
   def leave(player_id), do: GenServer.call(__MODULE__, {:leave, player_id})
-  def clear_room(game_id), do: GenServer.call(__MODULE__, {:clear_room, game_id})
+
+  def clear_room(player_id, game_id),
+    do: GenServer.call(__MODULE__, {:clear_room, player_id, game_id})
+
+  def force_clear_room(game_id), do: GenServer.call(__MODULE__, {:force_clear_room, game_id})
   def reset(player_id), do: GenServer.call(__MODULE__, {:reset, player_id})
   def start_game(player_id), do: GenServer.call(__MODULE__, {:start_game, player_id})
   def ready_to_start(player_id), do: GenServer.call(__MODULE__, {:ready_to_start, player_id})
@@ -278,15 +282,28 @@ defmodule ManaChessOnline.GameLobby do
     {:reply, :ok, state}
   end
 
-  def handle_call({:clear_room, game_id}, _from, state) do
+  def handle_call({:clear_room, player_id, game_id}, _from, state) do
+    case game_snapshot(game_id, state) do
+      %{practice?: false} = game
+      when game.status in [:waiting, :ready] ->
+        if can_clear_room?(state, player_id, game_id, game) do
+          state = clear_room_state(state, game_id, game)
+          broadcast_lobby(state)
+          {:reply, :ok, state}
+        else
+          {:reply, {:error, :forbidden}, state}
+        end
+
+      _ ->
+        {:reply, {:error, :not_clearable}, state}
+    end
+  end
+
+  def handle_call({:force_clear_room, game_id}, _from, state) do
     state =
       case game_snapshot(game_id, state) do
         %{practice?: false} = game when game.status in [:waiting, :ready] ->
-          player_ids = seated_players(game)
-
-          state
-          |> update_in([:players], fn players -> Map.drop(players, player_ids) end)
-          |> put_in([:games, game_id], replace_game_state(cleared_game_state(game_id, game)))
+          clear_room_state(state, game_id, game)
 
         _ ->
           state
@@ -800,6 +817,24 @@ defmodule ManaChessOnline.GameLobby do
   defp seated_players(game), do: GameDirectory.seated_players(game)
 
   defp find_slot(games), do: GameDirectory.find_open_slot(games)
+
+  defp can_clear_room?(state, player_id, game_id, game) do
+    case state.players[player_id] do
+      %{game_id: ^game_id, color: color} when color in [:white, :black] ->
+        player_id in seated_players(game)
+
+      _assignment ->
+        false
+    end
+  end
+
+  defp clear_room_state(state, game_id, game) do
+    player_ids = seated_players(game)
+
+    state
+    |> update_in([:players], fn players -> Map.drop(players, player_ids) end)
+    |> put_in([:games, game_id], replace_game_state(cleared_game_state(game_id, game)))
+  end
 
   defp cleared_game_state(game_id, %{private?: true, settings: settings}),
     do: private_game(game_id, settings)
