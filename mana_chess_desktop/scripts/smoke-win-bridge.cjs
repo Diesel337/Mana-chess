@@ -104,6 +104,7 @@ function bridgeSmokePage() {
         let openShareLinkOk = false;
         let openShareLinkLoggedOk = false;
         let openShareLinkUrl = "";
+        let blockedExternalProtocolOk = false;
         let copyDeepLinkOk = false;
         let copyDeepLinkUrl = "";
         let resetStateOk = false;
@@ -181,6 +182,20 @@ function bridgeSmokePage() {
         } catch (_error) {}
 
         try {
+          window.open("file:///C:/mana-chess-blocked-protocol-smoke", "_blank");
+          await new Promise((resolve) => setTimeout(resolve, 500));
+
+          const diagnostics = await bridge?.getDiagnostics?.();
+          blockedExternalProtocolOk = Boolean(
+            diagnostics?.recentLog?.some?.((line) =>
+              String(line || "").includes('"name":"desktop.external_link_blocked"') &&
+              String(line || "").includes('"protocol":"file:"') &&
+              String(line || "").includes('"error":"blocked_protocol"')
+            )
+          );
+        } catch (_error) {}
+
+        try {
           const result = await bridge?.copyDeepLink?.(shareTarget);
           copyDeepLinkOk = result?.ok === true;
           copyDeepLinkUrl = result?.url || "";
@@ -227,6 +242,7 @@ function bridgeSmokePage() {
           openShareLinkOk,
           openShareLinkLoggedOk,
           openShareLinkUrl,
+          blockedExternalProtocolOk,
           copyDeepLinkOk,
           copyDeepLinkUrl,
           resetStateOk,
@@ -283,6 +299,7 @@ function validateBridgePayload(entry) {
   if (String(payload.openShareLinkUrl || "").includes("qa_key")) {
     throw new Error(`Expected opened share link to strip qa_key, received ${payload.openShareLinkUrl || "empty"}.`)
   }
+  if (payload.blockedExternalProtocolOk !== true) throw new Error("Expected unsafe external protocols to be blocked and logged.")
   if (payload.copyDeepLinkOk !== true) throw new Error("Expected bridge copyDeepLink() to succeed.")
   if (payload.copyDeepLinkUrl !== "manachess://game/private_bridge_smoke") {
     throw new Error(`Expected private game deep link, received ${payload.copyDeepLinkUrl || "empty"}.`)

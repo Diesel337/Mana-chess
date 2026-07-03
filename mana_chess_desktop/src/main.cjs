@@ -421,6 +421,17 @@ async function openExternalUrl(url, source = "desktop") {
     return {ok: false, url: "", error}
   }
 
+  if (!externalProtocolAllowed(parsed)) {
+    const error = "blocked_protocol"
+    appendDesktopLog("warn", "desktop.external_link_blocked", {
+      source,
+      url: safeLogUrl,
+      protocol: String(parsed.protocol || "").slice(0, 24),
+      error
+    })
+    return {ok: false, url: parsed.toString(), error}
+  }
+
   try {
     if (DESKTOP_DISABLE_EXTERNAL_OPEN) {
       appendDesktopLog("info", "desktop.external_link_opened", {source, url: safeLogUrl, skipped: true})
@@ -445,6 +456,10 @@ function externalLogUrl(url) {
   if (!parsed) return ""
 
   return `${parsed.origin}${parsed.pathname}`.slice(0, 300)
+}
+
+function externalProtocolAllowed(parsed) {
+  return parsed?.protocol === "http:" || parsed?.protocol === "https:"
 }
 
 function desktopStatePath() {
