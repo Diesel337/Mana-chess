@@ -1208,6 +1208,68 @@ defmodule ManaChessOnline.GameLobbyTest do
     refute Enum.any?(GameLobby.lobby(), &(&1.id == game_id))
   end
 
+  test "agreed resets use registered game server state over stale mirrors" do
+    white_id = unique_player("reset-stale-white")
+    black_id = unique_player("reset-stale-black")
+
+    on_exit(fn ->
+      GameLobby.leave(white_id)
+      GameLobby.leave(black_id)
+    end)
+
+    {:ok, white_view} = GameLobby.create_private(white_id)
+    game_id = white_view.game_id
+
+    assert %{game: %{status: :ready}} = GameLobby.sit(black_id, game_id, :black)
+    assert {:ok, pid} = GameSupervisor.lookup_game(game_id)
+
+    assert :ok = GameLobby.reset(white_id)
+
+    live_chat = %{
+      player_id: white_id,
+      name: "Jugador LIVE",
+      role: "Blancas",
+      sent_at: System.system_time(:millisecond),
+      text: "chat vivo con mirror stale"
+    }
+
+    server_game =
+      GameServer.update(pid, fn game ->
+        %{
+          game
+          | chat: [live_chat | game.chat],
+            log: ["Servidor vivo antes del acuerdo." | game.log]
+        }
+      end)
+
+    stale_game = %{
+      server_game
+      | reset_requests: MapSet.new(),
+        chat: [],
+        log: ["Mirror stale antes del acuerdo."]
+    }
+
+    :sys.replace_state(GameLobby, fn state ->
+      %{state | games: Map.put(state.games, game_id, stale_game)}
+    end)
+
+    assert :sys.get_state(GameLobby).games[game_id].reset_requests == MapSet.new()
+
+    assert :ok = GameLobby.reset(black_id)
+
+    lobby_game = :sys.get_state(GameLobby).games[game_id]
+    server_game = GameServer.snapshot(pid)
+
+    assert server_game == lobby_game
+    assert server_game.private?
+    assert server_game.status == :ready
+    assert server_game.players == %{white: white_id, black: black_id}
+    assert server_game.reset_requests == MapSet.new()
+    assert hd(server_game.log) == "Partida reiniciada por acuerdo."
+    assert [%{text: "chat vivo con mirror stale"} | _rest] = server_game.chat
+    refute Enum.any?(server_game.log, &(&1 == "Mirror stale antes del acuerdo."))
+  end
+
   test "mirrors promotions through the registered game server" do
     player_id = unique_player("promote-player")
     on_exit(fn -> GameLobby.leave(player_id) end)
