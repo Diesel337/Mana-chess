@@ -15,6 +15,23 @@ defmodule ManaChessOnline.GameLobbyTest do
     end
   end
 
+  defp stop_live_anywhere_games(except) do
+    except = MapSet.new(except)
+    state_game_ids = :sys.get_state(GameLobby).games |> Map.keys()
+    server_game_ids = GameSupervisor.game_snapshots() |> Map.keys()
+
+    game_ids =
+      (state_game_ids ++ server_game_ids)
+      |> Enum.uniq()
+      |> Enum.filter(&(String.contains?(&1, "live_anywhere") and not MapSet.member?(except, &1)))
+
+    Enum.each(game_ids, &GameSupervisor.stop_game/1)
+
+    :sys.replace_state(GameLobby, fn state ->
+      %{state | games: Map.drop(state.games, game_ids)}
+    end)
+  end
+
   defp promotion_board do
     [
       ["P", ".", ".", ".", "k", ".", ".", "."],
@@ -335,6 +352,8 @@ defmodule ManaChessOnline.GameLobbyTest do
     game_id = "aaa_live_anywhere_" <> Integer.to_string(System.unique_integer([:positive]))
     game = GameState.new_game(game_id, GameLobby.global_settings())
 
+    stop_live_anywhere_games([game_id])
+
     on_exit(fn ->
       GameLobby.leave(player_id)
       GameSupervisor.stop_game(game_id)
@@ -381,6 +400,8 @@ defmodule ManaChessOnline.GameLobbyTest do
     stale_black_id = unique_player("stale-black")
     game_id = "000_live_anywhere_stale_" <> Integer.to_string(System.unique_integer([:positive]))
     game = GameState.new_game(game_id, GameLobby.global_settings())
+
+    stop_live_anywhere_games([game_id])
 
     on_exit(fn ->
       GameLobby.leave(player_id)
@@ -568,6 +589,55 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert server_game.queue == []
     assert server_game.reset_requests == MapSet.new()
     assert hd(server_game.log) == "Blancas dejo la partida."
+  end
+
+  test "leaves public games using registered game server state over stale mirrors" do
+    white_id = unique_player("live-leave-white")
+    black_id = unique_player("live-leave-black")
+    stale_white_id = unique_player("stale-leave-white")
+    stale_black_id = unique_player("stale-leave-black")
+    game_id = "game_4"
+
+    on_exit(fn -> GameLobby.force_clear_room(game_id) end)
+
+    GameLobby.force_clear_room(game_id)
+    assert %{game_id: ^game_id} = GameLobby.sit(white_id, game_id, :white)
+    assert %{game: %{status: :ready}} = GameLobby.sit(black_id, game_id, :black)
+    assert {:ok, pid} = GameSupervisor.lookup_game(game_id)
+
+    server_game =
+      GameServer.update(pid, fn game ->
+        %{game | log: ["Servidor vivo antes de salir." | game.log]}
+      end)
+
+    stale_game = %{
+      server_game
+      | players: %{white: stale_white_id, black: stale_black_id},
+        log: ["Mirror stale antes de salir."]
+    }
+
+    :sys.replace_state(GameLobby, fn state ->
+      %{state | games: Map.put(state.games, game_id, stale_game)}
+    end)
+
+    assert :sys.get_state(GameLobby).games[game_id].players == %{
+             white: stale_white_id,
+             black: stale_black_id
+           }
+
+    assert :ok = GameLobby.leave(white_id)
+
+    state = :sys.get_state(GameLobby)
+    lobby_game = state.games[game_id]
+    server_game = GameServer.snapshot(pid)
+
+    refute Map.has_key?(state.players, white_id)
+    assert state.players[black_id] == %{game_id: game_id, color: :black}
+    assert lobby_game == server_game
+    assert server_game.players == %{white: nil, black: black_id}
+    assert "Servidor vivo antes de salir." in server_game.log
+    refute stale_white_id in Map.values(server_game.players)
+    refute stale_black_id in Map.values(server_game.players)
   end
 
   test "mirrors cleared public rooms through the registered game server" do
