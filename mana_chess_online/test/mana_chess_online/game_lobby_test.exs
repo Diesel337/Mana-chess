@@ -374,6 +374,63 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert server_game.players == %{white: "live-anywhere-white", black: player_id}
   end
 
+  test "sits anywhere using registered game server slots over stale mirrors" do
+    player_id = unique_player("live-anywhere-stale")
+    live_white_id = unique_player("live-white")
+    stale_white_id = unique_player("stale-white")
+    stale_black_id = unique_player("stale-black")
+    game_id = "000_live_anywhere_stale_" <> Integer.to_string(System.unique_integer([:positive]))
+    game = GameState.new_game(game_id, GameLobby.global_settings())
+
+    on_exit(fn ->
+      GameLobby.leave(player_id)
+      GameSupervisor.stop_game(game_id)
+
+      :sys.replace_state(GameLobby, fn state ->
+        %{
+          state
+          | games: Map.delete(state.games, game_id),
+            players: Map.delete(state.players, player_id)
+        }
+      end)
+    end)
+
+    assert {:ok, pid} = GameSupervisor.upsert_game(game)
+
+    server_game =
+      GameServer.update(pid, fn game ->
+        %{
+          game
+          | players: %{white: live_white_id, black: nil},
+            status: :waiting,
+            log: ["Servidor vivo tiene negro libre." | game.log]
+        }
+      end)
+
+    stale_game = %{
+      server_game
+      | players: %{white: stale_white_id, black: stale_black_id},
+        status: :ready,
+        log: ["Mirror stale ocupado."]
+    }
+
+    :sys.replace_state(GameLobby, fn state ->
+      %{state | games: Map.put(state.games, game_id, stale_game)}
+    end)
+
+    assert :sys.get_state(GameLobby).games[game_id].players.black == stale_black_id
+
+    view = GameLobby.sit_anywhere(player_id)
+    lobby_game = :sys.get_state(GameLobby).games[game_id]
+    server_game = GameServer.snapshot(pid)
+
+    assert view.game_id == game_id
+    assert view.color == :black
+    assert lobby_game == server_game
+    assert server_game.players == %{white: live_white_id, black: player_id}
+    assert "Servidor vivo tiene negro libre." in server_game.log
+  end
+
   test "private matches become ready when black joins without entering public lobby" do
     white_id = unique_player("private-white")
     black_id = unique_player("private-black")
