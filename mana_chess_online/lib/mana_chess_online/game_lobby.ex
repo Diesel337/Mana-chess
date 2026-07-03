@@ -867,7 +867,7 @@ defmodule ManaChessOnline.GameLobby do
     do: enqueue_local_game_action(game, action, now)
 
   defp enqueue_unregistered_game_action(game, action, now) do
-    case GameSupervisor.upsert_game(game) do
+    case GameSupervisor.start_or_lookup_game(game) do
       {:ok, pid} -> GameServer.enqueue(pid, action, now)
       _error -> enqueue_local_game_action(game, action, now)
     end
@@ -892,7 +892,7 @@ defmodule ManaChessOnline.GameLobby do
   defp update_game_state(game, fun) when is_function(fun, 1), do: fun.(game)
 
   defp update_unregistered_game_state(game, fun) do
-    case GameSupervisor.upsert_game(game) do
+    case GameSupervisor.start_or_lookup_game(game) do
       {:ok, pid} -> GameServer.update(pid, fun)
       _error -> fun.(game)
     end
@@ -944,9 +944,8 @@ defmodule ManaChessOnline.GameLobby do
         GameServer.tick(pid, now)
 
       :error ->
-        case GameSupervisor.start_game(game) do
+        case GameSupervisor.start_or_lookup_game(game) do
           {:ok, pid} -> GameServer.tick(pid, now)
-          {:error, {:already_started, pid}} -> GameServer.tick(pid, now)
           _error -> GameTick.tick(game, now, @tick_ms, @default_settings.cooldown_seconds)
         end
     end
@@ -1045,11 +1044,8 @@ defmodule ManaChessOnline.GameLobby do
         :ok
 
       :error ->
-        case GameSupervisor.start_game(game) do
-          {:ok, _pid} -> :ok
-          {:error, {:already_started, _pid}} -> :ok
-          _error -> :ok
-        end
+        GameSupervisor.start_or_lookup_game(game)
+        :ok
     end
   end
 

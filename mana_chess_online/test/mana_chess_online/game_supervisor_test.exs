@@ -17,9 +17,7 @@ defmodule ManaChessOnline.GameSupervisorTest do
 
     {:ok, pid} = GameSupervisor.start_game(game, id: {__MODULE__, game_id})
 
-    on_exit(fn ->
-      if Process.alive?(pid), do: GenServer.stop(pid)
-    end)
+    on_exit(fn -> GameSupervisor.stop_game(game_id) end)
 
     assert GameServer.snapshot(pid).id == game_id
     assert {:ok, ^pid} = GameSupervisor.lookup_game(game_id)
@@ -34,9 +32,7 @@ defmodule ManaChessOnline.GameSupervisorTest do
 
     {:ok, pid} = GameSupervisor.start_game(game, id: {__MODULE__, game_id})
 
-    on_exit(fn ->
-      if Process.alive?(pid), do: GenServer.stop(pid)
-    end)
+    on_exit(fn -> GameSupervisor.stop_game(game_id) end)
 
     assert {:error, {:already_started, ^pid}} =
              GameSupervisor.start_game(game, id: {__MODULE__, game_id, :again})
@@ -56,15 +52,28 @@ defmodule ManaChessOnline.GameSupervisorTest do
     assert GameSupervisor.lookup_game(game_id) == :error
   end
 
+  test "start_or_lookup_game does not replace an existing live game" do
+    game_id = "start_lookup_" <> Integer.to_string(System.unique_integer([:positive]))
+    game = GameState.new_game(game_id, settings())
+
+    {:ok, pid} = GameSupervisor.start_game(game, id: {__MODULE__, game_id})
+
+    on_exit(fn -> GameSupervisor.stop_game(game_id) end)
+
+    live_game = GameServer.update(pid, &%{&1 | log: ["Estado vivo." | &1.log]})
+    stale_game = %{game | log: ["Mirror viejo." | game.log]}
+
+    assert {:ok, ^pid} = GameSupervisor.start_or_lookup_game(stale_game)
+    assert GameServer.snapshot(pid).log == live_game.log
+  end
+
   test "lists live game snapshots from supervised servers" do
     game_id = "snapshot_" <> Integer.to_string(System.unique_integer([:positive]))
     game = GameState.new_game(game_id, settings())
 
     {:ok, pid} = GameSupervisor.start_game(game, id: {__MODULE__, game_id})
 
-    on_exit(fn ->
-      if Process.alive?(pid), do: GenServer.stop(pid)
-    end)
+    on_exit(fn -> GameSupervisor.stop_game(game_id) end)
 
     GameServer.update(pid, fn game ->
       %{game | log: ["Snapshot vivo." | game.log]}

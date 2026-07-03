@@ -17,6 +17,14 @@ defmodule ManaChessOnline.GameSupervisor do
     DynamicSupervisor.start_child(__MODULE__, {GameServer, opts})
   end
 
+  def start_or_lookup_game(game) do
+    case start_game(game) do
+      {:ok, pid} -> {:ok, pid}
+      {:error, {:already_started, pid}} -> {:ok, pid}
+      error -> error
+    end
+  end
+
   def upsert_game(game) do
     case lookup_game(game.id) do
       {:ok, pid} ->
