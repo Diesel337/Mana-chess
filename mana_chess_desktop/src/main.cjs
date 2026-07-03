@@ -970,7 +970,10 @@ function deepLinkForGameUrl(url) {
   if (!parsed || parsed.origin !== GAME_ORIGIN) return `${PROTOCOL_SCHEME}://lobby`
 
   const parts = parsed.pathname.split("/").filter(Boolean)
-  if (parts[0] === "game" && parts[1]) return `${PROTOCOL_SCHEME}://game/${encodeURIComponent(parts[1])}`
+  if (parts[0] === "game" && parts[1]) {
+    const gameId = normalizeDeepLinkGameId(parts[1])
+    if (gameId) return `${PROTOCOL_SCHEME}://game/${encodeURIComponent(gameId)}`
+  }
 
   return `${PROTOCOL_SCHEME}://lobby`
 }
@@ -1021,7 +1024,14 @@ function routeFromDeepLink(url) {
 }
 
 function gameRoute(gameId) {
-  return `/game/${encodeURIComponent(gameId)}`
+  const normalizedGameId = normalizeDeepLinkGameId(gameId)
+  return normalizedGameId ? `/game/${encodeURIComponent(normalizedGameId)}` : "/"
+}
+
+function normalizeDeepLinkGameId(gameId) {
+  const value = String(gameId || "").trim()
+  if (!/^(game|private)_[A-Za-z0-9_-]{1,80}$/.test(value)) return ""
+  return value
 }
 
 function registerProtocol() {

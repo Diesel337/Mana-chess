@@ -79,9 +79,20 @@ function expectedPathFromDeepLink(url) {
     ...parsed.pathname.split("/").filter(Boolean)
   ].filter(Boolean)
 
-  if (parts[0] === "game" && parts[1]) return `/game/${encodeURIComponent(parts[1])}`
-  if (parts[0]?.startsWith("game_") || parts[0]?.startsWith("private_")) return `/game/${encodeURIComponent(parts[0])}`
+  if (parts[0] === "game" && parts[1]) return gameRoute(parts[1])
+  if (parts[0]?.startsWith("game_") || parts[0]?.startsWith("private_")) return gameRoute(parts[0])
   return "/"
+}
+
+function gameRoute(gameId) {
+  const normalizedGameId = normalizeDeepLinkGameId(gameId)
+  return normalizedGameId ? `/game/${encodeURIComponent(normalizedGameId)}` : "/"
+}
+
+function normalizeDeepLinkGameId(gameId) {
+  const value = String(gameId || "").trim()
+  if (!/^(game|private)_[A-Za-z0-9_-]{1,80}$/.test(value)) return ""
+  return value
 }
 
 function safeUrl(url) {

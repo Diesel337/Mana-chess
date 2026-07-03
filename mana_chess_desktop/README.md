@@ -184,6 +184,7 @@ The real `.vdf` files, SteamCMD logs, and Steam build output are ignored locally
 - `npm run smoke:win:reconnect` verifies the packaged executable can recover from the offline screen when the service comes back.
 - Desktop mode is forced with `?desktop=1` on every in-app navigation.
 - `manachess://` deep links can open lobby or game routes inside the desktop app.
+- Desktop deep links only accept `game_...` and `private_...` game ids; malformed game links fall back to the lobby and are covered by the Windows preflight.
 - External `http`/`https` links open in the user's browser; unsafe external protocols are blocked and logged, and Mana Chess links stay in the app window.
 - The offline/error screen offers automatic retry, pause/resume, lobby, copy-link, and browser fallback actions.
 - `npm run smoke:win:offline` verifies the packaged executable reaches the offline/error path and writes a QA log entry.
