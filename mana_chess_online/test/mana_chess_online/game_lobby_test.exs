@@ -32,6 +32,22 @@ defmodule ManaChessOnline.GameLobbyTest do
     end)
   end
 
+  defp stop_live_global_skip_games do
+    state_game_ids = :sys.get_state(GameLobby).games |> Map.keys()
+    server_game_ids = GameSupervisor.game_snapshots() |> Map.keys()
+
+    game_ids =
+      (state_game_ids ++ server_game_ids)
+      |> Enum.uniq()
+      |> Enum.filter(&String.contains?(&1, "live_global_skip"))
+
+    Enum.each(game_ids, &GameSupervisor.stop_game/1)
+
+    :sys.replace_state(GameLobby, fn state ->
+      %{state | games: Map.drop(state.games, game_ids)}
+    end)
+  end
+
   defp promotion_board do
     [
       ["P", ".", ".", ".", "k", ".", ".", "."],
@@ -90,6 +106,13 @@ defmodule ManaChessOnline.GameLobbyTest do
       GameServer.update(pid, fn game ->
         %{game | bot_enabled?: true}
       end)
+
+    :sys.replace_state(GameLobby, fn state ->
+      update_in(state.games[view.game_id], fn
+        nil -> nil
+        game -> %{game | bot_enabled?: false}
+      end)
+    end)
 
     lobby_game = :sys.get_state(GameLobby).games[view.game_id]
     refute lobby_game.bot_enabled? == server_game.bot_enabled?
@@ -944,11 +967,7 @@ defmodule ManaChessOnline.GameLobbyTest do
 
     on_exit(fn ->
       GameLobby.update_global_settings(settings_params(original_settings))
-      GameSupervisor.stop_game(game_id)
-
-      :sys.replace_state(GameLobby, fn state ->
-        %{state | games: Map.delete(state.games, game_id)}
-      end)
+      stop_live_global_skip_games()
     end)
 
     assert {:ok, pid} = GameSupervisor.upsert_game(game)
@@ -1689,6 +1708,8 @@ defmodule ManaChessOnline.GameLobbyTest do
   end
 
   test "idle ticks do not broadcast unchanged lobby or room payloads" do
+    stop_live_global_skip_games()
+
     Phoenix.PubSub.subscribe(ManaChessOnline.PubSub, GameLobby.lobby_topic())
     Phoenix.PubSub.subscribe(ManaChessOnline.PubSub, GameLobby.topic("game_1"))
     flush_messages()
@@ -1791,6 +1812,8 @@ defmodule ManaChessOnline.GameLobbyTest do
       GameServer.update(pid, fn game ->
         %{game | log: ["Server vivo antes del chat." | game.log]}
       end)
+
+    :sys.get_state(GameLobby)
 
     :sys.replace_state(GameLobby, fn state ->
       %{state | games: Map.delete(state.games, game_id)}

@@ -164,11 +164,7 @@ defmodule ManaChessOnlineWeb.GameComponents do
               data-sound-action="skin"
               aria-pressed="false"
             >
-              <span class="mc-pack-preview" aria-hidden="true">
-                <i></i><i></i><i></i><i></i>
-                <b class="mc-pack-piece-black">{@symbols["q"]}</b>
-                <b class="mc-pack-piece-white">{@symbols["K"]}</b>
-              </span>
+              <.pack_preview symbols={@symbols} />
               <strong>Base</strong>
               <small data-cosmetic-status data-cosmetic-pack-status data-cosmetic-state="included">
                 Incluido
@@ -181,11 +177,7 @@ defmodule ManaChessOnlineWeb.GameComponents do
               data-sound-action="skin"
               aria-pressed="false"
             >
-              <span class="mc-pack-preview mc-pack-preview-mana" aria-hidden="true">
-                <i></i><i></i><i></i><i></i>
-                <b class="mc-pack-piece-black">{@symbols["q"]}</b>
-                <b class="mc-pack-piece-white">{@symbols["K"]}</b>
-              </span>
+              <.pack_preview symbols={@symbols} class="mc-pack-preview-mana" />
               <strong>Mana</strong>
               <small data-cosmetic-status data-cosmetic-pack-status data-cosmetic-state="included">
                 Incluido
@@ -201,11 +193,7 @@ defmodule ManaChessOnlineWeb.GameComponents do
               aria-disabled="false"
               aria-pressed="false"
             >
-              <span class="mc-pack-preview mc-pack-preview-arcane" aria-hidden="true">
-                <i></i><i></i><i></i><i></i>
-                <b class="mc-pack-piece-black">{@symbols["q"]}</b>
-                <b class="mc-pack-piece-white">{@symbols["K"]}</b>
-              </span>
+              <.pack_preview symbols={@symbols} class="mc-pack-preview-arcane" />
               <strong>Arcano</strong>
               <small data-cosmetic-status data-cosmetic-pack-status data-cosmetic-state="premium">
                 Premium proximamente
@@ -331,6 +319,19 @@ defmodule ManaChessOnlineWeb.GameComponents do
         </div>
       </div>
     </section>
+    """
+  end
+
+  attr :symbols, :map, required: true
+  attr :class, :string, default: nil
+
+  defp pack_preview(assigns) do
+    ~H"""
+    <span class={["mc-pack-preview", @class]} aria-hidden="true">
+      <i :for={_square <- 1..16}></i>
+      <b class="mc-pack-piece-black">{@symbols["q"]}</b>
+      <b class="mc-pack-piece-white">{@symbols["K"]}</b>
+    </span>
     """
   end
 
