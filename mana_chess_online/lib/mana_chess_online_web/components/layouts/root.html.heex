@@ -516,6 +516,35 @@
       @media (max-width:999px){
         .mc-panel-game{grid-template-rows:none}
         .mc-panel-game .mc-log-list{max-height:min(320px,42dvh)}
+        .mc-shell:has(.mc-play-area)>.mc-panel.mc-panel-game{
+          display:grid;
+          width:100%;
+          max-width:none;
+          margin-top:10px;
+          padding:10px 0 0;
+          border-top:1px solid rgba(255,217,130,.14);
+          border-left:0;
+        }
+      }
+      @media (min-width:760px) and (max-width:999px){
+        .mc-shell:has(.mc-play-area)>.mc-panel.mc-panel-game{
+          grid-template-columns:minmax(0,.82fr) minmax(0,1.18fr);
+          align-items:stretch;
+          gap:8px;
+        }
+        .mc-shell:has(.mc-play-area)>.mc-panel.mc-panel-game>.mc-log-panel{
+          grid-column:2;
+          grid-row:1 / span 2;
+        }
+        .mc-shell:has(.mc-play-area)>.mc-panel.mc-panel-game>.mc-chat-panel{
+          grid-column:1;
+        }
+        .mc-shell:has(.mc-play-area)>.mc-panel.mc-panel-game .mc-log-list{
+          max-height:clamp(220px,30dvh,360px);
+        }
+        .mc-shell:has(.mc-play-area)>.mc-panel.mc-panel-game .mc-chat-list{
+          max-height:120px;
+        }
       }
       @media (max-width:520px){
         .mc-game:has(.mc-play-area){gap:6px}
