@@ -476,11 +476,12 @@
           --mc-game-control-rail:clamp(216px,13vw,248px);
           --mc-game-log-rail:clamp(250px,16vw,300px);
           --mc-game-rail:var(--mc-game-control-rail);
-          --mc-game-board:clamp(400px,min(calc(100dvh - 210px),48vw),820px);
+          --mc-game-board:clamp(360px,min(calc(100dvh - 300px),44vw),760px);
           --mc-game-width:calc(var(--mc-game-control-rail) + var(--mc-game-gap) + var(--mc-game-board) + var(--mc-game-gap) + var(--mc-game-log-rail));
           grid-template-columns:minmax(0,calc(var(--mc-game-control-rail) + var(--mc-game-gap) + var(--mc-game-board))) var(--mc-game-log-rail);
         }
         html[data-desktop="true"] .mc-shell:has(.mc-play-area){
+          --mc-game-board:clamp(400px,min(calc(100dvh - 210px),48vw),820px);
           grid-template-columns:minmax(0,calc(var(--mc-game-control-rail) + var(--mc-game-gap) + var(--mc-game-board))) var(--mc-game-log-rail);
           width:min(var(--mc-game-width),calc(100vw - 24px));
         }
@@ -506,12 +507,117 @@
         .mc-shell:has(.mc-play-area){
           --mc-game-control-rail:216px;
           --mc-game-log-rail:240px;
+          --mc-game-board:clamp(360px,min(calc(100dvh - 300px),44vw),560px);
+        }
+        html[data-desktop="true"] .mc-shell:has(.mc-play-area){
           --mc-game-board:clamp(400px,min(calc(100dvh - 210px),46vw),600px);
         }
       }
       @media (max-width:999px){
         .mc-panel-game{grid-template-rows:none}
         .mc-panel-game .mc-log-list{max-height:min(320px,42dvh)}
+      }
+      @media (max-width:520px){
+        .mc-game:has(.mc-play-area){gap:6px}
+        .mc-game:has(.mc-play-area)>.mc-header{
+          margin-bottom:4px;
+          padding-top:2px;
+        }
+        .mc-game:has(.mc-play-area) .mc-brand-mark{width:28px}
+        .mc-game:has(.mc-play-area) .mc-header h1{
+          font-size:1.38rem;
+          line-height:.98;
+        }
+        .mc-game:has(.mc-play-area) .mc-game-id{
+          margin-top:2px;
+          padding:3px 6px;
+          font-size:.62rem;
+        }
+        .mc-game:has(.mc-play-area)>.mc-practice-banner,
+        .mc-game:has(.mc-play-area)>.mc-spectator-banner,
+        .mc-game:has(.mc-play-area)>.mc-reconnect-banner{
+          gap:4px 8px;
+          padding:7px 8px;
+        }
+        .mc-game:has(.mc-play-area)>.mc-practice-banner>strong,
+        .mc-game:has(.mc-play-area)>.mc-spectator-banner>strong,
+        .mc-game:has(.mc-play-area)>.mc-reconnect-banner>strong{
+          font-size:.78rem;
+          line-height:1.05;
+        }
+        .mc-game:has(.mc-play-area)>.mc-practice-banner>span,
+        .mc-game:has(.mc-play-area)>.mc-spectator-banner>span,
+        .mc-game:has(.mc-play-area)>.mc-reconnect-banner>span{
+          font-size:.66rem;
+          line-height:1.12;
+        }
+        .mc-game:has(.mc-play-area) .mc-bot-control{gap:4px}
+        .mc-game:has(.mc-play-area) .mc-bot-toggle{
+          min-width:52px;
+          min-height:30px;
+        }
+        .mc-game:has(.mc-play-area) .mc-bot-side{
+          min-height:28px;
+          padding:0 8px;
+          font-size:.62rem;
+        }
+        .mc-game:has(.mc-play-area)>.mc-match-status{
+          gap:4px;
+          padding:7px 9px 7px 12px;
+        }
+        .mc-game:has(.mc-play-area)>.mc-match-status span{font-size:.62rem}
+        .mc-game:has(.mc-play-area)>.mc-match-status strong{
+          font-size:.88rem;
+          line-height:1.02;
+        }
+        .mc-game:has(.mc-play-area)>.mc-match-status p{
+          font-size:.7rem;
+          line-height:1.12;
+        }
+        .mc-game:has(.mc-play-area)>.mc-feedback-zone{
+          order:8;
+          margin-bottom:6px;
+        }
+        .mc-game:has(.mc-play-area)>.mc-play-area{
+          order:6;
+          margin-bottom:6px;
+        }
+        .mc-game:has(.mc-play-area) .mc-countdown,
+        .mc-game:has(.mc-play-area) .mc-turn-message,
+        .mc-game:has(.mc-play-area) .mc-alert-message,
+        .mc-game:has(.mc-play-area) .mc-reset-message,
+        .mc-game:has(.mc-play-area) .mc-check-message{
+          min-height:32px;
+          padding:6px 8px;
+          font-size:.82rem;
+        }
+        .mc-game:has(.mc-play-area) .mc-play-area>.mc-skin-strip{
+          top:4px;
+          right:4px;
+          gap:3px;
+          padding:3px;
+        }
+        .mc-game:has(.mc-play-area) .mc-play-area>.mc-piece-strip{
+          left:4px;
+        }
+        .mc-game:has(.mc-play-area) .mc-play-area>.mc-skin-strip button{
+          width:25px;
+          min-height:24px;
+        }
+        .mc-game:has(.mc-play-area) .mc-play-area>.mc-skin-strip .mc-skin-dot,
+        .mc-game:has(.mc-play-area) .mc-play-area>.mc-skin-strip .mc-piece-dot{
+          width:12px;
+          height:12px;
+        }
+        .mc-game:has(.mc-play-area) .mc-board-stack{
+          gap:4px;
+          padding:4px;
+        }
+        .mc-game:has(.mc-play-area) .mc-elixir-bottom-row{
+          min-height:30px;
+          padding:4px 5px;
+        }
+        .mc-game:has(.mc-play-area) .mc-elixir-bottom-track{height:12px}
       }
     </style>
 
