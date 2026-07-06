@@ -800,16 +800,12 @@ const Hooks = {
       }
     },
 
+    chatController() {
+      return window.ManaChessChat
+    },
+
     renderChatTimes() {
-      this.el.querySelectorAll("[data-chat-time]").forEach(node => {
-        if (node.dataset.chatTimeRendered === node.dataset.chatTime) return
-
-        const seconds = Number.parseInt(node.dataset.chatTime || "", 10)
-        if (Number.isNaN(seconds)) return
-
-        node.textContent = new Date(seconds * 1000).toLocaleTimeString([], {hour: "2-digit", minute: "2-digit", hour12: false})
-        node.dataset.chatTimeRendered = node.dataset.chatTime
-      })
+      this.chatController().renderTimes(this.el)
     },
 
     soundState() {
@@ -831,31 +827,15 @@ const Hooks = {
     },
 
     chatScrollState() {
-      return {
-        gameId: this.el.dataset.soundGameId || "",
-        chatCount: Number.parseInt(this.el.dataset.soundChatCount || "0", 10),
-      }
+      return this.chatController().scrollState(this.el)
     },
 
     keepChatAtLatest() {
-      const current = this.chatScrollState()
-      const previous = this.lastChatScrollState
-      this.lastChatScrollState = current
-
-      if (!current.gameId) return
-      if (previous && current.gameId === previous.gameId && current.chatCount <= previous.chatCount) return
-
-      this.scrollChatListsToEnd()
+      this.lastChatScrollState = this.chatController().keepAtLatest(this.el, this.lastChatScrollState)
     },
 
     scrollChatListsToEnd() {
-      const scroll = () => {
-        this.el.querySelectorAll("[data-chat-list]").forEach(list => {
-          list.scrollTop = list.scrollHeight
-        })
-      }
-      window.requestAnimationFrame(scroll)
-      window.setTimeout(scroll, 80)
+      this.chatController().scrollListsToEnd(this.el)
     },
 
     keepViewInFrame() {
