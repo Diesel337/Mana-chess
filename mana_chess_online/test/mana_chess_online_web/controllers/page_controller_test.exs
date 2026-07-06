@@ -23,6 +23,7 @@ defmodule ManaChessOnlineWeb.PageControllerTest do
     assert response =~ "Mana Chess"
     assert response =~ "cosmetics-module-20260706"
     assert response =~ "layout-module-20260706"
+    assert response =~ "local-stats-module-20260706"
   end
 
   test "GET /admin", %{conn: conn} do

@@ -219,65 +219,42 @@ const Hooks = {
       this.el.removeEventListener("click", this.handleViewJump, true);
     },
 
+    localStatsController() {
+      return window.ManaChessLocalStats;
+    },
+
     readStats() {
-      try {
-        return JSON.parse(localStorage.getItem(this.storageKey)) || this.emptyStats();
-      } catch (_error) {
-        return this.emptyStats();
-      }
+      return this.localStatsController().read(this.storageKey);
     },
 
     writeStats(stats) {
-      localStorage.setItem(this.storageKey, JSON.stringify(stats));
+      this.localStatsController().write(this.storageKey, stats);
     },
 
     emptyStats() {
-      return {played: 0, wins: 0, losses: 0, draws: 0, seen: []};
+      return this.localStatsController().empty();
     },
 
     recordResult() {
-      const key = this.el.dataset.resultKey;
-      const outcome = this.el.dataset.resultOutcome;
+      const result = this.localStatsController().record({
+        storageKey: this.storageKey,
+        resultKey: this.el.dataset.resultKey,
+        outcome: this.el.dataset.resultOutcome,
+        lastResultKey: this.lastResultKey
+      });
 
-      if (!key || !outcome) {
-        this.lastResultKey = null;
-        return;
+      this.lastResultKey = result.lastResultKey;
+      if (result.recorded && typeof this.sendDesktopEvent === "function") {
+        this.sendDesktopEvent(
+          "match.finished",
+          {result: result.outcome, resultKey: result.resultKey},
+          `match.finished:${result.resultKey}`
+        );
       }
-
-      if (this.lastResultKey === key) return;
-
-      const stats = this.readStats();
-      stats.seen = Array.isArray(stats.seen) ? stats.seen : [];
-
-      if (stats.seen.includes(key)) {
-        this.lastResultKey = key;
-        return;
-      }
-
-      stats.played = (stats.played || 0) + 1;
-
-      if (outcome === "win") stats.wins = (stats.wins || 0) + 1;
-      if (outcome === "loss") stats.losses = (stats.losses || 0) + 1;
-      if (outcome === "draw") stats.draws = (stats.draws || 0) + 1;
-
-      stats.seen = [key, ...stats.seen].slice(0, 40);
-      this.writeStats(stats);
-      this.lastResultKey = key;
     },
 
     renderStats() {
-      const stats = this.readStats();
-
-      for (const [name, value] of Object.entries({
-        played: stats.played || 0,
-        wins: stats.wins || 0,
-        losses: stats.losses || 0,
-        draws: stats.draws || 0
-      })) {
-        this.el.querySelectorAll(`[data-stat="${name}"]`).forEach(node => {
-          node.textContent = value;
-        });
-      }
+      this.localStatsController().render(this.el, this.storageKey);
     },
 
     soundEnabled() {
