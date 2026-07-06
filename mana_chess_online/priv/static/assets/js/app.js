@@ -45,6 +45,7 @@ const Hooks = {
       this.handleCosmeticUnlock = event => {
         const control = event.target.closest("[data-cosmetic-premium], [data-palette-unlock]");
         if (!control || control.disabled) return;
+        if (this.cosmeticsController()) return;
 
         const premiumId = control.dataset.cosmeticPremium || "palette:custom";
         if (this.cosmeticUnlocked(premiumId) && !control.matches("[data-palette-unlock]")) return;
@@ -60,6 +61,11 @@ const Hooks = {
         const control = event.target.closest("[data-sound-action]");
         if (!control || control.disabled) return;
         if (control.matches("[data-piece-skin-choice]")) {
+          if (this.cosmeticsController()) {
+            if (this.soundEnabled()) this.playSound(control.dataset.soundAction || "skin");
+            return;
+          }
+
           event.preventDefault();
           event.stopImmediatePropagation();
           this.setPieceSkin(control.dataset.pieceSkinChoice);
@@ -73,6 +79,8 @@ const Hooks = {
       this.handleSkinChoice = event => {
         const control = event.target.closest("[data-board-skin-choice]");
         if (!control || control.disabled) return;
+        if (this.cosmeticsController()) return;
+
         event.preventDefault();
         this.setBoardSkin(control.dataset.boardSkinChoice);
         this.renderBoardSkin();
@@ -81,6 +89,8 @@ const Hooks = {
       this.handlePieceSkinChoice = event => {
         const control = event.target.closest("[data-piece-skin-choice]");
         if (!control || control.disabled) return;
+        if (this.cosmeticsController()) return;
+
         event.preventDefault();
         this.setPieceSkin(control.dataset.pieceSkinChoice);
         this.renderPieceSkin();
@@ -88,7 +98,10 @@ const Hooks = {
       };
       this.handlePalettePreset = event => {
         const control = event.target.closest("[data-palette-preset]");
-        if (!control || control.disabled || !this.cosmeticUnlocked("palette:custom")) return;
+        if (!control || control.disabled) return;
+        if (this.cosmeticsController()) return;
+        if (!this.cosmeticUnlocked("palette:custom")) return;
+
         event.preventDefault();
         this.setPalette(this.palettePreset(control.dataset.palettePreset));
         this.setBoardSkin("custom");
@@ -101,7 +114,10 @@ const Hooks = {
       };
       this.handlePaletteReset = event => {
         const control = event.target.closest("[data-palette-reset]");
-        if (!control || control.disabled || !this.cosmeticUnlocked("palette:custom")) return;
+        if (!control || control.disabled) return;
+        if (this.cosmeticsController()) return;
+        if (!this.cosmeticUnlocked("palette:custom")) return;
+
         event.preventDefault();
         this.setPalette(this.defaultPalette());
         this.setBoardSkin("custom");
@@ -114,7 +130,10 @@ const Hooks = {
       };
       this.handlePaletteColor = event => {
         const input = event.target.closest("[data-palette-color]");
-        if (!input || input.disabled || !this.cosmeticUnlocked("palette:custom")) return;
+        if (!input || input.disabled) return;
+        if (this.cosmeticsController()) return;
+        if (!this.cosmeticUnlocked("palette:custom")) return;
+
         this.setPalette({...this.readPalette(), [input.dataset.paletteColor]: input.value});
         this.setBoardSkin("custom");
         this.setPieceSkin("custom");
@@ -126,6 +145,8 @@ const Hooks = {
       this.handleCosmeticPack = event => {
         const control = event.target.closest("[data-cosmetic-pack]");
         if (!control || control.disabled) return;
+        if (this.cosmeticsController()) return;
+
         event.preventDefault();
         this.applyCosmeticPack(control.dataset.cosmeticPack);
         this.renderBoardSkin();
@@ -154,10 +175,12 @@ const Hooks = {
       this.recordResult();
       this.renderStats();
       this.renderSoundToggle();
-      this.renderCosmetics();
-      this.renderBoardSkin();
-      this.renderPieceSkin();
-      this.renderPalette();
+      if (!this.renderModularCosmetics()) {
+        this.renderCosmetics();
+        this.renderBoardSkin();
+        this.renderPieceSkin();
+        this.renderPalette();
+      }
       this.renderChatTimes();
       this.keepChatAtLatest();
     },
@@ -166,10 +189,12 @@ const Hooks = {
       this.recordResult();
       this.renderStats();
       this.renderSoundToggle();
-      this.renderCosmetics();
-      this.renderBoardSkin();
-      this.renderPieceSkin();
-      this.renderPalette();
+      if (!this.renderModularCosmetics()) {
+        this.renderCosmetics();
+        this.renderBoardSkin();
+        this.renderPieceSkin();
+        this.renderPalette();
+      }
       this.renderChatTimes();
       this.keepViewInFrame();
       this.keepChatAtLatest();
@@ -309,6 +334,18 @@ const Hooks = {
       this.el.querySelectorAll("[data-sound-volume]").forEach(input => {
         input.setAttribute("aria-label", `Volumen de sonido ${percent}%`);
       });
+    },
+
+    cosmeticsController() {
+      return window.ManaChessCosmetics || null;
+    },
+
+    renderModularCosmetics() {
+      const controller = this.cosmeticsController();
+      if (!controller) return false;
+
+      controller.render();
+      return true;
     },
 
     readCosmeticUnlocks() {
