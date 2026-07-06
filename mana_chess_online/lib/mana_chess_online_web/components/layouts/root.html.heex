@@ -658,6 +658,11 @@
         const paletteKey = "mana-chess-custom-palette";
         const boards = ["classic", "gilded", "arcane", "custom"];
         const pieces = ["classic", "runes", "crystal", "custom"];
+        const cosmeticLabels = {
+          included: "Incluido",
+          local: "Local",
+          locked: "Probar local"
+        };
         const packs = {
           classic: {board: "classic", piece: "classic", included: true},
           mana: {board: "gilded", piece: "runes", included: true},
@@ -872,7 +877,7 @@
             button.setAttribute("aria-disabled", "false");
           });
           document.querySelectorAll("[data-palette-status]").forEach((status) => {
-            status.textContent = unlocked ? "Local" : "Premium proximamente";
+            status.textContent = unlocked ? cosmeticLabels.local : cosmeticLabels.locked;
             status.dataset.paletteState = unlocked ? "local" : "premium";
           });
         };
@@ -896,6 +901,14 @@
           if (unlocked) return 2;
           return 3;
         };
+        const localUnlockCount = () => [...readUnlocks()].filter((id) => !included.has(id)).length;
+        const renderLocalCount = () => {
+          const count = localUnlockCount();
+          const label = count === 0 ? "Local primero" : `${count} ${count === 1 ? "local" : "locales"}`;
+          document.querySelectorAll("[data-cosmetic-local-count]").forEach((element) => {
+            element.textContent = label;
+          });
+        };
         const orderCosmeticOption = (button, rank) => {
           button.dataset.cosmeticRank = String(rank);
           button.style.order = String(rank);
@@ -908,6 +921,7 @@
           if (board !== storedBoard) write(boardKey, board, boards);
           if (piece !== storedPiece) write(pieceKey, piece, pieces);
           applyPalette();
+          renderLocalCount();
           updateCosmeticPreview(board, piece, readPalette());
           document.documentElement.dataset.boardSkin = board;
           document.documentElement.dataset.pieceSkin = piece;
@@ -932,10 +946,10 @@
             button.setAttribute("aria-pressed", selected ? "true" : "false");
             button.querySelectorAll("[data-cosmetic-status]").forEach((status) => {
               if (includedItem) {
-                status.textContent = "Incluido";
+                status.textContent = cosmeticLabels.included;
                 status.dataset.cosmeticState = "included";
               } else {
-                status.textContent = unlocked ? "Local" : "Premium proximamente";
+                status.textContent = unlocked ? cosmeticLabels.local : cosmeticLabels.locked;
                 status.dataset.cosmeticState = unlocked ? "local" : "premium";
               }
             });
@@ -953,10 +967,10 @@
             button.setAttribute("aria-pressed", selected ? "true" : "false");
             button.querySelectorAll("[data-cosmetic-status]").forEach((status) => {
               if (includedItem) {
-                status.textContent = "Incluido";
+                status.textContent = cosmeticLabels.included;
                 status.dataset.cosmeticState = "included";
               } else {
-                status.textContent = unlocked ? "Local" : "Premium proximamente";
+                status.textContent = unlocked ? cosmeticLabels.local : cosmeticLabels.locked;
                 status.dataset.cosmeticState = unlocked ? "local" : "premium";
               }
             });
@@ -975,7 +989,11 @@
             button.setAttribute("aria-disabled", "false");
             button.setAttribute("aria-pressed", selected ? "true" : "false");
             button.querySelectorAll("[data-cosmetic-pack-status]").forEach((status) => {
-              status.textContent = includedItem ? "Incluido" : unlocked ? "Local" : "Premium proximamente";
+              status.textContent = includedItem
+                ? cosmeticLabels.included
+                : unlocked
+                  ? cosmeticLabels.local
+                  : cosmeticLabels.locked;
               status.dataset.cosmeticState = includedItem ? "included" : unlocked ? "local" : "premium";
             });
           });

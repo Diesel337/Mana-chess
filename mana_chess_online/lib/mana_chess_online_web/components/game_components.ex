@@ -18,7 +18,7 @@ defmodule ManaChessOnlineWeb.GameComponents do
           <h2>Tienda</h2>
           <span>Cosmeticos visuales</span>
         </div>
-        <small>Local primero</small>
+        <small data-cosmetic-local-count>Local primero</small>
       </div>
 
       <div class="mc-cosmetic-groups">
@@ -65,7 +65,7 @@ defmodule ManaChessOnlineWeb.GameComponents do
                 <i></i><i></i><i></i><i></i>
               </span>
               <strong>Arcano oscuro</strong>
-              <small data-cosmetic-status data-cosmetic-state="premium">Premium proximamente</small>
+              <small data-cosmetic-status data-cosmetic-state="premium">Probar local</small>
             </button>
             <button
               type="button"
@@ -81,7 +81,7 @@ defmodule ManaChessOnlineWeb.GameComponents do
                 <i></i><i></i><i></i><i></i>
               </span>
               <strong>Paleta</strong>
-              <small data-cosmetic-status data-cosmetic-state="premium">Premium proximamente</small>
+              <small data-cosmetic-status data-cosmetic-state="premium">Probar local</small>
             </button>
           </div>
         </div>
@@ -132,7 +132,7 @@ defmodule ManaChessOnlineWeb.GameComponents do
                 <b class="mc-piece-sample mc-piece-sample-black">{@symbols["q"]}</b>
               </span>
               <strong>Cristal premium</strong>
-              <small data-cosmetic-status data-cosmetic-state="premium">Premium proximamente</small>
+              <small data-cosmetic-status data-cosmetic-state="premium">Probar local</small>
             </button>
             <button
               type="button"
@@ -149,7 +149,7 @@ defmodule ManaChessOnlineWeb.GameComponents do
                 <b class="mc-piece-sample mc-piece-sample-black">{@symbols["q"]}</b>
               </span>
               <strong>Paleta</strong>
-              <small data-cosmetic-status data-cosmetic-state="premium">Premium proximamente</small>
+              <small data-cosmetic-status data-cosmetic-state="premium">Probar local</small>
             </button>
           </div>
         </div>
@@ -196,7 +196,7 @@ defmodule ManaChessOnlineWeb.GameComponents do
               <.pack_preview symbols={@symbols} class="mc-pack-preview-arcane" />
               <strong>Arcano</strong>
               <small data-cosmetic-status data-cosmetic-pack-status data-cosmetic-state="premium">
-                Premium proximamente
+                Probar local
               </small>
             </button>
           </div>
@@ -263,7 +263,7 @@ defmodule ManaChessOnlineWeb.GameComponents do
             >
               <span class="mc-palette-preview" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
               <strong>Custom premium</strong>
-              <small data-palette-status data-palette-state="premium">Premium proximamente</small>
+              <small data-palette-status data-palette-state="premium">Probar local</small>
             </button>
             <div class="mc-palette-fields">
               <label>
