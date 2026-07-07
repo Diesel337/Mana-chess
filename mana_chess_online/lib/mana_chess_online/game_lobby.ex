@@ -6,6 +6,7 @@ defmodule ManaChessOnline.GameLobby do
   alias ManaChessOnline.{
     GameBot,
     GameChat,
+    GameControl,
     GameDirectory,
     GameEngine,
     GameMetrics,
@@ -399,7 +400,9 @@ defmodule ManaChessOnline.GameLobby do
               | bot_enabled?: enabled?,
                 bot_ready_at:
                   if(enabled?, do: now_ms() + GameBot.move_delay_ms(game.settings), else: nil),
-                log: [GameChat.bot_toggle_message(enabled?, bot_color(game)) | game.log]
+                log: [
+                  GameChat.bot_toggle_message(enabled?, GameControl.bot_color(game)) | game.log
+                ]
             }
           end)
 
@@ -418,7 +421,7 @@ defmodule ManaChessOnline.GameLobby do
            %{practice?: true} = game <- game_snapshot(game_id, state) do
         game =
           update_game_state(game, fn game ->
-            next_bot_color = game |> bot_color() |> opposite_color()
+            next_bot_color = game |> GameControl.bot_color() |> GameControl.opposite_color()
             chat = Map.get(game, :chat, [])
 
             practice_game(game_id, player_id, game.settings, next_bot_color)
@@ -427,7 +430,7 @@ defmodule ManaChessOnline.GameLobby do
             |> update_in(
               [:log],
               &[
-                "Ahora juegas #{GameChat.label(opposite_color(next_bot_color))}; BOT controla #{GameChat.label(next_bot_color)}."
+                "Ahora juegas #{GameChat.label(GameControl.opposite_color(next_bot_color))}; BOT controla #{GameChat.label(next_bot_color)}."
                 | &1
               ]
             )
@@ -475,7 +478,7 @@ defmodule ManaChessOnline.GameLobby do
       with %{game_id: game_id, color: player_color} <- state.players[player_id],
            game when not is_nil(game) <- game_snapshot(game_id, state),
            %{player_id: ^player_id, color: color, at: square} <- game.promotion_pending,
-           true <- controls_color?(player_color, color) do
+           true <- GameControl.controls_color?(player_color, color) do
         game =
           update_game_state(game, fn game ->
             board =
@@ -562,7 +565,7 @@ defmodule ManaChessOnline.GameLobby do
     with %{game_id: game_id, color: player_color} <- state.players[player_id],
          game when not is_nil(game) <- game_snapshot(game_id, state) do
       cond do
-        not valid_square?(from) or not valid_square?(to) ->
+        not GameControl.valid_square?(from) or not GameControl.valid_square?(to) ->
           reject_move(state, game_id, "Movimiento rechazado: casilla invalida.")
 
         game.status != :playing ->
@@ -594,21 +597,21 @@ defmodule ManaChessOnline.GameLobby do
       color not in [:white, :black] ->
         reject_move(state, game_id, "Movimiento rechazado: pieza sin color.")
 
-      bot_controls_color?(game, color) ->
+      GameControl.bot_controls_color?(game, color) ->
         reject_move(
           state,
           game_id,
           "Movimiento rechazado: BOT controla #{GameChat.label(color)}."
         )
 
-      not controls_color?(player_color, color) ->
+      not GameControl.controls_color?(player_color, color) ->
         reject_move(
           state,
           game_id,
           "Movimiento rechazado: no controlas #{GameChat.label(color)}."
         )
 
-      not first_move_allowed?(game, color) ->
+      not GameControl.first_move_allowed?(game, color) ->
         reject_move(state, game_id, "Movimiento rechazado: Blancas deben abrir.")
 
       cooldown_active?(game, from) ->
@@ -776,7 +779,7 @@ defmodule ManaChessOnline.GameLobby do
         player_id = old_game.players.white
 
         reset_game =
-          practice_game(game_id, player_id, old_game.settings, bot_color(old_game))
+          practice_game(game_id, player_id, old_game.settings, GameControl.bot_color(old_game))
           |> preserve_practice_bot_state(old_game)
           |> Map.put(:chat, chat)
           |> update_in([:log], &["Practica reiniciada." | &1])
@@ -1116,28 +1119,6 @@ defmodule ManaChessOnline.GameLobby do
   defp clamp_elixir(elixir, settings) do
     Map.new(elixir, fn {color, amount} -> {color, min(amount, settings.max_elixir)} end)
   end
-
-  defp first_move_allowed?(%{first_move_pending: nil}, _color), do: true
-  defp first_move_allowed?(%{first_move_pending: color}, color), do: true
-  defp first_move_allowed?(_game, _color), do: false
-
-  defp controls_color?(:practice, color) when color in [:white, :black], do: true
-  defp controls_color?(color, color), do: true
-  defp controls_color?(_player_color, _piece_color), do: false
-
-  defp bot_controls_color?(%{practice?: true, bot_enabled?: true} = game, color),
-    do: bot_color(game) == color
-
-  defp bot_controls_color?(_game, _color), do: false
-
-  defp bot_color(%{bot_color: color}) when color in [:white, :black], do: color
-  defp bot_color(_game), do: :black
-
-  defp opposite_color(:white), do: :black
-  defp opposite_color(:black), do: :white
-
-  defp valid_square?({r, c}), do: r in 0..7 and c in 0..7
-  defp valid_square?(_square), do: false
 
   defp ensure_private_game(state, game_id) do
     if GameRooms.private_game_id?(game_id) do
