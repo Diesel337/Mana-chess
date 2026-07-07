@@ -35,6 +35,7 @@ defmodule ManaChessOnlineWeb.PageControllerTest do
     assert response =~ "desktop-bridge-module-20260707"
     assert response =~ "desktop-session-module-20260707"
     assert response =~ "invite-clipboard-module-20260707"
+    assert response =~ "board-drag-module-20260707"
   end
 
   test "GET /admin", %{conn: conn} do
