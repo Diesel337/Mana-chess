@@ -150,31 +150,28 @@ const Hooks = {
       this.localStatsController().render(this.el, this.storageKey)
     },
 
-    soundController() {
-      return window.ManaChessSound
+    soundSessionController() {
+      return window.ManaChessSoundSession
     },
 
     soundEnabled() {
-      return this.soundController().enabled(this.soundKey)
+      return this.soundSessionController().enabled(this)
     },
 
     setSoundEnabled(enabled) {
-      this.soundController().setEnabled(this.soundKey, enabled)
+      this.soundSessionController().setEnabled(this, enabled)
     },
 
     soundVolume() {
-      return this.soundController().volume(this.soundVolumeKey)
+      return this.soundSessionController().volume(this)
     },
 
     setSoundVolume(value) {
-      this.soundController().setVolume(this.soundVolumeKey, value)
+      this.soundSessionController().setVolume(this, value)
     },
 
     renderSoundToggle() {
-      this.soundController().render(this.el, {
-        soundKey: this.soundKey,
-        volumeKey: this.soundVolumeKey,
-      })
+      this.soundSessionController().renderToggle(this)
     },
 
     cosmeticsController() {
@@ -336,12 +333,8 @@ const Hooks = {
       this.chatController().renderTimes(this.el)
     },
 
-    soundStateController() {
-      return window.ManaChessSoundState
-    },
-
     soundState() {
-      return this.soundStateController().state(this.el)
+      return this.soundSessionController().state(this)
     },
 
     chatScrollState() {
@@ -377,20 +370,11 @@ const Hooks = {
     },
 
     playChangedSound() {
-      const current = this.soundState()
-      const previous = this.lastSoundState
-      this.lastSoundState = current
-      this.emitDesktopState(current, previous)
-      const changedSound = this.soundStateController().changedSound(current, previous, this.soundEnabled())
-
-      if (changedSound) this.playSound(changedSound)
+      this.soundSessionController().playChanged(this)
     },
 
     playSound(kind) {
-      this.soundController().play(kind, {
-        soundKey: this.soundKey,
-        volumeKey: this.soundVolumeKey,
-      })
+      this.soundSessionController().play(this, kind)
     },
 
     inviteClipboardController() {
