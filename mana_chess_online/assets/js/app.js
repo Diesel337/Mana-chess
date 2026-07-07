@@ -44,35 +44,32 @@ const Hooks = {
       return window.ManaChessLocalStatsEvents
     },
 
+    statsSessionController() {
+      return window.ManaChessStatsSession
+    },
+
     localStatsController() {
-      return window.ManaChessLocalStats
+      return this.statsSessionController().localStats()
     },
 
     resultRecordingController() {
-      return window.ManaChessResultRecording
+      return this.statsSessionController().resultRecording()
     },
 
     readStats() {
-      return this.localStatsController().read(this.storageKey)
+      return this.statsSessionController().read(this)
     },
 
     writeStats(stats) {
-      this.localStatsController().write(this.storageKey, stats)
+      this.statsSessionController().write(this, stats)
     },
 
     emptyStats() {
-      return this.localStatsController().empty()
+      return this.statsSessionController().empty()
     },
 
     recordResult() {
-      this.lastResultKey = this.resultRecordingController().record({
-        localStats: this.localStatsController(),
-        storageKey: this.storageKey,
-        resultKey: this.el.dataset.resultKey,
-        outcome: this.el.dataset.resultOutcome,
-        lastResultKey: this.lastResultKey,
-        onRecorded: event => this.sendDesktopEvent(event.name, event.payload, event.key),
-      })
+      this.statsSessionController().recordResult(this)
     },
 
     desktopSessionController() {
@@ -108,7 +105,7 @@ const Hooks = {
     },
 
     renderStats() {
-      this.localStatsController().render(this.el, this.storageKey)
+      this.statsSessionController().render(this)
     },
 
     soundSessionController() {
