@@ -1,20 +1,7 @@
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content");
 const Hooks = {
   LocalStats: window.ManaChessLocalStatsHook,
-
-  BoardDrag: {
-    mounted() {
-      window.ManaChessBoardDrag.mounted(this);
-    },
-
-    updated() {
-      window.ManaChessBoardDrag.updated(this);
-    },
-
-    destroyed() {
-      window.ManaChessBoardDrag.destroyed(this);
-    }
-  }
+  BoardDrag: window.ManaChessBoardDragHook
 };
 
 const liveSocket = new LiveView.LiveSocket("/live", Phoenix.Socket, {
