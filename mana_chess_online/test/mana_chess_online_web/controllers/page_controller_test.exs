@@ -28,6 +28,7 @@ defmodule ManaChessOnlineWeb.PageControllerTest do
     assert response =~ "layout-module-20260706"
     assert response =~ "local-stats-module-20260706"
     assert response =~ "local-stats-events-module-20260707"
+    assert response =~ "local-stats-lifecycle-module-20260707"
     assert response =~ "result-recording-module-20260707"
     assert response =~ "sound-module-20260706"
     assert response =~ "sound-state-module-20260707"

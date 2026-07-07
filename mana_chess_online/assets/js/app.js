@@ -29,54 +29,15 @@ const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute
 const Hooks = {
   LocalStats: {
     mounted() {
-      this.lastResultKey = null
-      this.storageKey = "mana-chess-local-stats"
-      this.soundKey = "mana-chess-sound-enabled"
-      this.soundVolumeKey = "mana-chess-sound-volume"
-      this.skinKey = "mana-chess-board-skin"
-      this.pieceSkinKey = "mana-chess-piece-skin"
-      this.cosmeticUnlockKey = "mana-chess-cosmetic-unlocks"
-      this.paletteKey = "mana-chess-custom-palette"
-      this.lastSoundState = this.soundState()
-      this.lastChatScrollState = null
-      this.desktopState = this.desktopSessionController().state(this)
-      this.lastViewKey = this.viewKey()
-      this.keepInitialViewInFrame()
-      this.localStatsEventsController().bind(this)
-      this.recordResult()
-      this.renderStats()
-      this.renderSoundToggle()
-      if (!this.renderModularCosmetics()) {
-        this.renderCosmetics()
-        this.renderBoardSkin()
-        this.renderPieceSkin()
-        this.renderPalette()
-      }
-      this.renderChatTimes()
-      this.keepChatAtLatest()
-      this.emitDesktopView()
-      this.emitDesktopState(this.soundState(), null)
+      window.ManaChessLocalStatsLifecycle.mounted(this)
     },
 
     updated() {
-      this.recordResult()
-      this.renderStats()
-      this.renderSoundToggle()
-      if (!this.renderModularCosmetics()) {
-        this.renderCosmetics()
-        this.renderBoardSkin()
-        this.renderPieceSkin()
-        this.renderPalette()
-      }
-      this.renderChatTimes()
-      this.keepViewInFrame()
-      this.emitDesktopView()
-      this.keepChatAtLatest()
-      this.playChangedSound()
+      window.ManaChessLocalStatsLifecycle.updated(this)
     },
 
     destroyed() {
-      this.localStatsEventsController().unbind(this)
+      window.ManaChessLocalStatsLifecycle.destroyed(this)
     },
 
     localStatsEventsController() {
