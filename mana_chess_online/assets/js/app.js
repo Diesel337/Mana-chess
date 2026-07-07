@@ -174,155 +174,155 @@ const Hooks = {
       this.soundSessionController().renderToggle(this)
     },
 
+    cosmeticSessionController() {
+      return window.ManaChessCosmeticSession
+    },
+
     cosmeticsController() {
-      return window.ManaChessCosmetics || null
+      return this.cosmeticSessionController().cosmetics()
     },
 
     cosmeticActionsController() {
-      return window.ManaChessCosmeticActions
+      return this.cosmeticSessionController().actions()
     },
 
     cosmeticFallbackController() {
-      return window.ManaChessCosmeticFallback
+      return this.cosmeticSessionController().fallback()
     },
 
     renderModularCosmetics() {
-      const controller = this.cosmeticsController()
-      if (!controller) return false
-
-      controller.render()
-      return true
+      return this.cosmeticSessionController().renderModular()
     },
 
     readCosmeticUnlocks() {
-      return this.cosmeticFallbackController().readCosmeticUnlocks(this)
+      return this.cosmeticSessionController().readCosmeticUnlocks(this)
     },
 
     writeCosmeticUnlocks(unlocks) {
-      this.cosmeticFallbackController().writeCosmeticUnlocks(this, unlocks)
+      this.cosmeticSessionController().writeCosmeticUnlocks(this, unlocks)
     },
 
     cosmeticUnlocked(id) {
-      return this.cosmeticFallbackController().cosmeticUnlocked(this, id)
+      return this.cosmeticSessionController().cosmeticUnlocked(this, id)
     },
 
     unlockCosmetic(id) {
-      this.cosmeticFallbackController().unlockCosmetic(this, id)
+      this.cosmeticSessionController().unlockCosmetic(this, id)
     },
 
     cosmeticAllowed(id) {
-      return this.cosmeticFallbackController().cosmeticAllowed(this, id)
+      return this.cosmeticSessionController().cosmeticAllowed(this, id)
     },
 
     cosmeticPackConfig(pack) {
-      return this.cosmeticFallbackController().cosmeticPackConfig(pack)
+      return this.cosmeticSessionController().cosmeticPackConfig(pack)
     },
 
     cosmeticPackUnlocked(pack) {
-      return this.cosmeticFallbackController().cosmeticPackUnlocked(this, pack)
+      return this.cosmeticSessionController().cosmeticPackUnlocked(this, pack)
     },
 
     applyCosmeticPack(pack) {
-      this.cosmeticFallbackController().applyCosmeticPack(this, pack)
+      this.cosmeticSessionController().applyCosmeticPack(this, pack)
     },
 
     premiumIdForBoardSkin(skin) {
-      return this.cosmeticFallbackController().premiumIdForBoardSkin(skin)
+      return this.cosmeticSessionController().premiumIdForBoardSkin(skin)
     },
 
     premiumIdForPieceSkin(skin) {
-      return this.cosmeticFallbackController().premiumIdForPieceSkin(skin)
+      return this.cosmeticSessionController().premiumIdForPieceSkin(skin)
     },
 
     activateCosmeticControl(control) {
-      this.cosmeticFallbackController().activateCosmeticControl(this, control)
+      this.cosmeticSessionController().activateCosmeticControl(this, control)
     },
 
     renderCosmetics() {
-      this.cosmeticFallbackController().renderCosmetics(this)
+      this.cosmeticSessionController().renderCosmetics(this)
     },
 
     renderCosmeticPacks() {
-      this.cosmeticFallbackController().renderCosmeticPacks(this)
+      this.cosmeticSessionController().renderCosmeticPacks(this)
     },
 
     boardSkin() {
-      return this.cosmeticFallbackController().boardSkin(this)
+      return this.cosmeticSessionController().boardSkin(this)
     },
 
     setBoardSkin(skin) {
-      this.cosmeticFallbackController().setBoardSkin(this, skin)
+      this.cosmeticSessionController().setBoardSkin(this, skin)
     },
 
     renderBoardSkin() {
-      this.cosmeticFallbackController().renderBoardSkin(this)
+      this.cosmeticSessionController().renderBoardSkin(this)
     },
 
     pieceSkin() {
-      return this.cosmeticFallbackController().pieceSkin(this)
+      return this.cosmeticSessionController().pieceSkin(this)
     },
 
     setPieceSkin(skin) {
-      this.cosmeticFallbackController().setPieceSkin(this, skin)
+      this.cosmeticSessionController().setPieceSkin(this, skin)
     },
 
     renderPieceSkin() {
-      this.cosmeticFallbackController().renderPieceSkin(this)
+      this.cosmeticSessionController().renderPieceSkin(this)
     },
 
     defaultPalette() {
-      return this.cosmeticFallbackController().defaultPalette()
+      return this.cosmeticSessionController().defaultPalette()
     },
 
     palettePreset(name) {
-      return this.cosmeticFallbackController().palettePreset(name)
+      return this.cosmeticSessionController().palettePreset(name)
     },
 
     paletteEquals(first, second) {
-      return this.cosmeticFallbackController().paletteEquals(first, second)
+      return this.cosmeticSessionController().paletteEquals(first, second)
     },
 
     activePalettePreset(palette) {
-      return this.cosmeticFallbackController().activePalettePreset(palette)
+      return this.cosmeticSessionController().activePalettePreset(palette)
     },
     readPalette() {
-      return this.cosmeticFallbackController().readPalette(this)
+      return this.cosmeticSessionController().readPalette(this)
     },
 
     setPalette(palette) {
-      this.cosmeticFallbackController().setPalette(this, palette)
+      this.cosmeticSessionController().setPalette(this, palette)
     },
 
     renderPalette() {
-      this.cosmeticFallbackController().renderPalette(this)
+      this.cosmeticSessionController().renderPalette(this)
     },
 
     boardPreviewPalette(skin, palette) {
-      return this.cosmeticFallbackController().boardPreviewPalette(skin, palette)
+      return this.cosmeticSessionController().boardPreviewPalette(skin, palette)
     },
 
     piecePreviewPalette(skin, palette) {
-      return this.cosmeticFallbackController().piecePreviewPalette(skin, palette)
+      return this.cosmeticSessionController().piecePreviewPalette(skin, palette)
     },
 
     renderCosmeticPreview() {
-      this.cosmeticFallbackController().renderCosmeticPreview(this)
+      this.cosmeticSessionController().renderCosmeticPreview(this)
     },
 
     applyPalette(palette) {
-      this.cosmeticFallbackController().applyPalette(this, palette)
+      this.cosmeticSessionController().applyPalette(this, palette)
     },
 
     readableTextColor(hex) {
-      return this.cosmeticFallbackController().readableTextColor(hex)
+      return this.cosmeticSessionController().readableTextColor(hex)
     },
 
     hexToRgba(hex, alpha) {
-      return this.cosmeticFallbackController().hexToRgba(hex, alpha)
+      return this.cosmeticSessionController().hexToRgba(hex, alpha)
     },
 
     hexToRgb(hex) {
-      return this.cosmeticFallbackController().hexToRgb(hex)
+      return this.cosmeticSessionController().hexToRgb(hex)
     },
 
     chatController() {
