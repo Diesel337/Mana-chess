@@ -160,6 +160,10 @@ const Hooks = {
       return window.ManaChessLocalStats
     },
 
+    resultRecordingController() {
+      return window.ManaChessResultRecording
+    },
+
     readStats() {
       return this.localStatsController().read(this.storageKey)
     },
@@ -173,21 +177,14 @@ const Hooks = {
     },
 
     recordResult() {
-      const result = this.localStatsController().record({
+      this.lastResultKey = this.resultRecordingController().record({
+        localStats: this.localStatsController(),
         storageKey: this.storageKey,
         resultKey: this.el.dataset.resultKey,
         outcome: this.el.dataset.resultOutcome,
         lastResultKey: this.lastResultKey,
+        onRecorded: event => this.sendDesktopEvent(event.name, event.payload, event.key),
       })
-
-      this.lastResultKey = result.lastResultKey
-      if (result.recorded) {
-        this.sendDesktopEvent(
-          "match.finished",
-          {result: result.outcome, resultKey: result.resultKey},
-          `match.finished:${result.resultKey}`
-        )
-      }
     },
 
     desktopBridge() {
