@@ -16,28 +16,11 @@
       })();
     </script>
 
-    <script>
-      (() => {
-        const jumpSelector = '[phx-click="start_practice"], [phx-click="start_tutorial"], [phx-click="sit_anywhere"], [phx-click="create_private"], [phx-click="leave"], [phx-click="sit"]';
-        let pendingJump = false;
-        const toTop = () => {
-          window.requestAnimationFrame(() => window.scrollTo(0, 0));
-          window.setTimeout(() => window.scrollTo(0, 0), 90);
-          window.setTimeout(() => window.scrollTo(0, 0), 300);
-        };
-
-        document.addEventListener("click", event => {
-          if (!event.target.closest(jumpSelector)) return;
-          pendingJump = true;
-          toTop();
-        }, true);
-
-        new MutationObserver(() => {
-          if (!pendingJump || !document.querySelector(".mc-play-area, .mc-menu")) return;
-          pendingJump = false;
-          toTop();
-        }).observe(document.documentElement, {childList: true, subtree: true});
-      })();
+    <script
+      phx-track-static
+      type="text/javascript"
+      src={~p"/assets/js/navigation.js?v=navigation-module-20260707"}
+    >
     </script>
 
     <.live_title default="Mana Chess">{assigns[:page_title]}</.live_title>
@@ -134,7 +117,7 @@
       defer
       phx-track-static
       type="text/javascript"
-      src={~p"/assets/js/app.js?v=chat-module-20260706"}
+      src={~p"/assets/js/app.js?v=navigation-module-20260707"}
     >
     </script>
 

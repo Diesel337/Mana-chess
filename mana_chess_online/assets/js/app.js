@@ -181,10 +181,6 @@ const Hooks = {
         this.renderPieceSkin()
         this.renderCosmetics()
       }
-      this.handleViewJump = event => {
-        if (!event.target.closest('[phx-click="start_practice"], [phx-click="start_tutorial"], [phx-click="sit_anywhere"], [phx-click="create_private"], [phx-click="leave"], [phx-click="sit"]')) return
-        this.scrollViewToTop()
-      }
       this.el.addEventListener("click", this.handleReset)
       this.el.addEventListener("click", this.handleInviteCopy)
       this.el.addEventListener("click", this.handleSoundToggle)
@@ -199,7 +195,6 @@ const Hooks = {
       this.el.addEventListener("input", this.handlePaletteColor)
       this.el.addEventListener("change", this.handlePaletteColor)
       this.el.addEventListener("click", this.handleCosmeticPack)
-      this.el.addEventListener("click", this.handleViewJump, true)
       this.recordResult()
       this.renderStats()
       this.renderSoundToggle()
@@ -247,7 +242,6 @@ const Hooks = {
       this.el.removeEventListener("input", this.handlePaletteColor)
       this.el.removeEventListener("change", this.handlePaletteColor)
       this.el.removeEventListener("click", this.handleCosmeticPack)
-      this.el.removeEventListener("click", this.handleViewJump, true)
     },
 
     localStatsController() {
@@ -822,10 +816,6 @@ const Hooks = {
       }
     },
 
-    viewKey() {
-      return this.el.dataset.soundGameId || "lobby"
-    },
-
     chatScrollState() {
       return this.chatController().scrollState(this.el)
     },
@@ -838,22 +828,24 @@ const Hooks = {
       this.chatController().scrollListsToEnd(this.el)
     },
 
-    keepViewInFrame() {
-      const current = this.viewKey()
-      if (current === this.lastViewKey) return
+    navigationController() {
+      return window.ManaChessNavigation
+    },
 
-      this.lastViewKey = current
-      this.scrollViewToTop()
+    viewKey() {
+      return this.navigationController().viewKey(this.el)
+    },
+
+    keepViewInFrame() {
+      this.lastViewKey = this.navigationController().keepViewInFrame(this.el, this.lastViewKey)
     },
 
     keepInitialViewInFrame() {
-      if (this.viewKey() !== "lobby") this.scrollViewToTop()
+      this.navigationController().keepInitialViewInFrame(this.el)
     },
 
     scrollViewToTop() {
-      window.requestAnimationFrame(() => window.scrollTo(0, 0))
-      window.setTimeout(() => window.scrollTo(0, 0), 80)
-      window.setTimeout(() => window.scrollTo(0, 0), 260)
+      this.navigationController().scrollToTop()
     },
 
     playChangedSound() {
