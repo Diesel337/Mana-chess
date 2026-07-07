@@ -38,6 +38,7 @@ The backend has been moving toward live `GameServer` processes as the source of 
 - `game_directory.ex`: lookup helpers for active game processes.
 - `game_lobby.ex`: lobby coordination, rooms, matchmaking, player/spectator views, broadcasts, and compatibility surface.
 - `game_state.ex`: game state struct and state helpers.
+- `game_settings.ex`: global/default settings sanitization, migration, and persistence.
 - `game_engine.ex`: move application, turns, mana, cooldown, and core mutations.
 - `game_rules.ex`: movement legality and board rules.
 - `game_bot.ex`: practice bot behavior.
