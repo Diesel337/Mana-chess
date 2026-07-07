@@ -10,6 +10,7 @@ defmodule ManaChessOnline.GameLobby do
     GameEngine,
     GameMetrics,
     GameRules,
+    GameRooms,
     GameSettings,
     GameServer,
     GameState,
@@ -142,7 +143,7 @@ defmodule ManaChessOnline.GameLobby do
   def handle_call({:create_private, player_id}, _from, state) do
     case take_rate_limit(state, {:private_room, player_id}, @private_room_rate_limit) do
       {:ok, state} ->
-        game_id = unique_private_game_id(server_backed_games(state))
+        game_id = GameRooms.unique_private_game_id(server_backed_games(state))
 
         state =
           state
@@ -369,7 +370,7 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   def handle_call({:start_practice, player_id}, _from, state) do
-    game_id = practice_game_id(player_id)
+    game_id = GameRooms.practice_game_id(player_id)
 
     state =
       state
@@ -1135,11 +1136,8 @@ defmodule ManaChessOnline.GameLobby do
   defp valid_square?({r, c}), do: r in 0..7 and c in 0..7
   defp valid_square?(_square), do: false
 
-  defp practice_game_id(player_id),
-    do: "practice_" <> Integer.to_string(:erlang.phash2(player_id))
-
   defp ensure_private_game(state, game_id) do
-    if private_game_id?(game_id) do
+    if GameRooms.private_game_id?(game_id) do
       case game_snapshot(game_id, state) do
         nil ->
           game = replace_game_state(private_game(game_id, state.global_settings))
@@ -1154,28 +1152,13 @@ defmodule ManaChessOnline.GameLobby do
     end
   end
 
-  defp private_game_id?("private_" <> rest), do: byte_size(rest) >= 6
-  defp private_game_id?(_game_id), do: false
-
   defp maybe_drop_empty_private_game(state, game_id, game) do
-    case game do
-      %{private?: true, players: %{white: nil, black: nil}} ->
-        stop_game_server(game_id)
-        update_in(state.games, &Map.delete(&1, game_id))
-
-      _game ->
-        state
+    if GameRooms.empty_private_game?(game) do
+      stop_game_server(game_id)
+      update_in(state.games, &Map.delete(&1, game_id))
+    else
+      state
     end
-  end
-
-  defp unique_private_game_id(games) do
-    game_id =
-      "private_" <>
-        (6
-         |> :crypto.strong_rand_bytes()
-         |> Base.url_encode64(padding: false))
-
-    if Map.has_key?(games, game_id), do: unique_private_game_id(games), else: game_id
   end
 
   defp promotion_choice("Q", :white), do: "Q"

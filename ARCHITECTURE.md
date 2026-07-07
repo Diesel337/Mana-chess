@@ -37,6 +37,7 @@ The backend has been moving toward live `GameServer` processes as the source of 
 - `game_registry.ex`: names game processes.
 - `game_directory.ex`: lookup helpers for active game processes.
 - `game_chat.ex`: room chat sanitization, player names, roles, and lobby log labels.
+- `game_rooms.ex`: room id helpers and private-room predicates.
 - `game_lobby.ex`: lobby coordination, rooms, matchmaking, player/spectator views, broadcasts, and compatibility surface.
 - `game_state.ex`: game state struct and state helpers.
 - `game_settings.ex`: global/default settings sanitization, migration, and persistence.
