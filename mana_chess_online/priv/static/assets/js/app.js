@@ -801,51 +801,19 @@ const Hooks = {
       });
     },
 
-    copyInvite(button) {
-      const inviteUrl = new URL(button.dataset.copyInvite, window.location.origin).toString();
-      const originalHtml = button.innerHTML;
-      const copiedLabel = button.dataset.copySuccess || "Copiado";
-      const markCopied = () => {
-        button.dataset.copied = "true";
-        button.textContent = copiedLabel;
-        this.playSound("copy");
-        window.clearTimeout(button.copyInviteTimer);
-        button.copyInviteTimer = window.setTimeout(() => {
-          button.innerHTML = originalHtml;
-          delete button.dataset.copied;
-        }, 1400);
-      };
+    inviteClipboardController() {
+      return window.ManaChessInviteClipboard;
+    },
 
-      const desktopCopy = this.desktopController().copyShareLink(inviteUrl);
-      if (desktopCopy) {
-        desktopCopy.then(markCopied).catch(() => {
-          this.fallbackCopy(inviteUrl, markCopied);
-        });
-      } else if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(inviteUrl).then(markCopied).catch(() => {
-          this.fallbackCopy(inviteUrl, markCopied);
-        });
-      } else {
-        this.fallbackCopy(inviteUrl, markCopied);
-      }
+    copyInvite(button) {
+      this.inviteClipboardController().copy(button, {
+        copyShareLink: url => this.desktopController().copyShareLink(url),
+        onCopied: () => this.playSound("copy")
+      });
     },
 
     fallbackCopy(text, callback) {
-      const field = document.createElement("textarea");
-      field.value = text;
-      field.setAttribute("readonly", "");
-      field.style.position = "fixed";
-      field.style.top = "-1000px";
-      field.style.opacity = "0";
-      document.body.appendChild(field);
-      field.select();
-
-      try {
-        document.execCommand("copy");
-        callback();
-      } finally {
-        field.remove();
-      }
+      this.inviteClipboardController().fallbackCopy(text, callback);
     }
   },
 
