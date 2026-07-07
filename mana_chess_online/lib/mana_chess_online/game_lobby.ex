@@ -9,6 +9,7 @@ defmodule ManaChessOnline.GameLobby do
     GameDirectory,
     GameEngine,
     GameMetrics,
+    GamePromotion,
     GameRules,
     GameRooms,
     GameSettings,
@@ -477,7 +478,9 @@ defmodule ManaChessOnline.GameLobby do
            true <- controls_color?(player_color, color) do
         game =
           update_game_state(game, fn game ->
-            board = GameRules.promote(game.board, square, promotion_choice(choice, color), color)
+            board =
+              GameRules.promote(game.board, square, GamePromotion.choice(choice, color), color)
+
             status = GameEngine.terminal_status(board, game.castling_rights) || :playing
 
             %{
@@ -1160,15 +1163,4 @@ defmodule ManaChessOnline.GameLobby do
       state
     end
   end
-
-  defp promotion_choice("Q", :white), do: "Q"
-  defp promotion_choice("R", :white), do: "R"
-  defp promotion_choice("B", :white), do: "B"
-  defp promotion_choice("N", :white), do: "N"
-  defp promotion_choice("Q", :black), do: "q"
-  defp promotion_choice("R", :black), do: "r"
-  defp promotion_choice("B", :black), do: "b"
-  defp promotion_choice("N", :black), do: "n"
-  defp promotion_choice(_choice, :white), do: "Q"
-  defp promotion_choice(_choice, :black), do: "q"
 end
