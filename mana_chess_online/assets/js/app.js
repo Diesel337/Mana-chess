@@ -39,7 +39,7 @@ const Hooks = {
       this.paletteKey = "mana-chess-custom-palette"
       this.lastSoundState = this.soundState()
       this.lastChatScrollState = null
-      this.desktopState = this.desktopController().state()
+      this.desktopState = this.desktopSessionController().state(this)
       this.lastViewKey = this.viewKey()
       this.keepInitialViewInFrame()
       this.handleReset = event => {
@@ -187,36 +187,32 @@ const Hooks = {
       })
     },
 
+    desktopSessionController() {
+      return window.ManaChessDesktopSession
+    },
+
     desktopBridge() {
-      return this.desktopController().bridge()
+      return this.desktopSessionController().bridge(this)
     },
 
     desktopPayload(payload = {}) {
-      return this.desktopController().eventPayload(this.el, this.viewKey(), this.soundState(), payload)
+      return this.desktopSessionController().payload(this, payload)
     },
 
     sendDesktopEvent(name, payload = {}, key = "") {
-      this.desktopController().sendEvent(
-        this.desktopState,
-        this.el,
-        this.viewKey(),
-        this.soundState(),
-        name,
-        payload,
-        key
-      )
+      this.desktopSessionController().sendEvent(this, name, payload, key)
     },
 
     emitDesktopView() {
-      this.desktopController().emitView(this.desktopState, this.el, this.viewKey(), this.soundState())
+      this.desktopSessionController().emitView(this)
     },
 
     emitDesktopState(current, previous) {
-      this.desktopController().emitState(this.desktopState, this.el, this.viewKey(), current, previous)
+      this.desktopSessionController().emitState(this, current, previous)
     },
 
     desktopStatusIsPlaying(status) {
-      return this.desktopController().statusIsPlaying(status)
+      return this.desktopSessionController().statusIsPlaying(this, status)
     },
 
     desktopController() {
@@ -476,7 +472,7 @@ const Hooks = {
 
     copyInvite(button) {
       this.inviteClipboardController().copy(button, {
-        copyShareLink: url => this.desktopController().copyShareLink(url),
+        copyShareLink: url => this.desktopSessionController().copyShareLink(this, url),
         onCopied: () => this.playSound("copy"),
       })
     },

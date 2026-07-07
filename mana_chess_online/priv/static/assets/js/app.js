@@ -12,7 +12,7 @@ const Hooks = {
       this.paletteKey = "mana-chess-custom-palette";
       this.lastSoundState = this.soundState();
       this.lastChatScrollState = null;
-      this.desktopState = this.desktopController().state();
+      this.desktopState = this.desktopSessionController().state(this);
       this.lastViewKey = this.viewKey();
       this.keepInitialViewInFrame();
       this.handleReset = event => {
@@ -91,6 +91,8 @@ const Hooks = {
       }
       this.renderChatTimes();
       this.keepChatAtLatest();
+      this.emitDesktopView();
+      this.emitDesktopState(this.soundState(), null);
     },
 
     updated() {
@@ -105,6 +107,7 @@ const Hooks = {
       }
       this.renderChatTimes();
       this.keepViewInFrame();
+      this.emitDesktopView();
       this.keepChatAtLatest();
       this.playChangedSound();
     },
@@ -161,20 +164,24 @@ const Hooks = {
       this.localStatsController().render(this.el, this.storageKey);
     },
 
-    desktopController() {
-      return window.ManaChessDesktopBridge;
+    desktopSessionController() {
+      return window.ManaChessDesktopSession;
     },
 
     sendDesktopEvent(name, payload = {}, key = "") {
-      this.desktopController().sendEvent(
-        this.desktopState,
-        this.el,
-        this.viewKey(),
-        this.soundState(),
-        name,
-        payload,
-        key
-      );
+      this.desktopSessionController().sendEvent(this, name, payload, key);
+    },
+
+    emitDesktopView() {
+      this.desktopSessionController().emitView(this);
+    },
+
+    emitDesktopState(current, previous) {
+      this.desktopSessionController().emitState(this, current, previous);
+    },
+
+    desktopController() {
+      return window.ManaChessDesktopBridge;
     },
 
     soundController() {
@@ -407,6 +414,7 @@ const Hooks = {
       const current = this.soundState();
       const previous = this.lastSoundState;
       this.lastSoundState = current;
+      this.emitDesktopState(current, previous);
       const changedSound = this.soundStateController().changedSound(current, previous, this.soundEnabled());
 
       if (changedSound) this.playSound(changedSound);
@@ -425,7 +433,7 @@ const Hooks = {
 
     copyInvite(button) {
       this.inviteClipboardController().copy(button, {
-        copyShareLink: url => this.desktopController().copyShareLink(url),
+        copyShareLink: url => this.desktopSessionController().copyShareLink(this, url),
         onCopied: () => this.playSound("copy")
       });
     },
