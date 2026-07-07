@@ -34,6 +34,7 @@ defmodule ManaChessOnlineWeb.PageControllerTest do
     assert response =~ "sound-state-module-20260707"
     assert response =~ "sound-session-module-20260707"
     assert response =~ "chat-module-20260706"
+    assert response =~ "view-session-module-20260707"
     assert response =~ "navigation-module-20260707"
     assert response =~ "desktop-bridge-module-20260707"
     assert response =~ "desktop-session-module-20260707"

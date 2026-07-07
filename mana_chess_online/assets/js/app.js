@@ -286,12 +286,16 @@ const Hooks = {
       return this.cosmeticSessionController().hexToRgb(hex)
     },
 
+    viewSessionController() {
+      return window.ManaChessViewSession
+    },
+
     chatController() {
-      return window.ManaChessChat
+      return this.viewSessionController().chat()
     },
 
     renderChatTimes() {
-      this.chatController().renderTimes(this.el)
+      this.viewSessionController().renderChatTimes(this)
     },
 
     soundState() {
@@ -299,35 +303,35 @@ const Hooks = {
     },
 
     chatScrollState() {
-      return this.chatController().scrollState(this.el)
+      return this.viewSessionController().chatScrollState(this)
     },
 
     keepChatAtLatest() {
-      this.lastChatScrollState = this.chatController().keepAtLatest(this.el, this.lastChatScrollState)
+      this.viewSessionController().keepChatAtLatest(this)
     },
 
     scrollChatListsToEnd() {
-      this.chatController().scrollListsToEnd(this.el)
+      this.viewSessionController().scrollChatListsToEnd(this)
     },
 
     navigationController() {
-      return window.ManaChessNavigation
+      return this.viewSessionController().navigation()
     },
 
     viewKey() {
-      return this.navigationController().viewKey(this.el)
+      return this.viewSessionController().viewKey(this)
     },
 
     keepViewInFrame() {
-      this.lastViewKey = this.navigationController().keepViewInFrame(this.el, this.lastViewKey)
+      this.viewSessionController().keepViewInFrame(this)
     },
 
     keepInitialViewInFrame() {
-      this.navigationController().keepInitialViewInFrame(this.el)
+      this.viewSessionController().keepInitialViewInFrame(this)
     },
 
     scrollViewToTop() {
-      this.navigationController().scrollToTop()
+      this.viewSessionController().scrollViewToTop()
     },
 
     playChangedSound() {
