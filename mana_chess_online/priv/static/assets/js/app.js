@@ -215,6 +215,10 @@ const Hooks = {
       return window.ManaChessCosmeticActions;
     },
 
+    cosmeticFallbackController() {
+      return window.ManaChessCosmeticFallback;
+    },
+
     renderModularCosmetics() {
       const controller = this.cosmeticsController();
       if (!controller) return false;
@@ -224,405 +228,134 @@ const Hooks = {
     },
 
     readCosmeticUnlocks() {
-      try {
-        return JSON.parse(localStorage.getItem(this.cosmeticUnlockKey)) || [];
-      } catch (_error) {
-        return [];
-      }
+      return this.cosmeticFallbackController().readCosmeticUnlocks(this);
     },
 
     writeCosmeticUnlocks(unlocks) {
-      localStorage.setItem(this.cosmeticUnlockKey, JSON.stringify([...new Set(unlocks)]));
+      this.cosmeticFallbackController().writeCosmeticUnlocks(this, unlocks);
     },
 
     cosmeticUnlocked(id) {
-      return this.readCosmeticUnlocks().includes(id);
+      return this.cosmeticFallbackController().cosmeticUnlocked(this, id);
     },
 
     unlockCosmetic(id) {
-      const unlocks = this.readCosmeticUnlocks();
-      const next = [...unlocks, id];
-
-      if (id === "board:custom" || id === "piece:custom" || id === "palette:custom") {
-        next.push("board:custom", "piece:custom", "palette:custom");
-      }
-
-      this.writeCosmeticUnlocks(next);
+      this.cosmeticFallbackController().unlockCosmetic(this, id);
     },
 
     cosmeticAllowed(id) {
-      return !id || this.cosmeticUnlocked(id);
+      return this.cosmeticFallbackController().cosmeticAllowed(this, id);
     },
 
     cosmeticPackConfig(pack) {
-      const packs = {
-        classic: {board: "classic", piece: "classic", included: true},
-        mana: {board: "gilded", piece: "runes", included: true},
-        arcane: {board: "arcane", piece: "crystal", unlocks: ["board:arcane", "piece:crystal"]}
-      };
-
-      return packs[pack] || null;
+      return this.cosmeticFallbackController().cosmeticPackConfig(pack);
     },
 
     cosmeticPackUnlocked(pack) {
-      const config = this.cosmeticPackConfig(pack);
-      if (!config) return false;
-      if (config.included) return true;
-      return (config.unlocks || []).every(id => this.cosmeticUnlocked(id));
+      return this.cosmeticFallbackController().cosmeticPackUnlocked(this, pack);
     },
 
     applyCosmeticPack(pack) {
-      const config = this.cosmeticPackConfig(pack);
-      if (!config) return;
-
-      (config.unlocks || []).forEach(id => this.unlockCosmetic(id));
-      this.setBoardSkin(config.board);
-      this.setPieceSkin(config.piece);
+      this.cosmeticFallbackController().applyCosmeticPack(this, pack);
     },
 
     premiumIdForBoardSkin(skin) {
-      return skin === "arcane" || skin === "custom" ? `board:${skin}` : null;
+      return this.cosmeticFallbackController().premiumIdForBoardSkin(skin);
     },
 
     premiumIdForPieceSkin(skin) {
-      return skin === "crystal" || skin === "custom" ? `piece:${skin}` : null;
+      return this.cosmeticFallbackController().premiumIdForPieceSkin(skin);
     },
 
     activateCosmeticControl(control) {
-      if (control.matches("[data-palette-unlock]")) {
-        this.setBoardSkin("custom");
-        this.setPieceSkin("custom");
-        this.renderBoardSkin();
-        this.renderPieceSkin();
-        this.renderPalette();
-        return;
-      }
-
-      if (control.dataset.boardSkinChoice) {
-        this.setBoardSkin(control.dataset.boardSkinChoice);
-        this.renderBoardSkin();
-      }
-
-      if (control.dataset.pieceSkinChoice) {
-        this.setPieceSkin(control.dataset.pieceSkinChoice);
-        this.renderPieceSkin();
-      }
+      this.cosmeticFallbackController().activateCosmeticControl(this, control);
     },
 
     renderCosmetics() {
-      this.el.querySelectorAll("[data-cosmetic-premium]").forEach(control => {
-        const unlocked = this.cosmeticUnlocked(control.dataset.cosmeticPremium);
-        control.classList.toggle("mc-skin-locked", !unlocked);
-        control.classList.toggle("mc-skin-unlocked", unlocked);
-        control.setAttribute("aria-disabled", "false");
-        control.title = unlocked ? "Cosmetico desbloqueado localmente" : "Premium proximamente; probar localmente";
-        control.querySelectorAll("[data-cosmetic-status]").forEach(status => {
-          status.textContent = unlocked ? "Local" : "Premium proximamente";
-          status.dataset.cosmeticState = unlocked ? "local" : "premium";
-        });
-      });
-
-      this.el.querySelectorAll("[data-palette-editor]").forEach(editor => {
-        const unlocked = this.cosmeticUnlocked("palette:custom");
-        editor.classList.toggle("is-locked", !unlocked);
-        editor.classList.toggle("is-unlocked", unlocked);
-        editor.querySelectorAll("[data-palette-status]").forEach(status => {
-          status.textContent = unlocked ? "Local" : "Premium proximamente";
-          status.dataset.paletteState = unlocked ? "local" : "premium";
-        });
-        editor.querySelectorAll("[data-palette-unlock]").forEach(control => {
-          control.setAttribute("aria-disabled", "false");
-        });
-        editor.querySelectorAll("[data-palette-color]").forEach(control => {
-          control.disabled = !unlocked;
-        });
-      });
-
-      const paletteUnlocked = this.cosmeticUnlocked("palette:custom");
-      this.el.querySelectorAll("[data-palette-preset], [data-palette-reset], [data-palette-color]").forEach(control => {
-        control.disabled = !paletteUnlocked;
-      });
-
-      this.renderCosmeticPacks();
+      this.cosmeticFallbackController().renderCosmetics(this);
     },
 
     renderCosmeticPacks() {
-      const board = this.boardSkin();
-      const piece = this.pieceSkin();
-
-      this.el.querySelectorAll("[data-cosmetic-pack]").forEach(control => {
-        const pack = control.dataset.cosmeticPack;
-        const config = this.cosmeticPackConfig(pack);
-        if (!config) return;
-
-        const unlocked = this.cosmeticPackUnlocked(pack);
-        const selected = unlocked && config.board === board && config.piece === piece;
-        control.classList.toggle("mc-skin-selected", selected);
-        control.classList.toggle("mc-skin-locked", !unlocked);
-        control.classList.toggle("mc-skin-unlocked", unlocked && !config.included);
-        control.setAttribute("aria-pressed", selected ? "true" : "false");
-        control.setAttribute("aria-disabled", "false");
-        control.title = unlocked ? "Pack disponible localmente" : "Premium proximamente; probar localmente";
-        control.querySelectorAll("[data-cosmetic-pack-status]").forEach(status => {
-          status.textContent = config.included ? "Incluido" : unlocked ? "Local" : "Premium proximamente";
-          status.dataset.cosmeticState = config.included ? "included" : unlocked ? "local" : "premium";
-        });
-      });
+      this.cosmeticFallbackController().renderCosmeticPacks(this);
     },
 
     boardSkin() {
-      const skin = localStorage.getItem(this.skinKey);
-      if (skin === "mana") return "gilded";
-      if (this.cosmeticAllowed(this.premiumIdForBoardSkin(skin))) {
-        return ["classic", "arcane", "gilded", "custom"].includes(skin) ? skin : "classic";
-      }
-      return "classic";
+      return this.cosmeticFallbackController().boardSkin(this);
     },
 
     setBoardSkin(skin) {
-      if (!["classic", "arcane", "gilded", "custom"].includes(skin)) return;
-      if (!this.cosmeticAllowed(this.premiumIdForBoardSkin(skin))) return;
-      localStorage.setItem(this.skinKey, skin);
+      this.cosmeticFallbackController().setBoardSkin(this, skin);
     },
 
     renderBoardSkin() {
-      const skin = this.boardSkin();
-
-      this.el.querySelectorAll("[data-board-skin-target]").forEach(node => {
-        node.dataset.boardSkin = skin;
-      });
-
-      this.el.querySelectorAll("[data-board-skin-choice]").forEach(button => {
-        const selected = button.dataset.boardSkinChoice === skin;
-        button.classList.toggle("mc-skin-selected", selected);
-        button.setAttribute("aria-pressed", selected ? "true" : "false");
-      });
-
-      this.renderCosmeticPreview();
+      this.cosmeticFallbackController().renderBoardSkin(this);
     },
 
     pieceSkin() {
-      const skin = localStorage.getItem(this.pieceSkinKey);
-      if (this.cosmeticAllowed(this.premiumIdForPieceSkin(skin))) {
-        return ["classic", "runes", "crystal", "custom"].includes(skin) ? skin : "classic";
-      }
-      return "classic";
+      return this.cosmeticFallbackController().pieceSkin(this);
     },
 
     setPieceSkin(skin) {
-      if (!["classic", "runes", "crystal", "custom"].includes(skin)) return;
-      if (!this.cosmeticAllowed(this.premiumIdForPieceSkin(skin))) return;
-      localStorage.setItem(this.pieceSkinKey, skin);
+      this.cosmeticFallbackController().setPieceSkin(this, skin);
     },
 
     renderPieceSkin() {
-      const skin = this.pieceSkin();
-      this.el.dataset.pieceSkin = skin;
-      this.el.classList.toggle("mc-piece-skin-classic", skin === "classic");
-      this.el.classList.toggle("mc-piece-skin-runes", skin === "runes");
-      this.el.classList.toggle("mc-piece-skin-crystal", skin === "crystal");
-      this.el.classList.toggle("mc-piece-skin-custom", skin === "custom");
-      document.documentElement.dataset.pieceSkin = skin;
-
-      this.el.querySelectorAll("[data-piece-skin-choice]").forEach(button => {
-        const selected = button.dataset.pieceSkinChoice === skin;
-        button.classList.toggle("mc-skin-selected", selected);
-        button.setAttribute("aria-pressed", selected ? "true" : "false");
-      });
-
-      this.renderCosmeticPreview();
+      this.cosmeticFallbackController().renderPieceSkin(this);
     },
 
     defaultPalette() {
-      return {
-        boardLight: "#d9c58f",
-        boardDark: "#243a31",
-        pieceWhite: "#f6f1df",
-        pieceBlack: "#241745",
-      };
+      return this.cosmeticFallbackController().defaultPalette();
     },
 
     palettePreset(name) {
-      const presets = {
-        midnight: {boardLight: "#8067c9", boardDark: "#151020", pieceWhite: "#f7f2ff", pieceBlack: "#241745"},
-        emerald: {boardLight: "#8bd9bd", boardDark: "#17342b", pieceWhite: "#f5f9de", pieceBlack: "#0b2c24"},
-        frost: {boardLight: "#d9f0ff", boardDark: "#22354f", pieceWhite: "#ffffff", pieceBlack: "#2f5e8f"},
-        solar: {boardLight: "#f2c15f", boardDark: "#174a45", pieceWhite: "#fff4d2", pieceBlack: "#31204f"},
-        ruby: {boardLight: "#f0b7a6", boardDark: "#3b141c", pieceWhite: "#fff0ea", pieceBlack: "#4c0f23"},
-      };
-
-      return presets[name] || this.defaultPalette();
+      return this.cosmeticFallbackController().palettePreset(name);
     },
 
     paletteEquals(first, second) {
-      return Object.keys(this.defaultPalette()).every(key => {
-        const a = (first[key] || "").toLowerCase();
-        const b = (second[key] || "").toLowerCase();
-        return a === b;
-      });
+      return this.cosmeticFallbackController().paletteEquals(first, second);
     },
 
     activePalettePreset(palette) {
-      const normalized = {...this.defaultPalette(), ...palette};
-      if (this.paletteEquals(normalized, this.defaultPalette())) return "base";
-      return ["midnight", "emerald", "frost", "solar", "ruby"].find(name => this.paletteEquals(normalized, this.palettePreset(name))) || null;
+      return this.cosmeticFallbackController().activePalettePreset(palette);
     },
     readPalette() {
-      try {
-        return {...this.defaultPalette(), ...(JSON.parse(localStorage.getItem(this.paletteKey)) || {})};
-      } catch (_error) {
-        return this.defaultPalette();
-      }
+      return this.cosmeticFallbackController().readPalette(this);
     },
 
     setPalette(palette) {
-      localStorage.setItem(this.paletteKey, JSON.stringify({...this.defaultPalette(), ...palette}));
+      this.cosmeticFallbackController().setPalette(this, palette);
     },
 
     renderPalette() {
-      const palette = this.readPalette();
-      this.applyPalette(palette);
-
-      this.el.querySelectorAll("[data-palette-color]").forEach(input => {
-        if (palette[input.dataset.paletteColor]) input.value = palette[input.dataset.paletteColor];
-      });
-      const activePreset = this.activePalettePreset(palette);
-      this.el.querySelectorAll("[data-palette-reset]").forEach(button => {
-        const selected = activePreset === "base";
-        button.classList.toggle("mc-palette-selected", selected);
-        button.setAttribute("aria-pressed", selected ? "true" : "false");
-      });
-      this.el.querySelectorAll("[data-palette-preset]").forEach(button => {
-        const selected = button.dataset.palettePreset === activePreset;
-        button.classList.toggle("mc-palette-selected", selected);
-        button.setAttribute("aria-pressed", selected ? "true" : "false");
-      });
-      this.renderCosmeticPreview();
+      this.cosmeticFallbackController().renderPalette(this);
     },
 
     boardPreviewPalette(skin, palette) {
-      const palettes = {
-        classic: {frame: "#f7f2e8", light: "#f3eee2", dark: "#171817"},
-        gilded: {frame: "#fff0b6", light: "#f4d477", dark: "#6e3b1f"},
-        arcane: {frame: "#8b6bea", light: "#8bd9bd", dark: "#241745"},
-        custom: {frame: palette.boardLight, light: palette.boardLight, dark: palette.boardDark}
-      };
-
-      return palettes[skin] || palettes.classic;
+      return this.cosmeticFallbackController().boardPreviewPalette(skin, palette);
     },
 
     piecePreviewPalette(skin, palette) {
-      const palettes = {
-        classic: {
-          frame: "#e6bd68",
-          white: "#f7ebce",
-          black: "#171a17",
-          whiteText: "#171a12",
-          blackText: "#7c5bd6",
-          whiteGlow: "rgba(247, 235, 206, .36)",
-          blackGlow: "rgba(124, 91, 214, .44)"
-        },
-        runes: {
-          frame: "#8bd9bd",
-          white: "#8bd9bd",
-          black: "#120b22",
-          whiteText: "#03251d",
-          blackText: "#c7b3ff",
-          whiteGlow: "rgba(139, 217, 189, .48)",
-          blackGlow: "rgba(168, 132, 255, .52)"
-        },
-        crystal: {
-          frame: "#fff0b6",
-          white: "#c7d2ff",
-          black: "#101623",
-          whiteText: "#101629",
-          blackText: "#fff0b6",
-          whiteGlow: "rgba(109, 143, 255, .48)",
-          blackGlow: "rgba(255, 240, 182, .5)"
-        },
-        custom: {
-          frame: palette.boardLight,
-          white: palette.pieceWhite,
-          black: palette.pieceBlack,
-          whiteText: this.readableTextColor(palette.pieceWhite),
-          blackText: this.readableTextColor(palette.pieceBlack),
-          whiteGlow: this.hexToRgba(palette.pieceWhite, 0.42),
-          blackGlow: this.hexToRgba(palette.pieceBlack, 0.5)
-        }
-      };
-
-      return palettes[skin] || palettes.classic;
+      return this.cosmeticFallbackController().piecePreviewPalette(skin, palette);
     },
 
     renderCosmeticPreview() {
-      const palette = this.readPalette();
-      const boardSkin = this.boardSkin();
-      const pieceSkin = this.pieceSkin();
-      const board = this.boardPreviewPalette(boardSkin, palette);
-      const piece = this.piecePreviewPalette(pieceSkin, palette);
-      const vars = {
-        "--mc-preview-board-frame": board.frame,
-        "--mc-preview-board-light": board.light,
-        "--mc-preview-board-dark": board.dark,
-        "--mc-preview-piece-frame": piece.frame,
-        "--mc-preview-piece-white": piece.white,
-        "--mc-preview-piece-black": piece.black,
-        "--mc-preview-piece-white-text": piece.whiteText,
-        "--mc-preview-piece-black-text": piece.blackText,
-        "--mc-preview-piece-white-glow": piece.whiteGlow,
-        "--mc-preview-piece-black-glow": piece.blackGlow
-      };
-
-      this.el.querySelectorAll("[data-palette-live-preview]").forEach(preview => {
-        preview.dataset.boardSkin = boardSkin;
-        preview.dataset.pieceSkin = pieceSkin;
-        for (const [name, value] of Object.entries(vars)) {
-          preview.style.setProperty(name, value);
-        }
-      });
+      this.cosmeticFallbackController().renderCosmeticPreview(this);
     },
 
     applyPalette(palette) {
-      const root = document.documentElement;
-      const vars = {
-        "--mc-custom-board-light": palette.boardLight,
-        "--mc-custom-board-dark": palette.boardDark,
-        "--mc-custom-board-frame": palette.boardLight,
-        "--mc-custom-piece-white": palette.pieceWhite,
-        "--mc-custom-piece-black": palette.pieceBlack,
-        "--mc-custom-piece-white-text": this.readableTextColor(palette.pieceWhite),
-        "--mc-custom-piece-black-text": this.readableTextColor(palette.pieceBlack),
-        "--mc-custom-piece-white-glow": this.hexToRgba(palette.pieceWhite, 0.42),
-        "--mc-custom-piece-black-glow": this.hexToRgba(palette.pieceBlack, 0.5),
-      };
-
-      for (const [name, value] of Object.entries(vars)) {
-        root.style.setProperty(name, value);
-        this.el.style.setProperty(name, value);
-      }
+      this.cosmeticFallbackController().applyPalette(this, palette);
     },
 
     readableTextColor(hex) {
-      const rgb = this.hexToRgb(hex);
-      if (!rgb) return "#10140f";
-      const luminance = (0.2126 * rgb.r + 0.7152 * rgb.g + 0.0722 * rgb.b) / 255;
-      return luminance > 0.56 ? "#10140f" : "#fff8dc";
+      return this.cosmeticFallbackController().readableTextColor(hex);
     },
 
     hexToRgba(hex, alpha) {
-      const rgb = this.hexToRgb(hex);
-      if (!rgb) return `rgba(255, 255, 255, ${alpha})`;
-      return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`;
+      return this.cosmeticFallbackController().hexToRgba(hex, alpha);
     },
 
     hexToRgb(hex) {
-      const match = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex || "");
-      if (!match) return null;
-      return {
-        r: Number.parseInt(match[1], 16),
-        g: Number.parseInt(match[2], 16),
-        b: Number.parseInt(match[3], 16),
-      };
+      return this.cosmeticFallbackController().hexToRgb(hex);
     },
 
     chatController() {

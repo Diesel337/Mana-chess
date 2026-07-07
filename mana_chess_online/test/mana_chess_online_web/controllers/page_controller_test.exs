@@ -23,6 +23,7 @@ defmodule ManaChessOnlineWeb.PageControllerTest do
     assert response =~ "Mana Chess"
     assert response =~ "cosmetics-module-20260706"
     assert response =~ "cosmetic-actions-module-20260707"
+    assert response =~ "cosmetic-fallback-module-20260707"
     assert response =~ "layout-module-20260706"
     assert response =~ "local-stats-module-20260706"
     assert response =~ "sound-module-20260706"
