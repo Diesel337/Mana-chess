@@ -416,18 +416,12 @@ const Hooks = {
       this.chatController().renderTimes(this.el)
     },
 
+    soundStateController() {
+      return window.ManaChessSoundState
+    },
+
     soundState() {
-      return {
-        gameId: this.el.dataset.soundGameId || "",
-        status: this.el.dataset.soundStatus || "",
-        logCount: Number.parseInt(this.el.dataset.soundLogCount || "0", 10),
-        logKind: this.el.dataset.soundLogKind || "",
-        chatCount: Number.parseInt(this.el.dataset.soundChatCount || "0", 10),
-        alert: this.el.dataset.soundAlert || "",
-        alertKind: this.el.dataset.soundAlertKind || "",
-        resultKey: this.el.dataset.resultKey || "",
-        result: this.el.dataset.resultOutcome || "",
-      }
+      return this.soundStateController().state(this.el)
     },
 
     chatScrollState() {
@@ -467,32 +461,9 @@ const Hooks = {
       const previous = this.lastSoundState
       this.lastSoundState = current
       this.emitDesktopState(current, previous)
+      const changedSound = this.soundStateController().changedSound(current, previous, this.soundEnabled())
 
-      if (!previous || !this.soundEnabled()) return
-
-      if (current.result && current.resultKey && current.resultKey !== previous.resultKey) {
-        this.playSound(current.result === "win" ? "win" : current.result === "loss" ? "loss" : "draw")
-        return
-      }
-
-      if (current.alert && current.alert !== previous.alert) {
-        this.playSound(current.alertKind === "check" ? "check" : current.alertKind === "reset" ? "reset" : "alert")
-        return
-      }
-
-      if (current.gameId && current.gameId === previous.gameId && current.logCount > previous.logCount) {
-        this.playSound(current.logKind === "capture" ? "capture" : current.logKind === "alert" ? "alert" : "move")
-        return
-      }
-
-      if (current.gameId && current.gameId === previous.gameId && current.chatCount > previous.chatCount) {
-        this.playSound("chat")
-        return
-      }
-
-      if (current.status && current.status !== previous.status) {
-        this.playSound("state")
-      }
+      if (changedSound) this.playSound(changedSound)
     },
 
     playSound(kind) {
