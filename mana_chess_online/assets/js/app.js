@@ -42,71 +42,7 @@ const Hooks = {
       this.desktopState = this.desktopSessionController().state(this)
       this.lastViewKey = this.viewKey()
       this.keepInitialViewInFrame()
-      this.handleReset = event => {
-        if (!event.target.closest("[data-stats-reset]")) return
-        localStorage.removeItem(this.storageKey)
-        this.lastResultKey = null
-        this.renderStats()
-      }
-      this.handleInviteCopy = event => {
-        const button = event.target.closest("[data-copy-invite]")
-        if (!button) return
-        event.preventDefault()
-        this.copyInvite(button)
-      }
-      this.handleSoundToggle = event => {
-        const button = event.target.closest("[data-sound-toggle]")
-        if (!button) return
-        event.preventDefault()
-        const enabled = !this.soundEnabled()
-        this.setSoundEnabled(enabled)
-        this.renderSoundToggle()
-        if (enabled) this.playSound("ready")
-      }
-      this.handleSoundVolume = event => {
-        const input = event.target.closest("[data-sound-volume]")
-        if (!input) return
-        this.setSoundVolume(input.value)
-        this.renderSoundToggle()
-      }
-      this.handleCosmeticUnlock = event => {
-        this.cosmeticActionsController().handleUnlock(event, this)
-      }
-      this.handleSoundAction = event => {
-        this.cosmeticActionsController().handleSoundAction(event, this)
-      }
-      this.handleSkinChoice = event => {
-        this.cosmeticActionsController().handleBoardSkinChoice(event, this)
-      }
-      this.handlePieceSkinChoice = event => {
-        this.cosmeticActionsController().handlePieceSkinChoice(event, this)
-      }
-      this.handlePalettePreset = event => {
-        this.cosmeticActionsController().handlePalettePreset(event, this)
-      }
-      this.handlePaletteReset = event => {
-        this.cosmeticActionsController().handlePaletteReset(event, this)
-      }
-      this.handlePaletteColor = event => {
-        this.cosmeticActionsController().handlePaletteColor(event, this)
-      }
-      this.handleCosmeticPack = event => {
-        this.cosmeticActionsController().handleCosmeticPack(event, this)
-      }
-      this.el.addEventListener("click", this.handleReset)
-      this.el.addEventListener("click", this.handleInviteCopy)
-      this.el.addEventListener("click", this.handleSoundToggle)
-      this.el.addEventListener("input", this.handleSoundVolume)
-      this.el.addEventListener("change", this.handleSoundVolume)
-      this.el.addEventListener("click", this.handleCosmeticUnlock)
-      this.el.addEventListener("click", this.handleSoundAction)
-      this.el.addEventListener("click", this.handleSkinChoice)
-      this.el.addEventListener("click", this.handlePieceSkinChoice)
-      this.el.addEventListener("click", this.handlePalettePreset)
-      this.el.addEventListener("click", this.handlePaletteReset)
-      this.el.addEventListener("input", this.handlePaletteColor)
-      this.el.addEventListener("change", this.handlePaletteColor)
-      this.el.addEventListener("click", this.handleCosmeticPack)
+      this.localStatsEventsController().bind(this)
       this.recordResult()
       this.renderStats()
       this.renderSoundToggle()
@@ -140,20 +76,11 @@ const Hooks = {
     },
 
     destroyed() {
-      this.el.removeEventListener("click", this.handleReset)
-      this.el.removeEventListener("click", this.handleInviteCopy)
-      this.el.removeEventListener("click", this.handleSoundToggle)
-      this.el.removeEventListener("input", this.handleSoundVolume)
-      this.el.removeEventListener("change", this.handleSoundVolume)
-      this.el.removeEventListener("click", this.handleCosmeticUnlock)
-      this.el.removeEventListener("click", this.handleSoundAction)
-      this.el.removeEventListener("click", this.handleSkinChoice)
-      this.el.removeEventListener("click", this.handlePieceSkinChoice)
-      this.el.removeEventListener("click", this.handlePalettePreset)
-      this.el.removeEventListener("click", this.handlePaletteReset)
-      this.el.removeEventListener("input", this.handlePaletteColor)
-      this.el.removeEventListener("change", this.handlePaletteColor)
-      this.el.removeEventListener("click", this.handleCosmeticPack)
+      this.localStatsEventsController().unbind(this)
+    },
+
+    localStatsEventsController() {
+      return window.ManaChessLocalStatsEvents
     },
 
     localStatsController() {
