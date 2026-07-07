@@ -4,16 +4,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content={get_csrf_token()} />
-    <script>
-      (() => {
-        const bridge = window.ManaChessDesktop;
-        const info = typeof bridge?.getInfo === "function" ? bridge.getInfo() : null;
-        if (new URLSearchParams(window.location.search).get("desktop") === "1" || info?.isDesktop) {
-          document.documentElement.dataset.desktop = "true";
-          if (info?.channel) document.documentElement.dataset.desktopChannel = info.channel;
-          if (info?.version) document.documentElement.dataset.desktopVersion = info.version;
-        }
-      })();
+    <script
+      phx-track-static
+      type="text/javascript"
+      src={~p"/assets/js/desktop_bridge.js?v=desktop-bridge-module-20260707"}
+    >
     </script>
 
     <script
@@ -117,7 +112,7 @@
       defer
       phx-track-static
       type="text/javascript"
-      src={~p"/assets/js/app.js?v=navigation-module-20260707"}
+      src={~p"/assets/js/app.js?v=desktop-bridge-module-20260707"}
     >
     </script>
 

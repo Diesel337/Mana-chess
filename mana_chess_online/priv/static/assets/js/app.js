@@ -12,6 +12,7 @@ const Hooks = {
       this.paletteKey = "mana-chess-custom-palette";
       this.lastSoundState = this.soundState();
       this.lastChatScrollState = null;
+      this.desktopState = this.desktopController().state();
       this.lastViewKey = this.viewKey();
       this.keepInitialViewInFrame();
       this.handleReset = event => {
@@ -237,7 +238,7 @@ const Hooks = {
       });
 
       this.lastResultKey = result.lastResultKey;
-      if (result.recorded && typeof this.sendDesktopEvent === "function") {
+      if (result.recorded) {
         this.sendDesktopEvent(
           "match.finished",
           {result: result.outcome, resultKey: result.resultKey},
@@ -248,6 +249,22 @@ const Hooks = {
 
     renderStats() {
       this.localStatsController().render(this.el, this.storageKey);
+    },
+
+    desktopController() {
+      return window.ManaChessDesktopBridge;
+    },
+
+    sendDesktopEvent(name, payload = {}, key = "") {
+      this.desktopController().sendEvent(
+        this.desktopState,
+        this.el,
+        this.viewKey(),
+        this.soundState(),
+        name,
+        payload,
+        key
+      );
     },
 
     soundController() {
@@ -799,7 +816,12 @@ const Hooks = {
         }, 1400);
       };
 
-      if (navigator.clipboard && window.isSecureContext) {
+      const desktopCopy = this.desktopController().copyShareLink(inviteUrl);
+      if (desktopCopy) {
+        desktopCopy.then(markCopied).catch(() => {
+          this.fallbackCopy(inviteUrl, markCopied);
+        });
+      } else if (navigator.clipboard && window.isSecureContext) {
         navigator.clipboard.writeText(inviteUrl).then(markCopied).catch(() => {
           this.fallbackCopy(inviteUrl, markCopied);
         });

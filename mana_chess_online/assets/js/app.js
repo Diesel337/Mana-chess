@@ -39,8 +39,7 @@ const Hooks = {
       this.paletteKey = "mana-chess-custom-palette"
       this.lastSoundState = this.soundState()
       this.lastChatScrollState = null
-      this.lastDesktopEventKeys = new Set()
-      this.lastDesktopViewKey = null
+      this.desktopState = this.desktopController().state()
       this.lastViewKey = this.viewKey()
       this.keepInitialViewInFrame()
       this.handleReset = event => {
@@ -279,74 +278,39 @@ const Hooks = {
     },
 
     desktopBridge() {
-      const bridge = window.ManaChessDesktop
-      return bridge && typeof bridge.sendEvent === "function" ? bridge : null
+      return this.desktopController().bridge()
     },
 
     desktopPayload(payload = {}) {
-      const state = this.soundState()
-      return {
-        path: window.location.pathname,
-        screen: state.gameId ? "game" : "lobby",
-        view: this.viewKey(),
-        gameId: state.gameId,
-        status: state.status,
-        ...payload,
-      }
+      return this.desktopController().eventPayload(this.el, this.viewKey(), this.soundState(), payload)
     },
 
     sendDesktopEvent(name, payload = {}, key = "") {
-      const bridge = this.desktopBridge()
-      if (!bridge) return
-
-      const eventKey = key || `${name}:${payload.gameId || ""}:${payload.status || ""}:${payload.result || ""}`
-      if (eventKey && this.lastDesktopEventKeys.has(eventKey)) return
-
-      if (eventKey) {
-        this.lastDesktopEventKeys.add(eventKey)
-        if (this.lastDesktopEventKeys.size > 80) {
-          this.lastDesktopEventKeys = new Set([...this.lastDesktopEventKeys].slice(-40))
-        }
-      }
-
-      try {
-        bridge.sendEvent(name, this.desktopPayload(payload))
-      } catch (_error) {
-      }
+      this.desktopController().sendEvent(
+        this.desktopState,
+        this.el,
+        this.viewKey(),
+        this.soundState(),
+        name,
+        payload,
+        key
+      )
     },
 
     emitDesktopView() {
-      const state = this.soundState()
-      const screen = state.gameId ? "game" : "lobby"
-      const key = `${screen}:${state.gameId || "lobby"}:${window.location.pathname}`
-      if (key === this.lastDesktopViewKey) return
-
-      this.lastDesktopViewKey = key
-      this.sendDesktopEvent("screen.viewed", {screen}, `screen.viewed:${key}`)
+      this.desktopController().emitView(this.desktopState, this.el, this.viewKey(), this.soundState())
     },
 
     emitDesktopState(current, previous) {
-      if (!current.gameId) return
-
-      if (!previous || current.gameId !== previous.gameId) {
-        this.sendDesktopEvent("match.opened", {}, `match.opened:${current.gameId}`)
-      }
-
-      if (!current.status || (previous && current.status === previous.status)) return
-
-      this.sendDesktopEvent(
-        "match.status_changed",
-        {previousStatus: previous?.status || ""},
-        `match.status_changed:${current.gameId}:${current.status}`
-      )
-
-      if (this.desktopStatusIsPlaying(current.status) && !this.desktopStatusIsPlaying(previous?.status || "")) {
-        this.sendDesktopEvent("match.started", {}, `match.started:${current.gameId}`)
-      }
+      this.desktopController().emitState(this.desktopState, this.el, this.viewKey(), current, previous)
     },
 
     desktopStatusIsPlaying(status) {
-      return status === ":playing" || status.includes("starting") || status.includes("promotion")
+      return this.desktopController().statusIsPlaying(status)
+    },
+
+    desktopController() {
+      return window.ManaChessDesktopBridge
     },
 
     renderStats() {
@@ -903,9 +867,9 @@ const Hooks = {
         }, 1400)
       }
 
-      const desktop = this.desktopBridge()
-      if (desktop && typeof desktop.copyShareLink === "function") {
-        desktop.copyShareLink(inviteUrl).then(markCopied).catch(() => {
+      const desktopCopy = this.desktopController().copyShareLink(inviteUrl)
+      if (desktopCopy) {
+        desktopCopy.then(markCopied).catch(() => {
           this.fallbackCopy(inviteUrl, markCopied)
         })
       } else if (navigator.clipboard && window.isSecureContext) {
