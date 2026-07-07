@@ -5,6 +5,7 @@ defmodule ManaChessOnline.GameLobby do
 
   alias ManaChessOnline.{
     GameBot,
+    GameChat,
     GameDirectory,
     GameEngine,
     GameMetrics,
@@ -305,7 +306,7 @@ defmodule ManaChessOnline.GameLobby do
               %{
                 game
                 | reset_requests: MapSet.put(game.reset_requests, player_id),
-                  log: ["#{label(color)} pidio reiniciar la partida." | game.log]
+                  log: ["#{GameChat.label(color)} pidio reiniciar la partida." | game.log]
               }
             end)
 
@@ -396,7 +397,7 @@ defmodule ManaChessOnline.GameLobby do
               | bot_enabled?: enabled?,
                 bot_ready_at:
                   if(enabled?, do: now_ms() + GameBot.move_delay_ms(game.settings), else: nil),
-                log: [bot_toggle_message(enabled?, bot_color(game)) | game.log]
+                log: [GameChat.bot_toggle_message(enabled?, bot_color(game)) | game.log]
             }
           end)
 
@@ -424,7 +425,7 @@ defmodule ManaChessOnline.GameLobby do
             |> update_in(
               [:log],
               &[
-                "Ahora juegas #{label(opposite_color(next_bot_color))}; BOT controla #{label(next_bot_color)}."
+                "Ahora juegas #{GameChat.label(opposite_color(next_bot_color))}; BOT controla #{GameChat.label(next_bot_color)}."
                 | &1
               ]
             )
@@ -483,7 +484,7 @@ defmodule ManaChessOnline.GameLobby do
               | board: board,
                 status: status,
                 promotion_pending: nil,
-                log: ["#{label(color)} promociono peon." | game.log]
+                log: ["#{GameChat.label(color)} promociono peon." | game.log]
             }
           end)
 
@@ -519,14 +520,14 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   def handle_call({:send_chat, player_id, game_id, message}, _from, state) do
-    with {:ok, text} <- sanitize_chat_message(message),
+    with {:ok, text} <- GameChat.sanitize_message(message),
          {:ok, state} <- take_rate_limit(state, {:chat, game_id, player_id}, @chat_rate_limit),
          %{id: ^game_id} = game <- game_snapshot(game_id, state) do
       entry = %{
         id: System.unique_integer([:positive, :monotonic]),
         player_id: player_id,
-        name: chat_name(player_id),
-        role: chat_role(game, player_id),
+        name: GameChat.player_name(player_id),
+        role: GameChat.role(game, player_id),
         sent_at: System.system_time(:second),
         text: text
       }
@@ -590,10 +591,18 @@ defmodule ManaChessOnline.GameLobby do
         reject_move(state, game_id, "Movimiento rechazado: pieza sin color.")
 
       bot_controls_color?(game, color) ->
-        reject_move(state, game_id, "Movimiento rechazado: BOT controla #{label(color)}.")
+        reject_move(
+          state,
+          game_id,
+          "Movimiento rechazado: BOT controla #{GameChat.label(color)}."
+        )
 
       not controls_color?(player_color, color) ->
-        reject_move(state, game_id, "Movimiento rechazado: no controlas #{label(color)}.")
+        reject_move(
+          state,
+          game_id,
+          "Movimiento rechazado: no controlas #{GameChat.label(color)}."
+        )
 
       not first_move_allowed?(game, color) ->
         reject_move(state, game_id, "Movimiento rechazado: Blancas deben abrir.")
@@ -730,7 +739,7 @@ defmodule ManaChessOnline.GameLobby do
                   | status: :waiting,
                     queue: [],
                     reset_requests: MapSet.new(),
-                    log: ["#{label(color)} dejo la partida." | game.log]
+                    log: ["#{GameChat.label(color)} dejo la partida." | game.log]
                 }
               end)
 
@@ -1097,41 +1106,6 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   defp stop_game_server(game_id), do: GameSupervisor.stop_game(game_id)
-
-  defp sanitize_chat_message(message) do
-    text =
-      message
-      |> to_string()
-      |> String.replace(~r/\s+/u, " ")
-      |> String.trim()
-      |> String.slice(0, 180)
-
-    if text == "", do: {:error, :empty}, else: {:ok, text}
-  end
-
-  defp chat_role(%{practice?: true}, player_id) when is_binary(player_id), do: "Practica"
-  defp chat_role(%{players: %{white: player_id}}, player_id), do: "Blancas"
-  defp chat_role(%{players: %{black: player_id}}, player_id), do: "Negras"
-  defp chat_role(_game, _player_id), do: "Espectador"
-
-  defp chat_name(player_id) when is_binary(player_id) do
-    tag =
-      player_id
-      |> :erlang.phash2(36 * 36 * 36 * 36)
-      |> Integer.to_string(36)
-      |> String.upcase()
-      |> String.pad_leading(4, "0")
-
-    "Jugador " <> tag
-  end
-
-  defp chat_name(_player_id), do: "Jugador"
-
-  defp bot_toggle_message(true, color), do: "Bot activado: controla #{label(color)}."
-  defp bot_toggle_message(false, _color), do: "Bot desactivado."
-  defp label(:white), do: "Blancas"
-  defp label(:black), do: "Negras"
-  defp label(:practice), do: "Practica"
 
   defp full_elixir(settings), do: GameState.full_elixir(settings)
 
