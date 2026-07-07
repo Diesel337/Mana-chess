@@ -70,115 +70,28 @@ const Hooks = {
         this.renderSoundToggle()
       }
       this.handleCosmeticUnlock = event => {
-        const control = event.target.closest("[data-cosmetic-premium], [data-palette-unlock]")
-        if (!control || control.disabled) return
-        if (this.cosmeticsController()) return
-
-        const premiumId = control.dataset.cosmeticPremium || "palette:custom"
-        if (this.cosmeticUnlocked(premiumId) && !control.matches("[data-palette-unlock]")) return
-
-        event.preventDefault()
-        event.stopImmediatePropagation()
-        this.unlockCosmetic(premiumId)
-        this.activateCosmeticControl(control)
-        this.renderCosmetics()
-        if (this.soundEnabled()) this.playSound("skin")
+        this.cosmeticActionsController().handleUnlock(event, this)
       }
       this.handleSoundAction = event => {
-        const control = event.target.closest("[data-sound-action]")
-        if (!control || control.disabled) return
-        if (control.matches("[data-piece-skin-choice]")) {
-          if (this.cosmeticsController()) {
-            if (this.soundEnabled()) this.playSound(control.dataset.soundAction || "skin")
-            return
-          }
-
-          event.preventDefault()
-          event.stopImmediatePropagation()
-          this.setPieceSkin(control.dataset.pieceSkinChoice)
-          this.renderPieceSkin()
-          if (this.soundEnabled()) this.playSound("skin")
-          return
-        }
-        if (!this.soundEnabled()) return
-        this.playSound(control.dataset.soundAction || "tap")
+        this.cosmeticActionsController().handleSoundAction(event, this)
       }
       this.handleSkinChoice = event => {
-        const control = event.target.closest("[data-board-skin-choice]")
-        if (!control || control.disabled) return
-        if (this.cosmeticsController()) return
-
-        event.preventDefault()
-        this.setBoardSkin(control.dataset.boardSkinChoice)
-        this.renderBoardSkin()
-        this.playSound("skin")
+        this.cosmeticActionsController().handleBoardSkinChoice(event, this)
       }
       this.handlePieceSkinChoice = event => {
-        const control = event.target.closest("[data-piece-skin-choice]")
-        if (!control || control.disabled) return
-        if (this.cosmeticsController()) return
-
-        event.preventDefault()
-        this.setPieceSkin(control.dataset.pieceSkinChoice)
-        this.renderPieceSkin()
-        this.playSound("skin")
+        this.cosmeticActionsController().handlePieceSkinChoice(event, this)
       }
       this.handlePalettePreset = event => {
-        const control = event.target.closest("[data-palette-preset]")
-        if (!control || control.disabled) return
-        if (this.cosmeticsController()) return
-        if (!this.cosmeticUnlocked("palette:custom")) return
-
-        event.preventDefault()
-        this.setPalette(this.palettePreset(control.dataset.palettePreset))
-        this.setBoardSkin("custom")
-        this.setPieceSkin("custom")
-        this.renderBoardSkin()
-        this.renderPieceSkin()
-        this.renderPalette()
-        this.renderCosmetics()
-        this.playSound("skin")
+        this.cosmeticActionsController().handlePalettePreset(event, this)
       }
       this.handlePaletteReset = event => {
-        const control = event.target.closest("[data-palette-reset]")
-        if (!control || control.disabled) return
-        if (this.cosmeticsController()) return
-        if (!this.cosmeticUnlocked("palette:custom")) return
-
-        event.preventDefault()
-        this.setPalette(this.defaultPalette())
-        this.setBoardSkin("custom")
-        this.setPieceSkin("custom")
-        this.renderBoardSkin()
-        this.renderPieceSkin()
-        this.renderPalette()
-        this.renderCosmetics()
-        this.playSound("skin")
+        this.cosmeticActionsController().handlePaletteReset(event, this)
       }
       this.handlePaletteColor = event => {
-        const input = event.target.closest("[data-palette-color]")
-        if (!input || input.disabled) return
-        if (this.cosmeticsController()) return
-        if (!this.cosmeticUnlocked("palette:custom")) return
-
-        this.setPalette({...this.readPalette(), [input.dataset.paletteColor]: input.value})
-        this.setBoardSkin("custom")
-        this.setPieceSkin("custom")
-        this.renderBoardSkin()
-        this.renderPieceSkin()
-        this.renderPalette()
-        this.renderCosmetics()
+        this.cosmeticActionsController().handlePaletteColor(event, this)
       }
       this.handleCosmeticPack = event => {
-        const control = event.target.closest("[data-cosmetic-pack]")
-        if (!control || control.disabled) return
-        if (this.cosmeticsController()) return
-
-        event.preventDefault()
-        this.applyCosmeticPack(control.dataset.cosmeticPack)
-        this.renderBoardSkin()
-        this.renderPieceSkin()
-        this.renderCosmetics()
+        this.cosmeticActionsController().handleCosmeticPack(event, this)
       }
       this.el.addEventListener("click", this.handleReset)
       this.el.addEventListener("click", this.handleInviteCopy)
@@ -346,6 +259,10 @@ const Hooks = {
 
     cosmeticsController() {
       return window.ManaChessCosmetics || null
+    },
+
+    cosmeticActionsController() {
+      return window.ManaChessCosmeticActions
     },
 
     renderModularCosmetics() {
