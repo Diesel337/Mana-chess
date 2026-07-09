@@ -10,6 +10,7 @@ defmodule ManaChessOnline.GameLobby do
     GameControl,
     GameDirectory,
     GameEngine,
+    GameLobbyView,
     GameMetrics,
     GamePromotion,
     GameRules,
@@ -853,13 +854,7 @@ defmodule ManaChessOnline.GameLobby do
     assignment = state.players[player_id] || %{game_id: nil, color: nil}
     game = game_snapshot(assignment.game_id, state)
 
-    %{
-      player_id: player_id,
-      game_id: assignment.game_id,
-      color: assignment.color,
-      game: public_game(game),
-      lobby: public_live_lobby(state)
-    }
+    GameLobbyView.player_view(player_id, assignment, public_game(game), public_live_lobby(state))
   end
 
   defp player_view(state, player_id, game_id) do
@@ -871,13 +866,13 @@ defmodule ManaChessOnline.GameLobby do
 
     game = game_snapshot(game_id, state)
 
-    %{
-      player_id: player_id,
-      game_id: game_id,
-      color: assignment.color,
-      game: public_game(game),
-      lobby: public_live_lobby(state)
-    }
+    GameLobbyView.spectator_view(
+      player_id,
+      game_id,
+      assignment.color,
+      public_game(game),
+      public_live_lobby(state)
+    )
   end
 
   defp take_rate_limit(state, key, {max_hits, window_ms}) do
@@ -1022,11 +1017,11 @@ defmodule ManaChessOnline.GameLobby do
   defp public_game(game), do: public_game_at(game, now_ms())
 
   defp public_game_at(game, now),
-    do: GameState.public_game(game, now, GameSettings.default_cooldown_seconds())
+    do: GameLobbyView.public_game(game, now)
 
   defp public_game_snapshot(game_id, state), do: public_game(game_snapshot(game_id, state))
 
-  defp public_lobby_at(state, now), do: GameState.public_lobby(state, now)
+  defp public_lobby_at(state, now), do: GameLobbyView.public_lobby(state, now)
 
   defp public_live_lobby(state),
     do: public_lobby_at(%{state | games: server_backed_games(state)}, now_ms())
