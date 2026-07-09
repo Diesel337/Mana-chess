@@ -230,7 +230,7 @@ defmodule ManaChessOnline.GameLobby do
           %{
             game
             | settings: state.global_settings,
-              elixir: clamp_elixir(game.elixir, state.global_settings),
+              elixir: GameSettings.clamp_elixir(game.elixir, state.global_settings),
               cooldowns: %{},
               log: ["Configuracion admin aplicada a la practica." | game.log]
           }
@@ -460,7 +460,7 @@ defmodule ManaChessOnline.GameLobby do
             %{
               game
               | settings: settings,
-                elixir: full_elixir(settings),
+                elixir: GameSettings.full_elixir(settings),
                 cooldowns: %{},
                 log: ["Blancas ajustaron la configuracion." | game.log]
             }
@@ -955,7 +955,7 @@ defmodule ManaChessOnline.GameLobby do
   defp apply_global_settings_to_waiting_game(game, settings) do
     update_game_state(game, fn game ->
       if empty_waiting_game?(game) do
-        %{game | settings: settings, elixir: full_elixir(settings), cooldowns: %{}}
+        %{game | settings: settings, elixir: GameSettings.full_elixir(settings), cooldowns: %{}}
       else
         game
       end
@@ -1109,12 +1109,6 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   defp stop_game_server(game_id), do: GameSupervisor.stop_game(game_id)
-
-  defp full_elixir(settings), do: GameState.full_elixir(settings)
-
-  defp clamp_elixir(elixir, settings) do
-    Map.new(elixir, fn {color, amount} -> {color, min(amount, settings.max_elixir)} end)
-  end
 
   defp ensure_private_game(state, game_id) do
     if GameRooms.private_game_id?(game_id) do

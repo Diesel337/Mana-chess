@@ -63,4 +63,15 @@ defmodule ManaChessOnline.GameSettingsTest do
     assert {:ok, persisted} = File.read(path)
     assert {:ok, %{"settings_version" => 2}} = Jason.decode(persisted)
   end
+
+  test "builds and clamps elixir from settings" do
+    settings = %{GameSettings.default_settings() | max_elixir: 8.0, initial_elixir: 4.0}
+
+    assert GameSettings.full_elixir(settings) == %{white: 4.0, black: 4.0}
+
+    assert GameSettings.clamp_elixir(%{white: 12.0, black: 3.0}, settings) == %{
+             white: 8.0,
+             black: 3.0
+           }
+  end
 end

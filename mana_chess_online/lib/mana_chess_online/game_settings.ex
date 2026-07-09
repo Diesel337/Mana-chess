@@ -1,6 +1,8 @@
 defmodule ManaChessOnline.GameSettings do
   @moduledoc false
 
+  alias ManaChessOnline.GameState
+
   @bot_move_seconds 1.2
   @settings_file "mana_chess_settings.json"
   @settings_version 2
@@ -25,6 +27,12 @@ defmodule ManaChessOnline.GameSettings do
 
   def default_settings, do: @default_settings
   def default_cooldown_seconds, do: @default_settings.cooldown_seconds
+
+  def full_elixir(settings), do: GameState.full_elixir(settings)
+
+  def clamp_elixir(elixir, settings) do
+    Map.new(elixir, fn {color, amount} -> {color, min(amount, settings.max_elixir)} end)
+  end
 
   def sanitize(params, current) do
     current_costs = Map.get(current, :costs, @default_settings.costs)
