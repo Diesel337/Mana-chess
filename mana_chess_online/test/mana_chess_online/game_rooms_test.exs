@@ -41,6 +41,29 @@ defmodule ManaChessOnline.GameRoomsTest do
            })
   end
 
+  test "checks reset readiness from seated players" do
+    game =
+      GameState.new_game("game_1", settings())
+      |> put_in([:players, :white], "white")
+      |> put_in([:players, :black], "black")
+      |> Map.put(:reset_requests, MapSet.new(["white"]))
+
+    refute GameRooms.reset_ready?(game, "white")
+    assert GameRooms.reset_ready?(game, "black")
+  end
+
+  test "checks whether a player may clear a room" do
+    game =
+      GameState.new_game("game_1", settings())
+      |> put_in([:players, :white], "white")
+      |> put_in([:players, :black], "black")
+
+    assert GameRooms.can_clear_room?(%{game_id: "game_1", color: :white}, "white", "game_1", game)
+    refute GameRooms.can_clear_room?(%{game_id: "game_1", color: nil}, "white", "game_1", game)
+    refute GameRooms.can_clear_room?(%{game_id: "game_2", color: :white}, "white", "game_1", game)
+    refute GameRooms.can_clear_room?(nil, "white", "game_1", game)
+  end
+
   test "generates unique private ids outside existing games" do
     games = Map.new(1..20, fn n -> {"private_existing_#{n}", %{}} end)
     game_id = GameRooms.unique_private_game_id(games)

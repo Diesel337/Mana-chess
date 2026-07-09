@@ -272,7 +272,7 @@ defmodule ManaChessOnline.GameLobby do
     case game_snapshot(game_id, state) do
       %{practice?: false} = game
       when game.status in [:waiting, :ready] ->
-        if can_clear_room?(state, player_id, game_id, game) do
+        if GameRooms.can_clear_room?(state.players[player_id], player_id, game_id, game) do
           state = clear_room_state(state, game_id, game)
           broadcast_lobby(state)
           {:reply, :ok, state}
@@ -303,7 +303,7 @@ defmodule ManaChessOnline.GameLobby do
     state =
       with %{game_id: game_id, color: color} when is_binary(game_id) <- state.players[player_id],
            game when not is_nil(game) <- game_snapshot(game_id, state) do
-        if reset_ready?(game, player_id) do
+        if GameRooms.reset_ready?(game, player_id) do
           reset_game(state, game_id, game)
         else
           game =
@@ -768,11 +768,6 @@ defmodule ManaChessOnline.GameLobby do
     put_in(state.players[player_id], %{game_id: game_id, color: color})
   end
 
-  defp reset_ready?(game, player_id) do
-    seated_players = seated_players(game)
-    MapSet.size(MapSet.put(game.reset_requests, player_id)) >= length(seated_players)
-  end
-
   defp reset_game(state, game_id, old_game) do
     chat = Map.get(old_game, :chat, [])
 
@@ -815,16 +810,6 @@ defmodule ManaChessOnline.GameLobby do
   defp seated_players(game), do: GameDirectory.seated_players(game)
 
   defp find_slot(games), do: GameDirectory.find_open_slot(games)
-
-  defp can_clear_room?(state, player_id, game_id, game) do
-    case state.players[player_id] do
-      %{game_id: ^game_id, color: color} when color in [:white, :black] ->
-        player_id in seated_players(game)
-
-      _assignment ->
-        false
-    end
-  end
 
   defp clear_room_state(state, game_id, game) do
     player_ids = seated_players(game)

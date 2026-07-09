@@ -1,7 +1,7 @@
 defmodule ManaChessOnline.GameRooms do
   @moduledoc false
 
-  alias ManaChessOnline.GameState
+  alias ManaChessOnline.{GameDirectory, GameState}
 
   def practice_game_id(player_id),
     do: "practice_" <> Integer.to_string(:erlang.phash2(player_id))
@@ -11,6 +11,18 @@ defmodule ManaChessOnline.GameRooms do
 
   def empty_private_game?(%{private?: true, players: %{white: nil, black: nil}}), do: true
   def empty_private_game?(_game), do: false
+
+  def reset_ready?(game, player_id) do
+    seated_players = GameDirectory.seated_players(game)
+    MapSet.size(MapSet.put(game.reset_requests, player_id)) >= length(seated_players)
+  end
+
+  def can_clear_room?(%{game_id: game_id, color: color}, player_id, game_id, game)
+      when color in [:white, :black] do
+    player_id in GameDirectory.seated_players(game)
+  end
+
+  def can_clear_room?(_assignment, _player_id, _game_id, _game), do: false
 
   def cleared_game_state(game_id, %{private?: true, settings: settings}),
     do: GameState.private_game(game_id, settings)
