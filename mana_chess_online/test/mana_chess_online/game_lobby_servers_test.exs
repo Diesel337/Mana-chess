@@ -31,4 +31,16 @@ defmodule ManaChessOnline.GameLobbyServersTest do
                "missing_" <> Integer.to_string(System.unique_integer([:positive]))
              )
   end
+
+  test "reads and replaces game state through live servers" do
+    game_id = "server_replace_" <> Integer.to_string(System.unique_integer([:positive]))
+    game = GameState.new_game(game_id, settings())
+
+    on_exit(fn -> GameSupervisor.stop_game(game_id) end)
+
+    replaced = GameLobbyServers.replace_game_state(game)
+    assert replaced.id == game_id
+    assert GameLobbyServers.game_snapshot(game_id, %{}) == replaced
+    assert Map.has_key?(GameLobbyServers.server_backed_games(%{}), game_id)
+  end
 end

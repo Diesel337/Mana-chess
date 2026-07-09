@@ -6,6 +6,14 @@ defmodule ManaChessOnline.GameRooms do
   def practice_game_id(player_id),
     do: "practice_" <> Integer.to_string(:erlang.phash2(player_id))
 
+  def new_game(id, settings), do: GameState.new_game(id, settings)
+
+  def practice_game(id, player_id, settings, now, bot_delay_ms, bot_color \\ :black) do
+    GameState.practice_game(id, player_id, settings, now, bot_delay_ms, bot_color)
+  end
+
+  def private_game(id, settings), do: GameState.private_game(id, settings)
+
   def private_game_id?("private_" <> rest), do: byte_size(rest) >= 6
   def private_game_id?(_game_id), do: false
 

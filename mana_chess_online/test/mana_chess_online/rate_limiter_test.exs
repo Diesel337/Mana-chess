@@ -21,4 +21,14 @@ defmodule ManaChessOnline.RateLimiterTest do
 
     assert RateLimiter.prune(buckets, 2_000, 500) == %{{:chat, "fresh"} => [1_900]}
   end
+
+  test "takes a hit and returns updated state" do
+    state = %{rate_limits: %{}, other: :kept}
+
+    assert {:ok, state} = RateLimiter.take_state(state, {:join, "p1"}, {1, 1_000}, 1_000)
+    assert state.other == :kept
+
+    assert {:error, :rate_limited, _state} =
+             RateLimiter.take_state(state, {:join, "p1"}, {1, 1_000}, 1_100)
+  end
 end

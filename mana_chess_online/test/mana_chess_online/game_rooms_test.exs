@@ -17,6 +17,15 @@ defmodule ManaChessOnline.GameRoomsTest do
     assert String.starts_with?(GameRooms.practice_game_id("player-1"), "practice_")
   end
 
+  test "builds room game states" do
+    assert GameRooms.new_game("game_1", settings()).id == "game_1"
+    assert GameRooms.private_game("private_1", settings()).private? == true
+
+    practice = GameRooms.practice_game("practice_1", "player", settings(), 10, 1_200, :white)
+    assert practice.practice? == true
+    assert practice.bot_color == :white
+  end
+
   test "validates private game ids" do
     assert GameRooms.private_game_id?("private_abcdef")
     refute GameRooms.private_game_id?("private_short")

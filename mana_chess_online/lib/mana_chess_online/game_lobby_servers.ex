@@ -1,7 +1,7 @@
 defmodule ManaChessOnline.GameLobbyServers do
   @moduledoc false
 
-  alias ManaChessOnline.GameSupervisor
+  alias ManaChessOnline.{GameServer, GameSupervisor}
 
   def sync_game_servers(games) do
     Enum.each(games, fn {_game_id, game} -> sync_game_server(game) end)
@@ -30,6 +30,24 @@ defmodule ManaChessOnline.GameLobbyServers do
         :error -> []
       end
     end)
+  end
+
+  def game_snapshot(game_id, fallback_games) when is_binary(game_id) do
+    case GameSupervisor.lookup_game(game_id) do
+      {:ok, pid} -> GameServer.snapshot(pid)
+      :error -> fallback_games[game_id]
+    end
+  end
+
+  def game_snapshot(_game_id, _fallback_games), do: nil
+
+  def server_backed_games(games), do: Map.merge(games, GameSupervisor.game_snapshots())
+
+  def replace_game_state(game) do
+    case GameSupervisor.upsert_game(game) do
+      {:ok, pid} -> GameServer.snapshot(pid)
+      _error -> game
+    end
   end
 
   def stop_game_server(game_id), do: GameSupervisor.stop_game(game_id)

@@ -18,7 +18,6 @@ defmodule ManaChessOnline.GameLobby do
     GameRooms,
     GameSettings,
     GameServer,
-    GameState,
     GameSupervisor,
     GameTick,
     RateLimiter
@@ -90,7 +89,10 @@ defmodule ManaChessOnline.GameLobby do
 
     state = %{
       global_settings: settings,
-      games: Map.new(1..@max_games, fn n -> {"game_#{n}", new_game("game_#{n}", settings)} end),
+      games:
+        Map.new(1..@max_games, fn n ->
+          {"game_#{n}", GameRooms.new_game("game_#{n}", settings)}
+        end),
       players: %{},
       rate_limits: %{}
     }
@@ -155,7 +157,7 @@ defmodule ManaChessOnline.GameLobby do
           |> remove_player(player_id)
           |> put_in(
             [:games, game_id],
-            replace_game_state(private_game(game_id, state.global_settings))
+            replace_game_state(GameRooms.private_game(game_id, state.global_settings))
           )
           |> assign_player(player_id, game_id, :white)
 
@@ -845,15 +847,8 @@ defmodule ManaChessOnline.GameLobby do
     )
   end
 
-  defp take_rate_limit(state, key, {max_hits, window_ms}) do
-    case RateLimiter.hit(state.rate_limits, key, now_ms(), max_hits, window_ms) do
-      {:ok, rate_limits} ->
-        {:ok, %{state | rate_limits: rate_limits}}
-
-      {{:error, :rate_limited}, rate_limits} ->
-        {:error, :rate_limited, %{state | rate_limits: rate_limits}}
-    end
-  end
+  defp take_rate_limit(state, key, limits),
+    do: RateLimiter.take_state(state, key, limits, now_ms())
 
   defp enqueue_game_action(%{id: game_id} = game, action, now) do
     case GameSupervisor.lookup_game(game_id) do
@@ -901,23 +896,17 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   defp replace_game_state(game) do
-    case GameSupervisor.upsert_game(game) do
-      {:ok, pid} -> GameServer.snapshot(pid)
-      _error -> game
-    end
+    GameLobbyServers.replace_game_state(game)
   end
 
   defp game_snapshot(game_id, state) when is_binary(game_id) do
-    case GameSupervisor.lookup_game(game_id) do
-      {:ok, pid} -> GameServer.snapshot(pid)
-      :error -> state.games[game_id]
-    end
+    GameLobbyServers.game_snapshot(game_id, state.games)
   end
 
   defp game_snapshot(_game_id, _state), do: nil
 
   defp server_backed_games(state) do
-    Map.merge(state.games, GameSupervisor.game_snapshots())
+    GameLobbyServers.server_backed_games(state.games)
   end
 
   defp append_chat_entry(game, entry), do: update_game_state(game, &GameChat.put_entry(&1, entry))
@@ -955,10 +944,8 @@ defmodule ManaChessOnline.GameLobby do
 
   defp now_ms, do: System.monotonic_time(:millisecond)
 
-  defp new_game(id, settings), do: GameState.new_game(id, settings)
-
   defp practice_game(id, player_id, settings, bot_color \\ :black) do
-    GameState.practice_game(
+    GameRooms.practice_game(
       id,
       player_id,
       settings,
@@ -967,8 +954,6 @@ defmodule ManaChessOnline.GameLobby do
       bot_color
     )
   end
-
-  defp private_game(id, settings), do: GameState.private_game(id, settings)
 
   defp refresh_status(%{players: %{white: white, black: black}} = game)
        when is_binary(white) and is_binary(black),
@@ -1042,7 +1027,7 @@ defmodule ManaChessOnline.GameLobby do
     if GameRooms.private_game_id?(game_id) do
       case game_snapshot(game_id, state) do
         nil ->
-          game = replace_game_state(private_game(game_id, state.global_settings))
+          game = replace_game_state(GameRooms.private_game(game_id, state.global_settings))
           put_in(state.games[game_id], game)
 
         game ->

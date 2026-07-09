@@ -29,6 +29,16 @@ defmodule ManaChessOnline.RateLimiter do
     end)
   end
 
+  def take_state(state, key, {max_hits, window_ms}, now_ms) do
+    case hit(state.rate_limits, key, now_ms, max_hits, window_ms) do
+      {:ok, rate_limits} ->
+        {:ok, %{state | rate_limits: rate_limits}}
+
+      {{:error, :rate_limited}, rate_limits} ->
+        {:error, :rate_limited, %{state | rate_limits: rate_limits}}
+    end
+  end
+
   defp recent_hits(hits, now_ms, window_ms) do
     cutoff = now_ms - window_ms
     Enum.filter(hits, &(&1 > cutoff))
