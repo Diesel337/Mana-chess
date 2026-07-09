@@ -5,6 +5,7 @@ defmodule ManaChessOnline.GameLobby do
 
   alias ManaChessOnline.{
     GameBot,
+    GameBroadcast,
     GameChat,
     GameControl,
     GameDirectory,
@@ -1039,20 +1040,20 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   defp game_broadcast_needed?(previous_game, next_game, now) do
-    public_game_at(previous_game, now) != public_game_at(next_game, now) or
-      countdown_visible?(next_game) or cooldowns_visible?(next_game)
+    GameBroadcast.game_update_needed?(
+      public_game_at(previous_game, now),
+      public_game_at(next_game, now),
+      next_game
+    )
   end
 
   defp lobby_broadcast_needed?(previous_state, next_state, now) do
-    public_lobby_at(previous_state, now) != public_lobby_at(next_state, now) or
-      Enum.any?(next_state.games, fn {_game_id, game} -> countdown_visible?(game) end)
+    GameBroadcast.lobby_update_needed?(
+      public_lobby_at(previous_state, now),
+      public_lobby_at(next_state, now),
+      next_state.games
+    )
   end
-
-  defp countdown_visible?(%{status: {:starting, _starts_at}}), do: true
-  defp countdown_visible?(_game), do: false
-
-  defp cooldowns_visible?(%{status: :playing, cooldowns: cooldowns}), do: map_size(cooldowns) > 0
-  defp cooldowns_visible?(_game), do: false
 
   defp broadcast_lobby(state) do
     sync_game_servers(state)
