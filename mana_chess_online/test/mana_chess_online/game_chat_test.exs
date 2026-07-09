@@ -21,6 +21,17 @@ defmodule ManaChessOnline.GameChatTest do
     assert GameChat.player_name(nil) == "Jugador"
   end
 
+  test "keeps latest chat entries in newest-first order" do
+    game =
+      Enum.reduce(1..30, %{chat: []}, fn number, game ->
+        GameChat.put_entry(game, %{text: "msg #{number}"})
+      end)
+
+    assert length(game.chat) == 24
+    assert hd(game.chat).text == "msg 30"
+    assert List.last(game.chat).text == "msg 7"
+  end
+
   test "labels chat roles and bot toggles" do
     game = %{practice?: false, players: %{white: "white-id", black: "black-id"}}
 

@@ -10,6 +10,7 @@ defmodule ManaChessOnline.GameLobby do
     GameControl,
     GameDirectory,
     GameEngine,
+    GameLobbyServers,
     GameLobbyView,
     GameMetrics,
     GamePromotion,
@@ -94,7 +95,7 @@ defmodule ManaChessOnline.GameLobby do
       rate_limits: %{}
     }
 
-    sync_game_servers(state)
+    GameLobbyServers.sync_game_servers(state.games)
     {:ok, state}
   end
 
@@ -191,7 +192,7 @@ defmodule ManaChessOnline.GameLobby do
     metrics =
       GameMetrics.snapshot(
         games,
-        game_server_pids(games),
+        GameLobbyServers.game_server_pids(games),
         GameSupervisor.child_count(),
         state.rate_limits
       )
@@ -261,7 +262,7 @@ defmodule ManaChessOnline.GameLobby do
     state = remove_player(state, player_id)
     sync_player_assignment(previous_assignment, state)
 
-    if public_lobby_game?(previous_game) do
+    if GameRooms.public_lobby_game?(previous_game) do
       broadcast_lobby_payload(state)
     end
 
@@ -727,7 +728,7 @@ defmodule ManaChessOnline.GameLobby do
       %{game_id: game_id, color: color} when is_binary(game_id) ->
         case game_snapshot(game_id, state) do
           %{practice?: true} ->
-            stop_game_server(game_id)
+            GameLobbyServers.stop_game_server(game_id)
 
             state
             |> update_in([:players], &Map.delete(&1, player_id))
@@ -919,7 +920,7 @@ defmodule ManaChessOnline.GameLobby do
     Map.merge(state.games, GameSupervisor.game_snapshots())
   end
 
-  defp append_chat_entry(game, entry), do: update_game_state(game, &put_chat_entry(&1, entry))
+  defp append_chat_entry(game, entry), do: update_game_state(game, &GameChat.put_entry(&1, entry))
 
   defp apply_global_settings_to_waiting_game(game, settings) do
     update_game_state(game, fn game ->
@@ -929,14 +930,6 @@ defmodule ManaChessOnline.GameLobby do
         game
       end
     end)
-  end
-
-  defp put_chat_entry(game, entry) do
-    chat =
-      [entry | Map.get(game, :chat, [])]
-      |> Enum.take(24)
-
-    Map.put(game, :chat, chat)
   end
 
   defp tick_game_server(game, now) do
@@ -1020,7 +1013,7 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   defp broadcast_lobby(state) do
-    sync_game_servers(state)
+    GameLobbyServers.sync_game_servers(state.games)
     broadcast_lobby_payload(state)
   end
 
@@ -1032,28 +1025,10 @@ defmodule ManaChessOnline.GameLobby do
     )
   end
 
-  defp sync_game_servers(state) do
-    Enum.each(state.games, fn {_game_id, game} -> sync_game_server(game) end)
-    state
-  end
-
-  defp sync_game_server(nil), do: :ok
-
-  defp sync_game_server(game) do
-    case GameSupervisor.lookup_game(game.id) do
-      {:ok, _pid} ->
-        :ok
-
-      :error ->
-        GameSupervisor.start_or_lookup_game(game)
-        :ok
-    end
-  end
-
   defp sync_player_assignment(%{game_id: game_id}, state) when is_binary(game_id) do
     game_id
     |> game_snapshot(state)
-    |> sync_game_server()
+    |> GameLobbyServers.sync_game_server()
   end
 
   defp sync_player_assignment(_assignment, _state), do: :ok
@@ -1062,22 +1037,6 @@ defmodule ManaChessOnline.GameLobby do
     do: game_snapshot(game_id, state)
 
   defp assigned_game(_assignment, _state), do: nil
-
-  defp public_lobby_game?(%{practice?: false} = game), do: !Map.get(game, :private?, false)
-  defp public_lobby_game?(_game), do: false
-
-  defp game_server_pids(games) do
-    games
-    |> Map.keys()
-    |> Enum.flat_map(fn game_id ->
-      case GameSupervisor.lookup_game(game_id) do
-        {:ok, pid} -> [pid]
-        :error -> []
-      end
-    end)
-  end
-
-  defp stop_game_server(game_id), do: GameSupervisor.stop_game(game_id)
 
   defp ensure_private_game(state, game_id) do
     if GameRooms.private_game_id?(game_id) do
@@ -1097,7 +1056,7 @@ defmodule ManaChessOnline.GameLobby do
 
   defp maybe_drop_empty_private_game(state, game_id, game) do
     if GameRooms.empty_private_game?(game) do
-      stop_game_server(game_id)
+      GameLobbyServers.stop_game_server(game_id)
       update_in(state.games, &Map.delete(&1, game_id))
     else
       state

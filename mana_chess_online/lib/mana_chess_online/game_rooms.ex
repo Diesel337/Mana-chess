@@ -12,6 +12,9 @@ defmodule ManaChessOnline.GameRooms do
   def empty_private_game?(%{private?: true, players: %{white: nil, black: nil}}), do: true
   def empty_private_game?(_game), do: false
 
+  def public_lobby_game?(%{practice?: false} = game), do: !Map.get(game, :private?, false)
+  def public_lobby_game?(_game), do: false
+
   def reset_ready?(game, player_id) do
     seated_players = GameDirectory.seated_players(game)
     MapSet.size(MapSet.put(game.reset_requests, player_id)) >= length(seated_players)

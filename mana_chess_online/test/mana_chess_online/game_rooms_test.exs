@@ -41,6 +41,13 @@ defmodule ManaChessOnline.GameRoomsTest do
            })
   end
 
+  test "detects public lobby games" do
+    assert GameRooms.public_lobby_game?(%{practice?: false, private?: false})
+    refute GameRooms.public_lobby_game?(%{practice?: false, private?: true})
+    refute GameRooms.public_lobby_game?(%{practice?: true, private?: false})
+    refute GameRooms.public_lobby_game?(nil)
+  end
+
   test "checks reset readiness from seated players" do
     game =
       GameState.new_game("game_1", settings())

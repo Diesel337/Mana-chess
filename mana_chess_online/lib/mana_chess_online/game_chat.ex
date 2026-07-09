@@ -12,6 +12,14 @@ defmodule ManaChessOnline.GameChat do
     if text == "", do: {:error, :empty}, else: {:ok, text}
   end
 
+  def put_entry(game, entry) do
+    chat =
+      [entry | Map.get(game, :chat, [])]
+      |> Enum.take(24)
+
+    Map.put(game, :chat, chat)
+  end
+
   def role(%{practice?: true}, player_id) when is_binary(player_id), do: "Practica"
   def role(%{players: %{white: player_id}}, player_id), do: "Blancas"
   def role(%{players: %{black: player_id}}, player_id), do: "Negras"
