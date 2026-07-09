@@ -1,6 +1,8 @@
 defmodule ManaChessOnline.GameRooms do
   @moduledoc false
 
+  alias ManaChessOnline.GameState
+
   def practice_game_id(player_id),
     do: "practice_" <> Integer.to_string(:erlang.phash2(player_id))
 
@@ -9,6 +11,23 @@ defmodule ManaChessOnline.GameRooms do
 
   def empty_private_game?(%{private?: true, players: %{white: nil, black: nil}}), do: true
   def empty_private_game?(_game), do: false
+
+  def cleared_game_state(game_id, %{private?: true, settings: settings}),
+    do: GameState.private_game(game_id, settings)
+
+  def cleared_game_state(game_id, %{settings: settings}),
+    do: GameState.new_game(game_id, settings)
+
+  def reset_room_state(game_id, %{private?: true, settings: settings}),
+    do: GameState.private_game(game_id, settings)
+
+  def reset_room_state(game_id, %{settings: settings}), do: GameState.new_game(game_id, settings)
+
+  def preserve_practice_bot_state(next_game, %{bot_enabled?: false}) do
+    %{next_game | bot_enabled?: false, bot_ready_at: nil}
+  end
+
+  def preserve_practice_bot_state(next_game, _previous_game), do: next_game
 
   def unique_private_game_id(games) do
     game_id = "private_" <> random_private_token()

@@ -1,7 +1,16 @@
 defmodule ManaChessOnline.GameRoomsTest do
   use ExUnit.Case, async: true
 
-  alias ManaChessOnline.GameRooms
+  alias ManaChessOnline.{GameRooms, GameState}
+
+  defp settings do
+    %{
+      max_elixir: 10.0,
+      initial_elixir: 5.0,
+      cooldown_seconds: 1.0,
+      costs: %{pawn: 1.0, knight: 3.0, bishop: 3.0, rook: 4.0, queen: 6.0, king: 3.0}
+    }
+  end
 
   test "builds stable practice game ids" do
     assert GameRooms.practice_game_id("player-1") == GameRooms.practice_game_id("player-1")
@@ -38,5 +47,25 @@ defmodule ManaChessOnline.GameRoomsTest do
 
     assert GameRooms.private_game_id?(game_id)
     refute Map.has_key?(games, game_id)
+  end
+
+  test "builds cleared and reset room states from room type" do
+    public = GameState.new_game("game_1", settings())
+    private = GameState.private_game("private_1", settings())
+
+    assert GameRooms.cleared_game_state("game_1", public).private? == false
+    assert GameRooms.reset_room_state("game_1", public).players == %{white: nil, black: nil}
+    assert GameRooms.cleared_game_state("private_1", private).private? == true
+    assert GameRooms.reset_room_state("private_1", private).private? == true
+  end
+
+  test "preserves disabled practice bot state" do
+    next_game = GameState.practice_game("practice_1", "player", settings(), 0, 1_200)
+    previous_game = %{bot_enabled?: false}
+
+    assert %{bot_enabled?: false, bot_ready_at: nil} =
+             GameRooms.preserve_practice_bot_state(next_game, previous_game)
+
+    assert GameRooms.preserve_practice_bot_state(next_game, %{}) == next_game
   end
 end

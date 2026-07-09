@@ -40,7 +40,7 @@ The backend has been moving toward live `GameServer` processes as the source of 
 - `game_chat.ex`: room chat sanitization, player names, roles, and lobby log labels.
 - `game_control.ex`: turn/color/bot-control predicates and board-square validation.
 - `game_lobby_view.ex`: public lobby/game/player payload builders.
-- `game_rooms.ex`: room id helpers and private-room predicates.
+- `game_rooms.ex`: room id helpers, private-room predicates, and room reset/clear templates.
 - `game_promotion.ex`: promotion choice normalization by color.
 - `game_lobby.ex`: lobby coordination, rooms, matchmaking, player/spectator views, broadcasts, and compatibility surface.
 - `game_state.ex`: game state struct and state helpers.

@@ -427,7 +427,7 @@ defmodule ManaChessOnline.GameLobby do
             chat = Map.get(game, :chat, [])
 
             practice_game(game_id, player_id, game.settings, next_bot_color)
-            |> preserve_practice_bot_state(game)
+            |> GameRooms.preserve_practice_bot_state(game)
             |> Map.put(:chat, chat)
             |> update_in(
               [:log],
@@ -782,7 +782,7 @@ defmodule ManaChessOnline.GameLobby do
 
         reset_game =
           practice_game(game_id, player_id, old_game.settings, GameControl.bot_color(old_game))
-          |> preserve_practice_bot_state(old_game)
+          |> GameRooms.preserve_practice_bot_state(old_game)
           |> Map.put(:chat, chat)
           |> update_in([:log], &["Practica reiniciada." | &1])
 
@@ -792,7 +792,7 @@ defmodule ManaChessOnline.GameLobby do
         }
       else
         reset_game =
-          reset_room_state(game_id, old_game)
+          GameRooms.reset_room_state(game_id, old_game)
           |> put_in([:players, :white], old_game.players.white)
           |> put_in([:players, :black], old_game.players.black)
           |> Map.put(:chat, chat)
@@ -831,24 +831,8 @@ defmodule ManaChessOnline.GameLobby do
 
     state
     |> update_in([:players], fn players -> Map.drop(players, player_ids) end)
-    |> put_in([:games, game_id], replace_game_state(cleared_game_state(game_id, game)))
+    |> put_in([:games, game_id], replace_game_state(GameRooms.cleared_game_state(game_id, game)))
   end
-
-  defp cleared_game_state(game_id, %{private?: true, settings: settings}),
-    do: private_game(game_id, settings)
-
-  defp cleared_game_state(game_id, %{settings: settings}), do: new_game(game_id, settings)
-
-  defp reset_room_state(game_id, %{private?: true, settings: settings}),
-    do: private_game(game_id, settings)
-
-  defp reset_room_state(game_id, %{settings: settings}), do: new_game(game_id, settings)
-
-  defp preserve_practice_bot_state(next_game, %{bot_enabled?: false}) do
-    %{next_game | bot_enabled?: false, bot_ready_at: nil}
-  end
-
-  defp preserve_practice_bot_state(next_game, _previous_game), do: next_game
 
   defp player_view(state, player_id) do
     assignment = state.players[player_id] || %{game_id: nil, color: nil}
