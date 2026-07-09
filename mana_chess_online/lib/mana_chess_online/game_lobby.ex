@@ -17,7 +17,6 @@ defmodule ManaChessOnline.GameLobby do
     GameRules,
     GameRooms,
     GameSettings,
-    GameServer,
     GameSupervisor,
     GameTick,
     RateLimiter
@@ -850,50 +849,19 @@ defmodule ManaChessOnline.GameLobby do
   defp take_rate_limit(state, key, limits),
     do: RateLimiter.take_state(state, key, limits, now_ms())
 
-  defp enqueue_game_action(%{id: game_id} = game, action, now) do
-    case GameSupervisor.lookup_game(game_id) do
-      {:ok, pid} ->
-        GameServer.enqueue(pid, action, now)
-
-      :error ->
-        enqueue_unregistered_game_action(game, action, now)
-    end
+  defp enqueue_game_action(%{id: _game_id} = game, action, now) do
+    GameLobbyServers.enqueue_action(game, action, now)
   end
 
   defp enqueue_game_action(game, action, now),
-    do: enqueue_local_game_action(game, action, now)
+    do: GameLobbyServers.enqueue_action(game, action, now)
 
-  defp enqueue_unregistered_game_action(game, action, now) do
-    case GameSupervisor.start_or_lookup_game(game) do
-      {:ok, pid} -> GameServer.enqueue(pid, action, now)
-      _error -> enqueue_local_game_action(game, action, now)
-    end
+  defp update_game_state(%{id: _game_id} = game, fun) when is_function(fun, 1) do
+    GameLobbyServers.update_state(game, fun)
   end
 
-  defp enqueue_local_game_action(game, action, now) do
-    game
-    |> Map.update!(:queue, &(&1 ++ [action]))
-    |> GameTick.after_bot(now, GameSettings.default_cooldown_seconds())
-  end
-
-  defp update_game_state(%{id: game_id} = game, fun) when is_function(fun, 1) do
-    case GameSupervisor.lookup_game(game_id) do
-      {:ok, pid} ->
-        GameServer.update(pid, fun)
-
-      :error ->
-        update_unregistered_game_state(game, fun)
-    end
-  end
-
-  defp update_game_state(game, fun) when is_function(fun, 1), do: fun.(game)
-
-  defp update_unregistered_game_state(game, fun) do
-    case GameSupervisor.start_or_lookup_game(game) do
-      {:ok, pid} -> GameServer.update(pid, fun)
-      _error -> fun.(game)
-    end
-  end
+  defp update_game_state(game, fun) when is_function(fun, 1),
+    do: GameLobbyServers.update_state(game, fun)
 
   defp replace_game_state(game) do
     GameLobbyServers.replace_game_state(game)
@@ -921,18 +889,7 @@ defmodule ManaChessOnline.GameLobby do
     end)
   end
 
-  defp tick_game_server(game, now) do
-    case GameSupervisor.lookup_game(game.id) do
-      {:ok, pid} ->
-        GameServer.tick(pid, now)
-
-      :error ->
-        case GameSupervisor.start_or_lookup_game(game) do
-          {:ok, pid} -> GameServer.tick(pid, now)
-          _error -> GameTick.tick(game, now, @tick_ms, GameSettings.default_cooldown_seconds())
-        end
-    end
-  end
+  defp tick_game_server(game, now), do: GameLobbyServers.tick_game(game, now, @tick_ms)
 
   defp maybe_start_when_everyone_ready(%{status: {:starting, _starts_at}} = game) do
     GameTick.start_when_ready(game, seated_players(game))

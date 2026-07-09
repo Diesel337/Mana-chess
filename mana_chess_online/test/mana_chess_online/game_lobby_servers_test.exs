@@ -43,4 +43,27 @@ defmodule ManaChessOnline.GameLobbyServersTest do
     assert GameLobbyServers.game_snapshot(game_id, %{}) == replaced
     assert Map.has_key?(GameLobbyServers.server_backed_games(%{}), game_id)
   end
+
+  test "enqueues, updates, and ticks through live servers" do
+    game_id = "server_actions_" <> Integer.to_string(System.unique_integer([:positive]))
+    game = GameState.new_game(game_id, settings())
+    action = %{player_id: "player", color: :white, from: {6, 0}, to: {5, 0}}
+
+    on_exit(fn -> GameSupervisor.stop_game(game_id) end)
+
+    enqueued = GameLobbyServers.enqueue_action(game, action, 1_000)
+    assert enqueued.id == game_id
+    assert GameLobbyServers.game_snapshot(game_id, %{}) == enqueued
+
+    updated =
+      GameLobbyServers.update_state(enqueued, fn game ->
+        %{game | log: ["updated" | game.log]}
+      end)
+
+    assert hd(updated.log) == "updated"
+
+    ticked = GameLobbyServers.tick_game(updated, 1_250, 250)
+    assert ticked.id == game_id
+    assert GameLobbyServers.game_snapshot(game_id, %{}) == ticked
+  end
 end

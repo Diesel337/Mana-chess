@@ -1,7 +1,7 @@
 defmodule ManaChessOnline.GameLobbyServers do
   @moduledoc false
 
-  alias ManaChessOnline.{GameServer, GameSupervisor}
+  alias ManaChessOnline.{GameServer, GameSettings, GameSupervisor, GameTick}
 
   def sync_game_servers(games) do
     Enum.each(games, fn {_game_id, game} -> sync_game_server(game) end)
@@ -50,5 +50,56 @@ defmodule ManaChessOnline.GameLobbyServers do
     end
   end
 
+  def enqueue_action(%{id: game_id} = game, action, now) do
+    case GameSupervisor.lookup_game(game_id) do
+      {:ok, pid} -> GameServer.enqueue(pid, action, now)
+      :error -> enqueue_unregistered_action(game, action, now)
+    end
+  end
+
+  def enqueue_action(game, action, now), do: enqueue_local_action(game, action, now)
+
+  def update_state(%{id: game_id} = game, fun) when is_function(fun, 1) do
+    case GameSupervisor.lookup_game(game_id) do
+      {:ok, pid} -> GameServer.update(pid, fun)
+      :error -> update_unregistered_state(game, fun)
+    end
+  end
+
+  def update_state(game, fun) when is_function(fun, 1), do: fun.(game)
+
+  def tick_game(game, now, tick_ms) do
+    case GameSupervisor.lookup_game(game.id) do
+      {:ok, pid} ->
+        GameServer.tick(pid, now)
+
+      :error ->
+        case GameSupervisor.start_or_lookup_game(game) do
+          {:ok, pid} -> GameServer.tick(pid, now)
+          _error -> GameTick.tick(game, now, tick_ms, GameSettings.default_cooldown_seconds())
+        end
+    end
+  end
+
   def stop_game_server(game_id), do: GameSupervisor.stop_game(game_id)
+
+  defp enqueue_unregistered_action(game, action, now) do
+    case GameSupervisor.start_or_lookup_game(game) do
+      {:ok, pid} -> GameServer.enqueue(pid, action, now)
+      _error -> enqueue_local_action(game, action, now)
+    end
+  end
+
+  defp enqueue_local_action(game, action, now) do
+    game
+    |> Map.update!(:queue, &(&1 ++ [action]))
+    |> GameTick.after_bot(now, GameSettings.default_cooldown_seconds())
+  end
+
+  defp update_unregistered_state(game, fun) do
+    case GameSupervisor.start_or_lookup_game(game) do
+      {:ok, pid} -> GameServer.update(pid, fun)
+      _error -> fun.(game)
+    end
+  end
 end
