@@ -4,13 +4,11 @@ defmodule ManaChessOnline.GameLobby do
   use GenServer
 
   alias ManaChessOnline.{
-    GameBot,
     GameBroadcast,
-    GameChat,
-    GameControl,
     GameLobbyActions,
     GameLobbyChat,
     GameLobbyMoves,
+    GameLobbyPractice,
     GameLobbyRooms,
     GameLobbyServers,
     GameLobbySettings,
@@ -293,75 +291,19 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   def handle_call({:start_practice, player_id}, _from, state) do
-    game_id = GameRooms.practice_game_id(player_id)
-
-    state =
-      state
-      |> remove_player(player_id)
-      |> put_in(
-        [:games, game_id],
-        replace_game_state(practice_game(game_id, player_id, state.global_settings))
-      )
-      |> put_in([:players, player_id], %{game_id: game_id, color: :practice})
-
+    state = GameLobbyPractice.start_practice(state, player_id, now_ms())
     broadcast_lobby(state)
     {:reply, player_view(state, player_id), state}
   end
 
   def handle_call({:toggle_practice_bot, player_id}, _from, state) do
-    state =
-      with %{game_id: game_id, color: :practice} <- GamePlayers.assignment(state, player_id),
-           %{practice?: true} = game <- game_snapshot(game_id, state) do
-        game =
-          update_game_state(game, fn game ->
-            enabled? = not game.bot_enabled?
-
-            %{
-              game
-              | bot_enabled?: enabled?,
-                bot_ready_at:
-                  if(enabled?, do: now_ms() + GameBot.move_delay_ms(game.settings), else: nil),
-                log: [
-                  GameChat.bot_toggle_message(enabled?, GameControl.bot_color(game)) | game.log
-                ]
-            }
-          end)
-
-        put_in(state.games[game_id], game)
-      else
-        _ -> state
-      end
-
+    state = GameLobbyPractice.toggle_bot(state, player_id, now_ms())
     broadcast_lobby(state)
     {:reply, player_view(state, player_id), state}
   end
 
   def handle_call({:toggle_practice_side, player_id}, _from, state) do
-    state =
-      with %{game_id: game_id, color: :practice} <- GamePlayers.assignment(state, player_id),
-           %{practice?: true} = game <- game_snapshot(game_id, state) do
-        game =
-          update_game_state(game, fn game ->
-            next_bot_color = game |> GameControl.bot_color() |> GameControl.opposite_color()
-            chat = Map.get(game, :chat, [])
-
-            practice_game(game_id, player_id, game.settings, next_bot_color)
-            |> GameRooms.preserve_practice_bot_state(game)
-            |> Map.put(:chat, chat)
-            |> update_in(
-              [:log],
-              &[
-                "Ahora juegas #{GameChat.label(GameControl.opposite_color(next_bot_color))}; BOT controla #{GameChat.label(next_bot_color)}."
-                | &1
-              ]
-            )
-          end)
-
-        put_in(state.games[game_id], game)
-      else
-        _ -> state
-      end
-
+    state = GameLobbyPractice.toggle_side(state, player_id, now_ms())
     broadcast_lobby(state)
     {:reply, player_view(state, player_id), state}
   end
@@ -488,13 +430,6 @@ defmodule ManaChessOnline.GameLobby do
   defp take_rate_limit(state, key, limits),
     do: RateLimiter.take_state(state, key, limits, now_ms())
 
-  defp update_game_state(%{id: _game_id} = game, fun) when is_function(fun, 1) do
-    GameLobbyServers.update_state(game, fun)
-  end
-
-  defp update_game_state(game, fun) when is_function(fun, 1),
-    do: GameLobbyServers.update_state(game, fun)
-
   defp replace_game_state(game) do
     GameLobbyServers.replace_game_state(game)
   end
@@ -510,10 +445,6 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   defp now_ms, do: System.monotonic_time(:millisecond)
-
-  defp practice_game(id, player_id, settings, bot_color \\ :black) do
-    GameLobbyRooms.practice_game(id, player_id, settings, now_ms(), bot_color)
-  end
 
   defp public_game(game), do: public_game_at(game, now_ms())
 

@@ -46,6 +46,7 @@ The backend has been moving toward live `GameServer` processes as the source of 
 - `game_lobby_settings.ex`: lobby/admin settings flow for global settings, practice refreshes, and player-controlled room settings.
 - `game_lobby_tick.ex`: lobby tick reducer for live game ticking, changed-game detection, lobby-change detection, and rate-limit pruning.
 - `game_lobby_moves.ex`: lobby move enqueue/rejection flow that validates player control, cooldowns, legal destinations, and logs rejected moves.
+- `game_lobby_practice.ex`: lobby practice-mode flow for starting practice games, toggling bots, and swapping player/BOT sides.
 - `game_lobby_view.ex`: public lobby/game/player/spectator payload and current-view builders.
 - `game_rooms.ex`: room constructors, occupancy/open-slot helpers, readiness/status helpers, room permissions, seat/private-room lifecycle, and room reset/clear states.
 - `game_promotion.ex`: promotion choice normalization by color.
