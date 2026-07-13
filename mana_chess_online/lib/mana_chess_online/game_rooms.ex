@@ -24,6 +24,14 @@ defmodule ManaChessOnline.GameRooms do
   def empty_private_game?(%{private?: true, players: %{white: nil, black: nil}}), do: true
   def empty_private_game?(_game), do: false
 
+  def drop_game(games, game_id), do: Map.delete(games, game_id)
+
+  def drop_empty_private_game(games, game_id, game) do
+    if empty_private_game?(game), do: drop_game(games, game_id), else: games
+  end
+
+  def drop_empty_private_game?(game), do: empty_private_game?(game)
+
   def public_lobby_game?(%{practice?: false} = game), do: !Map.get(game, :private?, false)
   def public_lobby_game?(_game), do: false
 

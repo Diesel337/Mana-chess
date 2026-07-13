@@ -716,7 +716,7 @@ defmodule ManaChessOnline.GameLobby do
 
             state
             |> GamePlayers.remove(player_id)
-            |> update_in([:games], &Map.delete(&1, game_id))
+            |> update_in([:games], &GameRooms.drop_game(&1, game_id))
 
           nil ->
             GamePlayers.remove(state, player_id)
@@ -921,9 +921,9 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   defp maybe_drop_empty_private_game(state, game_id, game) do
-    if GameRooms.empty_private_game?(game) do
+    if GameRooms.drop_empty_private_game?(game) do
       GameLobbyServers.stop_game_server(game_id)
-      update_in(state.games, &Map.delete(&1, game_id))
+      update_in(state.games, &GameRooms.drop_empty_private_game(&1, game_id, game))
     else
       state
     end

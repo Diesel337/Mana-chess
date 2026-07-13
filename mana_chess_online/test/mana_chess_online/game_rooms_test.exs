@@ -62,6 +62,26 @@ defmodule ManaChessOnline.GameRoomsTest do
            })
   end
 
+  test "drops games and empty private games" do
+    empty_private = GameState.private_game("private_1", settings())
+
+    occupied_private =
+      GameState.private_game("private_2", settings())
+      |> put_in([:players, :white], "white")
+
+    games = %{"private_1" => empty_private, "private_2" => occupied_private}
+
+    refute Map.has_key?(GameRooms.drop_game(games, "private_2"), "private_2")
+    assert GameRooms.drop_empty_private_game?(empty_private)
+    refute GameRooms.drop_empty_private_game?(occupied_private)
+
+    assert GameRooms.drop_empty_private_game(games, "private_1", empty_private) == %{
+             "private_2" => occupied_private
+           }
+
+    assert GameRooms.drop_empty_private_game(games, "private_2", occupied_private) == games
+  end
+
   test "detects public lobby games" do
     assert GameRooms.public_lobby_game?(%{practice?: false, private?: false})
     refute GameRooms.public_lobby_game?(%{practice?: false, private?: true})
