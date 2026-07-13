@@ -41,6 +41,17 @@ defmodule ManaChessOnline.GameLobbyServers do
 
   def game_snapshot(_game_id, _fallback_games), do: nil
 
+  def assigned_game(%{game_id: game_id}, fallback_games) when is_binary(game_id),
+    do: game_snapshot(game_id, fallback_games)
+
+  def assigned_game(_assignment, _fallback_games), do: nil
+
+  def sync_assignment_game(assignment, fallback_games) do
+    assignment
+    |> assigned_game(fallback_games)
+    |> sync_game_server()
+  end
+
   def server_backed_games(games), do: Map.merge(games, GameSupervisor.game_snapshots())
 
   def replace_game_state(game) do

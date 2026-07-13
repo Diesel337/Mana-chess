@@ -44,6 +44,21 @@ defmodule ManaChessOnline.GameLobbyServersTest do
     assert Map.has_key?(GameLobbyServers.server_backed_games(%{}), game_id)
   end
 
+  test "reads and syncs assigned games" do
+    game_id = "server_assignment_" <> Integer.to_string(System.unique_integer([:positive]))
+    game = GameState.new_game(game_id, settings())
+    assignment = %{game_id: game_id, color: :white}
+
+    on_exit(fn -> GameSupervisor.stop_game(game_id) end)
+
+    assert GameLobbyServers.assigned_game(assignment, %{game_id => game}) == game
+    assert GameLobbyServers.assigned_game(nil, %{game_id => game}) == nil
+
+    assert :ok = GameLobbyServers.sync_assignment_game(assignment, %{game_id => game})
+    assert {:ok, _pid} = GameSupervisor.lookup_game(game_id)
+    assert :ok = GameLobbyServers.sync_assignment_game(nil, %{game_id => game})
+  end
+
   test "enqueues, updates, and ticks through live servers" do
     game_id = "server_actions_" <> Integer.to_string(System.unique_integer([:positive]))
     game = GameState.new_game(game_id, settings())

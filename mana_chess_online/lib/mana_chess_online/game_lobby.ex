@@ -880,18 +880,11 @@ defmodule ManaChessOnline.GameLobby do
     GameBroadcast.lobby_update(lobby_topic(), state, now_ms())
   end
 
-  defp sync_player_assignment(%{game_id: game_id}, state) when is_binary(game_id) do
-    game_id
-    |> game_snapshot(state)
-    |> GameLobbyServers.sync_game_server()
-  end
+  defp sync_player_assignment(assignment, state),
+    do: GameLobbyServers.sync_assignment_game(assignment, state.games)
 
-  defp sync_player_assignment(_assignment, _state), do: :ok
-
-  defp assigned_game(%{game_id: game_id}, state) when is_binary(game_id),
-    do: game_snapshot(game_id, state)
-
-  defp assigned_game(_assignment, _state), do: nil
+  defp assigned_game(assignment, state),
+    do: GameLobbyServers.assigned_game(assignment, state.games)
 
   defp ensure_private_game(state, game_id) do
     if GameRooms.private_game_id?(game_id) do
