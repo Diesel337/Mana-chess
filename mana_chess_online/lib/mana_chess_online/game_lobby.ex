@@ -8,7 +8,7 @@ defmodule ManaChessOnline.GameLobby do
     GameBroadcast,
     GameChat,
     GameControl,
-    GameEngine,
+    GameLobbyActions,
     GameLobbyChat,
     GameLobbyMoves,
     GameLobbyRooms,
@@ -18,8 +18,6 @@ defmodule ManaChessOnline.GameLobby do
     GameLobbyView,
     GameMetrics,
     GamePlayers,
-    GamePromotion,
-    GameRules,
     GameRooms,
     GameSettings,
     GameSupervisor,
@@ -277,76 +275,19 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   def handle_call({:reset, player_id}, _from, state) do
-    state =
-      with %{game_id: game_id, color: color} when is_binary(game_id) <-
-             GamePlayers.assignment(state, player_id),
-           game when not is_nil(game) <- game_snapshot(game_id, state) do
-        if GameRooms.reset_ready?(game, player_id) do
-          reset_game(state, game_id, game)
-        else
-          game =
-            update_game_state(game, fn game ->
-              %{
-                game
-                | reset_requests: MapSet.put(game.reset_requests, player_id),
-                  log: ["#{GameChat.label(color)} pidio reiniciar la partida." | game.log]
-              }
-            end)
-
-          put_in(state.games[game_id], game)
-        end
-      else
-        _ -> state
-      end
-
+    state = GameLobbyActions.reset(state, player_id, now_ms())
     broadcast_lobby(state)
     {:reply, :ok, state}
   end
 
   def handle_call({:start_game, player_id}, _from, state) do
-    state =
-      with %{game_id: game_id} when is_binary(game_id) <- GamePlayers.assignment(state, player_id),
-           %{status: :ready} = game <- game_snapshot(game_id, state) do
-        starts_at = System.monotonic_time(:millisecond) + @countdown_ms
-
-        game =
-          update_game_state(game, fn game ->
-            %{
-              game
-              | status: {:starting, starts_at},
-                queue: [],
-                reset_requests: MapSet.new(),
-                start_requests: MapSet.new([player_id]),
-                log: ["Cuenta regresiva iniciada." | game.log]
-            }
-          end)
-
-        put_in(state.games[game_id], game)
-      else
-        _ -> state
-      end
-
+    state = GameLobbyActions.start_game(state, player_id, now_ms() + @countdown_ms)
     broadcast_lobby(state)
     {:reply, :ok, state}
   end
 
   def handle_call({:ready_to_start, player_id}, _from, state) do
-    state =
-      with %{game_id: game_id} when is_binary(game_id) <- GamePlayers.assignment(state, player_id),
-           %{status: {:starting, _starts_at}} = game <- game_snapshot(game_id, state),
-           true <- player_id in GameRooms.seated_players(game) do
-        game =
-          update_game_state(game, fn game ->
-            game
-            |> update_in([:start_requests], &MapSet.put(&1, player_id))
-            |> GameRooms.maybe_start_when_everyone_ready()
-          end)
-
-        put_in(state.games[game_id], game)
-      else
-        _ -> state
-      end
-
+    state = GameLobbyActions.ready_to_start(state, player_id)
     broadcast_lobby(state)
     {:reply, :ok, state}
   end
@@ -432,32 +373,7 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   def handle_call({:promote, player_id, choice}, _from, state) do
-    state =
-      with %{game_id: game_id, color: player_color} <- GamePlayers.assignment(state, player_id),
-           game when not is_nil(game) <- game_snapshot(game_id, state),
-           %{player_id: ^player_id, color: color, at: square} <- game.promotion_pending,
-           true <- GameControl.controls_color?(player_color, color) do
-        game =
-          update_game_state(game, fn game ->
-            board =
-              GameRules.promote(game.board, square, GamePromotion.choice(choice, color), color)
-
-            status = GameEngine.terminal_status(board, game.castling_rights) || :playing
-
-            %{
-              game
-              | board: board,
-                status: status,
-                promotion_pending: nil,
-                log: ["#{GameChat.label(color)} promociono peon." | game.log]
-            }
-          end)
-
-        put_in(state.games[game_id], game)
-      else
-        _ -> state
-      end
-
+    state = GameLobbyActions.promote(state, player_id, choice)
     broadcast_lobby(state)
     {:reply, :ok, state}
   end
@@ -544,10 +460,6 @@ defmodule ManaChessOnline.GameLobby do
 
   defp remove_player(state, player_id) do
     GameLobbyRooms.remove_player(state, player_id)
-  end
-
-  defp reset_game(state, game_id, old_game) do
-    GameLobbyRooms.reset_game(state, game_id, old_game, now_ms())
   end
 
   defp clear_room_state(state, game_id, game) do
