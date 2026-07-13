@@ -18,7 +18,6 @@ defmodule ManaChessOnline.GameLobby do
     GameRooms,
     GameSettings,
     GameSupervisor,
-    GameTick,
     RateLimiter
   }
 
@@ -363,7 +362,7 @@ defmodule ManaChessOnline.GameLobby do
           update_game_state(game, fn game ->
             game
             |> update_in([:start_requests], &MapSet.put(&1, player_id))
-            |> maybe_start_when_everyone_ready()
+            |> GameRooms.maybe_start_when_everyone_ready()
           end)
 
         put_in(state.games[game_id], game)
@@ -711,7 +710,7 @@ defmodule ManaChessOnline.GameLobby do
             update_game_state(game, fn game ->
               game
               |> put_in([:players, color], player_id)
-              |> refresh_status()
+              |> GameRooms.refresh_status()
             end)
 
           put_in(state.games[game_id], game)
@@ -793,7 +792,7 @@ defmodule ManaChessOnline.GameLobby do
           |> put_in([:players, :white], old_game.players.white)
           |> put_in([:players, :black], old_game.players.black)
           |> Map.put(:chat, chat)
-          |> refresh_status()
+          |> GameRooms.refresh_status()
           |> update_in([:log], &["Partida reiniciada por acuerdo." | &1])
 
         state =
@@ -891,32 +890,13 @@ defmodule ManaChessOnline.GameLobby do
 
   defp tick_game_server(game, now), do: GameLobbyServers.tick_game(game, now, @tick_ms)
 
-  defp maybe_start_when_everyone_ready(%{status: {:starting, _starts_at}} = game) do
-    GameTick.start_when_ready(game, seated_players(game))
-  end
-
-  defp maybe_start_when_everyone_ready(game), do: game
-
   defp cooldown_active?(game, square), do: GameEngine.cooldown_active?(game, square, now_ms())
 
   defp now_ms, do: System.monotonic_time(:millisecond)
 
   defp practice_game(id, player_id, settings, bot_color \\ :black) do
-    GameRooms.practice_game(
-      id,
-      player_id,
-      settings,
-      now_ms(),
-      GameBot.move_delay_ms(settings),
-      bot_color
-    )
+    GameRooms.practice_game_for_player(id, player_id, settings, now_ms(), bot_color)
   end
-
-  defp refresh_status(%{players: %{white: white, black: black}} = game)
-       when is_binary(white) and is_binary(black),
-       do: %{game | status: :ready, queue: [], log: ["Ambos jugadores sentados." | game.log]}
-
-  defp refresh_status(game), do: game
 
   defp public_game(game), do: public_game_at(game, now_ms())
 

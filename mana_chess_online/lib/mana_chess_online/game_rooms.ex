@@ -1,7 +1,7 @@
 defmodule ManaChessOnline.GameRooms do
   @moduledoc false
 
-  alias ManaChessOnline.{GameDirectory, GameState}
+  alias ManaChessOnline.{GameBot, GameDirectory, GameState, GameTick}
 
   def practice_game_id(player_id),
     do: "practice_" <> Integer.to_string(:erlang.phash2(player_id))
@@ -10,6 +10,10 @@ defmodule ManaChessOnline.GameRooms do
 
   def practice_game(id, player_id, settings, now, bot_delay_ms, bot_color \\ :black) do
     GameState.practice_game(id, player_id, settings, now, bot_delay_ms, bot_color)
+  end
+
+  def practice_game_for_player(id, player_id, settings, now, bot_color \\ :black) do
+    practice_game(id, player_id, settings, now, GameBot.move_delay_ms(settings), bot_color)
   end
 
   def private_game(id, settings), do: GameState.private_game(id, settings)
@@ -27,6 +31,18 @@ defmodule ManaChessOnline.GameRooms do
     seated_players = GameDirectory.seated_players(game)
     MapSet.size(MapSet.put(game.reset_requests, player_id)) >= length(seated_players)
   end
+
+  def refresh_status(%{players: %{white: white, black: black}} = game)
+      when is_binary(white) and is_binary(black),
+      do: %{game | status: :ready, queue: [], log: ["Ambos jugadores sentados." | game.log]}
+
+  def refresh_status(game), do: game
+
+  def maybe_start_when_everyone_ready(%{status: {:starting, _starts_at}} = game) do
+    GameTick.start_when_ready(game, GameDirectory.seated_players(game))
+  end
+
+  def maybe_start_when_everyone_ready(game), do: game
 
   def can_clear_room?(%{game_id: game_id, color: color}, player_id, game_id, game)
       when color in [:white, :black] do

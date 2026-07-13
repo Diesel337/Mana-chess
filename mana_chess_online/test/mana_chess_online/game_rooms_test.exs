@@ -24,6 +24,18 @@ defmodule ManaChessOnline.GameRoomsTest do
     practice = GameRooms.practice_game("practice_1", "player", settings(), 10, 1_200, :white)
     assert practice.practice? == true
     assert practice.bot_color == :white
+
+    practice_for_player =
+      GameRooms.practice_game_for_player(
+        "practice_2",
+        "player",
+        Map.put(settings(), :bot_move_seconds, 2.5),
+        10,
+        :black
+      )
+
+    assert practice_for_player.bot_ready_at == 2_510
+    assert practice_for_player.bot_color == :black
   end
 
   test "validates private game ids" do
@@ -66,6 +78,31 @@ defmodule ManaChessOnline.GameRoomsTest do
 
     refute GameRooms.reset_ready?(game, "white")
     assert GameRooms.reset_ready?(game, "black")
+  end
+
+  test "refreshes status when both seats are filled" do
+    game =
+      GameState.new_game("game_1", settings())
+      |> put_in([:players, :white], "white")
+      |> put_in([:players, :black], "black")
+      |> Map.put(:queue, [:stale])
+
+    refreshed = GameRooms.refresh_status(game)
+
+    assert refreshed.status == :ready
+    assert refreshed.queue == []
+    assert hd(refreshed.log) == "Ambos jugadores sentados."
+  end
+
+  test "starts when every seated player is ready" do
+    game =
+      GameState.new_game("game_1", settings())
+      |> put_in([:players, :white], "white")
+      |> put_in([:players, :black], "black")
+      |> Map.put(:status, {:starting, 1_000})
+      |> Map.put(:start_requests, MapSet.new(["white", "black"]))
+
+    assert %{status: :playing} = GameRooms.maybe_start_when_everyone_ready(game)
   end
 
   test "checks whether a player may clear a room" do
