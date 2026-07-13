@@ -1,7 +1,36 @@
 defmodule ManaChessOnline.GameLobbyView do
   @moduledoc false
 
-  alias ManaChessOnline.{GameSettings, GameState}
+  alias ManaChessOnline.{GamePlayers, GameSettings, GameState}
+
+  def current_player_view(state, player_id, public_game_snapshot, public_lobby)
+      when is_function(public_game_snapshot, 1) do
+    assignment = GamePlayers.assignment_or_empty(state, player_id)
+
+    player_view(
+      player_id,
+      assignment,
+      public_game_snapshot.(assignment.game_id),
+      public_lobby
+    )
+  end
+
+  def current_spectator_view(state, player_id, game_id, public_game_snapshot, public_lobby)
+      when is_function(public_game_snapshot, 1) do
+    assignment =
+      case GamePlayers.assignment(state, player_id) do
+        %{game_id: ^game_id} = assignment -> assignment
+        _ -> %{game_id: game_id, color: nil}
+      end
+
+    spectator_view(
+      player_id,
+      game_id,
+      assignment.color,
+      public_game_snapshot.(game_id),
+      public_lobby
+    )
+  end
 
   def player_view(player_id, assignment, public_game, public_lobby) do
     %{

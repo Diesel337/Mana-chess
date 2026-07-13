@@ -33,6 +33,43 @@ defmodule ManaChessOnline.GameLobbyViewTest do
              nil
   end
 
+  test "builds current player and spectator views from lobby state" do
+    state = %{
+      players: %{"player-1" => %{game_id: "game_1", color: :white}},
+      games: %{}
+    }
+
+    public_lobby = [%{id: "game_1"}]
+    public_game_snapshot = fn game_id -> %{id: game_id, status: :playing} end
+
+    assert GameLobbyView.current_player_view(
+             state,
+             "player-1",
+             public_game_snapshot,
+             public_lobby
+           ) == %{
+             player_id: "player-1",
+             game_id: "game_1",
+             color: :white,
+             game: %{id: "game_1", status: :playing},
+             lobby: public_lobby
+           }
+
+    assert GameLobbyView.current_spectator_view(
+             state,
+             "watcher",
+             "game_1",
+             public_game_snapshot,
+             public_lobby
+           ) == %{
+             player_id: "watcher",
+             game_id: "game_1",
+             color: nil,
+             game: %{id: "game_1", status: :playing},
+             lobby: public_lobby
+           }
+  end
+
   test "delegates public game and lobby snapshots" do
     game = GameState.new_game("game_1", settings())
     state = %{games: %{"game_1" => game}}
