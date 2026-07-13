@@ -38,6 +38,7 @@ The backend has been moving toward live `GameServer` processes as the source of 
 - `game_directory.ex`: lookup helpers for active game processes.
 - `game_broadcast.ex`: PubSub topics, broadcast-change predicates, and emitters for room/lobby payloads.
 - `game_chat.ex`: room chat sanitization, player names, roles, and lobby log labels.
+- `game_lobby_chat.ex`: lobby chat flow for sanitizing, rate-limiting, and appending room chat entries.
 - `game_control.ex`: turn/color/bot-control predicates and basic move-gate validation.
 - `game_lobby_servers.ex`: helpers for syncing, listing, reading, replacing, enqueueing, ticking, updating, assignment lookup, and stopping live game servers.
 - `game_lobby_rooms.ex`: lobby-state room lifecycle operations for seating, leaving, clearing, resetting, practice rooms, and private rooms.

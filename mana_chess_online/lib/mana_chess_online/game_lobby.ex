@@ -9,6 +9,7 @@ defmodule ManaChessOnline.GameLobby do
     GameChat,
     GameControl,
     GameEngine,
+    GameLobbyChat,
     GameLobbyMoves,
     GameLobbyRooms,
     GameLobbyServers,
@@ -530,33 +531,24 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   def handle_call({:send_chat, player_id, game_id, message}, _from, state) do
-    with {:ok, text} <- GameChat.sanitize_message(message),
-         {:ok, state} <- take_rate_limit(state, {:chat, game_id, player_id}, @chat_rate_limit),
-         %{id: ^game_id} = game <- game_snapshot(game_id, state) do
-      entry = %{
-        id: System.unique_integer([:positive, :monotonic]),
-        player_id: player_id,
-        name: GameChat.player_name(player_id),
-        role: GameChat.role(game, player_id),
-        sent_at: System.system_time(:second),
-        text: text
-      }
+    case GameLobbyChat.send_chat(
+           state,
+           player_id,
+           game_id,
+           message,
+           @chat_rate_limit,
+           now_ms(),
+           System.system_time(:second)
+         ) do
+      {:ok, state} ->
+        GameBroadcast.game_payload_update_for(game_id, public_game_snapshot(game_id, state))
+        {:reply, :ok, state}
 
-      game = append_chat_entry(game, entry)
-      state = put_in(state.games[game_id], game)
-
-      GameBroadcast.game_payload_update_for(game_id, public_game_snapshot(game_id, state))
-
-      {:reply, :ok, state}
-    else
       {:error, :rate_limited, state} ->
         {:reply, {:error, :rate_limited}, state}
 
-      {:error, reason} ->
+      {:error, reason, state} ->
         {:reply, {:error, reason}, state}
-
-      _ ->
-        {:reply, {:error, :no_game}, state}
     end
   end
 
@@ -665,8 +657,6 @@ defmodule ManaChessOnline.GameLobby do
   defp server_backed_games(state) do
     GameLobbyServers.server_backed_games(state.games)
   end
-
-  defp append_chat_entry(game, entry), do: update_game_state(game, &GameChat.put_entry(&1, entry))
 
   defp apply_global_settings_to_waiting_game(game, settings) do
     update_game_state(game, fn game ->
