@@ -14,6 +14,7 @@ defmodule ManaChessOnline.GameLobby do
     GameLobbyRooms,
     GameLobbyServers,
     GameLobbySettings,
+    GameLobbyTick,
     GameLobbyView,
     GameMetrics,
     GamePlayers,
@@ -509,33 +510,22 @@ defmodule ManaChessOnline.GameLobby do
   def handle_info(:tick, state) do
     Process.send_after(self(), :tick, @tick_ms)
     now = now_ms()
-    live_games = server_backed_games(state)
 
-    {games, changed_game_ids} =
-      Enum.reduce(live_games, {%{}, []}, fn {game_id, game}, {games, changed_game_ids} ->
-        ticked_game = tick_game_server(game, now)
-
-        changed_game_ids =
-          if game_broadcast_needed?(game, ticked_game, now) do
-            [game_id | changed_game_ids]
-          else
-            changed_game_ids
-          end
-
-        {Map.put(games, game_id, ticked_game), changed_game_ids}
-      end)
-
-    next_state = %{
-      state
-      | games: games,
-        rate_limits: RateLimiter.prune(state.rate_limits, now, @rate_limit_retention_ms)
-    }
+    {next_state, changed_game_ids, lobby_update?} =
+      GameLobbyTick.run(
+        state,
+        now,
+        @tick_ms,
+        @rate_limit_retention_ms,
+        &public_game_at/2,
+        &public_lobby_at/2
+      )
 
     changed_game_ids
     |> Enum.reverse()
     |> Enum.each(fn game_id -> broadcast_game_update(next_state.games[game_id], now) end)
 
-    if lobby_broadcast_needed?(state, next_state, now) do
+    if lobby_update? do
       GameBroadcast.lobby_payload_update(
         GameBroadcast.lobby_topic(),
         public_lobby_at(next_state, now)
@@ -607,8 +597,6 @@ defmodule ManaChessOnline.GameLobby do
     GameLobbyServers.server_backed_games(state.games)
   end
 
-  defp tick_game_server(game, now), do: GameLobbyServers.tick_game(game, now, @tick_ms)
-
   defp now_ms, do: System.monotonic_time(:millisecond)
 
   defp practice_game(id, player_id, settings, bot_color \\ :black) do
@@ -629,14 +617,6 @@ defmodule ManaChessOnline.GameLobby do
 
   defp broadcast_game_update(game, now) do
     GameBroadcast.game_update_for(game, now)
-  end
-
-  defp game_broadcast_needed?(previous_game, next_game, now) do
-    GameBroadcast.game_update_needed?(previous_game, next_game, now, &public_game_at/2)
-  end
-
-  defp lobby_broadcast_needed?(previous_state, next_state, now) do
-    GameBroadcast.lobby_update_needed?(previous_state, next_state, now, &public_lobby_at/2)
   end
 
   defp broadcast_lobby(state) do
