@@ -9,6 +9,7 @@ defmodule ManaChessOnline.GameLobby do
     GameChat,
     GameControl,
     GameEngine,
+    GameLobbyRooms,
     GameLobbyServers,
     GameLobbyView,
     GameMetrics,
@@ -688,84 +689,19 @@ defmodule ManaChessOnline.GameLobby do
   def lobby_topic, do: GameBroadcast.lobby_topic()
 
   defp assign_player(state, player_id, game_id, color) do
-    case game_snapshot(game_id, state) do
-      %{players: players} = game when color in [:white, :black] ->
-        if is_nil(players[color]) do
-          state = GamePlayers.assign(state, player_id, game_id, color)
-
-          game =
-            update_game_state(game, fn game ->
-              game
-              |> put_in([:players, color], player_id)
-              |> GameRooms.refresh_status()
-            end)
-
-          put_in(state.games[game_id], game)
-        else
-          state
-        end
-
-      _ ->
-        state
-    end
+    GameLobbyRooms.assign_player(state, player_id, game_id, color)
   end
 
   defp remove_player(state, player_id) do
-    case GamePlayers.assignment(state, player_id) do
-      %{game_id: game_id, color: color} when is_binary(game_id) ->
-        case game_snapshot(game_id, state) do
-          %{practice?: true} ->
-            GameLobbyServers.stop_game_server(game_id)
-
-            state
-            |> GamePlayers.remove(player_id)
-            |> update_in([:games], &GameRooms.drop_game(&1, game_id))
-
-          nil ->
-            GamePlayers.remove(state, player_id)
-
-          game ->
-            state = GamePlayers.remove(state, player_id)
-
-            game = update_game_state(game, &GameRooms.leave_seat_state(&1, color))
-
-            state
-            |> put_in([:games, game_id], game)
-            |> maybe_drop_empty_private_game(game_id, game)
-        end
-
-      _ ->
-        GamePlayers.remove(state, player_id)
-    end
+    GameLobbyRooms.remove_player(state, player_id)
   end
 
   defp reset_game(state, game_id, old_game) do
-    {state, reset_game} =
-      if old_game.practice? do
-        player_id = old_game.players.white
-
-        {
-          GamePlayers.assign(state, player_id, game_id, :practice),
-          GameRooms.reset_practice_room_state(game_id, old_game, now_ms())
-        }
-      else
-        state =
-          state
-          |> GamePlayers.keep_assignment_if_present(old_game.players.white, game_id, :white)
-          |> GamePlayers.keep_assignment_if_present(old_game.players.black, game_id, :black)
-
-        {state, GameRooms.reset_seated_room_state(game_id, old_game)}
-      end
-
-    put_in(state.games[game_id], replace_game_state(reset_game))
+    GameLobbyRooms.reset_game(state, game_id, old_game, now_ms())
   end
 
   defp clear_room_state(state, game_id, game) do
-    player_ids = GameRooms.seated_players(game)
-
-    state
-    |> GamePlayers.remove_many(player_ids)
-    |> put_in([:games, game_id], replace_game_state(GameRooms.cleared_game_state(game_id, game)))
+    GameLobbyRooms.clear_room_state(state, game_id, game)
   end
 
   defp player_view(state, player_id) do
@@ -837,7 +773,7 @@ defmodule ManaChessOnline.GameLobby do
   defp now_ms, do: System.monotonic_time(:millisecond)
 
   defp practice_game(id, player_id, settings, bot_color \\ :black) do
-    GameRooms.practice_game_for_player(id, player_id, settings, now_ms(), bot_color)
+    GameLobbyRooms.practice_game(id, player_id, settings, now_ms(), bot_color)
   end
 
   defp public_game(game), do: public_game_at(game, now_ms())
@@ -876,27 +812,6 @@ defmodule ManaChessOnline.GameLobby do
     do: GameLobbyServers.assigned_game(assignment, state.games)
 
   defp ensure_private_game(state, game_id) do
-    if GameRooms.private_game_id?(game_id) do
-      case game_snapshot(game_id, state) do
-        nil ->
-          game = replace_game_state(GameRooms.private_game(game_id, state.global_settings))
-          put_in(state.games[game_id], game)
-
-        game ->
-          game = replace_game_state(game)
-          put_in(state.games[game_id], game)
-      end
-    else
-      state
-    end
-  end
-
-  defp maybe_drop_empty_private_game(state, game_id, game) do
-    if GameRooms.drop_empty_private_game?(game) do
-      GameLobbyServers.stop_game_server(game_id)
-      update_in(state.games, &GameRooms.drop_empty_private_game(&1, game_id, game))
-    else
-      state
-    end
+    GameLobbyRooms.ensure_private_game(state, game_id)
   end
 end
