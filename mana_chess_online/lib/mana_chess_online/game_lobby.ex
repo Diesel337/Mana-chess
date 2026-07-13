@@ -562,13 +562,13 @@ defmodule ManaChessOnline.GameLobby do
     with %{game_id: game_id, color: player_color} <- GamePlayers.assignment(state, player_id),
          game when not is_nil(game) <- game_snapshot(game_id, state) do
       cond do
-        not GameControl.valid_square?(from) or not GameControl.valid_square?(to) ->
+        not GameControl.valid_move_squares?(from, to) ->
           reject_move(state, game_id, "Movimiento rechazado: casilla invalida.")
 
-        game.status != :playing ->
+        not GameControl.playing?(game) ->
           reject_move(state, game_id, "Movimiento rechazado: la partida no esta jugando.")
 
-        not is_nil(game.promotion_pending) ->
+        GameControl.promotion_blocking?(game) ->
           reject_move(state, game_id, "Movimiento rechazado: hay una promocion pendiente.")
 
         true ->

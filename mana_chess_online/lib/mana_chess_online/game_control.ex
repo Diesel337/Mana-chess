@@ -22,4 +22,13 @@ defmodule ManaChessOnline.GameControl do
 
   def valid_square?({r, c}), do: r in 0..7 and c in 0..7
   def valid_square?(_square), do: false
+
+  def valid_move_squares?(from, to), do: valid_square?(from) and valid_square?(to)
+
+  def playing?(%{status: :playing}), do: true
+  def playing?(_game), do: false
+
+  def promotion_blocking?(%{promotion_pending: nil}), do: false
+  def promotion_blocking?(%{promotion_pending: _pending}), do: true
+  def promotion_blocking?(_game), do: false
 end

@@ -38,5 +38,16 @@ defmodule ManaChessOnline.GameControlTest do
     assert GameControl.valid_square?({7, 7})
     refute GameControl.valid_square?({8, 0})
     refute GameControl.valid_square?(:bad)
+
+    assert GameControl.valid_move_squares?({0, 0}, {1, 1})
+    refute GameControl.valid_move_squares?({0, 0}, {8, 1})
+  end
+
+  test "checks basic move gates" do
+    assert GameControl.playing?(%{status: :playing})
+    refute GameControl.playing?(%{status: :waiting})
+
+    refute GameControl.promotion_blocking?(%{promotion_pending: nil})
+    assert GameControl.promotion_blocking?(%{promotion_pending: %{at: {0, 0}}})
   end
 end
