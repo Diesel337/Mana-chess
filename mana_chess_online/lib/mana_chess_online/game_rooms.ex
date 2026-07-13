@@ -58,6 +58,15 @@ defmodule ManaChessOnline.GameRooms do
 
   def maybe_start_when_everyone_ready(game), do: game
 
+  def leave_seat_state(game, color) when color in [:white, :black] do
+    game
+    |> put_in([:players, color], nil)
+    |> Map.merge(%{status: :waiting, queue: [], reset_requests: MapSet.new()})
+    |> prepend_log("#{seat_label(color)} dejo la partida.")
+  end
+
+  def leave_seat_state(game, _color), do: game
+
   def can_clear_room?(%{game_id: game_id, color: color}, player_id, game_id, game)
       when color in [:white, :black] do
     player_id in seated_players(game)
@@ -112,6 +121,9 @@ defmodule ManaChessOnline.GameRooms do
   end
 
   def prepend_log(game, message), do: update_in(game.log, &[message | &1])
+
+  def seat_label(:white), do: "Blancas"
+  def seat_label(:black), do: "Negras"
 
   def unique_private_game_id(games) do
     game_id = "private_" <> random_private_token()

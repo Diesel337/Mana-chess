@@ -143,6 +143,25 @@ defmodule ManaChessOnline.GameRoomsTest do
     assert %{status: :playing} = GameRooms.maybe_start_when_everyone_ready(game)
   end
 
+  test "builds room state after a seated player leaves" do
+    game =
+      GameState.new_game("game_1", settings())
+      |> put_in([:players, :white], "white")
+      |> put_in([:players, :black], "black")
+      |> Map.put(:status, :playing)
+      |> Map.put(:queue, [:move])
+      |> Map.put(:reset_requests, MapSet.new(["white"]))
+
+    next = GameRooms.leave_seat_state(game, :white)
+
+    assert next.players.white == nil
+    assert next.players.black == "black"
+    assert next.status == :waiting
+    assert next.queue == []
+    assert next.reset_requests == MapSet.new()
+    assert hd(next.log) == "Blancas dejo la partida."
+  end
+
   test "checks whether a player may clear a room" do
     game =
       GameState.new_game("game_1", settings())

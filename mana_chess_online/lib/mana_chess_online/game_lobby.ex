@@ -724,18 +724,7 @@ defmodule ManaChessOnline.GameLobby do
           game ->
             state = GamePlayers.remove(state, player_id)
 
-            game =
-              update_game_state(game, fn game ->
-                game = put_in(game.players[color], nil)
-
-                %{
-                  game
-                  | status: :waiting,
-                    queue: [],
-                    reset_requests: MapSet.new(),
-                    log: ["#{GameChat.label(color)} dejo la partida." | game.log]
-                }
-              end)
+            game = update_game_state(game, &GameRooms.leave_seat_state(&1, color))
 
             state
             |> put_in([:games, game_id], game)
