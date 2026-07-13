@@ -51,6 +51,7 @@ The backend has been moving toward live `GameServer` processes as the source of 
 - `game_bot.ex`: practice bot behavior.
 - `game_tick.ex`: tick/cooldown helpers.
 - `game_metrics.ex`: metrics and snapshots.
+- `game_players.ex`: player assignment map helpers.
 - `rate_limiter.ex`: request/action throttling and rate-limit state updates.
 
 Current large modules:

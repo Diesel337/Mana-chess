@@ -13,6 +13,7 @@ defmodule ManaChessOnline.GameLobby do
     GameLobbyServers,
     GameLobbyView,
     GameMetrics,
+    GamePlayers,
     GamePromotion,
     GameRules,
     GameRooms,
@@ -224,7 +225,7 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   def handle_call({:apply_global_settings_to_practice, player_id}, _from, state) do
-    with %{game_id: game_id, color: :practice} <- state.players[player_id],
+    with %{game_id: game_id, color: :practice} <- GamePlayers.assignment(state, player_id),
          %{practice?: true} = game <- game_snapshot(game_id, state) do
       game =
         update_game_state(game, fn game ->
@@ -257,7 +258,7 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   def handle_call({:leave, player_id}, _from, state) do
-    previous_assignment = state.players[player_id]
+    previous_assignment = GamePlayers.assignment(state, player_id)
     previous_game = assigned_game(previous_assignment, state)
     state = remove_player(state, player_id)
     sync_player_assignment(previous_assignment, state)
@@ -273,7 +274,12 @@ defmodule ManaChessOnline.GameLobby do
     case game_snapshot(game_id, state) do
       %{practice?: false} = game
       when game.status in [:waiting, :ready] ->
-        if GameRooms.can_clear_room?(state.players[player_id], player_id, game_id, game) do
+        if GameRooms.can_clear_room?(
+             GamePlayers.assignment(state, player_id),
+             player_id,
+             game_id,
+             game
+           ) do
           state = clear_room_state(state, game_id, game)
           broadcast_lobby(state)
           {:reply, :ok, state}
@@ -302,7 +308,8 @@ defmodule ManaChessOnline.GameLobby do
 
   def handle_call({:reset, player_id}, _from, state) do
     state =
-      with %{game_id: game_id, color: color} when is_binary(game_id) <- state.players[player_id],
+      with %{game_id: game_id, color: color} when is_binary(game_id) <-
+             GamePlayers.assignment(state, player_id),
            game when not is_nil(game) <- game_snapshot(game_id, state) do
         if GameRooms.reset_ready?(game, player_id) do
           reset_game(state, game_id, game)
@@ -328,7 +335,7 @@ defmodule ManaChessOnline.GameLobby do
 
   def handle_call({:start_game, player_id}, _from, state) do
     state =
-      with %{game_id: game_id} when is_binary(game_id) <- state.players[player_id],
+      with %{game_id: game_id} when is_binary(game_id) <- GamePlayers.assignment(state, player_id),
            %{status: :ready} = game <- game_snapshot(game_id, state) do
         starts_at = System.monotonic_time(:millisecond) + @countdown_ms
 
@@ -355,7 +362,7 @@ defmodule ManaChessOnline.GameLobby do
 
   def handle_call({:ready_to_start, player_id}, _from, state) do
     state =
-      with %{game_id: game_id} when is_binary(game_id) <- state.players[player_id],
+      with %{game_id: game_id} when is_binary(game_id) <- GamePlayers.assignment(state, player_id),
            %{status: {:starting, _starts_at}} = game <- game_snapshot(game_id, state),
            true <- player_id in seated_players(game) do
         game =
@@ -392,7 +399,7 @@ defmodule ManaChessOnline.GameLobby do
 
   def handle_call({:toggle_practice_bot, player_id}, _from, state) do
     state =
-      with %{game_id: game_id, color: :practice} <- state.players[player_id],
+      with %{game_id: game_id, color: :practice} <- GamePlayers.assignment(state, player_id),
            %{practice?: true} = game <- game_snapshot(game_id, state) do
         game =
           update_game_state(game, fn game ->
@@ -420,7 +427,7 @@ defmodule ManaChessOnline.GameLobby do
 
   def handle_call({:toggle_practice_side, player_id}, _from, state) do
     state =
-      with %{game_id: game_id, color: :practice} <- state.players[player_id],
+      with %{game_id: game_id, color: :practice} <- GamePlayers.assignment(state, player_id),
            %{practice?: true} = game <- game_snapshot(game_id, state) do
         game =
           update_game_state(game, fn game ->
@@ -451,7 +458,7 @@ defmodule ManaChessOnline.GameLobby do
   def handle_call({:update_settings, player_id, params}, _from, state) do
     state =
       with %{game_id: game_id, color: color} when color in [:white, :practice] <-
-             state.players[player_id],
+             GamePlayers.assignment(state, player_id),
            game when game.practice? or game.status in [:waiting, :ready] <-
              game_snapshot(game_id, state) do
         settings = GameSettings.sanitize(params, game.settings)
@@ -478,7 +485,7 @@ defmodule ManaChessOnline.GameLobby do
 
   def handle_call({:promote, player_id, choice}, _from, state) do
     state =
-      with %{game_id: game_id, color: player_color} <- state.players[player_id],
+      with %{game_id: game_id, color: player_color} <- GamePlayers.assignment(state, player_id),
            game when not is_nil(game) <- game_snapshot(game_id, state),
            %{player_id: ^player_id, color: color, at: square} <- game.promotion_pending,
            true <- GameControl.controls_color?(player_color, color) do
@@ -565,7 +572,7 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   defp enqueue_move(state, player_id, from, to) do
-    with %{game_id: game_id, color: player_color} <- state.players[player_id],
+    with %{game_id: game_id, color: player_color} <- GamePlayers.assignment(state, player_id),
          game when not is_nil(game) <- game_snapshot(game_id, state) do
       cond do
         not GameControl.valid_square?(from) or not GameControl.valid_square?(to) ->
@@ -704,7 +711,7 @@ defmodule ManaChessOnline.GameLobby do
     case game_snapshot(game_id, state) do
       %{players: players} = game when color in [:white, :black] ->
         if is_nil(players[color]) do
-          state = put_in(state.players[player_id], %{game_id: game_id, color: color})
+          state = GamePlayers.assign(state, player_id, game_id, color)
 
           game =
             update_game_state(game, fn game ->
@@ -724,21 +731,21 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   defp remove_player(state, player_id) do
-    case state.players[player_id] do
+    case GamePlayers.assignment(state, player_id) do
       %{game_id: game_id, color: color} when is_binary(game_id) ->
         case game_snapshot(game_id, state) do
           %{practice?: true} ->
             GameLobbyServers.stop_game_server(game_id)
 
             state
-            |> update_in([:players], &Map.delete(&1, player_id))
+            |> GamePlayers.remove(player_id)
             |> update_in([:games], &Map.delete(&1, game_id))
 
           nil ->
-            update_in(state.players, &Map.delete(&1, player_id))
+            GamePlayers.remove(state, player_id)
 
           game ->
-            state = update_in(state.players, &Map.delete(&1, player_id))
+            state = GamePlayers.remove(state, player_id)
 
             game =
               update_game_state(game, fn game ->
@@ -759,14 +766,8 @@ defmodule ManaChessOnline.GameLobby do
         end
 
       _ ->
-        update_in(state.players, &Map.delete(&1, player_id))
+        GamePlayers.remove(state, player_id)
     end
-  end
-
-  defp keep_player_assignment_if_present(state, nil, _game_id, _color), do: state
-
-  defp keep_player_assignment_if_present(state, player_id, game_id, color) do
-    put_in(state.players[player_id], %{game_id: game_id, color: color})
   end
 
   defp reset_game(state, game_id, old_game) do
@@ -783,7 +784,7 @@ defmodule ManaChessOnline.GameLobby do
           |> update_in([:log], &["Practica reiniciada." | &1])
 
         {
-          put_in(state.players[player_id], %{game_id: game_id, color: :practice}),
+          GamePlayers.assign(state, player_id, game_id, :practice),
           reset_game
         }
       else
@@ -797,8 +798,8 @@ defmodule ManaChessOnline.GameLobby do
 
         state =
           state
-          |> keep_player_assignment_if_present(old_game.players.white, game_id, :white)
-          |> keep_player_assignment_if_present(old_game.players.black, game_id, :black)
+          |> GamePlayers.keep_assignment_if_present(old_game.players.white, game_id, :white)
+          |> GamePlayers.keep_assignment_if_present(old_game.players.black, game_id, :black)
 
         {state, reset_game}
       end
@@ -816,12 +817,12 @@ defmodule ManaChessOnline.GameLobby do
     player_ids = seated_players(game)
 
     state
-    |> update_in([:players], fn players -> Map.drop(players, player_ids) end)
+    |> GamePlayers.remove_many(player_ids)
     |> put_in([:games, game_id], replace_game_state(GameRooms.cleared_game_state(game_id, game)))
   end
 
   defp player_view(state, player_id) do
-    assignment = state.players[player_id] || %{game_id: nil, color: nil}
+    assignment = GamePlayers.assignment_or_empty(state, player_id)
     game = game_snapshot(assignment.game_id, state)
 
     GameLobbyView.player_view(player_id, assignment, public_game(game), public_live_lobby(state))
@@ -829,7 +830,7 @@ defmodule ManaChessOnline.GameLobby do
 
   defp player_view(state, player_id, game_id) do
     assignment =
-      case state.players[player_id] do
+      case GamePlayers.assignment(state, player_id) do
         %{game_id: ^game_id} = assignment -> assignment
         _ -> %{game_id: game_id, color: nil}
       end
