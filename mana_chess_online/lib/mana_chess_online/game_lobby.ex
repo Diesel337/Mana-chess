@@ -264,7 +264,7 @@ defmodule ManaChessOnline.GameLobby do
     sync_player_assignment(previous_assignment, state)
 
     if GameRooms.public_lobby_game?(previous_game) do
-      broadcast_lobby_payload(state)
+      GameBroadcast.lobby_update(lobby_topic(), state, now_ms())
     end
 
     {:reply, :ok, state}
@@ -909,14 +909,10 @@ defmodule ManaChessOnline.GameLobby do
   defp public_lobby_at(state, now), do: GameLobbyView.public_lobby(state, now)
 
   defp public_live_lobby(state),
-    do: public_lobby_at(%{state | games: server_backed_games(state)}, now_ms())
+    do: GameBroadcast.live_lobby(state, now_ms())
 
   defp broadcast_game_update(game, now) do
-    Phoenix.PubSub.broadcast(
-      ManaChessOnline.PubSub,
-      topic(game.id),
-      {:game_update, public_game_at(game, now)}
-    )
+    GameBroadcast.game_update(topic(game.id), game, now)
   end
 
   defp game_broadcast_needed?(previous_game, next_game, now) do
@@ -937,15 +933,7 @@ defmodule ManaChessOnline.GameLobby do
 
   defp broadcast_lobby(state) do
     GameLobbyServers.sync_game_servers(state.games)
-    broadcast_lobby_payload(state)
-  end
-
-  defp broadcast_lobby_payload(state) do
-    Phoenix.PubSub.broadcast(
-      ManaChessOnline.PubSub,
-      lobby_topic(),
-      {:lobby_update, public_live_lobby(state)}
-    )
+    GameBroadcast.lobby_update(lobby_topic(), state, now_ms())
   end
 
   defp sync_player_assignment(%{game_id: game_id}, state) when is_binary(game_id) do

@@ -1,6 +1,31 @@
 defmodule ManaChessOnline.GameBroadcast do
   @moduledoc false
 
+  alias ManaChessOnline.{GameLobbyServers, GameLobbyView}
+
+  def game_update(topic, game, now) do
+    Phoenix.PubSub.broadcast(
+      ManaChessOnline.PubSub,
+      topic,
+      {:game_update, GameLobbyView.public_game(game, now)}
+    )
+  end
+
+  def lobby_update(topic, state, now) do
+    Phoenix.PubSub.broadcast(
+      ManaChessOnline.PubSub,
+      topic,
+      {:lobby_update, live_lobby(state, now)}
+    )
+  end
+
+  def live_lobby(state, now) do
+    GameLobbyView.public_lobby(
+      %{state | games: GameLobbyServers.server_backed_games(state.games)},
+      now
+    )
+  end
+
   def game_update_needed?(previous_public_game, next_public_game, next_game) do
     previous_public_game != next_public_game or countdown_visible?(next_game) or
       cooldowns_visible?(next_game)

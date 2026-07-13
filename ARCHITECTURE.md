@@ -36,7 +36,7 @@ The backend has been moving toward live `GameServer` processes as the source of 
 - `game_supervisor.ex`: starts and supervises game processes.
 - `game_registry.ex`: names game processes.
 - `game_directory.ex`: lookup helpers for active game processes.
-- `game_broadcast.ex`: broadcast-change predicates for room and lobby updates.
+- `game_broadcast.ex`: broadcast-change predicates and PubSub emitters for room and lobby updates.
 - `game_chat.ex`: room chat sanitization, player names, roles, and lobby log labels.
 - `game_control.ex`: turn/color/bot-control predicates and board-square validation.
 - `game_lobby_servers.ex`: helpers for syncing, listing, reading, replacing, enqueueing, ticking, updating, and stopping live game servers.
