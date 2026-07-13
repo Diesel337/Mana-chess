@@ -8,7 +8,6 @@ defmodule ManaChessOnline.GameLobby do
     GameBroadcast,
     GameChat,
     GameControl,
-    GameDirectory,
     GameEngine,
     GameLobbyServers,
     GameLobbyView,
@@ -128,7 +127,7 @@ defmodule ManaChessOnline.GameLobby do
     case take_rate_limit(state, {:seat, player_id}, @seat_rate_limit) do
       {:ok, state} ->
         state =
-          case find_slot(server_backed_games(state)) do
+          case GameRooms.find_open_slot(server_backed_games(state)) do
             {game_id, color} ->
               state
               |> remove_player(player_id)
@@ -212,7 +211,7 @@ defmodule ManaChessOnline.GameLobby do
         | global_settings: settings,
           games:
             Map.new(games, fn {game_id, game} ->
-              if empty_waiting_game?(game) do
+              if GameRooms.empty_waiting_game?(game) do
                 {game_id, apply_global_settings_to_waiting_game(game, settings)}
               else
                 {game_id, game}
@@ -364,7 +363,7 @@ defmodule ManaChessOnline.GameLobby do
     state =
       with %{game_id: game_id} when is_binary(game_id) <- GamePlayers.assignment(state, player_id),
            %{status: {:starting, _starts_at}} = game <- game_snapshot(game_id, state),
-           true <- player_id in seated_players(game) do
+           true <- player_id in GameRooms.seated_players(game) do
         game =
           update_game_state(game, fn game ->
             game
@@ -807,14 +806,8 @@ defmodule ManaChessOnline.GameLobby do
     put_in(state.games[game_id], replace_game_state(reset_game))
   end
 
-  defp empty_waiting_game?(game), do: GameDirectory.empty_waiting_game?(game)
-
-  defp seated_players(game), do: GameDirectory.seated_players(game)
-
-  defp find_slot(games), do: GameDirectory.find_open_slot(games)
-
   defp clear_room_state(state, game_id, game) do
-    player_ids = seated_players(game)
+    player_ids = GameRooms.seated_players(game)
 
     state
     |> GamePlayers.remove_many(player_ids)
@@ -881,7 +874,7 @@ defmodule ManaChessOnline.GameLobby do
 
   defp apply_global_settings_to_waiting_game(game, settings) do
     update_game_state(game, fn game ->
-      if empty_waiting_game?(game) do
+      if GameRooms.empty_waiting_game?(game) do
         %{game | settings: settings, elixir: GameSettings.full_elixir(settings), cooldowns: %{}}
       else
         game

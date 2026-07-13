@@ -69,6 +69,24 @@ defmodule ManaChessOnline.GameRoomsTest do
     refute GameRooms.public_lobby_game?(nil)
   end
 
+  test "finds room occupancy details" do
+    open =
+      GameState.new_game("game_open", settings())
+      |> put_in([:players, :white], "white")
+
+    full =
+      GameState.new_game("game_full", settings())
+      |> put_in([:players, :white], "white")
+      |> put_in([:players, :black], "black")
+
+    assert GameRooms.empty_waiting_game?(GameState.new_game("game_empty", settings()))
+    refute GameRooms.empty_waiting_game?(open)
+    assert MapSet.new(GameRooms.seated_players(full)) == MapSet.new(["white", "black"])
+
+    assert GameRooms.find_open_slot(%{"game_full" => full, "game_open" => open}) ==
+             {"game_open", :black}
+  end
+
   test "checks reset readiness from seated players" do
     game =
       GameState.new_game("game_1", settings())

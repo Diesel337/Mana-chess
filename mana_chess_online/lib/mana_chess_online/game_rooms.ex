@@ -27,8 +27,14 @@ defmodule ManaChessOnline.GameRooms do
   def public_lobby_game?(%{practice?: false} = game), do: !Map.get(game, :private?, false)
   def public_lobby_game?(_game), do: false
 
+  def empty_waiting_game?(game), do: GameDirectory.empty_waiting_game?(game)
+
+  def seated_players(game), do: GameDirectory.seated_players(game)
+
+  def find_open_slot(games), do: GameDirectory.find_open_slot(games)
+
   def reset_ready?(game, player_id) do
-    seated_players = GameDirectory.seated_players(game)
+    seated_players = seated_players(game)
     MapSet.size(MapSet.put(game.reset_requests, player_id)) >= length(seated_players)
   end
 
@@ -39,14 +45,14 @@ defmodule ManaChessOnline.GameRooms do
   def refresh_status(game), do: game
 
   def maybe_start_when_everyone_ready(%{status: {:starting, _starts_at}} = game) do
-    GameTick.start_when_ready(game, GameDirectory.seated_players(game))
+    GameTick.start_when_ready(game, seated_players(game))
   end
 
   def maybe_start_when_everyone_ready(game), do: game
 
   def can_clear_room?(%{game_id: game_id, color: color}, player_id, game_id, game)
       when color in [:white, :black] do
-    player_id in GameDirectory.seated_players(game)
+    player_id in seated_players(game)
   end
 
   def can_clear_room?(_assignment, _player_id, _game_id, _game), do: false
