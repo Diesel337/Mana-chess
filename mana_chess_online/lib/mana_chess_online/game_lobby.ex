@@ -239,11 +239,7 @@ defmodule ManaChessOnline.GameLobby do
 
       state = put_in(state.games[game_id], game)
 
-      Phoenix.PubSub.broadcast(
-        ManaChessOnline.PubSub,
-        topic(game_id),
-        {:game_update, public_game_snapshot(game_id, state)}
-      )
+      GameBroadcast.game_payload_update(topic(game_id), public_game_snapshot(game_id, state))
 
       {:reply, :ok, state}
     else
@@ -519,11 +515,7 @@ defmodule ManaChessOnline.GameLobby do
         {state, game_id} = enqueue_move(state, player_id, from, to)
 
         if game_id do
-          Phoenix.PubSub.broadcast(
-            ManaChessOnline.PubSub,
-            topic(game_id),
-            {:game_update, public_game_snapshot(game_id, state)}
-          )
+          GameBroadcast.game_payload_update(topic(game_id), public_game_snapshot(game_id, state))
 
           broadcast_lobby(state)
         end
@@ -551,11 +543,7 @@ defmodule ManaChessOnline.GameLobby do
       game = append_chat_entry(game, entry)
       state = put_in(state.games[game_id], game)
 
-      Phoenix.PubSub.broadcast(
-        ManaChessOnline.PubSub,
-        topic(game_id),
-        {:game_update, public_game_snapshot(game_id, state)}
-      )
+      GameBroadcast.game_payload_update(topic(game_id), public_game_snapshot(game_id, state))
 
       {:reply, :ok, state}
     else
@@ -693,11 +681,7 @@ defmodule ManaChessOnline.GameLobby do
     |> Enum.each(fn game_id -> broadcast_game_update(next_state.games[game_id], now) end)
 
     if lobby_broadcast_needed?(state, next_state, now) do
-      Phoenix.PubSub.broadcast(
-        ManaChessOnline.PubSub,
-        lobby_topic(),
-        {:lobby_update, public_lobby_at(next_state, now)}
-      )
+      GameBroadcast.lobby_payload_update(lobby_topic(), public_lobby_at(next_state, now))
     end
 
     {:noreply, next_state}

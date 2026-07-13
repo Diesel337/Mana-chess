@@ -4,18 +4,26 @@ defmodule ManaChessOnline.GameBroadcast do
   alias ManaChessOnline.{GameLobbyServers, GameLobbyView}
 
   def game_update(topic, game, now) do
+    game_payload_update(topic, GameLobbyView.public_game(game, now))
+  end
+
+  def game_payload_update(topic, public_game) do
     Phoenix.PubSub.broadcast(
       ManaChessOnline.PubSub,
       topic,
-      {:game_update, GameLobbyView.public_game(game, now)}
+      {:game_update, public_game}
     )
   end
 
   def lobby_update(topic, state, now) do
+    lobby_payload_update(topic, live_lobby(state, now))
+  end
+
+  def lobby_payload_update(topic, public_lobby) do
     Phoenix.PubSub.broadcast(
       ManaChessOnline.PubSub,
       topic,
-      {:lobby_update, live_lobby(state, now)}
+      {:lobby_update, public_lobby}
     )
   end
 

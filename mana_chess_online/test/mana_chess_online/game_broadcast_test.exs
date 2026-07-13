@@ -56,6 +56,16 @@ defmodule ManaChessOnline.GameBroadcastTest do
     assert_receive {:game_update, %{id: "game_broadcast", status: :waiting}}
   end
 
+  test "broadcasts prebuilt public game payloads" do
+    topic = "test_game_payload:" <> Integer.to_string(System.unique_integer([:positive]))
+    payload = %{id: "game_payload", status: :ready}
+
+    Phoenix.PubSub.subscribe(ManaChessOnline.PubSub, topic)
+
+    assert :ok = GameBroadcast.game_payload_update(topic, payload)
+    assert_receive {:game_update, ^payload}
+  end
+
   test "broadcasts public live lobby updates" do
     topic = "test_lobby:" <> Integer.to_string(System.unique_integer([:positive]))
     game = GameState.new_game("game_broadcast_lobby", settings())
@@ -66,5 +76,15 @@ defmodule ManaChessOnline.GameBroadcastTest do
     assert :ok = GameBroadcast.lobby_update(topic, state, 1_000)
     assert_receive {:lobby_update, lobby}
     assert Enum.any?(lobby, &(&1.id == game.id))
+  end
+
+  test "broadcasts prebuilt public lobby payloads" do
+    topic = "test_lobby_payload:" <> Integer.to_string(System.unique_integer([:positive]))
+    payload = [%{id: "game_payload", status: :waiting}]
+
+    Phoenix.PubSub.subscribe(ManaChessOnline.PubSub, topic)
+
+    assert :ok = GameBroadcast.lobby_payload_update(topic, payload)
+    assert_receive {:lobby_update, ^payload}
   end
 end
