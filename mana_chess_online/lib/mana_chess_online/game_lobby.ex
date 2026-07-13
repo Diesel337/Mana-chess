@@ -239,7 +239,7 @@ defmodule ManaChessOnline.GameLobby do
 
       state = put_in(state.games[game_id], game)
 
-      GameBroadcast.game_payload_update(topic(game_id), public_game_snapshot(game_id, state))
+      GameBroadcast.game_payload_update_for(game_id, public_game_snapshot(game_id, state))
 
       {:reply, :ok, state}
     else
@@ -515,7 +515,7 @@ defmodule ManaChessOnline.GameLobby do
         {state, game_id} = enqueue_move(state, player_id, from, to)
 
         if game_id do
-          GameBroadcast.game_payload_update(topic(game_id), public_game_snapshot(game_id, state))
+          GameBroadcast.game_payload_update_for(game_id, public_game_snapshot(game_id, state))
 
           broadcast_lobby(state)
         end
@@ -543,7 +543,7 @@ defmodule ManaChessOnline.GameLobby do
       game = append_chat_entry(game, entry)
       state = put_in(state.games[game_id], game)
 
-      GameBroadcast.game_payload_update(topic(game_id), public_game_snapshot(game_id, state))
+      GameBroadcast.game_payload_update_for(game_id, public_game_snapshot(game_id, state))
 
       {:reply, :ok, state}
     else
@@ -675,14 +675,17 @@ defmodule ManaChessOnline.GameLobby do
     |> Enum.each(fn game_id -> broadcast_game_update(next_state.games[game_id], now) end)
 
     if lobby_broadcast_needed?(state, next_state, now) do
-      GameBroadcast.lobby_payload_update(lobby_topic(), public_lobby_at(next_state, now))
+      GameBroadcast.lobby_payload_update(
+        GameBroadcast.lobby_topic(),
+        public_lobby_at(next_state, now)
+      )
     end
 
     {:noreply, next_state}
   end
 
-  def topic(game_id), do: "game:" <> game_id
-  def lobby_topic, do: "lobby"
+  def topic(game_id), do: GameBroadcast.game_topic(game_id)
+  def lobby_topic, do: GameBroadcast.lobby_topic()
 
   defp assign_player(state, player_id, game_id, color) do
     case game_snapshot(game_id, state) do
@@ -850,28 +853,20 @@ defmodule ManaChessOnline.GameLobby do
     do: GameBroadcast.live_lobby(state, now_ms())
 
   defp broadcast_game_update(game, now) do
-    GameBroadcast.game_update(topic(game.id), game, now)
+    GameBroadcast.game_update_for(game, now)
   end
 
   defp game_broadcast_needed?(previous_game, next_game, now) do
-    GameBroadcast.game_update_needed?(
-      public_game_at(previous_game, now),
-      public_game_at(next_game, now),
-      next_game
-    )
+    GameBroadcast.game_update_needed?(previous_game, next_game, now, &public_game_at/2)
   end
 
   defp lobby_broadcast_needed?(previous_state, next_state, now) do
-    GameBroadcast.lobby_update_needed?(
-      public_lobby_at(previous_state, now),
-      public_lobby_at(next_state, now),
-      next_state.games
-    )
+    GameBroadcast.lobby_update_needed?(previous_state, next_state, now, &public_lobby_at/2)
   end
 
   defp broadcast_lobby(state) do
     GameLobbyServers.sync_game_servers(state.games)
-    GameBroadcast.lobby_update(lobby_topic(), state, now_ms())
+    GameBroadcast.lobby_update(state, now_ms())
   end
 
   defp sync_player_assignment(assignment, state),

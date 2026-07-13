@@ -23,6 +23,19 @@ defmodule ManaChessOnline.GameBroadcastTest do
            })
   end
 
+  test "builds shared pubsub topics" do
+    assert GameBroadcast.game_topic("game_1") == "game:game_1"
+    assert GameBroadcast.lobby_topic() == "lobby"
+  end
+
+  test "requires game updates from raw games and public snapshot builders" do
+    previous_game = %{id: "game_1", status: :waiting, cooldowns: %{}}
+    next_game = %{id: "game_1", status: :playing, cooldowns: %{}}
+    public_game = fn game, _now -> %{id: game.id, status: game.status} end
+
+    assert GameBroadcast.game_update_needed?(previous_game, next_game, 1_000, public_game)
+  end
+
   test "keeps broadcasting visible countdowns and cooldowns" do
     assert GameBroadcast.game_update_needed?(%{}, %{}, %{status: {:starting, 1_000}})
 
@@ -46,6 +59,14 @@ defmodule ManaChessOnline.GameBroadcastTest do
            })
   end
 
+  test "requires lobby updates from raw states and public lobby builders" do
+    previous_state = %{games: %{"game_1" => %{id: "game_1", status: :waiting}}}
+    next_state = %{games: %{"game_1" => %{id: "game_1", status: {:starting, 1_000}}}}
+    public_lobby = fn state, _now -> Enum.map(state.games, fn {id, _game} -> %{id: id} end) end
+
+    assert GameBroadcast.lobby_update_needed?(previous_state, next_state, 1_000, public_lobby)
+  end
+
   test "broadcasts public game updates" do
     topic = "test_game:" <> Integer.to_string(System.unique_integer([:positive]))
     game = GameState.new_game("game_broadcast", settings())
@@ -66,6 +87,16 @@ defmodule ManaChessOnline.GameBroadcastTest do
     assert_receive {:game_update, ^payload}
   end
 
+  test "broadcasts prebuilt public game payloads by game id" do
+    game_id = "test_game_payload_for_" <> Integer.to_string(System.unique_integer([:positive]))
+    payload = %{id: game_id, status: :ready}
+
+    Phoenix.PubSub.subscribe(ManaChessOnline.PubSub, GameBroadcast.game_topic(game_id))
+
+    assert :ok = GameBroadcast.game_payload_update_for(game_id, payload)
+    assert_receive {:game_update, ^payload}
+  end
+
   test "broadcasts public live lobby updates" do
     topic = "test_lobby:" <> Integer.to_string(System.unique_integer([:positive]))
     game = GameState.new_game("game_broadcast_lobby", settings())
@@ -74,6 +105,17 @@ defmodule ManaChessOnline.GameBroadcastTest do
     Phoenix.PubSub.subscribe(ManaChessOnline.PubSub, topic)
 
     assert :ok = GameBroadcast.lobby_update(topic, state, 1_000)
+    assert_receive {:lobby_update, lobby}
+    assert Enum.any?(lobby, &(&1.id == game.id))
+  end
+
+  test "broadcasts public live lobby updates on the shared lobby topic" do
+    game = GameState.new_game("game_broadcast_lobby_topic", settings())
+    state = %{games: %{game.id => game}}
+
+    Phoenix.PubSub.subscribe(ManaChessOnline.PubSub, GameBroadcast.lobby_topic())
+
+    assert :ok = GameBroadcast.lobby_update(state, 1_000)
     assert_receive {:lobby_update, lobby}
     assert Enum.any?(lobby, &(&1.id == game.id))
   end
