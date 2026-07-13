@@ -63,6 +63,9 @@ defmodule ManaChessOnline.GameControlTest do
   test "checks piece and destination gates" do
     game = GameState.new_game("game_1", settings())
 
+    assert GameControl.piece_at(game, {6, 0}) == "P"
+    assert GameControl.piece_color("P") == :white
+
     assert GameControl.piece_present?("P")
     refute GameControl.piece_present?(".")
 
@@ -71,5 +74,14 @@ defmodule ManaChessOnline.GameControlTest do
 
     assert GameControl.legal_destination?(game, {6, 0}, {5, 0}, :white)
     refute GameControl.legal_destination?(game, {6, 0}, {4, 1}, :white)
+  end
+
+  test "builds move actions" do
+    assert GameControl.move_action("player", :white, {6, 0}, {5, 0}) == %{
+             player_id: "player",
+             color: :white,
+             from: {6, 0},
+             to: {5, 0}
+           }
   end
 end

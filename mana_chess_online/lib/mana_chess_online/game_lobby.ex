@@ -580,8 +580,8 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   defp enqueue_valid_move(state, game_id, game, player_id, player_color, from, to) do
-    piece = GameRules.at(game.board, elem(from, 0), elem(from, 1))
-    color = GameRules.color(piece)
+    piece = GameControl.piece_at(game, from)
+    color = GameControl.piece_color(piece)
 
     cond do
       not GameControl.piece_present?(piece) ->
@@ -622,7 +622,7 @@ defmodule ManaChessOnline.GameLobby do
         )
 
       true ->
-        action = %{player_id: player_id, color: color, from: from, to: to}
+        action = GameControl.move_action(player_id, color, from, to)
         now = now_ms()
 
         game = enqueue_game_action(game, action, now)

@@ -34,6 +34,10 @@ defmodule ManaChessOnline.GameControl do
   def promotion_blocking?(%{promotion_pending: _pending}), do: true
   def promotion_blocking?(_game), do: false
 
+  def piece_at(game, square), do: GameRules.at(game.board, elem(square, 0), elem(square, 1))
+
+  def piece_color(piece), do: GameRules.color(piece)
+
   def piece_present?(piece), do: piece != "."
 
   def playable_piece_color?(color), do: color in [:white, :black]
@@ -46,5 +50,9 @@ defmodule ManaChessOnline.GameControl do
       color,
       game.castling_rights
     )
+  end
+
+  def move_action(player_id, color, from, to) do
+    %{player_id: player_id, color: color, from: from, to: to}
   end
 end
