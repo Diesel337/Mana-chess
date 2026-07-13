@@ -42,6 +42,7 @@ The backend has been moving toward live `GameServer` processes as the source of 
 - `game_control.ex`: turn/color/bot-control predicates and basic move-gate validation.
 - `game_lobby_servers.ex`: helpers for syncing, listing, reading, replacing, enqueueing, ticking, updating, assignment lookup, and stopping live game servers.
 - `game_lobby_rooms.ex`: lobby-state room lifecycle operations for seating, leaving, clearing, resetting, practice rooms, and private rooms.
+- `game_lobby_settings.ex`: lobby/admin settings flow for global settings, practice refreshes, and player-controlled room settings.
 - `game_lobby_moves.ex`: lobby move enqueue/rejection flow that validates player control, cooldowns, legal destinations, and logs rejected moves.
 - `game_lobby_view.ex`: public lobby/game/player/spectator payload and current-view builders.
 - `game_rooms.ex`: room constructors, occupancy/open-slot helpers, readiness/status helpers, room permissions, seat/private-room lifecycle, and room reset/clear states.

@@ -13,6 +13,7 @@ defmodule ManaChessOnline.GameLobby do
     GameLobbyMoves,
     GameLobbyRooms,
     GameLobbyServers,
+    GameLobbySettings,
     GameLobbyView,
     GameMetrics,
     GamePlayers,
@@ -204,49 +205,19 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   def handle_call({:update_global_settings, params}, _from, state) do
-    settings = GameSettings.sanitize(params, state.global_settings)
-    GameSettings.persist_global(settings)
-    games = server_backed_games(state)
-
-    state =
-      %{
-        state
-        | global_settings: settings,
-          games:
-            Map.new(games, fn {game_id, game} ->
-              if GameRooms.empty_waiting_game?(game) do
-                {game_id, apply_global_settings_to_waiting_game(game, settings)}
-              else
-                {game_id, game}
-              end
-            end)
-      }
-
+    {state, settings} = GameLobbySettings.update_global_settings(state, params)
     broadcast_lobby(state)
     {:reply, settings, state}
   end
 
   def handle_call({:apply_global_settings_to_practice, player_id}, _from, state) do
-    with %{game_id: game_id, color: :practice} <- GamePlayers.assignment(state, player_id),
-         %{practice?: true} = game <- game_snapshot(game_id, state) do
-      game =
-        update_game_state(game, fn game ->
-          %{
-            game
-            | settings: state.global_settings,
-              elixir: GameSettings.clamp_elixir(game.elixir, state.global_settings),
-              cooldowns: %{},
-              log: ["Configuracion admin aplicada a la practica." | game.log]
-          }
-        end)
+    case GameLobbySettings.apply_global_settings_to_practice(state, player_id) do
+      {:ok, state} ->
+        %{game_id: game_id} = GamePlayers.assignment(state, player_id)
+        GameBroadcast.game_payload_update_for(game_id, public_game_snapshot(game_id, state))
+        {:reply, :ok, state}
 
-      state = put_in(state.games[game_id], game)
-
-      GameBroadcast.game_payload_update_for(game_id, public_game_snapshot(game_id, state))
-
-      {:reply, :ok, state}
-    else
-      _ ->
+      {:error, :no_practice, state} ->
         {:reply, {:error, :no_practice}, state}
     end
   end
@@ -454,29 +425,7 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   def handle_call({:update_settings, player_id, params}, _from, state) do
-    state =
-      with %{game_id: game_id, color: color} when color in [:white, :practice] <-
-             GamePlayers.assignment(state, player_id),
-           game when game.practice? or game.status in [:waiting, :ready] <-
-             game_snapshot(game_id, state) do
-        settings = GameSettings.sanitize(params, game.settings)
-
-        game =
-          update_game_state(game, fn game ->
-            %{
-              game
-              | settings: settings,
-                elixir: GameSettings.full_elixir(settings),
-                cooldowns: %{},
-                log: ["Blancas ajustaron la configuracion." | game.log]
-            }
-          end)
-
-        put_in(state.games[game_id], game)
-      else
-        _ -> state
-      end
-
+    state = GameLobbySettings.update_player_settings(state, player_id, params)
     broadcast_lobby(state)
     {:reply, :ok, state}
   end
@@ -656,16 +605,6 @@ defmodule ManaChessOnline.GameLobby do
 
   defp server_backed_games(state) do
     GameLobbyServers.server_backed_games(state.games)
-  end
-
-  defp apply_global_settings_to_waiting_game(game, settings) do
-    update_game_state(game, fn game ->
-      if GameRooms.empty_waiting_game?(game) do
-        %{game | settings: settings, elixir: GameSettings.full_elixir(settings), cooldowns: %{}}
-      else
-        game
-      end
-    end)
   end
 
   defp tick_game_server(game, now), do: GameLobbyServers.tick_game(game, now, @tick_ms)
