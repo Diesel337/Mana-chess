@@ -1,7 +1,16 @@
 defmodule ManaChessOnline.GameControlTest do
   use ExUnit.Case, async: true
 
-  alias ManaChessOnline.GameControl
+  alias ManaChessOnline.{GameControl, GameState}
+
+  defp settings do
+    %{
+      max_elixir: 10.0,
+      initial_elixir: 5.0,
+      cooldown_seconds: 1.0,
+      costs: %{pawn: 1.0, knight: 3.0, bishop: 3.0, rook: 4.0, queen: 6.0, king: 3.0}
+    }
+  end
 
   test "checks first move ownership" do
     assert GameControl.first_move_allowed?(%{first_move_pending: nil}, :white)
@@ -49,5 +58,18 @@ defmodule ManaChessOnline.GameControlTest do
 
     refute GameControl.promotion_blocking?(%{promotion_pending: nil})
     assert GameControl.promotion_blocking?(%{promotion_pending: %{at: {0, 0}}})
+  end
+
+  test "checks piece and destination gates" do
+    game = GameState.new_game("game_1", settings())
+
+    assert GameControl.piece_present?("P")
+    refute GameControl.piece_present?(".")
+
+    assert GameControl.playable_piece_color?(:white)
+    refute GameControl.playable_piece_color?(nil)
+
+    assert GameControl.legal_destination?(game, {6, 0}, {5, 0}, :white)
+    refute GameControl.legal_destination?(game, {6, 0}, {4, 1}, :white)
   end
 end

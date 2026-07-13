@@ -584,14 +584,14 @@ defmodule ManaChessOnline.GameLobby do
     color = GameRules.color(piece)
 
     cond do
-      piece == "." ->
+      not GameControl.piece_present?(piece) ->
         reject_move(
           state,
           game_id,
           "Movimiento rechazado: no hay pieza en origen #{inspect(from)}."
         )
 
-      color not in [:white, :black] ->
+      not GameControl.playable_piece_color?(color) ->
         reject_move(state, game_id, "Movimiento rechazado: pieza sin color.")
 
       GameControl.bot_controls_color?(game, color) ->
@@ -614,13 +614,7 @@ defmodule ManaChessOnline.GameLobby do
       cooldown_active?(game, from) ->
         reject_move(state, game_id, "Movimiento rechazado: pieza en cooldown.")
 
-      to not in GameRules.legal_moves_for(
-        game.board,
-        elem(from, 0),
-        elem(from, 1),
-        color,
-        game.castling_rights
-      ) ->
+      not GameControl.legal_destination?(game, from, to, color) ->
         reject_move(
           state,
           game_id,

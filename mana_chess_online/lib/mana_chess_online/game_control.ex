@@ -1,6 +1,8 @@
 defmodule ManaChessOnline.GameControl do
   @moduledoc false
 
+  alias ManaChessOnline.GameRules
+
   def first_move_allowed?(%{first_move_pending: nil}, _color), do: true
   def first_move_allowed?(%{first_move_pending: color}, color), do: true
   def first_move_allowed?(_game, _color), do: false
@@ -31,4 +33,18 @@ defmodule ManaChessOnline.GameControl do
   def promotion_blocking?(%{promotion_pending: nil}), do: false
   def promotion_blocking?(%{promotion_pending: _pending}), do: true
   def promotion_blocking?(_game), do: false
+
+  def piece_present?(piece), do: piece != "."
+
+  def playable_piece_color?(color), do: color in [:white, :black]
+
+  def legal_destination?(game, from, to, color) do
+    to in GameRules.legal_moves_for(
+      game.board,
+      elem(from, 0),
+      elem(from, 1),
+      color,
+      game.castling_rights
+    )
+  end
 end
