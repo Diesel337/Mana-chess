@@ -153,6 +153,38 @@ defmodule ManaChessOnline.GameRoomsTest do
     assert GameRooms.reset_room_state("private_1", private).private? == true
   end
 
+  test "builds reset practice room states" do
+    old_game =
+      GameState.practice_game("practice_1", "player", settings(), 0, 1_200, :white)
+      |> Map.put(:bot_enabled?, false)
+      |> Map.put(:chat, [%{text: "hola"}])
+
+    reset = GameRooms.reset_practice_room_state("practice_1", old_game, 10)
+
+    assert reset.practice? == true
+    assert reset.players.white == "player"
+    assert reset.bot_color == :white
+    assert reset.bot_enabled? == false
+    assert reset.bot_ready_at == nil
+    assert reset.chat == [%{text: "hola"}]
+    assert hd(reset.log) == "Practica reiniciada."
+  end
+
+  test "builds reset seated room states" do
+    old_game =
+      GameState.new_game("game_1", settings())
+      |> put_in([:players, :white], "white")
+      |> put_in([:players, :black], "black")
+      |> Map.put(:chat, [%{text: "listo"}])
+
+    reset = GameRooms.reset_seated_room_state("game_1", old_game)
+
+    assert reset.players == %{white: "white", black: "black"}
+    assert reset.chat == [%{text: "listo"}]
+    assert reset.status == :ready
+    assert hd(reset.log) == "Partida reiniciada por acuerdo."
+  end
+
   test "preserves disabled practice bot state" do
     next_game = GameState.practice_game("practice_1", "player", settings(), 0, 1_200)
     previous_game = %{bot_enabled?: false}

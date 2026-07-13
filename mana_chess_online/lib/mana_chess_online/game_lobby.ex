@@ -748,37 +748,21 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   defp reset_game(state, game_id, old_game) do
-    chat = Map.get(old_game, :chat, [])
-
     {state, reset_game} =
       if old_game.practice? do
         player_id = old_game.players.white
 
-        reset_game =
-          practice_game(game_id, player_id, old_game.settings, GameControl.bot_color(old_game))
-          |> GameRooms.preserve_practice_bot_state(old_game)
-          |> Map.put(:chat, chat)
-          |> update_in([:log], &["Practica reiniciada." | &1])
-
         {
           GamePlayers.assign(state, player_id, game_id, :practice),
-          reset_game
+          GameRooms.reset_practice_room_state(game_id, old_game, now_ms())
         }
       else
-        reset_game =
-          GameRooms.reset_room_state(game_id, old_game)
-          |> put_in([:players, :white], old_game.players.white)
-          |> put_in([:players, :black], old_game.players.black)
-          |> Map.put(:chat, chat)
-          |> GameRooms.refresh_status()
-          |> update_in([:log], &["Partida reiniciada por acuerdo." | &1])
-
         state =
           state
           |> GamePlayers.keep_assignment_if_present(old_game.players.white, game_id, :white)
           |> GamePlayers.keep_assignment_if_present(old_game.players.black, game_id, :black)
 
-        {state, reset_game}
+        {state, GameRooms.reset_seated_room_state(game_id, old_game)}
       end
 
     put_in(state.games[game_id], replace_game_state(reset_game))

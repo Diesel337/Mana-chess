@@ -1,7 +1,7 @@
 defmodule ManaChessOnline.GameRooms do
   @moduledoc false
 
-  alias ManaChessOnline.{GameBot, GameDirectory, GameState, GameTick}
+  alias ManaChessOnline.{GameBot, GameControl, GameDirectory, GameState, GameTick}
 
   def practice_game_id(player_id),
     do: "practice_" <> Integer.to_string(:erlang.phash2(player_id))
@@ -68,11 +68,42 @@ defmodule ManaChessOnline.GameRooms do
 
   def reset_room_state(game_id, %{settings: settings}), do: GameState.new_game(game_id, settings)
 
+  def reset_practice_room_state(game_id, old_game, now) do
+    player_id = old_game.players.white
+
+    game_id
+    |> practice_game_for_player(
+      player_id,
+      old_game.settings,
+      now,
+      GameControl.bot_color(old_game)
+    )
+    |> preserve_practice_bot_state(old_game)
+    |> preserve_chat(old_game)
+    |> prepend_log("Practica reiniciada.")
+  end
+
+  def reset_seated_room_state(game_id, old_game) do
+    game_id
+    |> reset_room_state(old_game)
+    |> put_in([:players, :white], old_game.players.white)
+    |> put_in([:players, :black], old_game.players.black)
+    |> preserve_chat(old_game)
+    |> refresh_status()
+    |> prepend_log("Partida reiniciada por acuerdo.")
+  end
+
   def preserve_practice_bot_state(next_game, %{bot_enabled?: false}) do
     %{next_game | bot_enabled?: false, bot_ready_at: nil}
   end
 
   def preserve_practice_bot_state(next_game, _previous_game), do: next_game
+
+  def preserve_chat(next_game, previous_game) do
+    Map.put(next_game, :chat, Map.get(previous_game, :chat, []))
+  end
+
+  def prepend_log(game, message), do: update_in(game.log, &[message | &1])
 
   def unique_private_game_id(games) do
     game_id = "private_" <> random_private_token()
