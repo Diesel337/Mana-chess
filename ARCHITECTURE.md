@@ -103,7 +103,7 @@ The desktop app is an Electron wrapper around the production or local Phoenix ap
 - `mana_chess_desktop/steam/`: non-secret SteamPipe templates.
 - `mana_chess_desktop/dist/`: generated local build artifacts; do not treat as source.
 
-Windows packaging goes through `scripts/run-electron-builder.cjs`, which prepares the pinned resource-editing tool cache before invoking electron-builder. `scripts/verify-win-executable-resources.cjs` verifies the product metadata and Mana Chess icon embedded in the generated executable.
+Windows packaging goes through `scripts/run-electron-builder.cjs`, which prepares the pinned resource-editing tool cache before invoking electron-builder. `scripts/verify-win-executable-resources.cjs` verifies the product metadata and Mana Chess icon embedded in the generated executable, while `scripts/verify-win-signatures.cjs` provides the optional required-signature gate. `scripts/smoke-win-installer.cjs` owns the guarded install/launch/uninstall lifecycle, and `build/installer.nsh` removes the desktop protocol registration during uninstall.
 
 Useful commands are documented in `mana_chess_desktop/README.md`.
 

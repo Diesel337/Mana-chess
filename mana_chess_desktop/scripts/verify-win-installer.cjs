@@ -3,6 +3,7 @@ const path = require("node:path")
 const crypto = require("node:crypto")
 const {execFileSync} = require("node:child_process")
 const {verifyWindowsExecutableResources} = require("./verify-win-executable-resources.cjs")
+const {verifyWindowsSignatures} = require("./verify-win-signatures.cjs")
 
 const desktopRoot = path.resolve(__dirname, "..")
 const node = process.execPath
@@ -10,6 +11,7 @@ const packageJson = JSON.parse(fs.readFileSync(path.join(desktopRoot, "package.j
 const buildInfoPath = path.join(desktopRoot, "src", "build-info.generated.json")
 const iconPngPath = path.join(desktopRoot, "build", "icon.png")
 const iconIcoPath = path.join(desktopRoot, "build", "icon.ico")
+const installerIncludePath = path.join(desktopRoot, "build", "installer.nsh")
 const exePath = path.join(desktopRoot, "dist", "win-unpacked", "Mana Chess.exe")
 const installerPath = path.join(desktopRoot, "dist", `Mana Chess Setup ${packageJson.version}.exe`)
 const latestYmlPath = path.join(desktopRoot, "dist", "latest.yml")
@@ -74,16 +76,17 @@ function readBuildInfo() {
   }
 }
 
-function writeReleaseManifest(artifacts, windowsExecutable) {
+function writeReleaseManifest(artifacts, windowsExecutable, windowsSignatures) {
   const build = readBuildInfo()
   const manifest = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     productName: packageJson.productName || "Mana Chess",
     version: packageJson.version,
     appId: packageJson.build?.appId || "",
     generatedAt: new Date().toISOString(),
     build,
     windowsExecutable,
+    windowsSignatures,
     artifacts
   }
 
@@ -140,6 +143,18 @@ function validateIconAssets() {
   if (!hasLargeIcon) {
     throw new Error("build/icon.ico must include a 256x256 icon entry.")
   }
+
+  if (packageJson.build?.nsis?.include !== "build/installer.nsh") {
+    throw new Error("package.json build.nsis.include must point to build/installer.nsh")
+  }
+
+  const installerInclude = fs.readFileSync(installerIncludePath, "utf8")
+  if (!installerInclude.includes("!macro customUnInstall")) {
+    throw new Error("build/installer.nsh must define customUnInstall")
+  }
+  if (!installerInclude.includes('DeleteRegKey HKCU "Software\\Classes\\manachess"')) {
+    throw new Error("build/installer.nsh must remove the manachess protocol registration")
+  }
 }
 
 validateIconAssets()
@@ -148,6 +163,7 @@ run(node, ["scripts/write-build-info.cjs"])
 
 run(node, ["scripts/run-electron-builder.cjs", "--win", "nsis", "--x64"])
 const windowsExecutable = verifyWindowsExecutableResources(exePath)
+const windowsSignatures = verifyWindowsSignatures()
 
 const artifacts = [
   artifactInfo("desktop-icon-png", iconPngPath),
@@ -176,7 +192,11 @@ if (header.toString("ascii") !== "MZ") {
   throw new Error("Installer does not have a Windows executable MZ header.")
 }
 
-const manifest = writeReleaseManifest(artifacts, windowsExecutable)
+const manifest = writeReleaseManifest(artifacts, windowsExecutable, windowsSignatures)
+
+for (const signature of windowsSignatures) {
+  console.log(`Authenticode ${signature.path}: ${signature.status}`)
+}
 
 for (const artifact of manifest.artifacts) {
   const megabytes = Math.round(artifact.bytes / 1024 / 1024)

@@ -41,6 +41,7 @@ const DESKTOP_BUILD_INFO = loadDesktopBuildInfo()
 const DESKTOP_CHANNEL = process.env.MANA_CHESS_DESKTOP_CHANNEL || DESKTOP_BUILD_INFO.channel || "desktop"
 const DESKTOP_QA_BYPASS_KEY = cleanQaBypassKey(process.env.MANA_CHESS_QA_BYPASS_KEY)
 const DESKTOP_DISABLE_EXTERNAL_OPEN = process.env.MANA_CHESS_DISABLE_EXTERNAL_OPEN === "1"
+const DESKTOP_DISABLE_PROTOCOL_REGISTRATION = process.env.MANA_CHESS_DISABLE_PROTOCOL_REGISTRATION === "1"
 const DESKTOP_USER_DATA_DIR = cleanUserDataDir(process.env.MANA_CHESS_USER_DATA_DIR)
 const DESKTOP_STEAM_CONTEXT = steamLaunchContext()
 
@@ -1035,6 +1036,8 @@ function normalizeDeepLinkGameId(gameId) {
 }
 
 function registerProtocol() {
+  if (DESKTOP_DISABLE_PROTOCOL_REGISTRATION) return
+
   if (process.defaultApp && process.argv.length >= 2) {
     app.setAsDefaultProtocolClient(PROTOCOL_SCHEME, process.execPath, [path.resolve(process.argv[1])])
     return

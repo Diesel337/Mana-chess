@@ -179,7 +179,7 @@ See `STEAM_RELEASE_CHECKLIST.md` for the operational Steam release gate list.
 
 ## Suggested next cuts
 
-1. Sign and test the Windows installer/uninstaller on a clean machine.
+1. Acquire the Windows release certificate, pass `MANA_CHESS_REQUIRE_SIGNED=1`, and repeat the automated installer lifecycle on a separate clean machine.
 2. Finish Steamworks onboarding, app/depot IDs, and the first internal SteamPipe upload.
 3. Launch the packaged build from the real Steam client and verify overlay, deep links, window modes, and reconnect.
 4. Wire real Steamworks identity into the `steam_required` launch gate.

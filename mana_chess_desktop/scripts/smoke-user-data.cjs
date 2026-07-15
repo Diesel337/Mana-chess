@@ -13,7 +13,16 @@ function desktopLogPath(userDataDir) {
   return path.join(userDataDir, "desktop-log.jsonl")
 }
 
+function smokeLaunchEnv(overrides = {}) {
+  return {
+    ...process.env,
+    MANA_CHESS_DISABLE_PROTOCOL_REGISTRATION: "1",
+    ...overrides
+  }
+}
+
 module.exports = {
   desktopLogPath,
+  smokeLaunchEnv,
   smokeUserDataDir
 }

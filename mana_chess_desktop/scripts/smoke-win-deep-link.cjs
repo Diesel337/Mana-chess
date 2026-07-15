@@ -1,7 +1,7 @@
 const fs = require("node:fs")
 const path = require("node:path")
 const {execFileSync, spawn} = require("node:child_process")
-const {desktopLogPath, smokeUserDataDir} = require("./smoke-user-data.cjs")
+const {desktopLogPath, smokeLaunchEnv, smokeUserDataDir} = require("./smoke-user-data.cjs")
 
 const desktopRoot = path.resolve(__dirname, "..")
 const exePath = path.join(desktopRoot, "dist", "win-unpacked", "Mana Chess.exe")
@@ -153,12 +153,11 @@ async function main() {
     cwd: desktopRoot,
     detached: false,
     stdio: "ignore",
-    env: {
-      ...process.env,
+    env: smokeLaunchEnv({
       MANA_CHESS_USER_DATA_DIR: userDataDir,
       MANA_CHESS_DESKTOP_CHANNEL: channel,
       MANA_CHESS_OFFLINE_RETRY_SECONDS: process.env.MANA_CHESS_OFFLINE_RETRY_SECONDS || "0"
-    }
+    })
   })
 
   child.unref()

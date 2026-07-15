@@ -76,6 +76,7 @@ function main() {
   run("Desktop syntax check", node, ["scripts/check-syntax.cjs"])
   validateSteamPipeTemplates()
   run("Windows installer and build verification", node, ["scripts/verify-win-installer.cjs"])
+  run("Windows install, launch, and uninstall smoke test", node, ["scripts/smoke-win-installer.cjs"])
 
   if (!fs.existsSync(exePath)) {
     throw new Error(`Expected Windows executable at ${exePath}`)

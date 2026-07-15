@@ -89,16 +89,16 @@ Official reference:
 - [~] Desktop bridge exists. `npm run smoke:win:bridge` now verifies the packaged executable exposes `window.ManaChessDesktop`, reads/copies/resets desktop state, reads/copies diagnostics, copies share/deep links, marks desktop mode, and records bridge IPC events.
 - [~] Local desktop QA state exists.
 - [~] Final app icon is approved. Windows builds now embed the Mana Chess icon instead of Electron's default and expose `Mana Chess`/`Diesel337` product metadata; `npm run verify:win` and `npm run verify:win:installer` validate both automatically. Final owner visual approval still pending.
-- [~] Installer is tested on a clean Windows machine. `npm run verify:win:installer` now builds and verifies the NSIS installer artifact without launching it and writes local SHA256 release hashes; clean-machine install pass still pending.
+- [~] Installer is tested on a clean Windows machine. `npm run smoke:win:installer` now passes an isolated install, installed-app launch, and uninstall cycle with registry, publisher, shortcuts, protocol, and file checks; a separate clean-machine pass is still pending.
 - [ ] Windows executable and installer are signed with the intended release certificate and pass SmartScreen/publisher QA. Current local candidates intentionally remain unsigned.
-- [ ] Uninstall behavior is tested.
+- [x] Automated uninstall behavior is tested. The NSIS include removes `manachess://`, and the installer smoke verifies uninstall registry, shortcuts, protocol registration, and application files are gone.
 - [~] Window restore, maximize, fullscreen, and relaunch behavior are tested. `npm run smoke:win:modes` now covers packaged launch/log smoke for windowed, maximized, and fullscreen; `npm run smoke:win:second-instance` covers single-instance relaunch handoff; `npm run release:win:preflight` includes them for release candidates. Manual restore QA still needed.
 - [~] Offline/error screen is acceptable for online-required launch. `npm run smoke:win:offline` verifies the packaged app reaches the offline path and writes QA logs; `npm run smoke:win:reconnect` verifies auto-recovery when the service comes back; `npm run release:win:preflight` includes both for release candidates. Visual/copy review still needed.
 - [~] Steam launch option points to the correct executable. SteamPipe docs identify `Mana Chess.exe`; Steamworks launch option still needs live app config.
 - [x] Desktop build has a clear app version strategy.
 - [x] Crash/error logs are accessible for QA.
 - [~] Steam overlay compatibility is checked. Desktop diagnostics now record Steam launch context and `npm run smoke:win:steam` verifies the packaged app captures Steam-like environment variables; real Steam client overlay QA still pending.
-- [~] Build can be reproduced from a clean checkout. Windows commands prepare a pinned, SHA256-verified resource-editing cache; `npm run verify:win` checks syntax, build metadata, embedded product identity, and the icon; `npm run verify:win:installer` adds the NSIS artifacts and release manifest; `npm run release:win:preflight` chains installer/build verification plus window, Steam-env, deep-link, bridge, reconnect, and offline smokes. Still needs a clean-machine pass.
+- [~] Build can be reproduced from a clean checkout. Windows commands prepare a pinned, SHA256-verified resource-editing cache; `npm run verify:win` checks syntax, build metadata, embedded product identity, and the icon; `npm run verify:win:installer` adds Authenticode status, NSIS artifacts, and the release manifest; `npm run release:win:preflight` adds the isolated installer lifecycle plus window, Steam-env, deep-link, bridge, reconnect, and offline smokes. Still needs a separate clean-machine pass and signed candidate.
 
 ## 5. SteamPipe and depots
 

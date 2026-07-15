@@ -105,7 +105,22 @@ Verify the Windows installer artifact without launching it:
 npm run verify:win:installer
 ```
 
-`verify:win:installer` checks the icon assets, runs the desktop syntax check, writes build metadata, creates the unpacked app plus NSIS installer, verifies the embedded Mana Chess icon and Windows product metadata in `dist/win-unpacked/Mana Chess.exe`, verifies `dist/Mana Chess Setup <version>.exe`, `dist/latest.yml`, and the installer block map, then writes `dist/release-manifest.json` with the executable identity, sizes, and SHA256 hashes.
+`verify:win:installer` checks the icon assets and NSIS uninstall include, runs the desktop syntax check, writes build metadata, creates the unpacked app plus NSIS installer, verifies the embedded Mana Chess icon and Windows product metadata in `dist/win-unpacked/Mana Chess.exe`, records Authenticode status, verifies `dist/Mana Chess Setup <version>.exe`, `dist/latest.yml`, and the installer block map, then writes `dist/release-manifest.json` with the executable identity, signatures, sizes, and SHA256 hashes.
+
+Inspect the current Authenticode state without rebuilding:
+
+```powershell
+npm run verify:win:signatures
+```
+
+Require valid signatures for a release candidate:
+
+```powershell
+$env:MANA_CHESS_REQUIRE_SIGNED="1"
+npm run verify:win:installer
+```
+
+The required-signature gate intentionally fails while the local candidate is unsigned.
 
 `pack:win`, `dist:win`, and both Windows verifiers use `scripts/run-electron-builder.cjs`. On Windows it prepares the pinned `winCodeSign` resource-editing tools in the electron-builder cache, verifies the official archive SHA256, and extracts only the Windows payload. This keeps icon/version resource editing reproducible on machines where extracting the archive's macOS symlinks is not permitted.
 
@@ -135,6 +150,7 @@ npm run smoke:win -- --mode=maximized --mode-source=env
 npm run smoke:win -- --mode=fullscreen --mode-source=window-mode-arg
 npm run smoke:win:steam
 npm run smoke:win:modes
+npm run smoke:win:installer
 npm run smoke:win:deep-link
 npm run smoke:win:second-instance
 npm run smoke:win:bridge
@@ -146,6 +162,7 @@ npm run smoke:win:offline
 It also verifies that the launcher records the expected `launchMode` and that bridge diagnostics report the requested window state. Use `--mode-source=env` to test `MANA_CHESS_WINDOW_MODE`, or `--mode-source=window-mode-arg` to test `--window-mode=...`.
 `smoke:win:steam` launches one windowed smoke with simulated Steam environment variables and verifies app/game/overlay IDs, client launch flags, Steam path, Deck/Tenfoot flags, and present Steam keys are captured in the session diagnostics.
 `smoke:win:modes` runs the same startup smoke through `windowed`, `maximized`, and `fullscreen` in sequence.
+`smoke:win:installer` requires no existing Mana Chess installation, shortcut, or protocol registration. It silently installs the NSIS candidate into a unique temporary directory, verifies executable identity, installed executable/helper/uninstaller Authenticode status, uninstall metadata, publisher, shortcuts, and `manachess://`, launches the installed executable, silently uninstalls it, verifies all owned artifacts are removed, and cleans its isolated QA data.
 `smoke:win:deep-link` launches the packaged app with a `manachess://game/private_smoke_deep_link` URL and verifies the launcher resolves it to a game route in the desktop QA log.
 `smoke:win:second-instance` opens the packaged app, launches a second copy with a `manachess://` game link, and verifies the first instance receives the runtime handoff.
 `smoke:win:bridge` launches the packaged app against a local QA page and verifies `window.ManaChessDesktop` can report desktop and Steam info, read/copy/reset local desktop state, read/copy diagnostics, copy/open share links and deep links without leaking `qa_key`, mark desktop mode, apply a QA launch bypass key, and send an IPC event back to the main process.
@@ -158,7 +175,7 @@ Run the full Windows release preflight before a Steam candidate:
 npm run release:win:preflight
 ```
 
-`release:win:preflight` runs the desktop syntax check, validates the non-secret SteamPipe templates, builds and verifies the unpacked app plus NSIS installer with `verify:win:installer`, then runs the window mode, env/long-arg launch mode, Steam environment, and offline smoke tests.
+`release:win:preflight` runs the desktop syntax check, validates the non-secret SteamPipe templates, builds and verifies the unpacked app plus NSIS installer with `verify:win:installer`, performs the isolated install/launch/uninstall cycle, then runs the window mode, env/long-arg launch mode, Steam environment, deep-link, bridge, reconnect, and offline smoke tests. It inherits `MANA_CHESS_REQUIRE_SIGNED=1` for signed release gates.
 
 ## SteamPipe templates
 
@@ -184,6 +201,7 @@ The real `.vdf` files, SteamCMD logs, and Steam build output are ignored locally
 - `npm run smoke:win:steam` verifies the packaged executable records Steam launch context, including Steam path, Deck, and Tenfoot flags, when Steam-like environment variables are present.
 - `npm run smoke:win:deep-link` verifies the packaged executable resolves a startup `manachess://` game link to the expected desktop route.
 - `npm run smoke:win:second-instance` verifies relaunch/single-instance handoff for runtime `manachess://` links.
+- Normal packaged smokes set `MANA_CHESS_DISABLE_PROTOCOL_REGISTRATION=1` so QA runs do not replace the user's default `manachess://` handler. The installer smoke enables registration only inside its guarded lifecycle test.
 - `npm run smoke:win:bridge` verifies the packaged executable exposes the desktop bridge to renderer code, handles QA copy/reset actions, and records bridge IPC events.
 - `MANA_CHESS_QA_BYPASS_KEY` lets QA desktop builds open web deployments protected by `steam_required` without leaking `qa_key` into copied share/deep links.
 - `MANA_CHESS_DISABLE_EXTERNAL_OPEN=1` lets QA verify external-link diagnostics without opening a browser.
@@ -197,7 +215,8 @@ The real `.vdf` files, SteamCMD logs, and Steam build output are ignored locally
 - The Windows build uses the shared Mana Chess icon, app id `com.diesel337.manachess`, product/company/version resources, and explicit shortcut/uninstall metadata.
 - `npm run verify:win` and `npm run verify:win:installer` verify the icon embedded in `Mana Chess.exe` plus its Windows product metadata; they reject the default Electron identity.
 - `npm run verify:win:installer` also verifies `build/icon.png`, `build/icon.ico`, and package icon wiring before creating release artifacts.
-- `npm run verify:win:installer` verifies the NSIS installer artifact exists and has a Windows executable header, without installing it, and writes a local release manifest with artifact hashes.
+- `npm run verify:win:installer` verifies the NSIS installer artifact exists and has a Windows executable header, without installing it, and writes a local release manifest with Authenticode status and artifact hashes.
+- `build/installer.nsh` removes the per-user `manachess://` registration during uninstall; `npm run smoke:win:installer` protects this behavior end to end.
 - The web game can read `window.ManaChessDesktop.getInfo()` for desktop version, channel, platform, origin, build metadata, and full Steam launch context.
 - The window title follows local presence, such as lobby, active match, playing, or result states.
 - The desktop menu can copy, open, or reset local desktop QA state.
