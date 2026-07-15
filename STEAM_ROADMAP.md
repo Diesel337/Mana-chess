@@ -25,9 +25,10 @@ Already in place:
 - Cosmetic shop prototype with local unlocks and palette previews.
 - Chat, private links, spectator flow, practice, tutorial, bot, local stats, sound.
 
-Current constraint:
+Current constraints:
 
-- `ManaChessOnline.GameLobby` is a single GenServer holding lobby, active games, practice games, private games, admin settings, chat, and bot ticks in memory. This is fine for prototype traffic, but it is not the final launch architecture for heavy multiplayer traffic.
+- Active match state is owned by supervised per-game `GameServer` processes; `GameLobby` now coordinates the public API, discovery, policy flows, and global settings through focused modules.
+- Runtime state is still memory-only on one application node. Deploy/crash recovery, persistence, horizontal ownership, and real-client load tuning remain launch-scale work.
 
 ## Steam launch requirements
 
@@ -109,25 +110,25 @@ Official reference:
 
 ## Backend scale roadmap
 
-### Phase 1: Prepare architecture without behavior changes
+### Phase 1: Prepare architecture without behavior changes (complete)
 
 Goal: make the code ready to split game state safely.
 
-- Extract pure game state operations from `GameLobby` where possible.
-- Define a `GameServer` API that mirrors current calls.
-- Add tests around lobby, join/sit, private matches, chat, reset, bot, and moves.
-- Keep current visible behavior stable.
+- [x] Extract pure game state operations from `GameLobby` where possible.
+- [x] Define a `GameServer` API that mirrors current calls.
+- [x] Add tests around lobby, join/sit, private matches, chat, reset, bot, and moves.
+- [x] Keep current visible behavior stable.
 
-### Phase 2: One process per game
+### Phase 2: One process per game (core migration complete)
 
 Goal: remove the single global bottleneck.
 
-- Add `ManaChessOnline.GameServer` as a GenServer per game.
-- Add `ManaChessOnline.GameSupervisor` as a DynamicSupervisor.
-- Add a Registry keyed by `game_id`.
-- Move board state, elixir, cooldowns, queue, chat, bot timers, and match status into each `GameServer`.
-- Keep a separate lobby/matchmaking process for public rooms and discovery.
-- Broadcast only changed game/lobby events.
+- [x] Add `ManaChessOnline.GameServer` as a GenServer per game.
+- [x] Add `ManaChessOnline.GameSupervisor` as a DynamicSupervisor.
+- [x] Add a Registry keyed by `game_id`.
+- [x] Make each `GameServer` authoritative for board state, elixir, cooldowns, queue, chat, bot ticks, and match status.
+- [x] Keep lobby/matchmaking coordination separate from per-game live ownership.
+- [~] Continue tuning changed-only broadcasts and launch telemetry under real-client load.
 
 ### Phase 3: Persistence
 
@@ -178,15 +179,14 @@ See `STEAM_RELEASE_CHECKLIST.md` for the operational Steam release gate list.
 
 ## Suggested next cuts
 
-1. Keep this roadmap and `STEAM_RELEASE_CHECKLIST.md` current.
-2. Create the first backend safety tests around current `GameLobby` behavior.
-3. Extract a `GameServer` module behind the existing `GameLobby` API.
-4. Split practice/private game ownership into per-game processes.
-5. Add Ecto/Postgres for Steam users and entitlement records.
-6. Wire real Steamworks identity into the `steam_required` launch gate.
-7. Integrate real Steamworks identity and achievements.
-8. Convert local cosmetic unlocks into Steam entitlement-aware unlocks.
-9. Run load tests and tune infrastructure before release.
+1. Sign and test the Windows installer/uninstaller on a clean machine.
+2. Finish Steamworks onboarding, app/depot IDs, and the first internal SteamPipe upload.
+3. Launch the packaged build from the real Steam client and verify overlay, deep links, window modes, and reconnect.
+4. Wire real Steamworks identity into the `steam_required` launch gate.
+5. Integrate the first Steam achievements and cloud-save decision.
+6. Add Ecto/Postgres for Steam users, entitlements, and operational persistence.
+7. Convert local cosmetic unlocks into Steam entitlement-aware unlocks.
+8. Run real WebSocket/Steam-client load tests and tune infrastructure before release.
 
 ## Non-goals for now
 

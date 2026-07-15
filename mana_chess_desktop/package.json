@@ -18,8 +18,8 @@
     "check": "node scripts/check-syntax.cjs",
     "build-info": "node scripts/write-build-info.cjs",
     "start": "electron .",
-    "pack:win": "node scripts/write-build-info.cjs && electron-builder --dir --win --x64",
-    "dist:win": "node scripts/write-build-info.cjs && electron-builder --win nsis --x64",
+    "pack:win": "node scripts/write-build-info.cjs && node scripts/run-electron-builder.cjs --dir --win --x64",
+    "dist:win": "node scripts/write-build-info.cjs && node scripts/run-electron-builder.cjs --win nsis --x64",
     "smoke:win": "node scripts/smoke-win-app.cjs",
     "smoke:win:steam": "node scripts/smoke-win-app.cjs --mode=windowed --steam-env",
     "smoke:win:modes": "node scripts/smoke-win-app.cjs --all-modes",
@@ -52,7 +52,7 @@
     ],
     "win": {
       "icon": "build/icon.ico",
-      "signAndEditExecutable": false,
+      "signAndEditExecutable": true,
       "signtoolOptions": {
         "publisherName": "Diesel337"
       },

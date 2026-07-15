@@ -2,11 +2,11 @@ const fs = require("node:fs")
 const path = require("node:path")
 const crypto = require("node:crypto")
 const {execFileSync} = require("node:child_process")
+const {verifyWindowsExecutableResources} = require("./verify-win-executable-resources.cjs")
 
 const desktopRoot = path.resolve(__dirname, "..")
 const node = process.execPath
 const packageJson = JSON.parse(fs.readFileSync(path.join(desktopRoot, "package.json"), "utf8"))
-const electronBuilder = path.join(desktopRoot, "node_modules", "electron-builder", "cli.js")
 const buildInfoPath = path.join(desktopRoot, "src", "build-info.generated.json")
 const iconPngPath = path.join(desktopRoot, "build", "icon.png")
 const iconIcoPath = path.join(desktopRoot, "build", "icon.ico")
@@ -74,7 +74,7 @@ function readBuildInfo() {
   }
 }
 
-function writeReleaseManifest(artifacts) {
+function writeReleaseManifest(artifacts, windowsExecutable) {
   const build = readBuildInfo()
   const manifest = {
     schemaVersion: 1,
@@ -83,6 +83,7 @@ function writeReleaseManifest(artifacts) {
     appId: packageJson.build?.appId || "",
     generatedAt: new Date().toISOString(),
     build,
+    windowsExecutable,
     artifacts
   }
 
@@ -91,6 +92,10 @@ function writeReleaseManifest(artifacts) {
 }
 
 function validateIconAssets() {
+  if (packageJson.build?.win?.signAndEditExecutable !== true) {
+    throw new Error("package.json build.win.signAndEditExecutable must be true")
+  }
+
   if (packageJson.build?.win?.icon !== "build/icon.ico") {
     throw new Error("package.json build.win.icon must point to build/icon.ico")
   }
@@ -141,11 +146,8 @@ validateIconAssets()
 run(node, ["scripts/check-syntax.cjs"])
 run(node, ["scripts/write-build-info.cjs"])
 
-if (!fs.existsSync(electronBuilder)) {
-  throw new Error("electron-builder is not installed. Run npm ci first.")
-}
-
-run(node, [electronBuilder, "--win", "nsis", "--x64"])
+run(node, ["scripts/run-electron-builder.cjs", "--win", "nsis", "--x64"])
+const windowsExecutable = verifyWindowsExecutableResources(exePath)
 
 const artifacts = [
   artifactInfo("desktop-icon-png", iconPngPath),
@@ -174,7 +176,7 @@ if (header.toString("ascii") !== "MZ") {
   throw new Error("Installer does not have a Windows executable MZ header.")
 }
 
-const manifest = writeReleaseManifest(artifacts)
+const manifest = writeReleaseManifest(artifacts, windowsExecutable)
 
 for (const artifact of manifest.artifacts) {
   const megabytes = Math.round(artifact.bytes / 1024 / 1024)

@@ -88,8 +88,9 @@ Official reference:
 - [~] Deep links `manachess://` exist. `npm run smoke:win:deep-link` now verifies startup game links and `npm run smoke:win:second-instance` verifies runtime relaunch handoff to the existing desktop window; real Steam client/deep-link QA still pending.
 - [~] Desktop bridge exists. `npm run smoke:win:bridge` now verifies the packaged executable exposes `window.ManaChessDesktop`, reads/copies/resets desktop state, reads/copies diagnostics, copies share/deep links, marks desktop mode, and records bridge IPC events.
 - [~] Local desktop QA state exists.
-- [~] Final app icon is approved. `npm run verify:win:installer` now validates `build/icon.png`, `build/icon.ico`, and package icon wiring; final visual approval still pending.
+- [~] Final app icon is approved. Windows builds now embed the Mana Chess icon instead of Electron's default and expose `Mana Chess`/`Diesel337` product metadata; `npm run verify:win` and `npm run verify:win:installer` validate both automatically. Final owner visual approval still pending.
 - [~] Installer is tested on a clean Windows machine. `npm run verify:win:installer` now builds and verifies the NSIS installer artifact without launching it and writes local SHA256 release hashes; clean-machine install pass still pending.
+- [ ] Windows executable and installer are signed with the intended release certificate and pass SmartScreen/publisher QA. Current local candidates intentionally remain unsigned.
 - [ ] Uninstall behavior is tested.
 - [~] Window restore, maximize, fullscreen, and relaunch behavior are tested. `npm run smoke:win:modes` now covers packaged launch/log smoke for windowed, maximized, and fullscreen; `npm run smoke:win:second-instance` covers single-instance relaunch handoff; `npm run release:win:preflight` includes them for release candidates. Manual restore QA still needed.
 - [~] Offline/error screen is acceptable for online-required launch. `npm run smoke:win:offline` verifies the packaged app reaches the offline path and writes QA logs; `npm run smoke:win:reconnect` verifies auto-recovery when the service comes back; `npm run release:win:preflight` includes both for release candidates. Visual/copy review still needed.
@@ -97,7 +98,7 @@ Official reference:
 - [x] Desktop build has a clear app version strategy.
 - [x] Crash/error logs are accessible for QA.
 - [~] Steam overlay compatibility is checked. Desktop diagnostics now record Steam launch context and `npm run smoke:win:steam` verifies the packaged app captures Steam-like environment variables; real Steam client overlay QA still pending.
-- [~] Build can be reproduced from a clean checkout. `npm run verify:win` now checks entry files, writes build metadata, builds unpacked Windows, and verifies the exe; `npm run verify:win:installer` verifies the unpacked exe plus NSIS installer artifact and writes `dist/release-manifest.json`; `npm run release:win:preflight` chains installer/build verification plus window, Steam-env, and offline smokes. Still needs a clean-machine pass.
+- [~] Build can be reproduced from a clean checkout. Windows commands prepare a pinned, SHA256-verified resource-editing cache; `npm run verify:win` checks syntax, build metadata, embedded product identity, and the icon; `npm run verify:win:installer` adds the NSIS artifacts and release manifest; `npm run release:win:preflight` chains installer/build verification plus window, Steam-env, deep-link, bridge, reconnect, and offline smokes. Still needs a clean-machine pass.
 
 ## 5. SteamPipe and depots
 
@@ -147,9 +148,10 @@ Official reference:
 
 ## 8. Backend scalability
 
-Prototype constraint:
+Current architecture:
 
-- [~] Current multiplayer state is centralized in `ManaChessOnline.GameLobby`.
+- [x] Active match state is owned by supervised `ManaChessOnline.GameServer` processes; `GameLobby` coordinates discovery, public API calls, global settings, and focused policy flows.
+- [~] Runtime state remains memory-only on one application node; persistence and horizontal ownership are still pending.
 
 Release candidate target:
 
@@ -158,8 +160,8 @@ Release candidate target:
 - [x] Add `GameServer` process per game.
 - [x] Add `GameSupervisor` DynamicSupervisor.
 - [x] Add Registry lookup by `game_id`.
-- [~] Split lobby discovery from per-game state. Game processes are mirrored, not authoritative yet.
-- [~] Move bot ticks into per-game processes or workers. GameServer now runs the shared tick pipeline and bot decisions; Lobby still mirrors state for views.
+- [x] Split lobby discovery from authoritative per-game state. Live reads, decisions, mutations, snapshots, metrics, and broadcasts use `GameServer` state.
+- [x] Move bot ticks into per-game processes or workers. `GameServer` runs the shared tick pipeline and bot decisions.
 - [~] Broadcast only changed game/lobby state. Idle ticks no longer emit unchanged game/lobby payloads.
 - [~] Add rate limits for chat, joins, moves, private room creation, and reconnects. Chat, move spam, private room bursts, seat spam, and reconnect/watch bursts are limited; launch tuning still needed after load tests.
 - [~] Add metrics for websocket latency, process mailbox sizes, game count, memory, CPU, PubSub fanout, and bot CPU. Admin now exposes a first process/game/memory/mailbox snapshot; websocket latency, PubSub fanout, CPU detail, and bot CPU still need launch telemetry/load tooling.

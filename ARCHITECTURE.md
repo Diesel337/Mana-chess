@@ -30,7 +30,7 @@ Useful docs:
 
 ## Backend runtime map
 
-The backend has been moving toward live `GameServer` processes as the source of truth for active matches. New runtime decisions should prefer the live game process over stale lobby mirrors.
+Live `GameServer` processes are the source of truth for active matches. New runtime decisions must read or mutate the live game process rather than stale lobby mirrors.
 
 - `game_server.ex`: per-game GenServer wrapper and live state owner.
 - `game_supervisor.ex`: starts and supervises game processes.
@@ -102,6 +102,8 @@ The desktop app is an Electron wrapper around the production or local Phoenix ap
 - `mana_chess_desktop/build/`: app icons and build assets.
 - `mana_chess_desktop/steam/`: non-secret SteamPipe templates.
 - `mana_chess_desktop/dist/`: generated local build artifacts; do not treat as source.
+
+Windows packaging goes through `scripts/run-electron-builder.cjs`, which prepares the pinned resource-editing tool cache before invoking electron-builder. `scripts/verify-win-executable-resources.cjs` verifies the product metadata and Mana Chess icon embedded in the generated executable.
 
 Useful commands are documented in `mana_chess_desktop/README.md`.
 
