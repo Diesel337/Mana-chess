@@ -32,6 +32,11 @@
     "verify:win": "node scripts/verify-win-build.cjs",
     "verify:win:signatures": "node scripts/verify-win-signatures.cjs",
     "verify:win:installer": "node scripts/verify-win-installer.cjs",
+    "steam:verify": "node scripts/prepare-steam-build.cjs --verify --app-id=111111 --depot-id=111112",
+    "steam:prepare:preview": "node scripts/prepare-steam-build.cjs",
+    "steam:prepare:upload": "node scripts/prepare-steam-build.cjs --upload",
+    "steam:preview": "node scripts/run-steam-build.cjs",
+    "steam:upload": "node scripts/run-steam-build.cjs --upload",
     "release:win:preflight": "node scripts/release-preflight-win.cjs"
   },
   "devDependencies": {

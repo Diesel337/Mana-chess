@@ -175,22 +175,41 @@ Run the full Windows release preflight before a Steam candidate:
 npm run release:win:preflight
 ```
 
-`release:win:preflight` runs the desktop syntax check, validates the non-secret SteamPipe templates, builds and verifies the unpacked app plus NSIS installer with `verify:win:installer`, performs the isolated install/launch/uninstall cycle, then runs the window mode, env/long-arg launch mode, Steam environment, deep-link, bridge, reconnect, and offline smoke tests. It inherits `MANA_CHESS_REQUIRE_SIGNED=1` for signed release gates.
+`release:win:preflight` runs the desktop syntax check, validates the non-secret SteamPipe templates, builds and verifies the unpacked app plus NSIS installer with `verify:win:installer`, verifies the exact Steam depot inventory and hashes, performs the isolated install/launch/uninstall cycle, then runs the window mode, env/long-arg launch mode, Steam environment, deep-link, bridge, reconnect, and offline smoke tests. It inherits `MANA_CHESS_REQUIRE_SIGNED=1` for signed release gates.
 
-## SteamPipe templates
+## SteamPipe release flow
 
-Non-secret upload templates live in `steam/`. They assume the packaged Windows payload is `dist/win-unpacked` and the Steam launch executable is `Mana Chess.exe`.
+The Steam scripts use `dist/win-unpacked` as the Windows depot and `Mana Chess.exe` as its launch executable. Configure the real IDs and Steam build account outside git:
 
 ```powershell
-npm run verify:win
-cd steam
-copy app_build_steam_app.vdf.example app_build_steam_app.vdf
-copy depot_build_windows.vdf.example depot_build_windows.vdf
-# Edit placeholders with Steamworks app/depot IDs, then:
-steamcmd +login <steam_username> +run_app_build .\app_build_steam_app.vdf +quit
+$env:STEAMWORKS_SDK_PATH="C:\steamworks_sdk"
+$env:MANA_CHESS_STEAM_APP_ID="<app-id>"
+$env:MANA_CHESS_STEAM_DEPOT_ID="<windows-depot-id>"
+$env:MANA_CHESS_STEAM_USERNAME="<build-account>"
 ```
 
-The real `.vdf` files, SteamCMD logs, and Steam build output are ignored locally. Keep Steam credentials and unpublished app/depot IDs outside git.
+Verify the local payload without writing VDF files:
+
+```powershell
+npm run steam:verify
+```
+
+Prepare and run SteamCMD's safe preview:
+
+```powershell
+npm run steam:prepare:preview
+npm run steam:preview
+```
+
+Prepare an upload only after the release candidate passes:
+
+```powershell
+npm run steam:prepare:upload
+$env:MANA_CHESS_STEAM_UPLOAD_CONFIRM="UPLOAD_$env:MANA_CHESS_STEAM_APP_ID"
+npm run steam:upload
+```
+
+Preview is the default. Upload requires a VDF without `Preview` plus the exact AppID-bound confirmation. The tooling never accepts or passes a Steam password, rejects automatic assignment to the default branch, verifies app/depot consistency, and writes an ignored per-file hash manifest at `dist/steam-depot-manifest.json`. See `steam/README.md` for SDK discovery, private-branch `SetLive`, exclusions, and first-upload details.
 
 ## Desktop v2 notes
 

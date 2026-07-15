@@ -94,19 +94,19 @@ Official reference:
 - [x] Automated uninstall behavior is tested. The NSIS include removes `manachess://`, and the installer smoke verifies uninstall registry, shortcuts, protocol registration, and application files are gone.
 - [~] Window restore, maximize, fullscreen, and relaunch behavior are tested. `npm run smoke:win:modes` now covers packaged launch/log smoke for windowed, maximized, and fullscreen; `npm run smoke:win:second-instance` covers single-instance relaunch handoff; `npm run release:win:preflight` includes them for release candidates. Manual restore QA still needed.
 - [~] Offline/error screen is acceptable for online-required launch. `npm run smoke:win:offline` verifies the packaged app reaches the offline path and writes QA logs; `npm run smoke:win:reconnect` verifies auto-recovery when the service comes back; `npm run release:win:preflight` includes both for release candidates. Visual/copy review still needed.
-- [~] Steam launch option points to the correct executable. SteamPipe docs identify `Mana Chess.exe`; Steamworks launch option still needs live app config.
+- [~] Steam launch option points to the correct executable. SteamPipe config, manifest, and docs identify `Mana Chess.exe`; Steamworks launch option still needs live app config.
 - [x] Desktop build has a clear app version strategy.
 - [x] Crash/error logs are accessible for QA.
 - [~] Steam overlay compatibility is checked. Desktop diagnostics now record Steam launch context and `npm run smoke:win:steam` verifies the packaged app captures Steam-like environment variables; real Steam client overlay QA still pending.
-- [~] Build can be reproduced from a clean checkout. Windows commands prepare a pinned, SHA256-verified resource-editing cache; `npm run verify:win` checks syntax, build metadata, embedded product identity, and the icon; `npm run verify:win:installer` adds Authenticode status, NSIS artifacts, and the release manifest; `npm run release:win:preflight` adds the isolated installer lifecycle plus window, Steam-env, deep-link, bridge, reconnect, and offline smokes. Still needs a separate clean-machine pass and signed candidate.
+- [~] Build can be reproduced from a clean checkout. Windows commands prepare a pinned, SHA256-verified resource-editing cache; `npm run verify:win` checks syntax, build metadata, embedded product identity, and the icon; `npm run verify:win:installer` adds Authenticode status, NSIS artifacts, and the release manifest; `npm run release:win:preflight` adds deterministic Steam depot inventory/hashes, the isolated installer lifecycle, and window, Steam-env, deep-link, bridge, reconnect, and offline smokes. Still needs a separate clean-machine pass and signed candidate.
 
 ## 5. SteamPipe and depots
 
-- [ ] SteamCMD is installed for release build upload.
-- [~] Windows depot is configured. Non-secret SteamPipe templates point at `mana_chess_desktop/dist/win-unpacked`; real Steamworks app/depot IDs still pending.
-- [~] Build scripts are created and stored outside secrets. Templates live in `mana_chess_desktop/steam/`, copied real `.vdf` files, logs, and build output are ignored, and `npm run release:win:preflight` validates the template shape.
+- [ ] SteamCMD is installed for release build upload. It is not present on the current machine; install it from the latest Steamworks SDK after onboarding and set `STEAMWORKS_SDK_PATH`.
+- [~] Windows depot is configured. Generated SteamPipe config points at `mana_chess_desktop/dist/win-unpacked`, requires the executable/app archive, excludes updater/installer-only files and QA state, and records a per-file SHA256 manifest; real Steamworks app/depot IDs still pending.
+- [x] Build scripts are created and stored outside secrets. `steam:verify`, `steam:prepare:preview`, `steam:prepare:upload`, `steam:preview`, and `steam:upload` validate the payload, keep generated VDF/log/output files ignored, default to no-upload preview, and gate real upload with an AppID-bound confirmation.
 - [ ] Internal branch receives first uploaded build.
-- [ ] Launch branch policy is defined.
+- [~] Launch branch policy is defined in tooling. Preview cannot set a branch, `default` is never auto-assigned, and the first real build should be assigned manually to a private internal branch; final Steamworks branch names/permissions remain pending.
 - [ ] Steam build launches successfully from Steam client.
 - [ ] Build is submitted to Valve review.
 - [ ] Valve build feedback is resolved.

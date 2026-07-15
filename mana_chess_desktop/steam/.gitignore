@@ -1,4 +1,6 @@
 build-output/
+steamworks-sdk/
+steamcmd/
 *.log
 *.vdf
 !*.vdf.example

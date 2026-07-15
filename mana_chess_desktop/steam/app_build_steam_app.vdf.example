@@ -4,6 +4,7 @@
   "Desc" "Mana Chess Windows build"
   "BuildOutput" ".\\build-output"
   "ContentRoot" "..\\dist\\win-unpacked"
+  "Preview" "1"
   "SetLive" ""
 
   "Depots"

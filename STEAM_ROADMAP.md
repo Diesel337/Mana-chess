@@ -21,6 +21,7 @@ Already in place:
 - Desktop mode via `?desktop=1`.
 - `manachess://` deep links.
 - Desktop bridge exposed as `window.ManaChessDesktop`.
+- Reproducible Windows packaging, installer lifecycle QA, Steam depot inventory, safe SteamPipe preview, and guarded upload commands.
 - Local desktop state for QA/Steam-ready hooks.
 - Cosmetic shop prototype with local unlocks and palette previews.
 - Chat, private links, spectator flow, practice, tutorial, bot, local stats, sound.
@@ -179,9 +180,9 @@ See `STEAM_RELEASE_CHECKLIST.md` for the operational Steam release gate list.
 
 ## Suggested next cuts
 
-1. Acquire the Windows release certificate, pass `MANA_CHESS_REQUIRE_SIGNED=1`, and repeat the automated installer lifecycle on a separate clean machine.
-2. Finish Steamworks onboarding, app/depot IDs, and the first internal SteamPipe upload.
-3. Launch the packaged build from the real Steam client and verify overlay, deep links, window modes, and reconnect.
+1. Finish Steamworks onboarding, create the app/depot IDs, install the latest SDK/SteamCMD, and run the automated SteamPipe preview.
+2. Acquire the Windows release certificate, pass `MANA_CHESS_REQUIRE_SIGNED=1`, and repeat the automated installer lifecycle on a separate clean machine.
+3. Upload the first candidate to a private internal branch, launch it from the real Steam client, and verify overlay, deep links, window modes, and reconnect.
 4. Wire real Steamworks identity into the `steam_required` launch gate.
 5. Integrate the first Steam achievements and cloud-save decision.
 6. Add Ecto/Postgres for Steam users, entitlements, and operational persistence.

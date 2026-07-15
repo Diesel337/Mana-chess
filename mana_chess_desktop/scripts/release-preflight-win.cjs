@@ -48,10 +48,15 @@ function validateSteamPipeTemplates() {
   assertIncludes(appBuild, appBuildPath, "<STEAM_APP_ID>")
   assertIncludes(appBuild, appBuildPath, "<WINDOWS_DEPOT_ID>")
   assertIncludes(appBuild, appBuildPath, "..\\\\dist\\\\win-unpacked")
+  assertIncludes(appBuild, appBuildPath, "\"Preview\" \"1\"")
   assertIncludes(appBuild, appBuildPath, "depot_build_windows.vdf")
   assertIncludes(depot, depotPath, "<WINDOWS_DEPOT_ID>")
   assertIncludes(depot, depotPath, "\"LocalPath\" \"*\"")
   assertIncludes(depot, depotPath, "\"recursive\" \"1\"")
+  assertIncludes(depot, depotPath, "\"FileExclusion\" \"*.pdb\"")
+  assertIncludes(depot, depotPath, "\"FileExclusion\" \"*.log\"")
+  assertIncludes(depot, depotPath, "\"FileExclusion\" \"resources\\\\app-update.yml\"")
+  assertIncludes(depot, depotPath, "\"FileExclusion\" \"resources\\\\elevate.exe\"")
   assertIncludes(gitignore, gitignorePath, "*.vdf")
   assertIncludes(gitignore, gitignorePath, "!*.vdf.example")
   assertIncludes(gitignore, gitignorePath, "build-output/")
@@ -76,6 +81,12 @@ function main() {
   run("Desktop syntax check", node, ["scripts/check-syntax.cjs"])
   validateSteamPipeTemplates()
   run("Windows installer and build verification", node, ["scripts/verify-win-installer.cjs"])
+  run("Steam depot preparation verification", node, [
+    "scripts/prepare-steam-build.cjs",
+    "--verify",
+    "--app-id=111111",
+    "--depot-id=111112"
+  ])
   run("Windows install, launch, and uninstall smoke test", node, ["scripts/smoke-win-installer.cjs"])
 
   if (!fs.existsSync(exePath)) {

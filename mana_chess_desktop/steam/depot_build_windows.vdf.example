@@ -8,4 +8,9 @@
     "DepotPath" "."
     "recursive" "1"
   }
+
+  "FileExclusion" "*.pdb"
+  "FileExclusion" "*.log"
+  "FileExclusion" "resources\\app-update.yml"
+  "FileExclusion" "resources\\elevate.exe"
 }
