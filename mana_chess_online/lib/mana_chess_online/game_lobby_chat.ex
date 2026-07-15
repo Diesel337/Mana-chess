@@ -3,6 +3,12 @@ defmodule ManaChessOnline.GameLobbyChat do
 
   alias ManaChessOnline.{GameChat, GameLobbyServers, RateLimiter}
 
+  @chat_rate_limit {30, 10_000}
+
+  def send_chat(state, player_id, game_id, message, now_ms, sent_at) do
+    send_chat(state, player_id, game_id, message, @chat_rate_limit, now_ms, sent_at)
+  end
+
   def send_chat(state, player_id, game_id, message, rate_limits, now_ms, sent_at) do
     with {:ok, text} <- GameChat.sanitize_message(message),
          {:ok, state} <-

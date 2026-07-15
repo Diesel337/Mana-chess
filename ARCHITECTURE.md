@@ -39,18 +39,21 @@ The backend has been moving toward live `GameServer` processes as the source of 
 - `game_lobby_actions.ex`: lobby-facing game actions for reset requests, start countdowns, ready confirmations, and promotions.
 - `game_broadcast.ex`: PubSub topics, broadcast-change predicates, and emitters for room/lobby payloads.
 - `game_chat.ex`: room chat sanitization, player names, roles, and lobby log labels.
-- `game_lobby_chat.ex`: lobby chat flow for sanitizing, rate-limiting, and appending room chat entries.
+- `game_lobby_chat.ex`: lobby chat flow and its rate limit for sanitizing and appending room chat entries.
 - `game_control.ex`: turn/color/bot-control predicates and basic move-gate validation.
 - `game_lobby_servers.ex`: helpers for syncing, listing, reading, replacing, enqueueing, ticking, updating, assignment lookup, and stopping live game servers.
-- `game_lobby_rooms.ex`: lobby-state room lifecycle operations for seating, leaving, clearing, resetting, practice rooms, and private rooms.
+- `game_lobby_runtime.ex`: boundary for live snapshots, public views, runtime topics, metrics process lists, and lobby/game broadcasts.
+- `game_lobby_presence.ex`: join/watch/leave flows, presence rate limits, and public-lobby change detection.
+- `game_lobby_matchmaking.ex`: requested seating, open-seat matchmaking, private-room creation, and their rate limits.
+- `game_lobby_rooms.ex`: lobby-state room lifecycle operations for seating, leaving, authorized clearing, resetting, practice rooms, and private rooms.
 - `game_lobby_settings.ex`: lobby/admin settings flow for global settings, practice refreshes, and player-controlled room settings.
 - `game_lobby_tick.ex`: lobby tick reducer for live game ticking, changed-game detection, lobby-change detection, and rate-limit pruning.
-- `game_lobby_moves.ex`: lobby move enqueue/rejection flow that validates player control, cooldowns, legal destinations, and logs rejected moves.
+- `game_lobby_moves.ex`: rate-limited move enqueue/rejection flow that validates player control, cooldowns, legal destinations, and logs rejected moves.
 - `game_lobby_practice.ex`: lobby practice-mode flow for starting practice games, toggling bots, and swapping player/BOT sides.
 - `game_lobby_view.ex`: public lobby/game/player/spectator payload and current-view builders.
 - `game_rooms.ex`: room constructors, occupancy/open-slot helpers, readiness/status helpers, room permissions, seat/private-room lifecycle, and room reset/clear states.
 - `game_promotion.ex`: promotion choice normalization by color.
-- `game_lobby.ex`: lobby coordination, matchmaking, admin/game actions, broadcasts, and compatibility surface.
+- `game_lobby.ex`: public API and GenServer callback coordinator. It delegates rules, live reads, state transitions, views, and broadcasts to focused modules.
 - `game_state.ex`: game state struct and state helpers.
 - `game_settings.ex`: global/default settings sanitization, migration, persistence, and elixir helpers.
 - `game_engine.ex`: move application, turns, mana, cooldown, and core mutations.
@@ -61,10 +64,22 @@ The backend has been moving toward live `GameServer` processes as the source of 
 - `game_players.ex`: player assignment map helpers.
 - `rate_limiter.ex`: request/action throttling and rate-limit state updates.
 
-Current large modules:
+## Lobby modularization checkpoint
 
-- `game_lobby.ex`: still the broadest backend module. Split candidates are matchmaking, private matches, room/player views, broadcast payloads, and admin/config operations.
-- `game_live.ex`: still the broadest LiveView module. Split candidates are event handlers, assign builders, render helpers, chat, cosmetics, and game action dispatch.
+The Steam-launch backend modularization pass is complete. `GameLobby` intentionally keeps the public API and callback order visible in one place, but it no longer owns private matchmaking, presence, room-clear, live-read, view, broadcast, chat-limit, or move-limit helpers.
+
+The normal request path is:
+
+1. `GameLobby` receives the synchronous call and coordinates the reply/effects.
+2. A focused `GameLobby*` flow module applies policy and state transitions.
+3. `GameLobbyServers` reads or mutates the live `GameServer` process.
+4. `GameLobbyRuntime` builds public payloads and emits updates when required.
+
+Keep new game rules out of `GameLobby` callbacks. Add them to the focused flow/domain module and cover that module directly, then retain an integration assertion in `game_lobby_test.exs` for cross-process behavior.
+
+Current large UI module:
+
+- `game_live.ex`: still the broadest LiveView module. Split it along event/assign/component boundaries only while implementing the next responsive game UX; it is no longer a prerequisite for returning to Steam packaging.
 
 ## Web/UI map
 
@@ -127,10 +142,9 @@ Use the stronger desktop smoke/build commands from `mana_chess_desktop/README.md
 - Backend-only changes do not require resize/fit checks.
 - Visual changes require responsive fit checks before deploy.
 
-## Next modularization targets
+## Next engineering priorities
 
-1. Continue reducing stale lobby reads by routing remaining critical decisions through live `GameServer` state.
-2. Split `game_lobby.ex` into focused modules once a boundary is obvious from tests.
-3. Split `game_live.ex` by event groups and assign/render helpers after backend state ownership is stable.
-4. Keep frontend browser modules aligned with `assets/js/README.md`.
-5. Keep desktop release work isolated inside `mana_chess_desktop/`.
+1. Treat backend lobby modularization as complete unless a concrete behavior exposes a missing boundary.
+2. Resume the Steam roadmap with desktop build verification, production/offline launch flow, real executable icon, and window/fullscreen behavior.
+3. Modularize `game_live.ex` opportunistically while implementing the responsive board and compact match layout.
+4. Keep frontend browser modules aligned with `assets/js/README.md` and desktop release work inside `mana_chess_desktop/`.

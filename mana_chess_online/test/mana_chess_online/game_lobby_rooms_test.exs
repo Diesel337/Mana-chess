@@ -60,4 +60,41 @@ defmodule ManaChessOnline.GameLobbyRoomsTest do
     assert state.games[game_id].private?
     assert GameLobbyServers.assigned_game(%{game_id: game_id}, state.games).id == game_id
   end
+
+  test "authorizes seated players to clear waiting rooms" do
+    game_id = "lobby_room_clear_" <> Integer.to_string(System.unique_integer([:positive]))
+    game = GameRooms.new_game(game_id, settings())
+    on_exit(fn -> GameSupervisor.stop_game(game_id) end)
+
+    state =
+      game
+      |> state()
+      |> GameLobbyRooms.assign_player("white-player", game_id, :white)
+      |> GameLobbyRooms.assign_player("black-player", game_id, :black)
+
+    assert {:error, :forbidden, ^state} =
+             GameLobbyRooms.clear_room(state, "intruder", game_id)
+
+    assert {:ok, state} = GameLobbyRooms.clear_room(state, "white-player", game_id)
+
+    assert state.games[game_id].status == :waiting
+    assert state.games[game_id].players == %{white: nil, black: nil}
+    refute Map.has_key?(state.players, "white-player")
+    refute Map.has_key?(state.players, "black-player")
+  end
+
+  test "force-clears eligible rooms without a player assignment" do
+    game_id = "lobby_room_force_clear_" <> Integer.to_string(System.unique_integer([:positive]))
+    game = GameRooms.new_game(game_id, settings())
+    on_exit(fn -> GameSupervisor.stop_game(game_id) end)
+
+    state =
+      game
+      |> state()
+      |> GameLobbyRooms.assign_player("white-player", game_id, :white)
+      |> GameLobbyRooms.force_clear_room(game_id)
+
+    assert state.games[game_id].players == %{white: nil, black: nil}
+    refute Map.has_key?(state.players, "white-player")
+  end
 end

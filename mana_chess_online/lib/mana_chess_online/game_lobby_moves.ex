@@ -1,7 +1,23 @@
 defmodule ManaChessOnline.GameLobbyMoves do
   @moduledoc false
 
-  alias ManaChessOnline.{GameChat, GameControl, GameEngine, GameLobbyServers, GamePlayers}
+  alias ManaChessOnline.{
+    GameChat,
+    GameControl,
+    GameEngine,
+    GameLobbyServers,
+    GamePlayers,
+    RateLimiter
+  }
+
+  @move_rate_limit {60, 1_000}
+
+  def enqueue(state, player_id, from, to, now) do
+    case RateLimiter.take_state(state, {:move, player_id}, @move_rate_limit, now) do
+      {:ok, state} -> enqueue_move(state, player_id, from, to, now)
+      {:error, :rate_limited, state} -> {state, nil}
+    end
+  end
 
   def enqueue_move(state, player_id, from, to, now) do
     with %{game_id: game_id, color: player_color} <- GamePlayers.assignment(state, player_id),

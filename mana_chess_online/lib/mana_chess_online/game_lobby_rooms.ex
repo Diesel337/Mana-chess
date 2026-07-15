@@ -84,6 +84,35 @@ defmodule ManaChessOnline.GameLobbyRooms do
     |> put_in([:games, game_id], replace_game_state(GameRooms.cleared_game_state(game_id, game)))
   end
 
+  def clear_room(state, player_id, game_id) do
+    case game_snapshot(game_id, state) do
+      %{practice?: false} = game when game.status in [:waiting, :ready] ->
+        if GameRooms.can_clear_room?(
+             GamePlayers.assignment(state, player_id),
+             player_id,
+             game_id,
+             game
+           ) do
+          {:ok, clear_room_state(state, game_id, game)}
+        else
+          {:error, :forbidden, state}
+        end
+
+      _ ->
+        {:error, :not_clearable, state}
+    end
+  end
+
+  def force_clear_room(state, game_id) do
+    case game_snapshot(game_id, state) do
+      %{practice?: false} = game when game.status in [:waiting, :ready] ->
+        clear_room_state(state, game_id, game)
+
+      _ ->
+        state
+    end
+  end
+
   def ensure_private_game(state, game_id) do
     if GameRooms.private_game_id?(game_id) do
       case game_snapshot(game_id, state) do
