@@ -40,8 +40,9 @@ npm run release:win:preflight
 ```
 
 It builds and verifies the Windows candidate, runs the installer and app smokes, then
-inventories the exact Steam depot payload. The depot requires `Mana Chess.exe` and
-`resources/app.asar`, rejects symlinks and QA state, and excludes PDB/log files,
+inventories the exact Steam depot payload. The depot requires `Mana Chess.exe`,
+`resources/app.asar`, `steam_api64.dll`, and the Steamworks N-API binding under
+`resources/app.asar.unpacked`; it rejects symlinks and QA state, and excludes PDB/log files,
 `resources/app-update.yml`, and `resources/elevate.exe`. Steam owns updates for this
 payload, and the NSIS elevation helper is not needed by the unpacked Steam build.
 
@@ -93,6 +94,8 @@ placeholders, missing confirmation, or an unavailable SteamCMD executable.
 ## Launch mode notes
 
 The default Steam launch option should point to `Mana Chess.exe` without extra arguments.
+Steam supplies the AppID environment used by the main-process Steamworks identity/session
+flow; no publisher key or ticket belongs in a launch option.
 For QA-only launch options, the packaged app also accepts:
 
 ```text

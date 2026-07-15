@@ -22,9 +22,15 @@ For a Steam-only launch rehearsal, set:
 ```bash
 MANA_CHESS_LAUNCH_ACCESS=steam_required
 MANA_CHESS_QA_BYPASS_KEY=<private qa key>
+MANA_CHESS_STEAM_APP_ID=<steam app id>
+MANA_CHESS_STEAM_WEB_API_PUBLISHER_KEY=<publisher key>
 ```
 
-In `steam_required` mode, public lobby/game routes return a Steam-required page unless the request has a future Steam-verified session or the QA bypass key is provided with `?qa_key=...` or `x-mana-chess-qa-key`. `/admin` remains reachable for its existing admin login.
+Optional Steam settings are `MANA_CHESS_STEAM_TICKET_IDENTITY` (default `mana-chess-desktop-v1`) and `MANA_CHESS_STEAM_SESSION_TTL_SECONDS` (default `86400`). The ticket identity must match the desktop runtime. The publisher key belongs only on the Phoenix/Railway service and must never be packaged in Electron.
+
+The desktop posts a one-use hexadecimal ticket to `POST /auth/steam`. Phoenix verifies it with `AuthenticateUserTicket`, checks the active base-app license with `CheckAppOwnership`, renews the signed browser session, and stores only SteamID/owner/AppID/ownership metadata. Raw tickets and publisher keys are not stored in the cookie.
+
+In `steam_required` mode, public lobby/game routes return a Steam-required page unless the request has a current verified Steam session or the QA bypass key is provided with `?qa_key=...` or `x-mana-chess-qa-key`. Verified player identity becomes `steam_<steamid>`. `/admin` remains reachable for its existing admin login. Keep the launch gate `open` until the real AppID/publisher key flow has passed a Steam-client rehearsal.
 
 ## Learn more
 

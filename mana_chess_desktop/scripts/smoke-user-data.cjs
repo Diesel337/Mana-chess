@@ -16,6 +16,7 @@ function desktopLogPath(userDataDir) {
 function smokeLaunchEnv(overrides = {}) {
   return {
     ...process.env,
+    MANA_CHESS_DISABLE_STEAM_NATIVE: "1",
     MANA_CHESS_DISABLE_PROTOCOL_REGISTRATION: "1",
     ...overrides
   }

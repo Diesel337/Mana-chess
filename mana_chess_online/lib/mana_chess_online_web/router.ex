@@ -1,6 +1,14 @@
 defmodule ManaChessOnlineWeb.Router do
   use ManaChessOnlineWeb, :router
 
+  alias ManaChessOnline.SteamAuth
+
+  pipeline :steam_auth do
+    plug :accepts, ["json"]
+    plug :fetch_session
+    plug :put_secure_browser_headers
+  end
+
   pipeline :browser do
     plug :accepts, ["html"]
     plug :fetch_session
@@ -16,6 +24,12 @@ defmodule ManaChessOnlineWeb.Router do
     plug :accepts, ["json"]
   end
 
+  scope "/auth", ManaChessOnlineWeb do
+    pipe_through :steam_auth
+
+    post "/steam", SteamAuthController, :create
+  end
+
   scope "/", ManaChessOnlineWeb do
     pipe_through :browser
 
@@ -25,9 +39,16 @@ defmodule ManaChessOnlineWeb.Router do
   end
 
   defp ensure_player_id(conn, _opts) do
-    case Plug.Conn.get_session(conn, :player_id) do
-      nil -> Plug.Conn.put_session(conn, :player_id, random_player_id())
-      _player_id -> conn
+    steam_player_id =
+      conn
+      |> Plug.Conn.get_session(SteamAuth.session_key())
+      |> SteamAuth.player_id()
+
+    case {steam_player_id, Plug.Conn.get_session(conn, :player_id)} do
+      {{:ok, player_id}, player_id} -> conn
+      {{:ok, player_id}, _current_player_id} -> Plug.Conn.put_session(conn, :player_id, player_id)
+      {:error, nil} -> Plug.Conn.put_session(conn, :player_id, random_player_id())
+      {:error, _player_id} -> conn
     end
   end
 

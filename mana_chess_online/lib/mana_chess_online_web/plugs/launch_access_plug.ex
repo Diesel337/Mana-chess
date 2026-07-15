@@ -10,10 +10,11 @@ defmodule ManaChessOnlineWeb.LaunchAccessPlug do
 
   import Plug.Conn
 
+  alias ManaChessOnline.SteamAuth
+
   @behaviour Plug
 
   @session_qa_key :launch_access
-  @session_steam_key :steam_verified
 
   @impl Plug
   def init(opts), do: opts
@@ -54,7 +55,9 @@ defmodule ManaChessOnlineWeb.LaunchAccessPlug do
   end
 
   defp steam_session?(conn) do
-    get_session(conn, @session_steam_key) in [true, "true", "1", "steam"]
+    conn
+    |> get_session(SteamAuth.session_key())
+    |> SteamAuth.valid_session?()
   end
 
   defp qa_bypass(conn) do

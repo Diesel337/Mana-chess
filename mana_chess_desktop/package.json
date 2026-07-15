@@ -32,6 +32,7 @@
     "verify:win": "node scripts/verify-win-build.cjs",
     "verify:win:signatures": "node scripts/verify-win-signatures.cjs",
     "verify:win:installer": "node scripts/verify-win-installer.cjs",
+    "verify:steam-session": "node scripts/verify-steam-session.cjs",
     "steam:verify": "node scripts/prepare-steam-build.cjs --verify --app-id=111111 --depot-id=111112",
     "steam:prepare:preview": "node scripts/prepare-steam-build.cjs",
     "steam:prepare:upload": "node scripts/prepare-steam-build.cjs --upload",
@@ -56,6 +57,9 @@
       "src/**/*",
       "build/icon.png",
       "package.json"
+    ],
+    "asarUnpack": [
+      "node_modules/steamworks.js/dist/**/*"
     ],
     "win": {
       "icon": "build/icon.ico",
@@ -82,5 +86,8 @@
       "shortcutName": "Mana Chess",
       "uninstallDisplayName": "Mana Chess"
     }
+  },
+  "dependencies": {
+    "steamworks.js": "0.4.0"
   }
 }

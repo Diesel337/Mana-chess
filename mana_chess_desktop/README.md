@@ -19,6 +19,22 @@ $env:MANA_CHESS_URL="http://localhost:4000/"
 npm start
 ```
 
+## Steam identity session
+
+When Steam supplies `SteamAppId` (or release QA sets `MANA_CHESS_STEAM_APP_ID`), the Electron main process initializes `steamworks.js`, reads the local SteamID/owner/license state, requests a one-use Web API ticket, and exchanges it at Phoenix `POST /auth/steam`. The request uses Electron's browser session so the resulting signed cookie is present before the game page loads. The ticket is always canceled after that request and is never exposed through preload, renderer IPC, desktop state, or diagnostics.
+
+`MANA_CHESS_STEAM_TICKET_IDENTITY` defaults to `mana-chess-desktop-v1` and must match Phoenix. The Steam publisher key is server-only and must never be set or packaged here.
+
+For direct local QA with a real AppID, `MANA_CHESS_STEAM_SKIP_RESTART=1` skips Steam's relaunch requirement. A local auth server additionally requires all three values below; arbitrary remote HTTP origins are rejected:
+
+```powershell
+$env:MANA_CHESS_URL="http://127.0.0.1:4000/"
+$env:MANA_CHESS_ALLOW_STEAM_AUTH_ORIGIN_OVERRIDE="1"
+$env:MANA_CHESS_STEAM_AUTH_ORIGIN="http://127.0.0.1:4000"
+```
+
+`MANA_CHESS_DISABLE_STEAM_NATIVE=1` is reserved for deterministic desktop smokes. Release builds should let the real Steam environment drive initialization.
+
 Force a launch window mode for Steam/QA:
 
 ```powershell
@@ -93,6 +109,14 @@ npm run check
 
 `check` runs syntax validation across `src/` and `scripts/`.
 
+Verify the Steam ticket/session lifecycle without real credentials:
+
+```powershell
+npm run verify:steam-session
+```
+
+This covers successful exchange, failure cleanup, mandatory ticket cancellation, disabled-native smokes, game/auth origin matching, and explicit loopback overrides.
+
 Create a Windows installer:
 
 ```powershell
@@ -160,7 +184,7 @@ npm run smoke:win:offline
 
 `smoke:win` launches `dist/win-unpacked/Mana Chess.exe` against a local QA page, waits for fresh `desktop.session_started` and `desktop.mode_smoke` log entries, and closes the launched process. It defaults to the `desktop-smoke` channel so QA can spot smoke runs in `desktop-log.jsonl`.
 It also verifies that the launcher records the expected `launchMode` and that bridge diagnostics report the requested window state. Use `--mode-source=env` to test `MANA_CHESS_WINDOW_MODE`, or `--mode-source=window-mode-arg` to test `--window-mode=...`.
-`smoke:win:steam` launches one windowed smoke with simulated Steam environment variables and verifies app/game/overlay IDs, client launch flags, Steam path, Deck/Tenfoot flags, and present Steam keys are captured in the session diagnostics.
+`smoke:win:steam` launches one windowed smoke with simulated Steam environment variables and native Steam initialization disabled, then verifies app/game/overlay IDs, client launch flags, Steam path, Deck/Tenfoot flags, and present Steam keys are captured in the session diagnostics.
 `smoke:win:modes` runs the same startup smoke through `windowed`, `maximized`, and `fullscreen` in sequence.
 `smoke:win:installer` requires no existing Mana Chess installation, shortcut, or protocol registration. It silently installs the NSIS candidate into a unique temporary directory, verifies executable identity, installed executable/helper/uninstaller Authenticode status, uninstall metadata, publisher, shortcuts, and `manachess://`, launches the installed executable, silently uninstalls it, verifies all owned artifacts are removed, and cleans its isolated QA data.
 `smoke:win:deep-link` launches the packaged app with a `manachess://game/private_smoke_deep_link` URL and verifies the launcher resolves it to a game route in the desktop QA log.
@@ -175,7 +199,7 @@ Run the full Windows release preflight before a Steam candidate:
 npm run release:win:preflight
 ```
 
-`release:win:preflight` runs the desktop syntax check, validates the non-secret SteamPipe templates, builds and verifies the unpacked app plus NSIS installer with `verify:win:installer`, verifies the exact Steam depot inventory and hashes, performs the isolated install/launch/uninstall cycle, then runs the window mode, env/long-arg launch mode, Steam environment, deep-link, bridge, reconnect, and offline smoke tests. It inherits `MANA_CHESS_REQUIRE_SIGNED=1` for signed release gates.
+`release:win:preflight` runs the desktop syntax and Steam session lifecycle checks, validates the non-secret SteamPipe templates, builds and verifies the unpacked app plus NSIS installer with `verify:win:installer`, requires the packaged Steam DLL/N-API binding, verifies the exact Steam depot inventory and hashes, performs the isolated install/launch/uninstall cycle, then runs the window mode, env/long-arg launch mode, Steam environment, deep-link, bridge, reconnect, and offline smoke tests. It inherits `MANA_CHESS_REQUIRE_SIGNED=1` for signed release gates.
 
 ## SteamPipe release flow
 
@@ -218,6 +242,7 @@ Preview is the default. Upload requires a VDF without `Preview` plus the exact A
 - Steam/QA can force startup with `MANA_CHESS_WINDOW_MODE`, `--window-mode`, `--fullscreen`, `--maximized`, or `--windowed`.
 - `npm run smoke:win:modes` verifies the packaged executable can start, report matching bridge window diagnostics, and write QA logs in `windowed`, `maximized`, and `fullscreen` launch modes. The release preflight also verifies `MANA_CHESS_WINDOW_MODE` and `--window-mode=...`.
 - `npm run smoke:win:steam` verifies the packaged executable records Steam launch context, including Steam path, Deck, and Tenfoot flags, when Steam-like environment variables are present.
+- Real Steam launches initialize the native client only in the main process, enable the overlay hook, authenticate Phoenix before first navigation, and expose only sanitized identity/license status through `getInfo().steam`.
 - `npm run smoke:win:deep-link` verifies the packaged executable resolves a startup `manachess://` game link to the expected desktop route.
 - `npm run smoke:win:second-instance` verifies relaunch/single-instance handoff for runtime `manachess://` links.
 - Normal packaged smokes set `MANA_CHESS_DISABLE_PROTOCOL_REGISTRATION=1` so QA runs do not replace the user's default `manachess://` handler. The installer smoke enables registration only inside its guarded lifecycle test.
@@ -306,4 +331,4 @@ The generated file is ignored by git but packaged into release builds. At runtim
 
 - This version requires internet.
 - Practice, tutorial, bot, online rooms, admin settings, and local browser stats keep using the deployed web game.
-- Later we can add Steamworks, achievements, cloud saves, rich presence, splash art, and an offline mode if needed.
+- Steamworks identity is wired. Later work includes live AppID QA, achievements, cloud saves, richer presence, splash art, and an offline mode if needed.

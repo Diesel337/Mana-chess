@@ -9,7 +9,12 @@ const packageJson = require(path.join(desktopRoot, "package.json"))
 const payloadRoot = path.join(desktopRoot, "dist", "win-unpacked")
 const defaultOutputDir = path.join(desktopRoot, "steam")
 const defaultManifestPath = path.join(desktopRoot, "dist", "steam-depot-manifest.json")
-const requiredPayloadFiles = ["Mana Chess.exe", "resources/app.asar"]
+const requiredPayloadFiles = [
+  "Mana Chess.exe",
+  "resources/app.asar",
+  "resources/app.asar.unpacked/node_modules/steamworks.js/dist/win64/steam_api64.dll",
+  "resources/app.asar.unpacked/node_modules/steamworks.js/dist/win64/steamworksjs.win32-x64-msvc.node"
+]
 const qaStateFiles = new Set([
   "desktop-log.jsonl",
   "desktop-state.json",

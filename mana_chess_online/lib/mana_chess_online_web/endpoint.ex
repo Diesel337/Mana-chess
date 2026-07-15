@@ -8,7 +8,8 @@ defmodule ManaChessOnlineWeb.Endpoint do
     store: :cookie,
     key: "_mana_chess_online_key",
     signing_salt: "DXXXnUi0",
-    same_site: "Lax"
+    same_site: "Lax",
+    secure: Application.compile_env(:mana_chess_online, :secure_session_cookie, false)
   ]
 
   socket "/live", Phoenix.LiveView.Socket,

@@ -10,6 +10,13 @@ const readArg = (name) => {
 
 const readBoolArg = (name) => readArg(name) === "1"
 
+const readOptionalBoolArg = (name) => {
+  const value = readArg(name)
+  if (value === "1") return true
+  if (value === "0") return false
+  return null
+}
+
 const readListArg = (name) => readArg(name).split(",").filter(Boolean)
 
 const desktopInfo = Object.freeze({
@@ -35,7 +42,15 @@ const desktopInfo = Object.freeze({
     steamPath: readBoolArg("mana-chess-steam-path"),
     steamDeck: readBoolArg("mana-chess-steam-deck"),
     steamTenfoot: readBoolArg("mana-chess-steam-tenfoot"),
-    presentKeys: readListArg("mana-chess-steam-present-keys")
+    presentKeys: readListArg("mana-chess-steam-present-keys"),
+    nativeReady: readBoolArg("mana-chess-steam-native-ready"),
+    nativeDisabled: readBoolArg("mana-chess-steam-native-disabled"),
+    restartRequired: readBoolArg("mana-chess-steam-restart-required"),
+    overlayReady: readBoolArg("mana-chess-steam-overlay-ready"),
+    nativeError: readArg("mana-chess-steam-native-error") || "",
+    steamId: readArg("mana-chess-steam-id") || "",
+    ownerSteamId: readArg("mana-chess-steam-owner-id") || "",
+    subscribed: readOptionalBoolArg("mana-chess-steam-subscribed")
   }
 })
 

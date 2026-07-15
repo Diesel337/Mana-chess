@@ -63,6 +63,9 @@ Live `GameServer` processes are the source of truth for active matches. New runt
 - `game_metrics.ex`: metrics and snapshots.
 - `game_players.ex`: player assignment map helpers.
 - `rate_limiter.ex`: request/action throttling and rate-limit state updates.
+- `steam_auth.ex`: Steam ticket validation boundary, signed session payloads, expiry checks, and stable Steam player IDs.
+- `steam_auth_client.ex`: behavior used to isolate the external Steam publisher API.
+- `steam_web_api_client.ex`: secure-server calls to authenticate a Web API ticket and verify current base-app ownership.
 
 ## Lobby modularization checkpoint
 
@@ -89,6 +92,7 @@ Current large UI module:
 - `components/layouts/root.html.heex`: root layout and browser JS load order.
 - `components/core_components.ex`: shared Phoenix components.
 - `controllers/page_controller.ex`: non-LiveView page endpoints.
+- `controllers/steam_auth_controller.ex`: desktop-only Steam ticket exchange; stores verified identity, never the raw ticket.
 - `plugs/`: request gates such as Steam launch access.
 
 Browser JS is intentionally modular. Start with `mana_chess_online/assets/js/README.md` before changing frontend behavior.
@@ -98,12 +102,14 @@ Browser JS is intentionally modular. Start with `mana_chess_online/assets/js/REA
 The desktop app is an Electron wrapper around the production or local Phoenix app.
 
 - `mana_chess_desktop/src/`: Electron main/preload/runtime code.
+- `mana_chess_desktop/src/steam-client.cjs`: main-process Steamworks initialization, public identity metadata, and one-use ticket lifecycle.
+- `mana_chess_desktop/src/steam-session.cjs`: pinned-origin exchange from a Steam ticket to the Phoenix session cookie.
 - `mana_chess_desktop/scripts/`: checks, packaging verification, and smoke scripts.
 - `mana_chess_desktop/build/`: app icons and build assets.
 - `mana_chess_desktop/steam/`: non-secret SteamPipe templates.
 - `mana_chess_desktop/dist/`: generated local build artifacts; do not treat as source.
 
-Windows packaging goes through `scripts/run-electron-builder.cjs`, which prepares the pinned resource-editing tool cache before invoking electron-builder. `scripts/verify-win-executable-resources.cjs` verifies the product metadata and Mana Chess icon embedded in the generated executable, while `scripts/verify-win-signatures.cjs` provides the optional required-signature gate. `scripts/smoke-win-installer.cjs` owns the guarded install/launch/uninstall lifecycle, and `build/installer.nsh` removes the desktop protocol registration during uninstall. `scripts/prepare-steam-build.cjs` inventories and hashes the exact depot payload while generating preview/upload VDFs; `scripts/run-steam-build.cjs` discovers SteamCMD and enforces the final preview/upload safety gates.
+Windows packaging goes through `scripts/run-electron-builder.cjs`, which prepares the pinned resource-editing tool cache before invoking electron-builder. `scripts/verify-steam-session.cjs` covers ticket cancellation, session exchange, and auth-origin pinning without real credentials. `scripts/verify-win-executable-resources.cjs` verifies the product metadata and Mana Chess icon embedded in the generated executable, while `scripts/verify-win-signatures.cjs` provides the optional required-signature gate. `scripts/smoke-win-installer.cjs` owns the guarded install/launch/uninstall lifecycle, and `build/installer.nsh` removes the desktop protocol registration during uninstall. `scripts/prepare-steam-build.cjs` inventories and hashes the exact depot payload, including the Steamworks DLL/native binding, while generating preview/upload VDFs; `scripts/run-steam-build.cjs` discovers SteamCMD and enforces the final preview/upload safety gates.
 
 Useful commands are documented in `mana_chess_desktop/README.md`.
 

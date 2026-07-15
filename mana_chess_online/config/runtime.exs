@@ -27,6 +27,13 @@ config :mana_chess_online, :launch_access,
   mode: System.get_env("MANA_CHESS_LAUNCH_ACCESS", "open"),
   qa_bypass_key: System.get_env("MANA_CHESS_QA_BYPASS_KEY", "")
 
+config :mana_chess_online, :steam_auth,
+  app_id: System.get_env("MANA_CHESS_STEAM_APP_ID", ""),
+  publisher_key: System.get_env("MANA_CHESS_STEAM_WEB_API_PUBLISHER_KEY", ""),
+  ticket_identity: System.get_env("MANA_CHESS_STEAM_TICKET_IDENTITY", "mana-chess-desktop-v1"),
+  session_ttl_seconds: System.get_env("MANA_CHESS_STEAM_SESSION_TTL_SECONDS", "86400"),
+  client: ManaChessOnline.SteamWebApiClient
+
 if config_env() == :prod do
   # The secret key base is used to sign/encrypt cookies and other secrets.
   # A default value is used in config/dev.exs and config/test.exs but you

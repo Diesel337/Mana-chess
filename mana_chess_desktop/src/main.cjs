@@ -1,9 +1,16 @@
 const fs = require("node:fs")
 const path = require("node:path")
 const {app, BrowserWindow, Menu, clipboard, ipcMain, screen, shell} = require("electron")
+const {createSteamClient} = require("./steam-client.cjs")
+const {authenticateSteamSession, resolveSteamAuthOrigin} = require("./steam-session.cjs")
 
-const DEFAULT_GAME_URL = process.env.MANA_CHESS_URL || "https://mana-chess-production.up.railway.app/"
+const PRODUCTION_GAME_URL = "https://mana-chess-production.up.railway.app/"
+const DEFAULT_GAME_URL = process.env.MANA_CHESS_URL || PRODUCTION_GAME_URL
 const GAME_ORIGIN = new URL(DEFAULT_GAME_URL).origin
+const STEAM_AUTH_ORIGIN = resolveSteamAuthOrigin({
+  env: process.env,
+  defaultOrigin: new URL(PRODUCTION_GAME_URL).origin
+})
 const PROTOCOL_SCHEME = "manachess"
 const DESKTOP_BUILD_INFO_FILE = "build-info.generated.json"
 const WINDOW_STATE_FILE = "window-state.json"
@@ -13,21 +20,6 @@ const EVENT_LOG_LIMIT = 40
 const DESKTOP_EVENT_PAYLOAD_MAX_BYTES = 4096
 const DESKTOP_LOG_READ_LIMIT = 80
 const DESKTOP_LOG_MAX_BYTES = 512 * 1024
-const STEAM_ENV_NAMES = [
-  "SteamAppId",
-  "SteamGameId",
-  "SteamOverlayGameId",
-  "STEAM_APP_ID",
-  "STEAM_APPID",
-  "STEAM_GAME_ID",
-  "STEAM_GAMEID",
-  "STEAM_OVERLAY_GAME_ID",
-  "SteamClientLaunch",
-  "SteamEnv",
-  "SteamPath",
-  "SteamDeck",
-  "SteamTenfoot"
-]
 const MIN_WINDOW_WIDTH = 1024
 const MIN_WINDOW_HEIGHT = 720
 const DEFAULT_WINDOW_WIDTH = 1440
@@ -43,7 +35,7 @@ const DESKTOP_QA_BYPASS_KEY = cleanQaBypassKey(process.env.MANA_CHESS_QA_BYPASS_
 const DESKTOP_DISABLE_EXTERNAL_OPEN = process.env.MANA_CHESS_DISABLE_EXTERNAL_OPEN === "1"
 const DESKTOP_DISABLE_PROTOCOL_REGISTRATION = process.env.MANA_CHESS_DISABLE_PROTOCOL_REGISTRATION === "1"
 const DESKTOP_USER_DATA_DIR = cleanUserDataDir(process.env.MANA_CHESS_USER_DATA_DIR)
-const DESKTOP_STEAM_CONTEXT = steamLaunchContext()
+const DESKTOP_STEAM_RUNTIME = createSteamClient()
 
 let mainWindow = null
 let pendingDeepLink = findDeepLink(process.argv)
@@ -62,8 +54,9 @@ app.on("open-url", (event, url) => {
   openDeepLink(url)
 })
 
-function createWindow() {
+async function createWindow() {
   const windowState = readWindowState()
+  const steamInfo = desktopSteamInfo()
   lastNormalBounds = {...windowState.bounds}
 
   mainWindow = new BrowserWindow({
@@ -86,16 +79,24 @@ function createWindow() {
         `--mana-chess-build-dirty=${DESKTOP_BUILD_INFO.dirty}`,
         `--mana-chess-build-time=${DESKTOP_BUILD_INFO.builtAt}`,
         `--mana-chess-build-source=${DESKTOP_BUILD_INFO.source}`,
-        `--mana-chess-steam-detected=${DESKTOP_STEAM_CONTEXT.detected ? "1" : "0"}`,
-        `--mana-chess-steam-app-id=${DESKTOP_STEAM_CONTEXT.appId}`,
-        `--mana-chess-steam-game-id=${DESKTOP_STEAM_CONTEXT.gameId}`,
-        `--mana-chess-steam-overlay-game-id=${DESKTOP_STEAM_CONTEXT.overlayGameId}`,
-        `--mana-chess-steam-client-launch=${DESKTOP_STEAM_CONTEXT.clientLaunch ? "1" : "0"}`,
-        `--mana-chess-steam-env=${DESKTOP_STEAM_CONTEXT.steamEnv ? "1" : "0"}`,
-        `--mana-chess-steam-path=${DESKTOP_STEAM_CONTEXT.steamPath ? "1" : "0"}`,
-        `--mana-chess-steam-deck=${DESKTOP_STEAM_CONTEXT.steamDeck ? "1" : "0"}`,
-        `--mana-chess-steam-tenfoot=${DESKTOP_STEAM_CONTEXT.steamTenfoot ? "1" : "0"}`,
-        `--mana-chess-steam-present-keys=${DESKTOP_STEAM_CONTEXT.presentKeys.join(",")}`
+        `--mana-chess-steam-detected=${steamInfo.detected ? "1" : "0"}`,
+        `--mana-chess-steam-app-id=${steamInfo.appId}`,
+        `--mana-chess-steam-game-id=${steamInfo.gameId}`,
+        `--mana-chess-steam-overlay-game-id=${steamInfo.overlayGameId}`,
+        `--mana-chess-steam-client-launch=${steamInfo.clientLaunch ? "1" : "0"}`,
+        `--mana-chess-steam-env=${steamInfo.steamEnv ? "1" : "0"}`,
+        `--mana-chess-steam-path=${steamInfo.steamPath ? "1" : "0"}`,
+        `--mana-chess-steam-deck=${steamInfo.steamDeck ? "1" : "0"}`,
+        `--mana-chess-steam-tenfoot=${steamInfo.steamTenfoot ? "1" : "0"}`,
+        `--mana-chess-steam-present-keys=${steamInfo.presentKeys.join(",")}`,
+        `--mana-chess-steam-native-ready=${steamInfo.nativeReady ? "1" : "0"}`,
+        `--mana-chess-steam-native-disabled=${steamInfo.nativeDisabled ? "1" : "0"}`,
+        `--mana-chess-steam-restart-required=${steamInfo.restartRequired ? "1" : "0"}`,
+        `--mana-chess-steam-overlay-ready=${steamInfo.overlayReady ? "1" : "0"}`,
+        `--mana-chess-steam-native-error=${steamInfo.nativeError}`,
+        `--mana-chess-steam-id=${steamInfo.steamId}`,
+        `--mana-chess-steam-owner-id=${steamInfo.ownerSteamId}`,
+        `--mana-chess-steam-subscribed=${steamInfo.subscribed === null ? "" : steamInfo.subscribed ? "1" : "0"}`
       ],
       contextIsolation: true,
       nodeIntegration: false,
@@ -118,6 +119,18 @@ function createWindow() {
   const initialUrl = pendingGameUrl || DEFAULT_GAME_URL
   pendingDeepLink = null
   pendingGameUrl = null
+  const steamAuth = await authenticateSteamSession({
+    steamClient: DESKTOP_STEAM_RUNTIME,
+    session: mainWindow.webContents.session,
+    authOrigin: STEAM_AUTH_ORIGIN,
+    gameOrigin: GAME_ORIGIN
+  })
+
+  recordDesktopEvent({
+    name: "desktop.steam_session",
+    payload: steamAuth
+  })
+
   loadGameUrl(initialUrl)
   logDeepLinkOpened(initialDeepLink, initialUrl, "startup")
 }
@@ -533,7 +546,7 @@ function desktopDiagnostics() {
       platform: process.platform,
       origin: GAME_ORIGIN,
       build: desktopBuildInfo(),
-      steam: DESKTOP_STEAM_CONTEXT
+      steam: desktopSteamInfo()
     },
     window: currentWindowDiagnostics(),
     paths: {
@@ -627,7 +640,7 @@ function desktopSessionPayload(extra = {}) {
     version: app.getVersion(),
     channel: DESKTOP_CHANNEL,
     launchMode: launchWindowMode() || "saved",
-    steam: DESKTOP_STEAM_CONTEXT,
+    steam: desktopSteamInfo(),
     ...extra
   }
 }
@@ -815,45 +828,8 @@ function desktopBuildInfo() {
   }
 }
 
-function steamLaunchContext(env = process.env) {
-  const appId = cleanSteamId(readEnv(env, ["SteamAppId", "STEAM_APP_ID", "STEAM_APPID"]))
-  const gameId = cleanSteamId(readEnv(env, ["SteamGameId", "STEAM_GAME_ID", "STEAM_GAMEID"]))
-  const overlayGameId = cleanSteamId(readEnv(env, ["SteamOverlayGameId", "STEAM_OVERLAY_GAME_ID"]))
-  const presentKeys = presentSteamEnvKeys(env)
-
-  return {
-    detected: Boolean(appId || gameId || overlayGameId || presentKeys.length > 0),
-    appId,
-    gameId,
-    overlayGameId,
-    clientLaunch: Boolean(readEnv(env, ["SteamClientLaunch"])),
-    steamEnv: Boolean(readEnv(env, ["SteamEnv"])),
-    steamPath: Boolean(readEnv(env, ["SteamPath"])),
-    steamDeck: Boolean(readEnv(env, ["SteamDeck"])),
-    steamTenfoot: Boolean(readEnv(env, ["SteamTenfoot"])),
-    presentKeys
-  }
-}
-
-function presentSteamEnvKeys(env = process.env) {
-  return STEAM_ENV_NAMES.filter(name => readEnv(env, [name]))
-}
-
-function readEnv(env = process.env, names = []) {
-  for (const name of names) {
-    if (Object.prototype.hasOwnProperty.call(env, name)) return String(env[name] || "").trim()
-
-    const normalizedName = String(name || "").toLowerCase()
-    const actualName = Object.keys(env).find(key => key.toLowerCase() === normalizedName)
-    if (actualName) return String(env[actualName] || "").trim()
-  }
-
-  return ""
-}
-
-function cleanSteamId(value) {
-  const text = String(value || "").trim()
-  return /^[0-9]{1,32}$/.test(text) ? text : ""
+function desktopSteamInfo() {
+  return DESKTOP_STEAM_RUNTIME.publicInfo()
 }
 
 function bindProcessDiagnostics() {
@@ -1474,9 +1450,10 @@ function offlineFailureSummary(failure = {}) {
   return "Esperando conexion con el servidor de Mana Chess."
 }
 
-const gotLock = app.requestSingleInstanceLock()
+const steamRestartRequired = desktopSteamInfo().restartRequired
+const gotLock = steamRestartRequired ? false : app.requestSingleInstanceLock()
 
-if (!gotLock) {
+if (steamRestartRequired || !gotLock) {
   app.quit()
 } else {
   app.on("second-instance", (_event, commandLine) => {
@@ -1485,17 +1462,17 @@ if (!gotLock) {
     focusMainWindow()
   })
 
-  app.whenReady().then(() => {
+  app.whenReady().then(async () => {
     Menu.setApplicationMenu(buildMenu())
     bindDesktopBridge()
     recordDesktopEvent({
       name: "desktop.session_started",
       payload: desktopSessionPayload()
     })
-    createWindow()
+    await createWindow()
 
     app.on("activate", () => {
-      if (BrowserWindow.getAllWindows().length === 0) createWindow()
+      if (BrowserWindow.getAllWindows().length === 0) void createWindow()
     })
   })
 }

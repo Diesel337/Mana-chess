@@ -97,13 +97,13 @@ Official reference:
 - [~] Steam launch option points to the correct executable. SteamPipe config, manifest, and docs identify `Mana Chess.exe`; Steamworks launch option still needs live app config.
 - [x] Desktop build has a clear app version strategy.
 - [x] Crash/error logs are accessible for QA.
-- [~] Steam overlay compatibility is checked. Desktop diagnostics now record Steam launch context and `npm run smoke:win:steam` verifies the packaged app captures Steam-like environment variables; real Steam client overlay QA still pending.
-- [~] Build can be reproduced from a clean checkout. Windows commands prepare a pinned, SHA256-verified resource-editing cache; `npm run verify:win` checks syntax, build metadata, embedded product identity, and the icon; `npm run verify:win:installer` adds Authenticode status, NSIS artifacts, and the release manifest; `npm run release:win:preflight` adds deterministic Steam depot inventory/hashes, the isolated installer lifecycle, and window, Steam-env, deep-link, bridge, reconnect, and offline smokes. Still needs a separate clean-machine pass and signed candidate.
+- [~] Steam overlay compatibility is checked. The main process initializes `steamworks.js` and enables its Electron overlay hook when a real AppID is present; diagnostics and `npm run smoke:win:steam` cover the safe metadata path. Real Steam client overlay QA still pending.
+- [~] Build can be reproduced from a clean checkout. Windows commands prepare a pinned, SHA256-verified resource-editing cache; `npm run verify:steam-session` checks the ticket/session lifecycle; `npm run verify:win` checks syntax, build metadata, native Steam runtime files, embedded product identity, and the icon; `npm run verify:win:installer` adds Authenticode status, NSIS artifacts, and the release manifest; `npm run release:win:preflight` adds deterministic Steam depot inventory/hashes, the isolated installer lifecycle, and window, Steam-env, deep-link, bridge, reconnect, and offline smokes. Still needs a separate clean-machine pass and signed candidate.
 
 ## 5. SteamPipe and depots
 
 - [ ] SteamCMD is installed for release build upload. It is not present on the current machine; install it from the latest Steamworks SDK after onboarding and set `STEAMWORKS_SDK_PATH`.
-- [~] Windows depot is configured. Generated SteamPipe config points at `mana_chess_desktop/dist/win-unpacked`, requires the executable/app archive, excludes updater/installer-only files and QA state, and records a per-file SHA256 manifest; real Steamworks app/depot IDs still pending.
+- [~] Windows depot is configured. Generated SteamPipe config points at `mana_chess_desktop/dist/win-unpacked`, requires the executable, app archive, `steam_api64.dll`, and the Steamworks N-API binding, excludes updater/installer-only files and QA state, and records a per-file SHA256 manifest; real Steamworks app/depot IDs still pending.
 - [x] Build scripts are created and stored outside secrets. `steam:verify`, `steam:prepare:preview`, `steam:prepare:upload`, `steam:preview`, and `steam:upload` validate the payload, keep generated VDF/log/output files ignored, default to no-upload preview, and gate real upload with an AppID-bound confirmation.
 - [ ] Internal branch receives first uploaded build.
 - [~] Launch branch policy is defined in tooling. Preview cannot set a branch, `default` is never auto-assigned, and the first real build should be assigned manually to a private internal branch; final Steamworks branch names/permissions remain pending.
@@ -118,12 +118,12 @@ Official reference:
 
 ## 6. Steam identity and access gate
 
-- [ ] Desktop app can read Steam identity.
-- [ ] Backend can verify a Steam-authenticated session.
-- [ ] Player identity binds to SteamID.
-- [~] Web QA bypass is explicit and protected. `MANA_CHESS_LAUNCH_ACCESS=steam_required` now requires `MANA_CHESS_QA_BYPASS_KEY` for web QA access; real Steam-authenticated sessions still pending.
-- [~] Production launch mode blocks full commercial play without Steam context. The launch gate is implemented but stays off by default until Steam identity is wired.
-- [~] Public web URL shows Steam-required or limited QA-safe surface. The launch gate returns a Steam-required page in `steam_required` mode; final launch copy and Steam session wiring still pending.
+- [~] Desktop app can read Steam identity. `steamworks.js` is initialized only in Electron's main process and exposes sanitized SteamID/owner/license diagnostics; live validation with the real AppID is pending.
+- [~] Backend can verify a Steam-authenticated session. Phoenix authenticates one-use Web API tickets, checks current app ownership, renews a signed session, and rejects malformed/expired/legacy markers; live publisher-key QA is pending.
+- [~] Player identity binds to SteamID. Verified sessions map to stable `steam_<steamid>` player IDs; a real Steam-client multiplayer rehearsal is pending.
+- [~] Web QA bypass is explicit and protected. `MANA_CHESS_LAUNCH_ACCESS=steam_required` accepts only current signed Steam sessions or `MANA_CHESS_QA_BYPASS_KEY`; real Steam-client rehearsal is pending.
+- [~] Production launch mode blocks full commercial play without Steam context. The launch gate and Steam session wiring are implemented but remain `open` until real AppID/publisher-key QA passes.
+- [~] Public web URL shows Steam-required or limited QA-safe surface. The launch gate returns a Steam-required page in `steam_required` mode; final launch copy and live Steam rehearsal still pending.
 - [ ] Steam ownership/DLC/inventory state controls paid cosmetics.
 - [ ] Local cosmetic unlocks are marked preview/dev only or disabled in launch mode.
 

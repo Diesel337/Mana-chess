@@ -79,6 +79,7 @@ function main() {
   }
 
   run("Desktop syntax check", node, ["scripts/check-syntax.cjs"])
+  run("Steam session lifecycle", node, ["scripts/verify-steam-session.cjs"])
   validateSteamPipeTemplates()
   run("Windows installer and build verification", node, ["scripts/verify-win-installer.cjs"])
   run("Steam depot preparation verification", node, [

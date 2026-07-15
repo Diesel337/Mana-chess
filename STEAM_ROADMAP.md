@@ -22,6 +22,7 @@ Already in place:
 - `manachess://` deep links.
 - Desktop bridge exposed as `window.ManaChessDesktop`.
 - Reproducible Windows packaging, installer lifecycle QA, Steam depot inventory, safe SteamPipe preview, and guarded upload commands.
+- Main-process Steamworks runtime, one-use Web API ticket exchange, backend ticket/ownership verification, signed Steam sessions, and SteamID-bound player identity.
 - Local desktop state for QA/Steam-ready hooks.
 - Cosmetic shop prototype with local unlocks and palette previews.
 - Chat, private links, spectator flow, practice, tutorial, bot, local stats, sound.
@@ -63,13 +64,14 @@ Current constraints:
 
 ### Steam identity and entitlement
 
-Before launch, add a real Steam identity layer:
+The base identity layer is implemented:
 
-- Read Steam user identity from the desktop app.
-- Send a signed/verified session token to the Phoenix backend.
-- Bind local player identity to SteamID.
-- Gate commercial features through Steam ownership/DLC/inventory checks.
-- Keep QA/staging bypass explicit and disabled for production launch builds.
+- Electron reads Steam identity and creates a one-use Web API ticket in the main process.
+- Phoenix authenticates the ticket with Valve, verifies active ownership, and issues its own signed session.
+- The session binds game player identity to SteamID and satisfies the `steam_required` launch gate.
+- Tickets are canceled after one request, publisher keys remain server-only, and the auth origin is pinned to production unless an explicit loopback QA override is enabled.
+
+Before release, run this flow with the real AppID/publisher key from an internal Steam branch, then add DLC/inventory-backed commercial entitlements and disable QA bypasses in the launch environment.
 
 Practical launch rule:
 
@@ -180,10 +182,10 @@ See `STEAM_RELEASE_CHECKLIST.md` for the operational Steam release gate list.
 
 ## Suggested next cuts
 
-1. Finish Steamworks onboarding, create the app/depot IDs, install the latest SDK/SteamCMD, and run the automated SteamPipe preview.
-2. Acquire the Windows release certificate, pass `MANA_CHESS_REQUIRE_SIGNED=1`, and repeat the automated installer lifecycle on a separate clean machine.
-3. Upload the first candidate to a private internal branch, launch it from the real Steam client, and verify overlay, deep links, window modes, and reconnect.
-4. Wire real Steamworks identity into the `steam_required` launch gate.
+1. Finish Steamworks onboarding, create the app/depot IDs and publisher key, install the latest SDK/SteamCMD, and run the automated SteamPipe preview.
+2. Configure the matching AppID/key on desktop and Railway, then rehearse the implemented identity/ownership gate from the real Steam client.
+3. Acquire the Windows release certificate, pass `MANA_CHESS_REQUIRE_SIGNED=1`, and repeat the automated installer lifecycle on a separate clean machine.
+4. Upload the first candidate to a private internal branch and verify overlay, deep links, window modes, reconnect, lobby, private match, and SteamID binding.
 5. Integrate the first Steam achievements and cloud-save decision.
 6. Add Ecto/Postgres for Steam users, entitlements, and operational persistence.
 7. Convert local cosmetic unlocks into Steam entitlement-aware unlocks.
