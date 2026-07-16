@@ -12,8 +12,20 @@ defmodule ManaChessOnline.SteamAuth do
   @max_ticket_characters 8_192
   @max_clock_skew_seconds 60
   @max_app_id 4_294_967_295
+  @protocol_version 1
 
   def session_key, do: @session_key
+
+  def public_configuration do
+    raw_config = Application.get_env(:mana_chess_online, :steam_auth, [])
+
+    %{
+      protocol_version: @protocol_version,
+      configured: match?({:ok, _config}, configuration()),
+      app_id: public_app_id(Keyword.get(raw_config, :app_id)),
+      ticket_identity: public_ticket_identity(Keyword.get(raw_config, :ticket_identity))
+    }
+  end
 
   def authenticate(ticket) do
     with {:ok, config} <- configuration(),
@@ -160,6 +172,20 @@ defmodule ManaChessOnline.SteamAuth do
   end
 
   defp normalize_identity(_identity, _expected_app_id), do: {:error, :invalid_ticket}
+
+  defp public_app_id(value) do
+    case positive_integer(value) do
+      {:ok, app_id} when app_id <= @max_app_id -> app_id
+      _error -> nil
+    end
+  end
+
+  defp public_ticket_identity(value) do
+    case required_string(value, 128) do
+      {:ok, ticket_identity} -> ticket_identity
+      _error -> nil
+    end
+  end
 
   defp positive_integer(value) when is_integer(value) and value > 0, do: {:ok, value}
 

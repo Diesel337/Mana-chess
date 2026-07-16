@@ -64,6 +64,34 @@ defmodule ManaChessOnlineWeb.SteamAuthControllerTest do
     assert get_session(conn, :player_id) == "steam_" <> @steam_id
   end
 
+  test "returns sanitized desktop configuration without publisher credentials", %{conn: conn} do
+    conn =
+      conn
+      |> put_req_header("x-mana-chess-desktop", "1")
+      |> get(~p"/auth/steam/config")
+
+    assert %{
+             "ok" => true,
+             "launch_required" => true,
+             "steam" => %{
+               "protocol_version" => 1,
+               "configured" => true,
+               "app_id" => @app_id,
+               "ticket_identity" => "mana-chess-desktop-v1"
+             }
+           } = json_response(conn, 200)
+
+    assert get_resp_header(conn, "cache-control") == ["no-store"]
+    refute conn.resp_body =~ "publisher-secret"
+  end
+
+  test "protects the desktop configuration contract with the desktop header", %{conn: conn} do
+    conn = get(conn, ~p"/auth/steam/config")
+
+    assert %{"ok" => false, "error" => "desktop_header_required"} =
+             json_response(conn, 400)
+  end
+
   test "requires the desktop-only request header", %{conn: conn} do
     SteamAuthTestClient.put_response({:ok, verified_identity()})
 

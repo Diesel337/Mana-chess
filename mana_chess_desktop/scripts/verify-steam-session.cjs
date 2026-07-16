@@ -8,6 +8,28 @@ const OWNER_STEAM_ID = "76561198000000001"
 const AUTH_ORIGIN = "https://mana-chess-production.up.railway.app"
 const TICKET_BYTES = Buffer.alloc(64, 0xab)
 
+function jsonResponse(status, body) {
+  return {
+    ok: status >= 200 && status < 300,
+    status,
+    json: async () => body
+  }
+}
+
+function bootstrapBody(overrides = {}) {
+  return {
+    ok: true,
+    launch_required: true,
+    steam: {
+      protocol_version: 1,
+      configured: true,
+      app_id: Number(APP_ID),
+      ticket_identity: "mana-chess-desktop-v1",
+      ...overrides
+    }
+  }
+}
+
 function fakeSteamworks(counters, options = {}) {
   return {
     restartAppIfNecessary(appId) {
@@ -73,14 +95,12 @@ async function verifySuccessfulSession() {
     gameOrigin: AUTH_ORIGIN,
     fetchImpl: async (url, options) => {
       requests.push({url, options})
-      return {
+      if (url.endsWith("/auth/steam/config")) return jsonResponse(200, bootstrapBody())
+
+      return jsonResponse(201, {
         ok: true,
-        status: 201,
-        json: async () => ({
-          ok: true,
-          identity: {steam_id: STEAM_ID, owner_steam_id: OWNER_STEAM_ID}
-        })
-      }
+        identity: {steam_id: STEAM_ID, owner_steam_id: OWNER_STEAM_ID}
+      })
     }
   })
 
@@ -110,16 +130,25 @@ async function verifySuccessfulSession() {
     status: "authenticated",
     httpStatus: 201,
     error: "",
+    phase: "complete",
+    protocolVersion: 1,
+    backendConfigured: true,
+    backendAppId: APP_ID,
+    launchRequired: true,
     steamId: STEAM_ID,
     ownerSteamId: OWNER_STEAM_ID
   })
-  assert.equal(requests.length, 1)
-  assert.equal(requests[0].url, `${AUTH_ORIGIN}/auth/steam`)
-  assert.equal(requests[0].options.method, "POST")
+  assert.equal(requests.length, 2)
+  assert.equal(requests[0].url, `${AUTH_ORIGIN}/auth/steam/config`)
+  assert.equal(requests[0].options.method, "GET")
   assert.equal(requests[0].options.credentials, "include")
-  assert.equal(requests[0].options.redirect, "error")
   assert.equal(requests[0].options.headers["x-mana-chess-desktop"], "1")
-  assert.deepEqual(JSON.parse(requests[0].options.body), {ticket: TICKET_BYTES.toString("hex")})
+  assert.equal(requests[1].url, `${AUTH_ORIGIN}/auth/steam`)
+  assert.equal(requests[1].options.method, "POST")
+  assert.equal(requests[1].options.credentials, "include")
+  assert.equal(requests[1].options.redirect, "error")
+  assert.equal(requests[1].options.headers["x-mana-chess-desktop"], "1")
+  assert.deepEqual(JSON.parse(requests[1].options.body), {ticket: TICKET_BYTES.toString("hex")})
   assert.equal(counters.ticket, 1)
   assert.equal(counters.cancel, 1)
   assert.equal(JSON.stringify(result).includes(TICKET_BYTES.toString("hex")), false)
@@ -131,7 +160,8 @@ async function verifyTicketCancellationOnFailure() {
     steamClient: runtime,
     authOrigin: AUTH_ORIGIN,
     gameOrigin: AUTH_ORIGIN,
-    fetchImpl: async () => {
+    fetchImpl: async url => {
+      if (url.endsWith("/auth/steam/config")) return jsonResponse(200, bootstrapBody())
       throw new Error("simulated network failure")
     }
   })
@@ -139,8 +169,36 @@ async function verifyTicketCancellationOnFailure() {
   assert.equal(result.ok, false)
   assert.equal(result.status, "failed")
   assert.equal(result.error, "request_failed")
+  assert.equal(result.phase, "session")
   assert.equal(counters.ticket, 1)
   assert.equal(counters.cancel, 1)
+}
+
+async function verifyBackendConfigurationGuardsTickets() {
+  for (const [overrides, expectedError] of [
+    [{configured: false}, "steam_auth_not_configured"],
+    [{app_id: 222222}, "steam_app_id_mismatch"],
+    [{protocol_version: 2}, "unsupported_steam_protocol"],
+    [{ticket_identity: ""}, "invalid_ticket_identity"]
+  ]) {
+    const {counters, runtime} = steamRuntime({enableOverlay: false})
+    const result = await authenticateSteamSession({
+      steamClient: runtime,
+      authOrigin: AUTH_ORIGIN,
+      gameOrigin: AUTH_ORIGIN,
+      fetchImpl: async url => {
+        assert.equal(url, `${AUTH_ORIGIN}/auth/steam/config`)
+        return jsonResponse(200, bootstrapBody(overrides))
+      }
+    })
+
+    assert.equal(result.ok, false)
+    assert.equal(result.attempted, false)
+    assert.equal(result.phase, "configuration")
+    assert.equal(result.error, expectedError)
+    assert.equal(counters.ticket, 0)
+    assert.equal(counters.cancel, 0)
+  }
 }
 
 async function verifyDisabledAndMismatchedOriginsSkipTickets() {
@@ -206,6 +264,7 @@ function verifyAuthOriginPinning() {
 async function main() {
   await verifySuccessfulSession()
   await verifyTicketCancellationOnFailure()
+  await verifyBackendConfigurationGuardsTickets()
   await verifyDisabledAndMismatchedOriginsSkipTickets()
   verifyAuthOriginPinning()
   console.log("Steam session lifecycle verification passed.")

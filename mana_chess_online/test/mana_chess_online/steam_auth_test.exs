@@ -50,6 +50,29 @@ defmodule ManaChessOnline.SteamAuthTest do
     assert config.ticket_identity == "mana-chess-desktop-v1"
   end
 
+  test "exposes only the sanitized versioned desktop configuration" do
+    assert SteamAuth.public_configuration() == %{
+             protocol_version: 1,
+             configured: true,
+             app_id: @app_id,
+             ticket_identity: "mana-chess-desktop-v1"
+           }
+
+    Application.put_env(:mana_chess_online, :steam_auth,
+      app_id: @app_id,
+      publisher_key: "",
+      ticket_identity: "mana-chess-desktop-v1",
+      client: SteamAuthTestClient
+    )
+
+    assert SteamAuth.public_configuration() == %{
+             protocol_version: 1,
+             configured: false,
+             app_id: @app_id,
+             ticket_identity: "mana-chess-desktop-v1"
+           }
+  end
+
   test "rejects malformed tickets before calling the upstream client" do
     assert {:error, :malformed_ticket} = SteamAuth.authenticate("not-a-ticket")
     refute_receive {SteamAuthTestClient, :called, _ticket, _config}

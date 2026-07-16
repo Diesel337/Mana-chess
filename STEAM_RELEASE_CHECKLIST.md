@@ -98,7 +98,7 @@ Official reference:
 - [x] Desktop build has a clear app version strategy.
 - [x] Crash/error logs are accessible for QA.
 - [~] Steam overlay compatibility is checked. The main process initializes `steamworks.js` and enables its Electron overlay hook when a real AppID is present; diagnostics and `npm run smoke:win:steam` cover the safe metadata path. Real Steam client overlay QA still pending.
-- [~] Build can be reproduced from a clean checkout. Windows commands prepare a pinned, SHA256-verified resource-editing cache; `npm run verify:steam-session` checks the ticket/session lifecycle; `npm run verify:win` checks syntax, build metadata, native Steam runtime files, embedded product identity, and the icon; `npm run verify:win:installer` adds Authenticode status, NSIS artifacts, and the release manifest; `npm run release:win:preflight` adds deterministic Steam depot inventory/hashes, the isolated installer lifecycle, and window, Steam-env, deep-link, bridge, reconnect, and offline smokes. Still needs a separate clean-machine pass and signed candidate.
+- [~] Build can be reproduced from a clean checkout. Windows commands prepare a pinned, SHA256-verified resource-editing cache; `npm run verify:steam-session` checks bootstrap/ticket/session lifecycle; `npm run verify:win` checks syntax, build metadata, native Steam runtime files, embedded product identity, and the icon; `npm run verify:win:installer` adds Authenticode status, NSIS artifacts, and the release manifest; `npm run release:win:candidate` refuses dirty source, runs the complete preflight, and proves the manifest matches the current commit; `npm run steam:doctor` reports remaining machine/backend gates. Still needs a separate clean-machine pass and signed candidate.
 
 ## 5. SteamPipe and depots
 
@@ -118,7 +118,7 @@ Official reference:
 
 ## 6. Steam identity and access gate
 
-- [~] Desktop app can read Steam identity. `steamworks.js` is initialized only in Electron's main process and exposes sanitized SteamID/owner/license diagnostics; live validation with the real AppID is pending.
+- [~] Desktop app can read Steam identity. `steamworks.js` is initialized only in Electron's main process; Electron negotiates protocol/AppID/ticket identity from Phoenix before ticket issuance and exposes only sanitized SteamID/owner/license diagnostics. Live validation with the real AppID is pending.
 - [~] Backend can verify a Steam-authenticated session. Phoenix authenticates one-use Web API tickets, checks current app ownership, renews a signed session, and rejects malformed/expired/legacy markers; live publisher-key QA is pending.
 - [~] Player identity binds to SteamID. Verified sessions map to stable `steam_<steamid>` player IDs; a real Steam-client multiplayer rehearsal is pending.
 - [~] Web QA bypass is explicit and protected. `MANA_CHESS_LAUNCH_ACCESS=steam_required` accepts only current signed Steam sessions or `MANA_CHESS_QA_BYPASS_KEY`; real Steam-client rehearsal is pending.

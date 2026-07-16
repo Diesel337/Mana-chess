@@ -21,7 +21,7 @@ Already in place:
 - Desktop mode via `?desktop=1`.
 - `manachess://` deep links.
 - Desktop bridge exposed as `window.ManaChessDesktop`.
-- Reproducible Windows packaging, installer lifecycle QA, Steam depot inventory, safe SteamPipe preview, and guarded upload commands.
+- Reproducible Windows packaging, clean-commit candidate gate, release doctor, installer lifecycle QA, Steam depot inventory, safe SteamPipe preview, and guarded upload commands.
 - Main-process Steamworks runtime, one-use Web API ticket exchange, backend ticket/ownership verification, signed Steam sessions, and SteamID-bound player identity.
 - Local desktop state for QA/Steam-ready hooks.
 - Cosmetic shop prototype with local unlocks and palette previews.
@@ -182,7 +182,7 @@ See `STEAM_RELEASE_CHECKLIST.md` for the operational Steam release gate list.
 
 ## Suggested next cuts
 
-1. Finish Steamworks onboarding, create the app/depot IDs and publisher key, install the latest SDK/SteamCMD, and run the automated SteamPipe preview.
+1. Finish Steamworks onboarding, create the app/depot IDs and publisher key, install the latest SDK/SteamCMD, set the build account, and drive `npm run steam:doctor` to zero internal blockers.
 2. Configure the matching AppID/key on desktop and Railway, then rehearse the implemented identity/ownership gate from the real Steam client.
 3. Acquire the Windows release certificate, pass `MANA_CHESS_REQUIRE_SIGNED=1`, and repeat the automated installer lifecycle on a separate clean machine.
 4. Upload the first candidate to a private internal branch and verify overlay, deep links, window modes, reconnect, lobby, private match, and SteamID binding.

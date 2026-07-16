@@ -36,11 +36,14 @@ account's SteamGuard authorization.
 Run the complete Windows release gate first:
 
 ```powershell
-npm run release:win:preflight
+npm run release:win:candidate
+npm run steam:doctor
 ```
 
-It builds and verifies the Windows candidate, runs the installer and app smokes, then
-inventories the exact Steam depot payload. The depot requires `Mana Chess.exe`,
+The candidate command requires a clean committed repository, builds and verifies Windows,
+runs the installer and app smokes, and proves the manifest matches that commit with
+`dirty=false`. The doctor then reports SDK, IDs, account, Railway, signing, gate, and
+payload readiness without exposing credentials. The depot requires `Mana Chess.exe`,
 `resources/app.asar`, `steam_api64.dll`, and the Steamworks N-API binding under
 `resources/app.asar.unpacked`; it rejects symlinks and QA state, and excludes PDB/log files,
 `resources/app-update.yml`, and `resources/elevate.exe`. Steam owns updates for this
@@ -95,7 +98,8 @@ placeholders, missing confirmation, or an unavailable SteamCMD executable.
 
 The default Steam launch option should point to `Mana Chess.exe` without extra arguments.
 Steam supplies the AppID environment used by the main-process Steamworks identity/session
-flow; no publisher key or ticket belongs in a launch option.
+flow. Electron negotiates protocol, AppID, and ticket identity from Phoenix before creating
+a ticket; no publisher key or ticket belongs in a launch option.
 For QA-only launch options, the packaged app also accepts:
 
 ```text

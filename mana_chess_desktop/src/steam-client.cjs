@@ -15,7 +15,6 @@ const STEAM_ENV_NAMES = [
   "SteamTenfoot"
 ]
 
-const DEFAULT_TICKET_IDENTITY = "mana-chess-desktop-v1"
 const MAX_APP_ID = 4_294_967_295
 const MIN_TICKET_BYTES = 32
 const MAX_TICKET_BYTES = 4_096
@@ -32,7 +31,6 @@ function createSteamClient(options = {}) {
   const env = options.env || process.env
   const launchContext = steamLaunchContext(env)
   const appId = numericAppId(launchContext.appId)
-  const ticketIdentity = cleanTicketIdentity(readEnv(env, ["MANA_CHESS_STEAM_TICKET_IDENTITY"]))
   const nativeDisabled = readEnv(env, ["MANA_CHESS_DISABLE_STEAM_NATIVE"]) === "1"
   const skipRestart = readEnv(env, ["MANA_CHESS_STEAM_SKIP_RESTART"]) === "1"
   const loadSteamworks = options.steamworksLoader || (() => require("steamworks.js"))
@@ -97,8 +95,10 @@ function createSteamClient(options = {}) {
     }
   }
 
-  async function withWebApiTicket(callback) {
+  async function withWebApiTicket(identity, callback) {
     if (!state.nativeReady || !client) throw new SteamClientError("native_unavailable")
+    const ticketIdentity = cleanTicketIdentity(identity)
+    if (!ticketIdentity) throw new SteamClientError("ticket_identity_invalid")
     if (typeof callback !== "function") throw new SteamClientError("ticket_callback_required")
 
     let ticket
@@ -184,13 +184,13 @@ function numericAppId(value) {
 }
 
 function cleanTicketIdentity(value) {
-  const text = String(value || DEFAULT_TICKET_IDENTITY).trim()
+  const text = String(value || "").trim()
 
   if (text.length > 0 && text.length <= 128 && !/[\u0000-\u001f\u007f]/.test(text)) {
     return text
   }
 
-  return DEFAULT_TICKET_IDENTITY
+  return ""
 }
 
 function playerSteamId(player) {

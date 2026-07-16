@@ -27,6 +27,7 @@ defmodule ManaChessOnlineWeb.Router do
   scope "/auth", ManaChessOnlineWeb do
     pipe_through :steam_auth
 
+    get "/steam/config", SteamAuthController, :configuration
     post "/steam", SteamAuthController, :create
   end
 

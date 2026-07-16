@@ -21,9 +21,9 @@ npm start
 
 ## Steam identity session
 
-When Steam supplies `SteamAppId` (or release QA sets `MANA_CHESS_STEAM_APP_ID`), the Electron main process initializes `steamworks.js`, reads the local SteamID/owner/license state, requests a one-use Web API ticket, and exchanges it at Phoenix `POST /auth/steam`. The request uses Electron's browser session so the resulting signed cookie is present before the game page loads. The ticket is always canceled after that request and is never exposed through preload, renderer IPC, desktop state, or diagnostics.
+When Steam supplies `SteamAppId` (or release QA sets `MANA_CHESS_STEAM_APP_ID`), the Electron main process initializes `steamworks.js` and reads the local SteamID/owner/license state. Before requesting a ticket it fetches Phoenix `GET /auth/steam/config`, requires protocol version 1, verifies that backend and client AppIDs match, and uses the server-provided ticket identity. Only then does it request a one-use Web API ticket and exchange it at `POST /auth/steam`. The request uses Electron's browser session so the resulting signed cookie is present before the game page loads. The ticket is always canceled after that request and is never exposed through preload, renderer IPC, desktop state, or diagnostics.
 
-`MANA_CHESS_STEAM_TICKET_IDENTITY` defaults to `mana-chess-desktop-v1` and must match Phoenix. The Steam publisher key is server-only and must never be set or packaged here.
+`MANA_CHESS_STEAM_TICKET_IDENTITY` belongs to Phoenix and defaults to `mana-chess-desktop-v1`; Electron negotiates it at runtime instead of duplicating configuration. The Steam publisher key is server-only and must never be set or packaged here.
 
 For direct local QA with a real AppID, `MANA_CHESS_STEAM_SKIP_RESTART=1` skips Steam's relaunch requirement. A local auth server additionally requires all three values below; arbitrary remote HTTP origins are rejected:
 
@@ -115,7 +115,7 @@ Verify the Steam ticket/session lifecycle without real credentials:
 npm run verify:steam-session
 ```
 
-This covers successful exchange, failure cleanup, mandatory ticket cancellation, disabled-native smokes, game/auth origin matching, and explicit loopback overrides.
+This covers bootstrap negotiation, protocol/AppID/identity rejection before ticket issuance, successful exchange, failure cleanup, mandatory ticket cancellation, disabled-native smokes, game/auth origin matching, and explicit loopback overrides.
 
 Create a Windows installer:
 
@@ -201,6 +201,14 @@ npm run release:win:preflight
 
 `release:win:preflight` runs the desktop syntax and Steam session lifecycle checks, validates the non-secret SteamPipe templates, builds and verifies the unpacked app plus NSIS installer with `verify:win:installer`, requires the packaged Steam DLL/N-API binding, verifies the exact Steam depot inventory and hashes, performs the isolated install/launch/uninstall cycle, then runs the window mode, env/long-arg launch mode, Steam environment, deep-link, bridge, reconnect, and offline smoke tests. It inherits `MANA_CHESS_REQUIRE_SIGNED=1` for signed release gates.
 
+Build a traceable candidate only from an already committed, clean repository:
+
+```powershell
+npm run release:win:candidate
+```
+
+This wraps the complete preflight, refuses dirty input, and then verifies that `dist/release-manifest.json` records the current commit with `dirty=false`.
+
 ## SteamPipe release flow
 
 The Steam scripts use `dist/win-unpacked` as the Windows depot and `Mana Chess.exe` as its launch executable. Configure the real IDs and Steam build account outside git:
@@ -211,6 +219,14 @@ $env:MANA_CHESS_STEAM_APP_ID="<app-id>"
 $env:MANA_CHESS_STEAM_DEPOT_ID="<windows-depot-id>"
 $env:MANA_CHESS_STEAM_USERNAME="<build-account>"
 ```
+
+Inspect every machine-readable blocker without printing the account name or any secret:
+
+```powershell
+npm run steam:doctor
+```
+
+`steam:doctor` reports readiness without failing so it is useful during setup. `npm run steam:doctor:strict` fails until an internal candidate has a clean current build, real IDs, Steamworks SDK/SteamCMD, build account, matching Railway bootstrap, and packaged native runtime. `npm run steam:doctor:release` additionally requires valid Authenticode signatures and `MANA_CHESS_LAUNCH_ACCESS=steam_required` on Railway.
 
 Verify the local payload without writing VDF files:
 
