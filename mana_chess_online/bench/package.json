@@ -1,0 +1,15 @@
+{
+  "name": "mana-chess-liveview-capacity-bench",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "liveview": "node liveview_capacity.mjs"
+  },
+  "dependencies": {
+    "cheerio": "1.2.0",
+    "ws": "8.21.1"
+  }
+}

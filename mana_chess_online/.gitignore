@@ -28,12 +28,13 @@ mana_chess_online-*.tar
 # Static base assets are committed for this lightweight prototype because
 # production deploys do not run a separate JS/CSS build pipeline.
 # Keep generated digests and compressed artifacts out of git/uploads.
-/priv/static/assets/css/app-*.css
+/priv/static/assets/css/*-[0-9a-f]*.css
 /priv/static/assets/css/*.gz
 /priv/static/assets/js/*-*.js
 /priv/static/assets/js/*.gz
 /priv/static/favicon-*.ico
 /priv/static/robots-*.txt
+/priv/static/*-[0-9a-f]*.webmanifest
 /priv/static/*.gz
 /priv/static/images/*-[0-9a-f]*.svg
 /priv/static/images/*.gz
@@ -42,3 +43,5 @@ mana_chess_online-*.tar
 # In case you use Node.js/npm, you want to ignore these.
 npm-debug.log
 /assets/node_modules/
+/bench/node_modules/
+/bench/reports/
