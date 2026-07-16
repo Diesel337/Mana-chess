@@ -1,10 +1,11 @@
 defmodule ManaChessOnline.GameSettings do
   @moduledoc false
 
-  alias ManaChessOnline.GameState
+  alias ManaChessOnline.{GameState, Persistence}
 
   @bot_move_seconds 1.2
   @settings_file "mana_chess_settings.json"
+  @settings_key "global_game_settings"
   @settings_version 2
   @default_settings %{
     settings_version: @settings_version,
@@ -83,14 +84,29 @@ defmodule ManaChessOnline.GameSettings do
   end
 
   def load_global do
+    case Persistence.get_setting(@settings_key) do
+      {:ok, params} when is_map(params) ->
+        settings = normalize_loaded_settings(params)
+        persist_file(settings)
+        settings
+
+      _error ->
+        load_global_file()
+    end
+  end
+
+  def persist_global(settings) do
+    persist_file(settings)
+    Persistence.put_setting(@settings_key, settings, @settings_version)
+    :ok
+  end
+
+  defp load_global_file do
     path = settings_path()
 
     with {:ok, json} <- File.read(path),
          {:ok, params} <- Jason.decode(json) do
-      settings =
-        params
-        |> migrate_params()
-        |> sanitize(@default_settings)
+      settings = normalize_loaded_settings(params)
 
       persist_global(settings)
       settings
@@ -99,7 +115,7 @@ defmodule ManaChessOnline.GameSettings do
     end
   end
 
-  def persist_global(settings) do
+  defp persist_file(settings) do
     path = settings_path()
 
     with :ok <- File.mkdir_p(Path.dirname(path)),
@@ -109,6 +125,12 @@ defmodule ManaChessOnline.GameSettings do
     else
       _ -> :ok
     end
+  end
+
+  defp normalize_loaded_settings(params) do
+    params
+    |> migrate_params()
+    |> sanitize(@default_settings)
   end
 
   defp bool_param(params, key, fallback) do

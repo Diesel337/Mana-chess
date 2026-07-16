@@ -86,6 +86,19 @@ defmodule ManaChessOnline.GameEngineTest do
     assert GameEngine.regen_elixir(active, 250).elixir == %{white: 5.25, black: 10.0}
   end
 
+  test "uses the current default regeneration for legacy settings" do
+    game =
+      GameState.new_game("legacy_regen", Map.delete(settings(), :regen_per_second))
+      |> Map.put(:status, :playing)
+      |> Map.put(:first_move_pending, nil)
+      |> Map.put(:elixir, %{white: 5.0, black: 5.0})
+
+    assert GameEngine.regen_elixir(game, 250).elixir == %{white: 5.25, black: 5.25}
+
+    game = %{game | settings: Map.put(game.settings, :regen_per_second, nil)}
+    assert GameEngine.regen_elixir(game, 250).elixir == %{white: 5.25, black: 5.25}
+  end
+
   test "clears expired cooldowns and reports active ones" do
     game =
       GameState.new_game("game_1", settings())
@@ -102,5 +115,41 @@ defmodule ManaChessOnline.GameEngineTest do
     game = GameState.new_game("game_1", settings())
 
     assert GameEngine.terminal_status(game.board, game.castling_rights) == nil
+  end
+
+  test "stamps the exact move that finishes a match" do
+    rich_settings = %{
+      settings()
+      | max_elixir: 20.0,
+        initial_elixir: 20.0,
+        cooldown_enabled: false
+    }
+
+    game =
+      GameState.new_game("fools_mate", rich_settings)
+      |> Map.merge(%{
+        status: :playing,
+        players: %{white: "white", black: "black"},
+        elixir: %{white: 20.0, black: 20.0}
+      })
+
+    moves = [
+      {:white, {6, 5}, {5, 5}},
+      {:black, {1, 4}, {3, 4}},
+      {:white, {6, 6}, {4, 6}},
+      {:black, {0, 3}, {4, 7}}
+    ]
+
+    finished =
+      moves
+      |> Enum.with_index(1)
+      |> Enum.reduce(game, fn {{color, from, to}, index}, game ->
+        game
+        |> Map.put(:queue, [%{player_id: Atom.to_string(color), color: color, from: from, to: to}])
+        |> GameEngine.process_next_action(index * 1_000, 1.0)
+      end)
+
+    assert finished.status == {:checkmate, :black, :white}
+    assert finished.finished_at == 4_000
   end
 end

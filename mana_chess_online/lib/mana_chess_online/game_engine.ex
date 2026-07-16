@@ -1,7 +1,7 @@
 defmodule ManaChessOnline.GameEngine do
   @moduledoc false
 
-  alias ManaChessOnline.{GameRules, GameState}
+  alias ManaChessOnline.{GameRules, GameSettings, GameState}
 
   @files ~w(a b c d e f g h)
 
@@ -57,6 +57,8 @@ defmodule ManaChessOnline.GameEngine do
         {board, promotion_pending, status} =
           resolve_promotion(board, piece, action, castling_rights)
 
+        next_status = status || game.status
+
         %{
           game
           | board: board,
@@ -66,14 +68,23 @@ defmodule ManaChessOnline.GameEngine do
             queue: rest,
             first_move_pending: clear_first_move(game.first_move_pending, action.color),
             elixir: spend_and_refund_elixir(game, action.color, cost, captured),
-            status: status || game.status,
+            status: next_status,
+            finished_at: if(terminal_status?(next_status), do: now_ms, else: game.finished_at),
             log: [move_message(action, piece, captured) | game.log]
         }
     end
   end
 
   def regen_elixir(%{status: :playing, first_move_pending: nil} = game, tick_ms) do
-    regen_per_tick = game.settings.regen_per_second * tick_ms / 1000
+    default_regen = GameSettings.default_settings().regen_per_second
+
+    regen_per_second =
+      case Map.get(game.settings, :regen_per_second) do
+        value when is_number(value) and value >= 0 -> value
+        _value -> default_regen
+      end
+
+    regen_per_tick = regen_per_second * tick_ms / 1000
 
     update_in(game.elixir, fn elixir ->
       Map.new(elixir, fn {color, amount} ->
@@ -125,6 +136,11 @@ defmodule ManaChessOnline.GameEngine do
         nil
     end
   end
+
+  def terminal_status?({:checkmate, _winner, _loser}), do: true
+  def terminal_status?({:winner, _winner}), do: true
+  def terminal_status?(:draw), do: true
+  def terminal_status?(_status), do: false
 
   def piece_cost(settings, piece), do: Map.fetch!(settings.costs, piece_type(piece))
 

@@ -34,6 +34,55 @@ config :mana_chess_online, :steam_auth,
   session_ttl_seconds: System.get_env("MANA_CHESS_STEAM_SESSION_TTL_SECONDS", "86400"),
   client: ManaChessOnline.SteamWebApiClient
 
+database_url = System.get_env("DATABASE_URL", "") |> String.trim()
+
+persistence_enabled =
+  case System.get_env("MANA_CHESS_PERSISTENCE_ENABLED", "")
+       |> String.trim()
+       |> String.downcase() do
+    "" -> config_env() == :prod and database_url != ""
+    value when value in ["1", "true", "yes", "on"] -> true
+    value when value in ["0", "false", "no", "off"] -> false
+    value -> raise "invalid MANA_CHESS_PERSISTENCE_ENABLED value: #{inspect(value)}"
+  end
+
+if persistence_enabled and database_url == "" do
+  raise "DATABASE_URL is required when Mana Chess persistence is enabled"
+end
+
+config :mana_chess_online, :persistence,
+  enabled: persistence_enabled,
+  store: ManaChessOnline.Persistence.EctoStore,
+  writer: ManaChessOnline.Persistence.Writer
+
+if persistence_enabled do
+  pool_size =
+    case Integer.parse(System.get_env("POOL_SIZE", "10")) do
+      {value, ""} when value > 0 -> min(value, 50)
+      _error -> 10
+    end
+
+  repo_config = [
+    url: database_url,
+    pool_size: pool_size,
+    queue_target: 5_000,
+    queue_interval: 1_000,
+    timeout: 5_000
+  ]
+
+  repo_config =
+    if System.get_env("ECTO_IPV6", "") in ["1", "true"],
+      do: Keyword.put(repo_config, :socket_options, [:inet6]),
+      else: repo_config
+
+  repo_config =
+    if System.get_env("MANA_CHESS_DATABASE_SSL", "") in ["1", "true"],
+      do: Keyword.put(repo_config, :ssl, true),
+      else: repo_config
+
+  config :mana_chess_online, ManaChessOnline.Repo, repo_config
+end
+
 if config_env() == :prod do
   # The secret key base is used to sign/encrypt cookies and other secrets.
   # A default value is used in config/dev.exs and config/test.exs but you
@@ -61,9 +110,7 @@ if config_env() == :prod do
       ip: {0, 0, 0, 0, 0, 0, 0, 0},
       port: String.to_integer(System.get_env("PORT", "4000"))
     ],
-    secret_key_base: secret_key_base,
-    cache_static_manifest:
-      Application.app_dir(:mana_chess_online, "priv/static/cache_manifest.json")
+    secret_key_base: secret_key_base
 
   # ## SSL Support
   #

@@ -33,6 +33,7 @@ Useful docs:
 Live `GameServer` processes are the source of truth for active matches. New runtime decisions must read or mutate the live game process rather than stale lobby mirrors.
 
 - `game_server.ex`: per-game GenServer wrapper and live state owner.
+- `game_persistence.ex`: observes terminal state transitions and emits one match-summary event outside the game loop.
 - `game_supervisor.ex`: starts and supervises game processes.
 - `game_registry.ex`: names game processes.
 - `game_directory.ex`: lookup helpers for active game processes.
@@ -66,6 +67,13 @@ Live `GameServer` processes are the source of truth for active matches. New runt
 - `steam_auth.ex`: Steam ticket validation boundary, signed session payloads, expiry checks, and stable Steam player IDs.
 - `steam_auth_client.ex`: behavior used to isolate the external Steam publisher API.
 - `steam_web_api_client.ex`: secure-server calls to authenticate a Web API ticket and verify current base-app ownership.
+- `persistence.ex`: optional persistence boundary, health/readiness contract, entitlement reads, and non-blocking event dispatch.
+- `persistence/event.ex`: validation and JSON-safe conversion for Steam identity, entitlement, settings, and match events.
+- `persistence/writer.ex`: supervised fail-open write worker isolated from authentication and `GameServer` processes.
+- `persistence/ecto_store.ex`: Ecto upserts and Postgres reads.
+- `persistence/steam_user.ex`, `entitlement.ex`, `match_summary.ex`, `system_setting.ex`: durable schemas.
+- `repo.ex`: optional Postgres Ecto repository; it starts only when persistence is enabled.
+- `release.ex`: release-safe migration/rollback entry points.
 
 ## Lobby modularization checkpoint
 
@@ -93,6 +101,7 @@ Current large UI module:
 - `components/core_components.ex`: shared Phoenix components.
 - `controllers/page_controller.ex`: non-LiveView page endpoints.
 - `controllers/steam_auth_controller.ex`: sanitized/versioned desktop bootstrap plus Steam ticket exchange; stores verified identity, never the raw ticket.
+- `controllers/health_controller.ex`: Railway readiness without connection strings or credentials.
 - `plugs/`: request gates such as Steam launch access.
 
 Browser JS is intentionally modular. Start with `mana_chess_online/assets/js/README.md` before changing frontend behavior.
@@ -149,10 +158,12 @@ Use the stronger desktop smoke/build commands from `mana_chess_desktop/README.md
 - After deploy, verify production responds successfully.
 - Backend-only changes do not require resize/fit checks.
 - Visual changes require responsive fit checks before deploy.
+- Railway runs `bin/migrate` before startup and checks `/health`; without `DATABASE_URL`, persistence stays in compatible memory mode.
+- `mana_chess_online/PERSISTENCE.md` is the operational runbook for Postgres activation and rollback.
 
 ## Next engineering priorities
 
-1. Treat backend lobby modularization as complete unless a concrete behavior exposes a missing boundary.
-2. Resume the Steam roadmap with desktop build verification, production/offline launch flow, real executable icon, and window/fullscreen behavior.
-3. Modularize `game_live.ex` opportunistically while implementing the responsive board and compact match layout.
-4. Keep frontend browser modules aligned with `assets/js/README.md` and desktop release work inside `mana_chess_desktop/`.
+1. Provision Railway Postgres and verify migrations, health, Steam-user upserts, settings, and match summaries in a non-launch environment.
+2. Finish Steamworks onboarding, configure real IDs/credentials, and rehearse the Steam identity plus entitlement contracts.
+3. Decide whether active matches must survive deploys before implementing snapshot restoration or horizontal ownership.
+4. Modularize `game_live.ex` opportunistically while implementing the responsive board and compact match layout.

@@ -98,4 +98,31 @@ defmodule ManaChessOnline.GameServerTest do
     assert game.cooldowns == %{{6, 5} => 1_500}
     assert game.elixir == %{white: 5.25, black: 10.0}
   end
+
+  test "reports state transitions to its persistence observer" do
+    parent = self()
+    game = GameState.new_game("server_observer_1", settings())
+
+    observer = fn previous_game, next_game ->
+      send(parent, {:observed, previous_game.status, next_game.status})
+    end
+
+    {:ok, pid} =
+      start_supervised({GameServer, game: game, id: {:game_server_test, 6}, observer: observer})
+
+    GameServer.update(pid, &%{&1 | status: :draw})
+    assert_receive {:observed, :waiting, :draw}
+  end
+
+  test "keeps the game alive when persistence observation fails" do
+    game = GameState.new_game("server_observer_failure_1", settings())
+    observer = fn _previous_game, _next_game -> raise "simulated persistence failure" end
+
+    {:ok, pid} =
+      start_supervised({GameServer, game: game, id: {:game_server_test, 7}, observer: observer})
+
+    updated = GameServer.update(pid, &%{&1 | log: ["still alive"]})
+    assert updated.log == ["still alive"]
+    assert Process.alive?(pid)
+  end
 end

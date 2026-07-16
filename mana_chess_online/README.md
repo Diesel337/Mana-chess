@@ -32,6 +32,24 @@ The desktop first reads `GET /auth/steam/config` with its desktop header. This v
 
 In `steam_required` mode, public lobby/game routes return a Steam-required page unless the request has a current verified Steam session or the QA bypass key is provided with `?qa_key=...` or `x-mana-chess-qa-key`. Verified player identity becomes `steam_<steamid>`. `/admin` remains reachable for its existing admin login. Keep the launch gate `open` until the real AppID/publisher key flow has passed a Steam-client rehearsal.
 
+## Optional Postgres persistence
+
+Production automatically enables the Ecto layer when `DATABASE_URL` is present. It can also be controlled explicitly:
+
+```bash
+DATABASE_URL=postgresql://...
+MANA_CHESS_PERSISTENCE_ENABLED=true
+POOL_SIZE=10
+```
+
+`MANA_CHESS_DATABASE_SSL=true` enables TLS when the selected Postgres endpoint requires it. `ECTO_IPV6=true` enables IPv6 socket resolution. Database URLs and credentials belong only in environment variables.
+
+Railway runs `sh /app/bin/migrate` as a pre-deploy command, then checks `GET /health` before routing traffic. With no database configured, the migration is a no-op and health reports ready `memory` mode, so the current production behavior remains available. With Postgres enabled, health returns `503` until the database answers.
+
+The persistence boundary stores verified Steam users, Steam entitlements, terminal match summaries, and versioned global game settings. Authentication and `GameServer` state changes enqueue writes through a separate supervised worker; database write errors do not crash those caller processes. `GET /auth/steam/entitlements` requires both the desktop header and a current verified Steam session, and fails closed when durable entitlement state is unavailable.
+
+See [`PERSISTENCE.md`](PERSISTENCE.md) for schema ownership, Railway activation, rollback, backup, and remaining active-match snapshot work.
+
 ## Learn more
 
 * Official website: https://www.phoenixframework.org/

@@ -1,7 +1,12 @@
 defmodule ManaChessOnlineWeb.SteamAuthControllerTest do
   use ManaChessOnlineWeb.ConnCase, async: false
 
-  alias ManaChessOnline.{SteamAuth, SteamAuthTestClient}
+  alias ManaChessOnline.{
+    PersistenceTestStore,
+    PersistenceTestWriter,
+    SteamAuth,
+    SteamAuthTestClient
+  }
 
   @app_id 111_111
   @steam_id "76561198000000001"
@@ -11,6 +16,11 @@ defmodule ManaChessOnlineWeb.SteamAuthControllerTest do
   setup do
     original_steam_config = Application.get_env(:mana_chess_online, :steam_auth)
     original_launch_config = Application.get_env(:mana_chess_online, :launch_access)
+    original_persistence_config = Application.get_env(:mana_chess_online, :persistence)
+    original_persistence_pid = Application.get_env(:mana_chess_online, :persistence_test_pid)
+
+    original_entitlements =
+      Application.get_env(:mana_chess_online, :persistence_test_entitlements)
 
     Application.put_env(:mana_chess_online, :steam_auth,
       app_id: @app_id,
@@ -31,12 +41,22 @@ defmodule ManaChessOnlineWeb.SteamAuthControllerTest do
       SteamAuthTestClient.clear_response()
       restore_env(:steam_auth, original_steam_config)
       restore_env(:launch_access, original_launch_config)
+      restore_env(:persistence, original_persistence_config)
+      restore_env(:persistence_test_pid, original_persistence_pid)
+      restore_env(:persistence_test_entitlements, original_entitlements)
     end)
 
     :ok
   end
 
   test "creates a renewed verified session and binds player identity", %{conn: conn} do
+    Application.put_env(:mana_chess_online, :persistence,
+      enabled: false,
+      store: PersistenceTestStore,
+      writer: PersistenceTestWriter
+    )
+
+    Application.put_env(:mana_chess_online, :persistence_test_pid, self())
     SteamAuthTestClient.put_response({:ok, verified_identity()})
 
     conn =
@@ -50,6 +70,10 @@ defmodule ManaChessOnlineWeb.SteamAuthControllerTest do
     assert response["identity"]["owner_steam_id"] == @owner_steam_id
     refute inspect(response) =~ @ticket
 
+    assert_receive {:persistence_writer_event, {:steam_identity, persisted_identity}}
+    assert persisted_identity.steam_id == @steam_id
+    assert persisted_identity.owner_steam_id == @owner_steam_id
+
     session = get_session(conn, SteamAuth.session_key())
     assert session["steam_id"] == @steam_id
     assert session["app_id"] == Integer.to_string(@app_id)
@@ -62,6 +86,68 @@ defmodule ManaChessOnlineWeb.SteamAuthControllerTest do
 
     assert html_response(conn, 200) =~ "Mana Chess"
     assert get_session(conn, :player_id) == "steam_" <> @steam_id
+  end
+
+  test "returns only active persisted entitlements to a verified desktop session", %{conn: conn} do
+    Application.put_env(:mana_chess_online, :persistence,
+      enabled: true,
+      store: PersistenceTestStore,
+      writer: PersistenceTestWriter
+    )
+
+    Application.put_env(:mana_chess_online, :persistence_test_entitlements, [
+      %{
+        source: "steam_dlc",
+        external_id: "222222",
+        sku: "founder_board_pack",
+        kind: "cosmetic_pack",
+        status: "active",
+        metadata: %{"private" => "not-public"}
+      },
+      %{
+        source: "steam_dlc",
+        external_id: "333333",
+        sku: "revoked_pack",
+        kind: "cosmetic_pack",
+        status: "revoked"
+      }
+    ])
+
+    SteamAuthTestClient.put_response({:ok, verified_identity()})
+    conn = steam_post(conn, @ticket)
+
+    conn =
+      conn
+      |> recycle()
+      |> put_req_header("x-mana-chess-desktop", "1")
+      |> get(~p"/auth/steam/entitlements")
+
+    assert %{
+             "ok" => true,
+             "steam_id" => @steam_id,
+             "entitlements" => [
+               %{
+                 "source" => "steam_dlc",
+                 "external_id" => "222222",
+                 "sku" => "founder_board_pack",
+                 "kind" => "cosmetic_pack",
+                 "status" => "active"
+               }
+             ]
+           } = json_response(conn, 200)
+
+    refute conn.resp_body =~ "not-public"
+    refute conn.resp_body =~ "revoked_pack"
+  end
+
+  test "requires a verified session before reading entitlements", %{conn: conn} do
+    conn =
+      conn
+      |> put_req_header("x-mana-chess-desktop", "1")
+      |> get(~p"/auth/steam/entitlements")
+
+    assert %{"ok" => false, "error" => "steam_session_required"} =
+             json_response(conn, 401)
   end
 
   test "returns sanitized desktop configuration without publisher credentials", %{conn: conn} do

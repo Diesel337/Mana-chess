@@ -253,7 +253,9 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   def handle_call({:promote, player_id, choice}, _from, state) do
-    state = GameLobbyActions.promote(state, player_id, choice)
+    state =
+      GameLobbyActions.promote(state, player_id, choice, GameLobbyRuntime.now_ms())
+
     GameLobbyRuntime.broadcast_lobby(state)
     {:reply, :ok, state}
   end

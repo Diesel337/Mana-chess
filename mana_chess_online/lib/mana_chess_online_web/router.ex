@@ -28,7 +28,14 @@ defmodule ManaChessOnlineWeb.Router do
     pipe_through :steam_auth
 
     get "/steam/config", SteamAuthController, :configuration
+    get "/steam/entitlements", SteamAuthController, :entitlements
     post "/steam", SteamAuthController, :create
+  end
+
+  scope "/", ManaChessOnlineWeb do
+    pipe_through :api
+
+    get "/health", HealthController, :show
   end
 
   scope "/", ManaChessOnlineWeb do

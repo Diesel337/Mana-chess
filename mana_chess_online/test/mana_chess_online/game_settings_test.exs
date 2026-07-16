@@ -74,4 +74,48 @@ defmodule ManaChessOnline.GameSettingsTest do
              black: 3.0
            }
   end
+
+  test "loads global settings from the optional persistence store" do
+    original_config = Application.get_env(:mana_chess_online, :persistence)
+    original_settings = Application.get_env(:mana_chess_online, :persistence_test_settings)
+    original_path = System.get_env("MANA_CHESS_SETTINGS_PATH")
+    path = Path.join(System.tmp_dir!(), "mana_chess_db_settings_#{System.unique_integer()}.json")
+
+    on_exit(fn ->
+      restore_app_env(:persistence, original_config)
+      restore_app_env(:persistence_test_settings, original_settings)
+
+      if original_path,
+        do: System.put_env("MANA_CHESS_SETTINGS_PATH", original_path),
+        else: System.delete_env("MANA_CHESS_SETTINGS_PATH")
+
+      File.rm(path)
+    end)
+
+    Application.put_env(:mana_chess_online, :persistence,
+      enabled: true,
+      store: ManaChessOnline.PersistenceTestStore,
+      writer: ManaChessOnline.PersistenceTestWriter
+    )
+
+    Application.put_env(:mana_chess_online, :persistence_test_settings, %{
+      "global_game_settings" => %{
+        "settings_version" => 2,
+        "max_elixir" => 14,
+        "initial_elixir" => 6,
+        "queen" => 8
+      }
+    })
+
+    System.put_env("MANA_CHESS_SETTINGS_PATH", path)
+
+    settings = GameSettings.load_global()
+    assert settings.max_elixir == 14.0
+    assert settings.initial_elixir == 6.0
+    assert settings.costs.queen == 8.0
+    assert File.exists?(path)
+  end
+
+  defp restore_app_env(key, nil), do: Application.delete_env(:mana_chess_online, key)
+  defp restore_app_env(key, value), do: Application.put_env(:mana_chess_online, key, value)
 end

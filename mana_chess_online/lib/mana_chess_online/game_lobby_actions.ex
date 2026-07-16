@@ -74,7 +74,7 @@ defmodule ManaChessOnline.GameLobbyActions do
     end
   end
 
-  def promote(state, player_id, choice) do
+  def promote(state, player_id, choice, now \\ System.monotonic_time(:millisecond)) do
     with %{game_id: game_id, color: player_color} <- GamePlayers.assignment(state, player_id),
          game when not is_nil(game) <- game_snapshot(game_id, state),
          %{player_id: ^player_id, color: color, at: square} <- game.promotion_pending,
@@ -90,6 +90,8 @@ defmodule ManaChessOnline.GameLobbyActions do
             game
             | board: board,
               status: status,
+              finished_at:
+                if(GameEngine.terminal_status?(status), do: now, else: game.finished_at),
               promotion_pending: nil,
               log: ["#{GameChat.label(color)} promociono peon." | game.log]
           }

@@ -30,7 +30,7 @@ Already in place:
 Current constraints:
 
 - Active match state is owned by supervised per-game `GameServer` processes; `GameLobby` now coordinates the public API, discovery, policy flows, and global settings through focused modules.
-- Runtime state is still memory-only on one application node. Deploy/crash recovery, persistence, horizontal ownership, and real-client load tuning remain launch-scale work.
+- Active matches still live in memory on one application node. An optional Ecto/Postgres layer now covers Steam users, entitlement records, terminal match summaries, and global settings, but Railway Postgres provisioning, active-game restoration, horizontal ownership, and real-client load tuning remain launch work.
 
 ## Steam launch requirements
 
@@ -137,12 +137,12 @@ Goal: remove the single global bottleneck.
 
 Goal: survive deploys, crashes, and real users.
 
-- Add Postgres/Ecto.
-- Persist Steam users.
-- Persist entitlements/inventory.
-- Persist match summaries and stats.
-- Persist active match snapshots if reconnection after deploy matters.
-- Move admin/global settings out of local JSON file.
+- [x] Add optional Postgres/Ecto, additive migrations, a release migration command, and Railway readiness.
+- [~] Persist Steam users. Verified identities enqueue safe upserts; real Railway database and AppID rehearsal remain.
+- [~] Persist entitlements/inventory. Schema, idempotent upsert event, and authenticated read contract exist; Steam DLC/inventory sync remains.
+- [~] Persist match summaries and stats. Terminal transitions enqueue immutable summaries; production database activation and aggregate stats remain.
+- [ ] Persist active match snapshots if reconnection after deploy matters.
+- [~] Move admin/global settings out of local JSON. Postgres is the preferred read when enabled and the JSON file remains a compatibility fallback.
 
 ### Phase 4: Horizontal scaling
 
@@ -187,9 +187,9 @@ See `STEAM_RELEASE_CHECKLIST.md` for the operational Steam release gate list.
 3. Acquire the Windows release certificate, pass `MANA_CHESS_REQUIRE_SIGNED=1`, and repeat the automated installer lifecycle on a separate clean machine.
 4. Upload the first candidate to a private internal branch and verify overlay, deep links, window modes, reconnect, lobby, private match, and SteamID binding.
 5. Integrate the first Steam achievements and cloud-save decision.
-6. Add Ecto/Postgres for Steam users, entitlements, and operational persistence.
+6. Provision Railway Postgres and verify the implemented users, entitlements, match-summary, settings, migration, and health flows.
 7. Convert local cosmetic unlocks into Steam entitlement-aware unlocks.
-8. Run real WebSocket/Steam-client load tests and tune infrastructure before release.
+8. Decide and implement active-match recovery, then run real WebSocket/Steam-client load tests before release.
 
 ## Non-goals for now
 

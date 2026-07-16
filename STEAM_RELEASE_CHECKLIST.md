@@ -151,7 +151,7 @@ Official reference:
 Current architecture:
 
 - [x] Active match state is owned by supervised `ManaChessOnline.GameServer` processes; `GameLobby` coordinates discovery, public API calls, global settings, and focused policy flows.
-- [~] Runtime state remains memory-only on one application node; persistence and horizontal ownership are still pending.
+- [~] Active matches remain memory-only on one application node. Optional Postgres persistence now covers durable launch records, while active-game restoration and horizontal ownership remain pending.
 
 Release candidate target:
 
@@ -171,17 +171,17 @@ Release candidate target:
 
 ## 9. Persistence and operations
 
-- [ ] Add Postgres/Ecto.
-- [ ] Persist Steam users.
-- [ ] Persist entitlements/inventory.
-- [ ] Persist match summaries and stats.
-- [ ] Move admin/global settings out of local JSON.
+- [~] Add Postgres/Ecto. Repo, schemas, additive migration, pre-deploy migration, healthcheck, and memory-compatible mode are implemented; Railway Postgres is not provisioned yet.
+- [~] Persist Steam users. Verified authentication emits safe upserts without raw tickets; real database/AppID QA remains.
+- [~] Persist entitlements/inventory. Durable model, idempotent writes, and authenticated desktop read endpoint exist; Valve ownership sync and cosmetic consumption remain.
+- [~] Persist match summaries and stats. Terminal `GameServer` transitions emit immutable summaries; production activation and aggregate player stats remain.
+- [~] Move admin/global settings out of local JSON. Postgres becomes primary when enabled, with JSON retained as a fail-safe fallback.
 - [ ] Decide whether active match snapshots are needed across deploys.
-- [ ] Add backup/restore plan.
+- [~] Add backup/restore plan. `PERSISTENCE.md` defines safe additive rollback and backup prerequisites; scheduled backups and restore rehearsal remain.
 - [ ] Add environment separation for QA/staging/production.
 - [ ] Add structured logs.
 - [ ] Add error reporting.
-- [ ] Add deploy rollback plan.
+- [~] Add deploy rollback plan. Previous application commits remain schema-compatible and explicit release rollback exists; launch-day rehearsal remains.
 - [ ] Add incident checklist for launch day.
 
 ## 10. Final review gate

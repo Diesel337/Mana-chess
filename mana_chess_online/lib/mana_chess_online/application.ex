@@ -7,18 +7,20 @@ defmodule ManaChessOnline.Application do
 
   @impl true
   def start(_type, _args) do
-    children = [
-      ManaChessOnlineWeb.Telemetry,
-      {DNSCluster, query: Application.get_env(:mana_chess_online, :dns_cluster_query) || :ignore},
-      {Phoenix.PubSub, name: ManaChessOnline.PubSub},
-      ManaChessOnline.GameRegistry,
-      ManaChessOnline.GameSupervisor,
-      ManaChessOnline.GameLobby,
-      # Start a worker by calling: ManaChessOnline.Worker.start_link(arg)
-      # {ManaChessOnline.Worker, arg},
-      # Start to serve requests, typically the last entry
-      ManaChessOnlineWeb.Endpoint
-    ]
+    children =
+      [
+        ManaChessOnlineWeb.Telemetry,
+        {DNSCluster,
+         query: Application.get_env(:mana_chess_online, :dns_cluster_query) || :ignore},
+        {Phoenix.PubSub, name: ManaChessOnline.PubSub}
+      ] ++
+        ManaChessOnline.Persistence.children() ++
+        [
+          ManaChessOnline.GameRegistry,
+          ManaChessOnline.GameSupervisor,
+          ManaChessOnline.GameLobby,
+          ManaChessOnlineWeb.Endpoint
+        ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options

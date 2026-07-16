@@ -1,5 +1,5 @@
 defmodule ManaChessOnline.GameLobbyTickTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
 
   alias ManaChessOnline.{GameLobbyTick, GameLobbyView, GameRooms, GameSupervisor}
 

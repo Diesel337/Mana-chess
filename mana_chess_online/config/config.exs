@@ -8,7 +8,17 @@
 import Config
 
 config :mana_chess_online,
-  generators: [timestamp_type: :utc_datetime]
+  ecto_repos: [ManaChessOnline.Repo],
+  generators: [timestamp_type: :utc_datetime_usec],
+  persistence: [
+    enabled: false,
+    store: ManaChessOnline.Persistence.EctoStore,
+    writer: ManaChessOnline.Persistence.Writer
+  ]
+
+config :mana_chess_online, ManaChessOnline.Repo,
+  migration_primary_key: [name: :id, type: :bigserial],
+  migration_foreign_key: [type: :bigint]
 
 # Configure the endpoint
 config :mana_chess_online, ManaChessOnlineWeb.Endpoint,
@@ -29,8 +39,7 @@ config :logger, :default_formatter,
 # Use Jason for JSON parsing in Phoenix
 config :phoenix, :json_library, Jason
 
-config :phoenix_live_view, :colocated_js,
-  disable_symlink_warning: true
+config :phoenix_live_view, :colocated_js, disable_symlink_warning: true
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.

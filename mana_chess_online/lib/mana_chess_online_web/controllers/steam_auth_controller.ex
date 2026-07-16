@@ -1,7 +1,7 @@
 defmodule ManaChessOnlineWeb.SteamAuthController do
   use ManaChessOnlineWeb, :controller
 
-  alias ManaChessOnline.SteamAuth
+  alias ManaChessOnline.{Persistence, SteamAuth}
 
   def configuration(conn, _params) do
     if desktop_request?(conn) do
@@ -30,6 +30,30 @@ defmodule ManaChessOnlineWeb.SteamAuthController do
 
   def create(conn, _params), do: rejected(conn, :malformed_ticket)
 
+  def entitlements(conn, _params) do
+    if desktop_request?(conn) do
+      with {:ok, steam_id} <-
+             conn
+             |> get_session(SteamAuth.session_key())
+             |> SteamAuth.session_steam_id(),
+           {:ok, entitlements} <- Persistence.entitlements_for(steam_id) do
+        conn
+        |> put_resp_header("cache-control", "no-store")
+        |> json(%{
+          ok: true,
+          steam_id: steam_id,
+          entitlements: Persistence.public_entitlements(entitlements)
+        })
+      else
+        :error -> rejected(conn, :steam_session_required)
+        {:error, :disabled} -> rejected(conn, :persistence_not_configured)
+        {:error, _reason} -> rejected(conn, :persistence_unavailable)
+      end
+    else
+      rejected(conn, :desktop_header_required)
+    end
+  end
+
   defp desktop_request?(conn) do
     conn
     |> get_req_header("x-mana-chess-desktop")
@@ -49,6 +73,8 @@ defmodule ManaChessOnlineWeb.SteamAuthController do
   end
 
   defp authenticated(conn, identity) do
+    Persistence.record_steam_identity(identity)
+
     conn
     |> put_resp_header("cache-control", "no-store")
     |> configure_session(renew: true)
@@ -66,6 +92,9 @@ defmodule ManaChessOnlineWeb.SteamAuthController do
         :invalid_ticket -> {:forbidden, "invalid_ticket"}
         :ownership_required -> {:forbidden, "ownership_required"}
         :publisher_banned -> {:forbidden, "publisher_banned"}
+        :steam_session_required -> {:unauthorized, "steam_session_required"}
+        :persistence_not_configured -> {:service_unavailable, "persistence_not_configured"}
+        :persistence_unavailable -> {:service_unavailable, "persistence_unavailable"}
         :not_configured -> {:service_unavailable, "steam_auth_not_configured"}
         :upstream_unavailable -> {:service_unavailable, "steam_unavailable"}
         _reason -> {:service_unavailable, "steam_unavailable"}

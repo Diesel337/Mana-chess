@@ -91,6 +91,14 @@ defmodule ManaChessOnline.SteamAuth do
     end
   end
 
+  def session_steam_id(session, now \\ System.system_time(:second)) do
+    if valid_session?(session, now) do
+      {:ok, field(session, :steam_id)}
+    else
+      :error
+    end
+  end
+
   defp configuration do
     config = Application.get_env(:mana_chess_online, :steam_auth, [])
 
