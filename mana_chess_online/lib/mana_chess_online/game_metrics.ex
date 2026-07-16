@@ -6,7 +6,8 @@ defmodule ManaChessOnline.GameMetrics do
         game_server_pids,
         child_count,
         rate_limits,
-        measured_at_ms \\ System.system_time(:millisecond)
+        measured_at_ms \\ System.system_time(:millisecond),
+        capacity \\ %{}
       ) do
     game_values = Map.values(games)
     process_stats = process_stats(game_server_pids)
@@ -36,7 +37,12 @@ defmodule ManaChessOnline.GameMetrics do
       memory_total_kb: memory_kb(:total),
       memory_processes_kb: memory_kb(:processes),
       memory_binary_kb: memory_kb(:binary),
-      run_queue: :erlang.statistics(:run_queue)
+      run_queue: :erlang.statistics(:run_queue),
+      dynamic_game_count: Map.get(capacity, :dynamic_game_count, 0),
+      max_dynamic_games: Map.get(capacity, :max_dynamic_games, 0),
+      dynamic_capacity_available: Map.get(capacity, :dynamic_capacity_available, 0),
+      capacity_rejected_count: Map.get(capacity, :capacity_rejected_count, 0),
+      cleaned_dynamic_game_count: Map.get(capacity, :cleaned_dynamic_game_count, 0)
     }
   end
 

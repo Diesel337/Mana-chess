@@ -125,4 +125,31 @@ defmodule ManaChessOnline.GameServerTest do
     assert updated.log == ["still alive"]
     assert Process.alive?(pid)
   end
+
+  test "runs staggerable autonomous ticks and reports them" do
+    parent = self()
+
+    game =
+      GameState.new_game("server_auto_tick_1", settings())
+      |> Map.put(:status, :playing)
+      |> Map.put(:first_move_pending, nil)
+
+    tick_observer = fn previous_game, next_game, now_ms ->
+      send(parent, {:auto_tick, previous_game.elixir.white, next_game.elixir.white, now_ms})
+    end
+
+    {:ok, _pid} =
+      start_supervised(
+        {GameServer,
+         game: game,
+         id: {:game_server_test, 8},
+         tick_ms: 25,
+         auto_tick: true,
+         initial_tick_delay_ms: 1,
+         clock: fn -> 2_000 end,
+         tick_observer: tick_observer}
+      )
+
+    assert_receive {:auto_tick, 5.0, 5.03, 2_000}, 100
+  end
 end

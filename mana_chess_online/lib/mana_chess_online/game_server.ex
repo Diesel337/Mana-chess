@@ -40,15 +40,21 @@ defmodule ManaChessOnline.GameServer do
 
   @impl true
   def init(opts) do
-    {:ok,
-     %{
-       game: Keyword.fetch!(opts, :game),
-       tick_ms: Keyword.get(opts, :tick_ms, @default_tick_ms),
-       default_cooldown_seconds:
-         Keyword.get(opts, :default_cooldown_seconds, @default_cooldown_seconds),
-       observer: Keyword.get(opts, :observer, &GamePersistence.observe/2),
-       clock: Keyword.get(opts, :clock, fn -> System.monotonic_time(:millisecond) end)
-     }}
+    state =
+      %{
+        game: Keyword.fetch!(opts, :game),
+        tick_ms: Keyword.get(opts, :tick_ms, @default_tick_ms),
+        default_cooldown_seconds:
+          Keyword.get(opts, :default_cooldown_seconds, @default_cooldown_seconds),
+        observer: Keyword.get(opts, :observer, &GamePersistence.observe/2),
+        tick_observer: Keyword.get(opts, :tick_observer, fn _previous, _next, _now -> :ok end),
+        auto_tick?: Keyword.get(opts, :auto_tick, false),
+        initial_tick_delay_ms: Keyword.get(opts, :initial_tick_delay_ms),
+        clock: Keyword.get(opts, :clock, fn -> System.monotonic_time(:millisecond) end)
+      }
+
+    schedule_tick(state, state.initial_tick_delay_ms || state.tick_ms)
+    {:ok, state}
   end
 
   @impl true
@@ -82,6 +88,21 @@ defmodule ManaChessOnline.GameServer do
     {:reply, game, commit_game(state, game)}
   end
 
+  @impl true
+  def handle_info(:tick, state) do
+    now_ms = now_ms(state, nil)
+    previous_game = state.game
+
+    game =
+      GameTick.tick(previous_game, now_ms, state.tick_ms, state.default_cooldown_seconds)
+
+    next_state = commit_game(state, game)
+    observe_tick(state.tick_observer, previous_game, game, now_ms)
+    schedule_tick(next_state, next_state.tick_ms)
+
+    {:noreply, next_state}
+  end
+
   defp commit_game(state, game) do
     observe(state.observer, state.game, game)
     %{state | game: game}
@@ -96,6 +117,22 @@ defmodule ManaChessOnline.GameServer do
       _kind, _reason -> :ok
     end
   end
+
+  defp observe_tick(observer, previous_game, next_game, now_ms) do
+    try do
+      observer.(previous_game, next_game, now_ms)
+    rescue
+      _error -> :ok
+    catch
+      _kind, _reason -> :ok
+    end
+  end
+
+  defp schedule_tick(%{auto_tick?: true}, delay_ms) do
+    Process.send_after(self(), :tick, max(delay_ms, 1))
+  end
+
+  defp schedule_tick(_state, _delay_ms), do: :ok
 
   defp now_ms(%{clock: clock}, nil), do: clock.()
   defp now_ms(_state, now_ms) when is_integer(now_ms), do: now_ms

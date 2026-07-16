@@ -1,7 +1,7 @@
 defmodule ManaChessOnline.GameLobbyServers do
   @moduledoc false
 
-  alias ManaChessOnline.{GameServer, GameSettings, GameSupervisor, GameTick}
+  alias ManaChessOnline.{GameDirectory, GameServer, GameSettings, GameSupervisor, GameTick}
 
   def sync_game_servers(games) do
     Enum.each(games, fn {_game_id, game} -> sync_game_server(game) end)
@@ -53,6 +53,17 @@ defmodule ManaChessOnline.GameLobbyServers do
   end
 
   def server_backed_games(games), do: Map.merge(games, GameSupervisor.game_snapshots())
+
+  def refresh_public_games(games) do
+    games
+    |> GameDirectory.public_games()
+    |> Enum.reduce(games, fn {game_id, _game}, refreshed_games ->
+      case game_snapshot(game_id, games) do
+        nil -> refreshed_games
+        live_game -> Map.put(refreshed_games, game_id, live_game)
+      end
+    end)
+  end
 
   def replace_game_state(game) do
     case GameSupervisor.upsert_game(game) do

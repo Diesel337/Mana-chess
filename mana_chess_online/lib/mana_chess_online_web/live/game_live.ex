@@ -1,7 +1,7 @@
 defmodule ManaChessOnlineWeb.GameLive do
   use ManaChessOnlineWeb, :live_view
 
-  alias ManaChessOnline.GameLobby
+  alias ManaChessOnline.{GameLobby, GameRuntimeConfig}
   alias ManaChessOnline.GameRules
   alias ManaChessOnlineWeb.GameText
 
@@ -42,6 +42,8 @@ defmodule ManaChessOnlineWeb.GameLive do
       if view.game_id do
         Phoenix.PubSub.subscribe(ManaChessOnline.PubSub, GameLobby.topic(view.game_id))
       end
+
+      Process.send_after(self(), :game_heartbeat, GameRuntimeConfig.heartbeat_interval_ms())
     end
 
     {:ok,
@@ -223,21 +225,27 @@ defmodule ManaChessOnlineWeb.GameLive do
   def handle_event("start_practice", _params, socket) do
     view = GameLobby.start_practice(socket.assigns.player_id)
 
-    if connected?(socket) and view.game_id do
-      Phoenix.PubSub.subscribe(ManaChessOnline.PubSub, GameLobby.topic(view.game_id))
-    end
+    if practice_view?(view) do
+      if connected?(socket),
+        do: Phoenix.PubSub.subscribe(ManaChessOnline.PubSub, GameLobby.topic(view.game_id))
 
-    {:noreply, socket |> assign_view(view) |> assign(:tutorial?, false)}
+      {:noreply, socket |> assign_view(view) |> assign(:tutorial?, false)}
+    else
+      {:noreply, put_flash(socket, :error, "Servidor ocupado. Intenta de nuevo en un momento.")}
+    end
   end
 
   def handle_event("start_tutorial", _params, socket) do
     view = GameLobby.start_practice(socket.assigns.player_id)
 
-    if connected?(socket) and view.game_id do
-      Phoenix.PubSub.subscribe(ManaChessOnline.PubSub, GameLobby.topic(view.game_id))
-    end
+    if practice_view?(view) do
+      if connected?(socket),
+        do: Phoenix.PubSub.subscribe(ManaChessOnline.PubSub, GameLobby.topic(view.game_id))
 
-    {:noreply, socket |> assign_view(view) |> assign(:tutorial?, true)}
+      {:noreply, socket |> assign_view(view) |> assign(:tutorial?, true)}
+    else
+      {:noreply, put_flash(socket, :error, "Servidor ocupado. Intenta de nuevo en un momento.")}
+    end
   end
 
   def handle_event("toggle_practice_bot", _params, socket) do
@@ -308,6 +316,9 @@ defmodule ManaChessOnlineWeb.GameLive do
       {:error, :rate_limited} ->
         {:noreply,
          put_flash(socket, :error, "Espera un momento antes de crear otra sala privada.")}
+
+      {:error, :capacity} ->
+        {:noreply, put_flash(socket, :error, "Servidor ocupado. Intenta de nuevo en un momento.")}
     end
   end
 
@@ -332,6 +343,12 @@ defmodule ManaChessOnlineWeb.GameLive do
   end
 
   @impl true
+  def handle_info(:game_heartbeat, socket) do
+    GameLobby.heartbeat(socket.assigns.player_id, socket.assigns.game_id)
+    Process.send_after(self(), :game_heartbeat, GameRuntimeConfig.heartbeat_interval_ms())
+    {:noreply, socket}
+  end
+
   def handle_info({:game_update, %{id: game_id} = game}, %{assigns: %{game_id: game_id}} = socket) do
     {:noreply, assign(socket, :game, game)}
   end
@@ -366,6 +383,11 @@ defmodule ManaChessOnlineWeb.GameLive do
     |> assign(:chat_error, nil)
     |> assign(:reconnected?, false)
   end
+
+  defp practice_view?(%{game: %{practice?: true}, game_id: game_id}) when is_binary(game_id),
+    do: true
+
+  defp practice_view?(_view), do: false
 
   defp rows_for(%{color: :black, game: %{board: board}}),
     do: board |> Enum.with_index() |> Enum.reverse()

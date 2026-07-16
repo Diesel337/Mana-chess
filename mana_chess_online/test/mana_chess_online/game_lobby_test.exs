@@ -1,7 +1,14 @@
 defmodule ManaChessOnline.GameLobbyTest do
   use ExUnit.Case, async: false
 
-  alias ManaChessOnline.{GameLobby, GameServer, GameState, GameSupervisor}
+  alias ManaChessOnline.{
+    GameLobby,
+    GameLobbyRuntime,
+    GameRuntimeConfig,
+    GameServer,
+    GameState,
+    GameSupervisor
+  }
 
   defp unique_player(prefix) do
     prefix <> "-" <> Integer.to_string(System.unique_integer([:positive]))
@@ -359,10 +366,17 @@ defmodule ManaChessOnline.GameLobbyTest do
       end)
 
     :sys.replace_state(GameLobby, fn state ->
-      %{state | games: Map.delete(state.games, game_id)}
+      %{
+        state
+        | games: Map.delete(state.games, game_id),
+          last_lifecycle_at: GameLobbyRuntime.now_ms() - GameRuntimeConfig.lifecycle_interval_ms()
+      }
     end)
 
     refute Map.has_key?(:sys.get_state(GameLobby).games, game_id)
+
+    send(Process.whereis(GameLobby), :tick)
+    :sys.get_state(GameLobby)
 
     lobby_entry = Enum.find(GameLobby.lobby(), &(&1.id == game_id))
 
@@ -1409,7 +1423,7 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert "Broadcast no pisa estado vivo." in server_game.log
   end
 
-  test "lobby ticks do not overwrite live game server state" do
+  test "lobby ticks leave private game mirrors out of the hot path" do
     player_id = unique_player("tick-preserve")
     on_exit(fn -> GameLobby.leave(player_id) end)
 
@@ -1431,7 +1445,7 @@ defmodule ManaChessOnline.GameLobbyTest do
     lobby_game = :sys.get_state(GameLobby).games[view.game_id]
 
     assert "Tick conserva estado vivo." in server_game.log
-    assert lobby_game.log == server_game.log
+    refute lobby_game.log == server_game.log
   end
 
   test "lobby ticks restore registered game servers missing from the mirror" do
@@ -1459,7 +1473,11 @@ defmodule ManaChessOnline.GameLobbyTest do
       end)
 
     :sys.replace_state(GameLobby, fn state ->
-      %{state | games: Map.delete(state.games, game_id)}
+      %{
+        state
+        | games: Map.delete(state.games, game_id),
+          last_lifecycle_at: GameLobbyRuntime.now_ms() - GameRuntimeConfig.lifecycle_interval_ms()
+      }
     end)
 
     refute Map.has_key?(:sys.get_state(GameLobby).games, game_id)

@@ -14,6 +14,14 @@ config :mana_chess_online,
     enabled: false,
     store: ManaChessOnline.Persistence.EctoStore,
     writer: ManaChessOnline.Persistence.Writer
+  ],
+  game_runtime: [
+    tick_ms: 250,
+    auto_tick: true,
+    max_dynamic_games: 250,
+    dynamic_idle_ttl_ms: 900_000,
+    lifecycle_interval_ms: 5_000,
+    heartbeat_interval_ms: 30_000
   ]
 
 config :mana_chess_online, ManaChessOnline.Repo,

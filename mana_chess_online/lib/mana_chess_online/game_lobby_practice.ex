@@ -2,6 +2,7 @@ defmodule ManaChessOnline.GameLobbyPractice do
   @moduledoc false
 
   alias ManaChessOnline.{
+    GameCapacity,
     GameBot,
     GameChat,
     GameControl,
@@ -12,17 +13,21 @@ defmodule ManaChessOnline.GameLobbyPractice do
   }
 
   def start_practice(state, player_id, now) do
-    game_id = GameRooms.practice_game_id(player_id)
+    if GameCapacity.available_after_leaving?(state, player_id) do
+      game_id = GameRooms.practice_game_id(player_id)
 
-    state
-    |> GameLobbyRooms.remove_player(player_id)
-    |> put_in(
-      [:games, game_id],
-      replace_game_state(
-        GameLobbyRooms.practice_game(game_id, player_id, state.global_settings, now)
+      state
+      |> GameLobbyRooms.remove_player(player_id)
+      |> put_in(
+        [:games, game_id],
+        replace_game_state(
+          GameLobbyRooms.practice_game(game_id, player_id, state.global_settings, now)
+        )
       )
-    )
-    |> put_in([:players, player_id], %{game_id: game_id, color: :practice})
+      |> put_in([:players, player_id], %{game_id: game_id, color: :practice})
+    else
+      GameCapacity.record_rejection(state)
+    end
   end
 
   def toggle_bot(state, player_id, now) do

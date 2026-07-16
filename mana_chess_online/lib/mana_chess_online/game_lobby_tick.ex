@@ -1,10 +1,54 @@
 defmodule ManaChessOnline.GameLobbyTick do
   @moduledoc false
 
-  alias ManaChessOnline.{GameBroadcast, GameLobbyServers, RateLimiter}
+  alias ManaChessOnline.{
+    GameBroadcast,
+    GameDirectory,
+    GameLobbyServers,
+    GameRuntimeConfig,
+    RateLimiter
+  }
 
   def run(state, now, tick_ms, rate_limit_retention_ms, public_game, public_lobby)
       when is_function(public_game, 2) and is_function(public_lobby, 2) do
+    if GameRuntimeConfig.auto_tick?() do
+      run_autonomous(state, now, rate_limit_retention_ms, public_lobby)
+    else
+      run_batch(
+        state,
+        now,
+        tick_ms,
+        rate_limit_retention_ms,
+        public_game,
+        public_lobby
+      )
+    end
+  end
+
+  defp run_autonomous(state, now, rate_limit_retention_ms, public_lobby) do
+    previous_public_lobby = public_lobby.(state, now)
+    games = GameLobbyServers.refresh_public_games(state.games)
+
+    next_state = %{
+      state
+      | games: games,
+        rate_limits: RateLimiter.prune(state.rate_limits, now, rate_limit_retention_ms)
+    }
+
+    next_public_lobby = public_lobby.(next_state, now)
+    public_games = next_state.games |> GameDirectory.public_games() |> Map.new()
+
+    lobby_update? =
+      GameBroadcast.lobby_update_needed?(
+        previous_public_lobby,
+        next_public_lobby,
+        public_games
+      )
+
+    {next_state, [], lobby_update?}
+  end
+
+  defp run_batch(state, now, tick_ms, rate_limit_retention_ms, public_game, public_lobby) do
     live_games = GameLobbyServers.server_backed_games(state.games)
 
     {games, changed_game_ids} =

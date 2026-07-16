@@ -34,6 +34,39 @@ config :mana_chess_online, :steam_auth,
   session_ttl_seconds: System.get_env("MANA_CHESS_STEAM_SESSION_TTL_SECONDS", "86400"),
   client: ManaChessOnline.SteamWebApiClient
 
+positive_integer = fn name, default, maximum ->
+  case System.get_env(name, "") |> String.trim() do
+    "" ->
+      default
+
+    value ->
+      case Integer.parse(value) do
+        {integer, ""} when integer > 0 -> min(integer, maximum)
+        _error -> raise "invalid positive integer for #{name}: #{inspect(value)}"
+      end
+  end
+end
+
+auto_tick =
+  case System.get_env("MANA_CHESS_GAME_AUTO_TICK", "true")
+       |> String.trim()
+       |> String.downcase() do
+    value when value in ["1", "true", "yes", "on"] -> true
+    value when value in ["0", "false", "no", "off"] -> false
+    value -> raise "invalid MANA_CHESS_GAME_AUTO_TICK value: #{inspect(value)}"
+  end
+
+config :mana_chess_online, :game_runtime,
+  tick_ms: positive_integer.("MANA_CHESS_GAME_TICK_MS", 250, 5_000),
+  auto_tick: auto_tick,
+  max_dynamic_games: positive_integer.("MANA_CHESS_MAX_DYNAMIC_GAMES", 250, 5_000),
+  dynamic_idle_ttl_ms:
+    positive_integer.("MANA_CHESS_DYNAMIC_IDLE_TTL_SECONDS", 900, 604_800) * 1_000,
+  lifecycle_interval_ms:
+    positive_integer.("MANA_CHESS_LIFECYCLE_INTERVAL_SECONDS", 5, 300) * 1_000,
+  heartbeat_interval_ms:
+    positive_integer.("MANA_CHESS_HEARTBEAT_INTERVAL_SECONDS", 30, 300) * 1_000
+
 database_url = System.get_env("DATABASE_URL", "") |> String.trim()
 
 persistence_enabled =

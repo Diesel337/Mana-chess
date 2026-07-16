@@ -4,6 +4,8 @@ defmodule ManaChessOnline.GameLobby do
   use GenServer
 
   alias ManaChessOnline.{
+    GameCapacity,
+    GameLifecycle,
     GameLobbyActions,
     GameLobbyChat,
     GameLobbyMatchmaking,
@@ -17,12 +19,12 @@ defmodule ManaChessOnline.GameLobby do
     GameMetrics,
     GamePlayers,
     GameRooms,
+    GameRuntimeConfig,
     GameSettings,
     GameSupervisor
   }
 
   @max_games 4
-  @tick_ms 250
   @countdown_ms 5_000
   @rate_limit_retention_ms 60_000
 
@@ -75,10 +77,14 @@ defmodule ManaChessOnline.GameLobby do
   def send_chat(player_id, game_id, message),
     do: GenServer.call(__MODULE__, {:send_chat, player_id, game_id, message})
 
+  def heartbeat(player_id, game_id),
+    do: GenServer.cast(__MODULE__, {:heartbeat, player_id, game_id})
+
   @impl true
   def init(:ok) do
-    Process.send_after(self(), :tick, @tick_ms)
+    Process.send_after(self(), :tick, GameRuntimeConfig.tick_ms())
     settings = GameSettings.load_global()
+    now = GameLobbyRuntime.now_ms()
 
     state = %{
       global_settings: settings,
@@ -87,7 +93,10 @@ defmodule ManaChessOnline.GameLobby do
           {"game_#{n}", GameRooms.new_game("game_#{n}", settings)}
         end),
       players: %{},
-      rate_limits: %{}
+      rate_limits: %{},
+      game_activity: %{},
+      last_lifecycle_at: now,
+      capacity_stats: %{rejected_count: 0, cleaned_count: 0}
     }
 
     GameLobbyRuntime.sync_game_servers(state)
@@ -101,8 +110,11 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   def handle_call({:sit, player_id, game_id, color}, _from, state) do
-    case GameLobbyMatchmaking.sit(state, player_id, game_id, color, GameLobbyRuntime.now_ms()) do
+    now = GameLobbyRuntime.now_ms()
+
+    case GameLobbyMatchmaking.sit(state, player_id, game_id, color, now) do
       {:ok, state} ->
+        state = GameLifecycle.touch_player(state, player_id, now)
         GameLobbyRuntime.broadcast_lobby(state)
         {:reply, GameLobbyRuntime.player_view(state, player_id), state}
 
@@ -112,8 +124,11 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   def handle_call({:sit_anywhere, player_id}, _from, state) do
-    case GameLobbyMatchmaking.sit_anywhere(state, player_id, GameLobbyRuntime.now_ms()) do
+    now = GameLobbyRuntime.now_ms()
+
+    case GameLobbyMatchmaking.sit_anywhere(state, player_id, now) do
       {:ok, state} ->
+        state = GameLifecycle.touch_player(state, player_id, now)
         GameLobbyRuntime.broadcast_lobby(state)
         {:reply, GameLobbyRuntime.player_view(state, player_id), state}
 
@@ -123,18 +138,26 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   def handle_call({:create_private, player_id}, _from, state) do
-    case GameLobbyMatchmaking.create_private(state, player_id, GameLobbyRuntime.now_ms()) do
-      {:ok, state, _game_id} ->
+    now = GameLobbyRuntime.now_ms()
+
+    case GameLobbyMatchmaking.create_private(state, player_id, now) do
+      {:ok, state, game_id} ->
+        state = GameLifecycle.touch_game(state, game_id, now)
         GameLobbyRuntime.broadcast_lobby(state)
         {:reply, {:ok, GameLobbyRuntime.player_view(state, player_id)}, state}
 
       {:error, :rate_limited, state} ->
         {:reply, {:error, :rate_limited}, state}
+
+      {:error, :capacity, state} ->
+        {:reply, {:error, :capacity}, state}
     end
   end
 
   def handle_call({:watch, player_id, game_id}, _from, state) do
-    state = GameLobbyPresence.watch(state, player_id, game_id, GameLobbyRuntime.now_ms())
+    now = GameLobbyRuntime.now_ms()
+    state = GameLobbyPresence.watch(state, player_id, game_id, now)
+    state = GameLifecycle.heartbeat(state, player_id, game_id, now)
     {:reply, GameLobbyRuntime.spectator_view(state, player_id, game_id), state}
   end
 
@@ -154,7 +177,9 @@ defmodule ManaChessOnline.GameLobby do
         games,
         GameLobbyRuntime.game_server_pids(state),
         GameSupervisor.child_count(),
-        state.rate_limits
+        state.rate_limits,
+        System.system_time(:millisecond),
+        GameCapacity.snapshot(state)
       )
 
     {:reply, metrics, state}
@@ -184,6 +209,7 @@ defmodule ManaChessOnline.GameLobby do
 
   def handle_call({:leave, player_id}, _from, state) do
     {state, public_lobby_changed?} = GameLobbyPresence.leave(state, player_id)
+    state = GameLifecycle.forget_missing_games(state)
 
     if public_lobby_changed? do
       GameLobbyRuntime.broadcast_lobby(state)
@@ -229,7 +255,9 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   def handle_call({:start_practice, player_id}, _from, state) do
-    state = GameLobbyPractice.start_practice(state, player_id, GameLobbyRuntime.now_ms())
+    now = GameLobbyRuntime.now_ms()
+    state = GameLobbyPractice.start_practice(state, player_id, now)
+    state = GameLifecycle.touch_player(state, player_id, now)
     GameLobbyRuntime.broadcast_lobby(state)
     {:reply, GameLobbyRuntime.player_view(state, player_id), state}
   end
@@ -261,8 +289,12 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   def handle_call({:enqueue, player_id, from, to}, _from, state) do
+    now = GameLobbyRuntime.now_ms()
+
     {state, game_id} =
-      GameLobbyMoves.enqueue(state, player_id, from, to, GameLobbyRuntime.now_ms())
+      GameLobbyMoves.enqueue(state, player_id, from, to, now)
+
+    state = if game_id, do: GameLifecycle.touch_game(state, game_id, now), else: state
 
     if game_id do
       GameLobbyRuntime.broadcast_game_snapshot(game_id, state)
@@ -282,6 +314,7 @@ defmodule ManaChessOnline.GameLobby do
            System.system_time(:second)
          ) do
       {:ok, state} ->
+        state = GameLifecycle.touch_game(state, game_id, GameLobbyRuntime.now_ms())
         GameLobbyRuntime.broadcast_game_snapshot(game_id, state)
         {:reply, :ok, state}
 
@@ -294,19 +327,28 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   @impl true
+  def handle_cast({:heartbeat, player_id, game_id}, state) do
+    state = GameLifecycle.heartbeat(state, player_id, game_id, GameLobbyRuntime.now_ms())
+    {:noreply, state}
+  end
+
+  @impl true
   def handle_info(:tick, state) do
-    Process.send_after(self(), :tick, @tick_ms)
+    tick_ms = GameRuntimeConfig.tick_ms()
+    Process.send_after(self(), :tick, tick_ms)
     now = GameLobbyRuntime.now_ms()
 
     {next_state, changed_game_ids, lobby_update?} =
       GameLobbyTick.run(
         state,
         now,
-        @tick_ms,
+        tick_ms,
         @rate_limit_retention_ms,
         &GameLobbyRuntime.public_game_at/2,
         &GameLobbyRuntime.public_lobby_at/2
       )
+
+    next_state = GameLifecycle.maintain(next_state, now)
 
     changed_game_ids
     |> Enum.reverse()

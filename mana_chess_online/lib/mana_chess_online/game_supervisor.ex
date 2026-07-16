@@ -3,7 +3,7 @@ defmodule ManaChessOnline.GameSupervisor do
 
   use DynamicSupervisor
 
-  alias ManaChessOnline.{GameRegistry, GameServer}
+  alias ManaChessOnline.{GameRegistry, GameRuntimeConfig, GameServer, GameServerRuntime}
 
   def start_link(opts), do: DynamicSupervisor.start_link(__MODULE__, opts, name: __MODULE__)
 
@@ -11,6 +11,16 @@ defmodule ManaChessOnline.GameSupervisor do
     opts =
       opts
       |> Keyword.put(:game, game)
+      |> Keyword.put_new(:tick_ms, GameRuntimeConfig.tick_ms())
+      |> Keyword.put_new(:auto_tick, GameRuntimeConfig.auto_tick?())
+      |> Keyword.put_new(:tick_observer, &GameServerRuntime.after_tick/3)
+      |> Keyword.put_new(
+        :initial_tick_delay_ms,
+        GameRuntimeConfig.initial_tick_delay_ms(
+          game.id,
+          Keyword.get(opts, :tick_ms, GameRuntimeConfig.tick_ms())
+        )
+      )
       |> Keyword.put_new(:id, {GameServer, game.id})
       |> Keyword.put_new(:name, GameRegistry.via(game.id))
 

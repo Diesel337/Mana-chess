@@ -1,7 +1,7 @@
 defmodule ManaChessOnline.GameLobbyRooms do
   @moduledoc false
 
-  alias ManaChessOnline.{GameLobbyServers, GamePlayers, GameRooms}
+  alias ManaChessOnline.{GameCapacity, GameLobbyServers, GamePlayers, GameRooms}
 
   def assign_player(state, player_id, game_id, color) do
     case game_snapshot(game_id, state) do
@@ -117,8 +117,12 @@ defmodule ManaChessOnline.GameLobbyRooms do
     if GameRooms.private_game_id?(game_id) do
       case game_snapshot(game_id, state) do
         nil ->
-          game = replace_game_state(GameRooms.private_game(game_id, state.global_settings))
-          put_in(state.games[game_id], game)
+          if GameCapacity.available?(state) do
+            game = replace_game_state(GameRooms.private_game(game_id, state.global_settings))
+            put_in(state.games[game_id], game)
+          else
+            GameCapacity.record_rejection(state)
+          end
 
         game ->
           game = replace_game_state(game)

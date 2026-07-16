@@ -26,7 +26,14 @@ defmodule ManaChessOnline.GameMetricsTest do
         [self()],
         %{active: 3},
         %{{:chat, "player"} => [0]},
-        123
+        123,
+        %{
+          dynamic_game_count: 2,
+          max_dynamic_games: 250,
+          dynamic_capacity_available: 248,
+          capacity_rejected_count: 3,
+          cleaned_dynamic_game_count: 4
+        }
       )
 
     assert metrics.measured_at_ms == 123
@@ -39,6 +46,11 @@ defmodule ManaChessOnline.GameMetricsTest do
     assert metrics.playing_game_count == 1
     assert metrics.bot_game_count == 1
     assert metrics.rate_limit_bucket_count == 1
+    assert metrics.dynamic_game_count == 2
+    assert metrics.max_dynamic_games == 250
+    assert metrics.dynamic_capacity_available == 248
+    assert metrics.capacity_rejected_count == 3
+    assert metrics.cleaned_dynamic_game_count == 4
     assert metrics.game_server_count == 3
     assert metrics.game_server_memory_kb > 0
     assert metrics.process_count > 0

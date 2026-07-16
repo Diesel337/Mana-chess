@@ -44,7 +44,7 @@ defmodule ManaChessOnline.GameBroadcast do
 
   def live_lobby(state, now) do
     GameLobbyView.public_lobby(
-      %{state | games: GameLobbyServers.server_backed_games(state.games)},
+      %{state | games: GameLobbyServers.refresh_public_games(state.games)},
       now
     )
   end
