@@ -30,6 +30,7 @@ defmodule ManaChessOnlineWeb.Endpoint do
     from: :mana_chess_online,
     gzip: not code_reloading?,
     only: ManaChessOnlineWeb.static_paths(),
+    only_matching: ~w(favicon- robots- site-),
     raise_on_missing_only: code_reloading?
 
   plug Plug.RequestId
