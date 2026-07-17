@@ -11,6 +11,8 @@ defmodule ManaChessOnline.Operations.EventLog do
 
   require Logger
 
+  alias ManaChessOnline.Operations.AlertDispatcher
+
   @levels [:info, :warning, :error]
   @allowed_fields [
     :code,
@@ -69,6 +71,7 @@ defmodule ManaChessOnline.Operations.EventLog do
     {:ok,
      %{
        clock: Keyword.get(config, :clock, fn -> System.monotonic_time(:millisecond) end),
+       alert_dispatcher: Keyword.get(config, :alert_dispatcher, AlertDispatcher),
        counts: %{error: 0, info: 0, warning: 0},
        dedupe: %{},
        dedupe_window_ms: positive_option(config, :dedupe_window_ms, 60_000),
@@ -126,6 +129,7 @@ defmodule ManaChessOnline.Operations.EventLog do
         |> maybe_put(:suppressed_since_last, suppressed)
 
       safe_emit(state.logger, level, payload)
+      dispatch_alert(state.alert_dispatcher, level, event, payload)
 
       dedupe =
         state.dedupe
@@ -156,6 +160,14 @@ defmodule ManaChessOnline.Operations.EventLog do
     _error -> :ok
   catch
     _kind, _reason -> :ok
+  end
+
+  defp dispatch_alert(nil, _level, _event, _payload), do: :ok
+
+  defp dispatch_alert(dispatcher, level, event, payload) do
+    AlertDispatcher.notify(dispatcher, level, event, payload)
+  catch
+    :exit, _reason -> :ok
   end
 
   defp increment(state, level) do

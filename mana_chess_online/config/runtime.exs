@@ -53,12 +53,60 @@ positive_integer = fn name, default, maximum ->
   end
 end
 
+alert_webhook_url = System.get_env("MANA_CHESS_ALERT_WEBHOOK_URL", "") |> String.trim()
+
+if String.length(alert_webhook_url) > 2_048 do
+  raise "MANA_CHESS_ALERT_WEBHOOK_URL exceeds 2048 characters"
+end
+
+if alert_webhook_url != "" do
+  uri = URI.parse(alert_webhook_url)
+
+  unless uri.scheme == "https" and is_binary(uri.host) and uri.host != "" and
+           is_nil(uri.userinfo) and is_nil(uri.fragment) do
+    raise "MANA_CHESS_ALERT_WEBHOOK_URL must be an HTTPS URL without userinfo or fragment"
+  end
+end
+
+alert_webhook_token = System.get_env("MANA_CHESS_ALERT_WEBHOOK_TOKEN", "")
+
+if String.length(alert_webhook_token) > 4_096 do
+  raise "MANA_CHESS_ALERT_WEBHOOK_TOKEN exceeds 4096 characters"
+end
+
+alert_levels_value =
+  case System.get_env("MANA_CHESS_ALERT_LEVELS", "error") |> String.trim() do
+    "" -> "error"
+    value -> value
+  end
+
+alert_levels =
+  alert_levels_value
+  |> String.split(",", trim: true)
+  |> Enum.map(&(&1 |> String.trim() |> String.downcase()))
+  |> Enum.map(fn
+    "warning" -> :warning
+    "error" -> :error
+    value -> raise "invalid MANA_CHESS_ALERT_LEVELS value: #{inspect(value)}"
+  end)
+  |> Enum.uniq()
+
+if alert_levels == [] do
+  raise "MANA_CHESS_ALERT_LEVELS must contain warning or error"
+end
+
 config :mana_chess_online, :operations,
   max_events: positive_integer.("MANA_CHESS_OPERATION_EVENT_LIMIT", 100, 500),
   dedupe_window_ms: positive_integer.("MANA_CHESS_OPERATION_DEDUPE_SECONDS", 60, 3_600) * 1_000,
   slow_request_ms: positive_integer.("MANA_CHESS_SLOW_REQUEST_MS", 2_000, 60_000),
   slow_query_ms: positive_integer.("MANA_CHESS_SLOW_QUERY_MS", 1_000, 60_000),
-  slow_socket_ms: positive_integer.("MANA_CHESS_SLOW_SOCKET_MS", 2_000, 60_000)
+  slow_socket_ms: positive_integer.("MANA_CHESS_SLOW_SOCKET_MS", 2_000, 60_000),
+  alert_webhook_url: alert_webhook_url,
+  alert_webhook_token: alert_webhook_token,
+  alert_levels: alert_levels,
+  alert_queue_limit: positive_integer.("MANA_CHESS_ALERT_QUEUE_LIMIT", 50, 500),
+  alert_max_attempts: positive_integer.("MANA_CHESS_ALERT_MAX_ATTEMPTS", 3, 5),
+  alert_retry_delay_ms: positive_integer.("MANA_CHESS_ALERT_RETRY_DELAY_MS", 500, 60_000)
 
 config :mana_chess_online, :runtime_metadata,
   environment: System.get_env("RAILWAY_ENVIRONMENT_NAME", Atom.to_string(config_env())),

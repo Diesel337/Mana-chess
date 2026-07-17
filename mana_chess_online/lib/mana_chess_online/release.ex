@@ -35,6 +35,27 @@ defmodule ManaChessOnline.Release do
     end
   end
 
+  def compare_persistence_reports do
+    load_app()
+
+    with {:ok, baseline_path} <- report_path("MANA_CHESS_PERSISTENCE_BASELINE_REPORT"),
+         {:ok, recovery_path} <- report_path("MANA_CHESS_PERSISTENCE_RECOVERY_REPORT") do
+      case ManaChessOnline.Persistence.VerificationComparison.compare_files(
+             baseline_path,
+             recovery_path
+           ) do
+        {:ok, report} ->
+          report |> Jason.encode!() |> IO.puts()
+
+        {:error, report} ->
+          raise "Mana Chess persistence report comparison failed code=#{report.code}"
+      end
+    else
+      {:error, code} ->
+        raise "Mana Chess persistence report comparison could not start code=#{code}"
+    end
+  end
+
   defp verify_repo(repo) do
     result = with_repo(repo)
 
@@ -65,6 +86,13 @@ defmodule ManaChessOnline.Release do
 
   defp sanitized_reason(reason) when is_atom(reason), do: Atom.to_string(reason)
   defp sanitized_reason(_reason), do: "repo_unavailable"
+
+  defp report_path(name) do
+    case System.get_env(name, "") |> String.trim() do
+      "" -> {:error, "missing_report_path"}
+      path -> {:ok, path}
+    end
+  end
 
   defp repos, do: Application.fetch_env!(@app, :ecto_repos)
 

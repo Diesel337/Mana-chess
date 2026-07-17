@@ -1,7 +1,7 @@
 defmodule ManaChessOnline.ReleaseScriptsTest do
   use ExUnit.Case, async: true
 
-  @scripts ~w(migrate server verify-persistence)
+  @scripts ~w(compare-persistence-reports migrate server verify-persistence)
 
   test "Unix release scripts use LF line endings" do
     scripts_dir = Path.expand("../../rel/overlays/bin", __DIR__)

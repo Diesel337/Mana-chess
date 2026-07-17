@@ -1,0 +1,5 @@
+#!/bin/sh
+set -eu
+
+SCRIPT_DIR=$(CDPATH= cd -P -- "$(dirname -- "$0")" && pwd)
+exec "$SCRIPT_DIR/mana_chess_online" eval "ManaChessOnline.Release.compare_persistence_reports()"

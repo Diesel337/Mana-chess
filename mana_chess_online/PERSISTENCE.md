@@ -16,6 +16,7 @@ Active match snapshots are not restored from Postgres yet. Enabling this layer d
 - `ManaChessOnline.Repo`: Ecto repository.
 - `ManaChessOnline.Release`: release migration entry point.
 - `ManaChessOnline.Persistence.Verifier`: read-only migration, table, and aggregate-count checks for restored databases.
+- `ManaChessOnline.Persistence.VerificationComparison`: validates and compares baseline/recovery aggregate reports.
 - `ManaChessOnline.GamePersistence`: detects the first transition into a terminal match state.
 - `ManaChessOnline.CompetitiveRating`: pure Elo calculation, eligibility rules, and record updates.
 - `ManaChessOnline.CompetitiveLeaderboard`: normalizes ranks and replaces private player IDs with server-keyed public aliases.
@@ -86,6 +87,14 @@ bin/verify-persistence
 ```
 
 It fails closed on an unavailable database, pending migration, missing table, or unreadable aggregate count. It only prints migration and row counts. Follow the complete disposable-environment restore rehearsal in [`OPERATIONS.md`](OPERATIONS.md); a passing verifier against the live database is not evidence that a backup can be restored.
+
+After capturing reports from the backup baseline and disposable restored database, compare them locally:
+
+```sh
+mix mana_chess.compare_persistence_reports baseline.json recovery.json
+```
+
+The comparison fails closed on invalid reports, migration drift, and expected table-count differences. It only returns aggregate mismatches. The release command `bin/compare-persistence-reports` provides the same check for report paths supplied through `MANA_CHESS_PERSISTENCE_BASELINE_REPORT` and `MANA_CHESS_PERSISTENCE_RECOVERY_REPORT`.
 
 For an intentional schema rollback from a release console:
 

@@ -12,6 +12,8 @@ defmodule ManaChessOnline.Application do
     children =
       [
         {ManaChessOnline.Operations.EventLog, operations},
+        {Task.Supervisor, name: ManaChessOnline.Operations.AlertTaskSupervisor},
+        {ManaChessOnline.Operations.AlertDispatcher, operations},
         {ManaChessOnline.Operations.Telemetry, operations},
         ManaChessOnlineWeb.Telemetry,
         {DNSCluster,

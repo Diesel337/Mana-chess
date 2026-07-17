@@ -17,7 +17,13 @@ config :mana_chess_online,
     dedupe_window_ms: 60_000,
     slow_request_ms: 2_000,
     slow_query_ms: 1_000,
-    slow_socket_ms: 2_000
+    slow_socket_ms: 2_000,
+    alert_webhook_url: "",
+    alert_webhook_token: "",
+    alert_levels: [:error],
+    alert_queue_limit: 50,
+    alert_max_attempts: 3,
+    alert_retry_delay_ms: 500
   ],
   persistence: [
     enabled: false,

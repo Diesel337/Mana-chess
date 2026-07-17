@@ -86,7 +86,7 @@ ENV MIX_ENV="prod"
 
 # Only copy the final release from the build stage
 COPY --from=builder --chown=nobody:root /app/_build/${MIX_ENV}/rel/mana_chess_online ./
-RUN chmod +x /app/bin/server /app/bin/migrate /app/bin/verify-persistence
+RUN chmod +x /app/bin/server /app/bin/migrate /app/bin/verify-persistence /app/bin/compare-persistence-reports
 
 USER nobody
 

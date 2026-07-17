@@ -41,6 +41,7 @@ Create or refresh a dedicated Railway `staging` environment from `production`, t
 - Steam publisher credentials are used only when staging a real Steam authentication rehearsal.
 - `/health` reports `ready: true` and the expected persistence mode.
 - `operations.running=true`, no unexplained error-count increase, and the release hash matches the candidate.
+- `operations.alerting.enabled=true` only when the staging receiver and alert owner are ready; its failed/dropped counters remain zero during the rehearsal.
 
 Verify the staging database from the running release:
 

@@ -2,7 +2,7 @@ defmodule ManaChessOnlineWeb.HealthController do
   use ManaChessOnlineWeb, :controller
 
   alias ManaChessOnline.Persistence
-  alias ManaChessOnline.Operations.EventLog
+  alias ManaChessOnline.Operations.{AlertDispatcher, EventLog}
 
   def show(conn, _params) do
     case Persistence.health() do
@@ -21,7 +21,9 @@ defmodule ManaChessOnlineWeb.HealthController do
       ok: ok,
       service: "mana_chess_online",
       persistence: persistence,
-      operations: EventLog.snapshot()
+      operations:
+        EventLog.snapshot()
+        |> Map.put(:alerting, AlertDispatcher.snapshot())
     }
   end
 end

@@ -179,10 +179,10 @@ Release candidate target:
 - [~] Persist match summaries and stats. Terminal `GameServer` transitions emit immutable summaries to production Postgres; richer aggregate player stats remain.
 - [~] Move admin/global settings out of local JSON. Postgres becomes primary when enabled, with JSON retained as a fail-safe fallback.
 - [ ] Decide whether active match snapshots are needed across deploys.
-- [~] Add backup/restore plan. `PERSISTENCE.md` and `OPERATIONS.md` define safe additive rollback and a read-only restored-database verifier; provider scheduling, retention, and the recorded restore rehearsal remain.
+- [~] Add backup/restore plan. `PERSISTENCE.md` and `OPERATIONS.md` define safe additive rollback, a read-only restored-database verifier, and a strict baseline/recovery report comparator; provider scheduling, retention, and the recorded restore rehearsal remain.
 - [x] Add environment separation for launch QA/staging and production. Railway staging has a separate domain, Postgres service, database credentials, session secret, and leaderboard alias secret.
 - [x] Add structured logs. Production emits bounded one-line JSON with release/environment metadata, while high-volume routine endpoint and socket logs remain suppressed.
-- [~] Add error reporting. Phoenix, LiveView, Ecto, persistence, and GameServer recovery events are sanitized, deduplicated, counted in health, and retained in Railway logs; external paging/notification ownership remains.
+- [~] Add error reporting. Phoenix, LiveView, Ecto, persistence, and GameServer recovery events are sanitized, deduplicated, counted in health, retained in Railway logs, and ready for bounded HTTPS webhook delivery; the real endpoint, routing test, and notification ownership remain.
 - [~] Add deploy rollback plan. Previous application commits remain schema-compatible and explicit release rollback exists; launch-day rehearsal remains.
 - [x] Add incident checklist for launch day. Roles, severity, evidence, rollback, and communication fields are defined in `STEAM_LAUNCH_RUNBOOK.md`.
 
