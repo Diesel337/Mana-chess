@@ -9,8 +9,22 @@ defmodule ManaChessOnline.LoadLobbySmoke do
   @default_operation_timeout_ms 30_000
 
   @profile_defaults %{
-    "100" => %{players: 100, practice: 20, private_pairs: 30, concurrency: 32, settle_ms: 300},
-    "500" => %{players: 500, practice: 100, private_pairs: 150, concurrency: 64, settle_ms: 500}
+    "100" => %{
+      players: 100,
+      practice: 20,
+      competitive_pairs: 20,
+      private_pairs: 15,
+      concurrency: 32,
+      settle_ms: 300
+    },
+    "500" => %{
+      players: 500,
+      practice: 100,
+      competitive_pairs: 75,
+      private_pairs: 75,
+      concurrency: 64,
+      settle_ms: 500
+    }
   }
 
   def run(argv) do
@@ -18,7 +32,10 @@ defmodule ManaChessOnline.LoadLobbySmoke do
     total_start = System.monotonic_time(:millisecond)
     run_id = "load-" <> Integer.to_string(System.system_time(:millisecond))
     players = Enum.map(1..config.players, &"#{run_id}-p#{&1}")
-    {practice_players, private_players, watch_players} = split_players(players, config)
+
+    {practice_players, competitive_players, private_players, watch_players} =
+      split_players(players, config)
+
     private_pairs = Enum.chunk_every(private_players, 2)
 
     baseline = metrics(config)
@@ -34,6 +51,11 @@ defmodule ManaChessOnline.LoadLobbySmoke do
       end)
 
     after_practice = metrics(config)
+
+    {competitive_summary, competitive_ms} =
+      timed(fn -> competitive_matches(competitive_players, config.concurrency, config) end)
+
+    after_competitive = metrics(config)
 
     {private_summary, private_ms} =
       timed(fn -> private_matches(private_pairs, config.concurrency, config) end)
@@ -68,6 +90,7 @@ defmodule ManaChessOnline.LoadLobbySmoke do
           :profile,
           :players,
           :practice,
+          :competitive_pairs,
           :private_pairs,
           :concurrency,
           :moves,
@@ -81,6 +104,7 @@ defmodule ManaChessOnline.LoadLobbySmoke do
         total: total_ms,
         join: join_ms,
         practice: practice_ms,
+        competitive_matches: competitive_ms,
         private_matches: private_ms,
         watch: watch_ms,
         cleanup: cleanup_ms
@@ -88,6 +112,7 @@ defmodule ManaChessOnline.LoadLobbySmoke do
       summaries: %{
         join: join_summary,
         practice: practice_summary,
+        competitive_matches: Map.delete(competitive_summary, :game_ids),
         private_matches: Map.delete(private_summary, :game_ids),
         watch: watch_summary,
         cleanup: cleanup_summary
@@ -96,6 +121,7 @@ defmodule ManaChessOnline.LoadLobbySmoke do
         baseline: compact_metrics(baseline),
         after_join: compact_metrics(after_join),
         after_practice: compact_metrics(after_practice),
+        after_competitive: compact_metrics(after_competitive),
         after_private: compact_metrics(after_private),
         after_watch: compact_metrics(after_watch),
         after_settle: compact_metrics(after_settle),
@@ -118,6 +144,7 @@ defmodule ManaChessOnline.LoadLobbySmoke do
           profile: :string,
           players: :integer,
           practice: :integer,
+          competitive_pairs: :integer,
           private_pairs: :integer,
           concurrency: :integer,
           moves: :integer,
@@ -151,6 +178,19 @@ defmodule ManaChessOnline.LoadLobbySmoke do
       clamp(non_negative(option(opts, :practice, practice_default), :practice), 0, players)
 
     remaining = players - practice
+    competitive_pairs_default = Map.get(defaults, :competitive_pairs, 0)
+
+    competitive_pairs =
+      clamp(
+        non_negative(
+          option(opts, :competitive_pairs, competitive_pairs_default),
+          :competitive_pairs
+        ),
+        0,
+        div(remaining, 2)
+      )
+
+    remaining = remaining - competitive_pairs * 2
     private_pairs_default = Map.get(defaults, :private_pairs, div(remaining, 2))
 
     private_pairs =
@@ -164,6 +204,7 @@ defmodule ManaChessOnline.LoadLobbySmoke do
       profile: profile || "custom",
       players: players,
       practice: practice,
+      competitive_pairs: competitive_pairs,
       private_pairs: private_pairs,
       concurrency: positive(option(opts, :concurrency, defaults.concurrency), :concurrency),
       moves: positive(option(opts, :moves, 1), :moves),
@@ -233,8 +274,9 @@ defmodule ManaChessOnline.LoadLobbySmoke do
 
   defp split_players(players, config) do
     {practice_players, rest} = Enum.split(players, config.practice)
+    {competitive_players, rest} = Enum.split(rest, config.competitive_pairs * 2)
     {private_players, watch_players} = Enum.split(rest, config.private_pairs * 2)
-    {practice_players, private_players, watch_players}
+    {practice_players, competitive_players, private_players, watch_players}
   end
 
   defp metrics(config), do: GameLobby.metrics(config.metrics_timeout_ms)
@@ -270,6 +312,29 @@ defmodule ManaChessOnline.LoadLobbySmoke do
       result, acc -> accumulate_result(result, acc)
     end)
     |> update_in([:game_ids], &Enum.reverse/1)
+  end
+
+  defp competitive_matches(players, concurrency, config) do
+    players
+    |> Task.async_stream(&safe_competitive_player(&1, config),
+      max_concurrency: concurrency,
+      timeout: :infinity,
+      ordered: false
+    )
+    |> Enum.reduce(%{ok: 0, error: 0, errors: [], game_ids: []}, fn
+      {:ok, {:ok, game_id}}, acc ->
+        %{acc | ok: acc.ok + 1, game_ids: [game_id | acc.game_ids]}
+
+      result, acc ->
+        accumulate_result(result, acc)
+    end)
+    |> then(fn summary ->
+      game_ids = summary.game_ids |> Enum.uniq() |> Enum.sort()
+
+      summary
+      |> Map.put(:game_ids, game_ids)
+      |> Map.put(:match_count, length(game_ids))
+    end)
   end
 
   defp watch_games(players, [], concurrency, config),
@@ -315,6 +380,17 @@ defmodule ManaChessOnline.LoadLobbySmoke do
 
   defp safe_private_match(pair, _config), do: {:error, "invalid private pair #{inspect(pair)}"}
 
+  defp safe_competitive_player(player_id, config) do
+    case lobby_call({:sit_anywhere, player_id, 1_200}, config) do
+      %{game_id: game_id} when is_binary(game_id) -> {:ok, game_id}
+      _view -> {:error, "competitive queue did not assign #{player_id}"}
+    end
+  rescue
+    error -> {:error, Exception.message(error)}
+  catch
+    kind, reason -> {:error, "#{kind}: #{inspect(reason)}"}
+  end
+
   defp accumulate_result({:ok, :ok}, acc), do: %{acc | ok: acc.ok + 1}
   defp accumulate_result({:ok, {:ok, _value}}, acc), do: %{acc | ok: acc.ok + 1}
   defp accumulate_result({:ok, {:error, reason}}, acc), do: add_error(acc, reason)
@@ -346,6 +422,7 @@ defmodule ManaChessOnline.LoadLobbySmoke do
     Map.take(metrics, [
       :game_count,
       :public_game_count,
+      :matchmaking_game_count,
       :private_game_count,
       :practice_game_count,
       :playing_game_count,
@@ -356,6 +433,11 @@ defmodule ManaChessOnline.LoadLobbySmoke do
       :game_server_mailbox_total,
       :game_server_mailbox_max,
       :game_server_memory_kb,
+      :dynamic_game_count,
+      :max_dynamic_games,
+      :dynamic_capacity_available,
+      :capacity_rejected_count,
+      :cleaned_dynamic_game_count,
       :process_count,
       :memory_total_kb,
       :run_queue
@@ -454,8 +536,10 @@ defmodule ManaChessOnline.LoadLobbySmoke do
   defp format_metrics(nil), do: "n/a"
 
   defp format_metrics(metrics) do
-    "games=#{metrics.game_count} public=#{metrics.public_game_count} private=#{metrics.private_game_count} " <>
+    "games=#{metrics.game_count} public=#{metrics.public_game_count} matchmaking=#{metrics.matchmaking_game_count} " <>
+      "private=#{metrics.private_game_count} " <>
       "practice=#{metrics.practice_game_count} playing=#{metrics.playing_game_count} bots=#{metrics.bot_game_count} " <>
+      "dynamic=#{metrics.dynamic_game_count}/#{metrics.max_dynamic_games} " <>
       "servers=#{metrics.game_server_count} mailbox=#{metrics.game_server_mailbox_total}/#{metrics.game_server_mailbox_max} " <>
       "rate_buckets=#{metrics.rate_limit_bucket_count} mem=#{metrics.memory_total_kb}KB run_queue=#{metrics.run_queue}"
   end

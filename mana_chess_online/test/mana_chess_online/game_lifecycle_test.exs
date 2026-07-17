@@ -61,6 +61,36 @@ defmodule ManaChessOnline.GameLifecycleTest do
     assert GameSupervisor.lookup_game(game_id) == :error
   end
 
+  test "maintenance expires idle matchmaking rooms and rating cache entries" do
+    game_id = "match_idle_lifecycle_test"
+
+    game =
+      game_id
+      |> GameState.matchmaking_game(settings())
+      |> Map.put(:players, %{white: "idle-queue-player", black: nil})
+
+    assert {:ok, _pid} = GameSupervisor.upsert_game(game)
+    on_exit(fn -> GameSupervisor.stop_game(game_id) end)
+
+    state = %{
+      games: %{game_id => game},
+      players: %{"idle-queue-player" => %{game_id: game_id, color: :white}},
+      player_ratings: %{"idle-queue-player" => 1_350},
+      rate_limits: %{},
+      game_activity: %{game_id => 1},
+      last_lifecycle_at: 0,
+      capacity_stats: %{rejected_count: 0, cleaned_count: 0}
+    }
+
+    next_state = GameLifecycle.maintain(state, 200)
+
+    refute Map.has_key?(next_state.games, game_id)
+    refute Map.has_key?(next_state.players, "idle-queue-player")
+    refute Map.has_key?(next_state.player_ratings, "idle-queue-player")
+    assert next_state.capacity_stats.cleaned_count == 1
+    assert GameSupervisor.lookup_game(game_id) == :error
+  end
+
   defp settings do
     %{
       max_elixir: 10.0,

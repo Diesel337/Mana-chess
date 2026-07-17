@@ -16,6 +16,7 @@ defmodule ManaChessOnline.GameMetrics do
       measured_at_ms: measured_at_ms,
       game_count: map_size(games),
       public_game_count: count_games(game_values, &public_game?/1),
+      matchmaking_game_count: count_games(game_values, &Map.get(&1, :matchmaking?, false)),
       private_game_count: count_games(game_values, &Map.get(&1, :private?, false)),
       practice_game_count: count_games(game_values, &Map.get(&1, :practice?, false)),
       waiting_game_count: count_status(game_values, :waiting),

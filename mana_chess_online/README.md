@@ -50,6 +50,14 @@ The persistence boundary stores verified Steam users, Steam entitlements, termin
 
 Quick match prefers an already waiting opponent and, when several are available, chooses the smallest rating difference. The lobby leaderboard shows the top rated players plus the current player's position, but replaces every stored player identity with a server-keyed public alias. `MANA_CHESS_LEADERBOARD_ALIAS_SECRET` can provide a dedicated alias key; production otherwise derives it from `SECRET_KEY_BASE`. Private and practice games never change competitive rating.
 
+The four fixed public rooms remain visible for manual seating. They are no longer the quick-match ceiling: once those rooms have no waiting seat, the lobby creates hidden `match_*` public rooms, pairs the next closest-rated opponent, and starts the existing five-second countdown. Empty queue rooms stop immediately; inactive rooms also expire through the dynamic-room TTL.
+
+```bash
+MANA_CHESS_MAX_DYNAMIC_GAMES=250
+```
+
+That default is a shared admission ceiling for competitive queue, private, and practice rooms. Together with the four fixed rooms it permits at most 254 admitted game processes, but it is not a throughput guarantee; keep production at 250 until the Railway staging WebSocket scenarios in `bench/README.md` pass on production-sized resources.
+
 See [`PERSISTENCE.md`](PERSISTENCE.md) for schema ownership, Railway activation, rollback, backup, and remaining active-match snapshot work.
 
 ## Learn more
@@ -73,8 +81,9 @@ Useful options:
 
 ```bash
 mix run scripts/lobby_stress.exs -- --players 100 --practice 20 --private-pairs 40 --concurrency 32 --settle-ms 500
+mix run scripts/lobby_stress.exs -- --players 100 --practice 20 --competitive-pairs 25 --private-pairs 10 --concurrency 32
 mix run scripts/lobby_stress.exs -- --profile 500 --max-total-ms 90000 --max-mailbox 10 --max-run-queue 20
 mix run scripts/lobby_stress.exs -- --profile 100 --operation-timeout-ms 30000 --json
 ```
 
-Profiles are local logical-client runs. Profile `500` uses 100 practice players, 150 private matches, and 100 watchers. This is an internal OTP/lobby smoke, not a replacement for real WebSocket or Steam-client load tests.
+Profiles are local logical-client runs. Profile `500` uses 100 practice players, 75 competitive matches, 75 private matches, and 100 watchers. This is an internal OTP/lobby smoke, not a replacement for real WebSocket or Steam-client load tests.

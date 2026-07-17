@@ -13,6 +13,7 @@ defmodule ManaChessOnline.GameMetricsTest do
 
   test "summarizes game and runtime health" do
     public_game = GameState.new_game("game_1", settings())
+    matchmaking_game = GameState.matchmaking_game("match_1", settings())
     private_game = %{GameState.private_game("private_1", settings()) | status: :ready}
     practice_game = GameState.practice_game("practice_1", "player", settings(), 0, 1_000)
 
@@ -20,11 +21,12 @@ defmodule ManaChessOnline.GameMetricsTest do
       GameMetrics.snapshot(
         %{
           public_game.id => public_game,
+          matchmaking_game.id => matchmaking_game,
           private_game.id => private_game,
           practice_game.id => practice_game
         },
         [self()],
-        %{active: 3},
+        %{active: 4},
         %{{:chat, "player"} => [0]},
         123,
         %{
@@ -37,11 +39,12 @@ defmodule ManaChessOnline.GameMetricsTest do
       )
 
     assert metrics.measured_at_ms == 123
-    assert metrics.game_count == 3
-    assert metrics.public_game_count == 1
+    assert metrics.game_count == 4
+    assert metrics.public_game_count == 2
+    assert metrics.matchmaking_game_count == 1
     assert metrics.private_game_count == 1
     assert metrics.practice_game_count == 1
-    assert metrics.waiting_game_count == 1
+    assert metrics.waiting_game_count == 2
     assert metrics.ready_game_count == 1
     assert metrics.playing_game_count == 1
     assert metrics.bot_game_count == 1
@@ -51,7 +54,7 @@ defmodule ManaChessOnline.GameMetricsTest do
     assert metrics.dynamic_capacity_available == 248
     assert metrics.capacity_rejected_count == 3
     assert metrics.cleaned_dynamic_game_count == 4
-    assert metrics.game_server_count == 3
+    assert metrics.game_server_count == 4
     assert metrics.game_server_memory_kb > 0
     assert metrics.process_count > 0
     assert metrics.memory_total_kb > 0

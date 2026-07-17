@@ -489,6 +489,46 @@ defmodule ManaChessOnline.GameLobbyTest do
     assert "Servidor vivo tiene negro libre." in server_game.log
   end
 
+  test "quick match creates a hidden fifth public match and starts it automatically" do
+    game_ids = Enum.map(1..4, &"game_#{&1}")
+    seated_players = Enum.map(1..8, &unique_player("queue-seat-#{&1}"))
+    first_queue_player = unique_player("queue-fifth-white")
+    second_queue_player = unique_player("queue-fifth-black")
+    all_players = seated_players ++ [first_queue_player, second_queue_player]
+
+    on_exit(fn ->
+      Enum.each(all_players, &GameLobby.leave/1)
+      Enum.each(game_ids, &GameLobby.force_clear_room/1)
+    end)
+
+    Enum.each(game_ids, &GameLobby.force_clear_room/1)
+
+    game_ids
+    |> Enum.zip(Enum.chunk_every(seated_players, 2))
+    |> Enum.each(fn {game_id, [white, black]} ->
+      assert %{game_id: ^game_id, color: :white} = GameLobby.sit(white, game_id, :white)
+      assert %{game_id: ^game_id, color: :black} = GameLobby.sit(black, game_id, :black)
+    end)
+
+    first_view = GameLobby.sit_anywhere(first_queue_player, 1_310)
+
+    assert String.starts_with?(first_view.game_id, "match_")
+    assert first_view.color == :white
+    assert first_view.game.matchmaking?
+    refute Enum.any?(first_view.lobby, &(&1.id == first_view.game_id))
+
+    second_view = GameLobby.sit_anywhere(second_queue_player, 1_325)
+
+    assert second_view.game_id == first_view.game_id
+    assert second_view.color == :black
+    assert second_view.game.players.white == first_queue_player
+    assert second_view.game.players.black == second_queue_player
+    assert match?({:starting, _starts_at}, second_view.game.status)
+
+    assert GameLobby.lobby() |> Enum.map(& &1.id) |> MapSet.new() == MapSet.new(game_ids)
+    assert GameLobby.metrics().matchmaking_game_count >= 1
+  end
+
   test "private matches become ready when black joins without entering public lobby" do
     white_id = unique_player("private-white")
     black_id = unique_player("private-black")

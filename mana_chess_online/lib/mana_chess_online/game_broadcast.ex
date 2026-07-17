@@ -1,7 +1,7 @@
 defmodule ManaChessOnline.GameBroadcast do
   @moduledoc false
 
-  alias ManaChessOnline.{GameLobbyServers, GameLobbyView}
+  alias ManaChessOnline.{GameDirectory, GameLobbyServers, GameLobbyView}
 
   def game_topic(game_id), do: "game:" <> game_id
   def lobby_topic, do: "lobby"
@@ -65,7 +65,9 @@ defmodule ManaChessOnline.GameBroadcast do
 
   def lobby_update_needed?(previous_public_lobby, next_public_lobby, next_games) do
     previous_public_lobby != next_public_lobby or
-      Enum.any?(next_games, fn {_game_id, game} -> countdown_visible?(game) end)
+      Enum.any?(next_games, fn {_game_id, game} ->
+        GameDirectory.lobby_game?(game) and countdown_visible?(game)
+      end)
   end
 
   def lobby_update_needed?(previous_state, next_state, now, public_lobby)

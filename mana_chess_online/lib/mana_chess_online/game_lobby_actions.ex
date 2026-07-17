@@ -41,14 +41,7 @@ defmodule ManaChessOnline.GameLobbyActions do
          %{status: :ready} = game <- game_snapshot(game_id, state) do
       game =
         update_game_state(game, fn game ->
-          %{
-            game
-            | status: {:starting, starts_at},
-              queue: [],
-              reset_requests: MapSet.new(),
-              start_requests: MapSet.new([player_id]),
-              log: ["Cuenta regresiva iniciada." | game.log]
-          }
+          GameRooms.start_countdown(game, starts_at, [player_id])
         end)
 
       put_in(state.games[game_id], game)

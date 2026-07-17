@@ -10,6 +10,7 @@ defmodule ManaChessOnline.GameState do
       players: %{white: nil, black: nil},
       practice?: false,
       private?: false,
+      matchmaking?: false,
       settings: settings,
       elixir: full_elixir(settings),
       castling_rights: %{
@@ -55,6 +56,14 @@ defmodule ManaChessOnline.GameState do
     }
   end
 
+  def matchmaking_game(id, settings) do
+    %{
+      new_game(id, settings)
+      | matchmaking?: true,
+        log: ["Buscando rival competitivo..."]
+    }
+  end
+
   def public_game(nil, _now_ms, _default_cooldown_seconds), do: nil
 
   def public_game(game, now_ms, default_cooldown_seconds) do
@@ -64,6 +73,7 @@ defmodule ManaChessOnline.GameState do
       players: game.players,
       practice?: game.practice?,
       private?: Map.get(game, :private?, false),
+      matchmaking?: Map.get(game, :matchmaking?, false),
       elixir: game.elixir,
       settings: game.settings,
       bot_enabled?: game.bot_enabled?,
@@ -86,7 +96,7 @@ defmodule ManaChessOnline.GameState do
 
   def public_lobby(%{games: games}, now_ms) do
     games
-    |> GameDirectory.public_games()
+    |> GameDirectory.lobby_games()
     |> Enum.map(fn {_game_id, game} ->
       %{
         id: game.id,

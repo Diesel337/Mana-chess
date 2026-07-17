@@ -47,7 +47,7 @@ defmodule ManaChessOnline.GameLobbyRooms do
 
             state
             |> put_in([:games, game_id], game)
-            |> maybe_drop_empty_private_game(game_id, game)
+            |> maybe_drop_empty_ephemeral_game(game_id, game)
         end
 
       _ ->
@@ -137,10 +137,10 @@ defmodule ManaChessOnline.GameLobbyRooms do
     GameRooms.practice_game_for_player(id, player_id, settings, now, bot_color)
   end
 
-  defp maybe_drop_empty_private_game(state, game_id, game) do
-    if GameRooms.drop_empty_private_game?(game) do
+  defp maybe_drop_empty_ephemeral_game(state, game_id, game) do
+    if GameRooms.drop_empty_private_game?(game) or GameRooms.empty_matchmaking_game?(game) do
       GameLobbyServers.stop_game_server(game_id)
-      update_in(state.games, &GameRooms.drop_empty_private_game(&1, game_id, game))
+      update_in(state.games, &GameRooms.drop_game(&1, game_id))
     else
       state
     end

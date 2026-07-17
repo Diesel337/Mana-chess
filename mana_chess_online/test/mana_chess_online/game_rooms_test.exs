@@ -20,6 +20,7 @@ defmodule ManaChessOnline.GameRoomsTest do
   test "builds room game states" do
     assert GameRooms.new_game("game_1", settings()).id == "game_1"
     assert GameRooms.private_game("private_1", settings()).private? == true
+    assert GameRooms.matchmaking_game("match_1", settings()).matchmaking? == true
 
     practice = GameRooms.practice_game("practice_1", "player", settings(), 10, 1_200, :white)
     assert practice.practice? == true
@@ -43,6 +44,13 @@ defmodule ManaChessOnline.GameRoomsTest do
     refute GameRooms.private_game_id?("private_short")
     refute GameRooms.private_game_id?("game_1")
     refute GameRooms.private_game_id?(nil)
+  end
+
+  test "validates matchmaking game ids" do
+    assert GameRooms.matchmaking_game_id?("match_abcdef")
+    refute GameRooms.matchmaking_game_id?("match_short")
+    refute GameRooms.matchmaking_game_id?("game_1")
+    refute GameRooms.matchmaking_game_id?(nil)
   end
 
   test "detects empty private games" do
@@ -85,6 +93,13 @@ defmodule ManaChessOnline.GameRoomsTest do
   test "detects public lobby games" do
     assert GameRooms.public_lobby_game?(%{practice?: false, private?: false})
     refute GameRooms.public_lobby_game?(%{practice?: false, private?: true})
+
+    refute GameRooms.public_lobby_game?(%{
+             practice?: false,
+             private?: false,
+             matchmaking?: true
+           })
+
     refute GameRooms.public_lobby_game?(%{practice?: true, private?: false})
     refute GameRooms.public_lobby_game?(nil)
   end
@@ -130,6 +145,18 @@ defmodule ManaChessOnline.GameRoomsTest do
     assert refreshed.status == :ready
     assert refreshed.queue == []
     assert hd(refreshed.log) == "Ambos jugadores sentados."
+  end
+
+  test "starts the shared countdown state" do
+    game =
+      GameState.new_game("game_1", settings())
+      |> Map.put(:status, :ready)
+
+    started = GameRooms.start_countdown(game, 6_000, ["white"])
+
+    assert started.status == {:starting, 6_000}
+    assert started.start_requests == MapSet.new(["white"])
+    assert hd(started.log) == "Cuenta regresiva iniciada."
   end
 
   test "starts when every seated player is ready" do
@@ -182,14 +209,25 @@ defmodule ManaChessOnline.GameRoomsTest do
     refute Map.has_key?(games, game_id)
   end
 
+  test "generates unique matchmaking ids outside existing games" do
+    games = Map.new(1..20, fn n -> {"match_existing_#{n}", %{}} end)
+    game_id = GameRooms.unique_matchmaking_game_id(games)
+
+    assert GameRooms.matchmaking_game_id?(game_id)
+    refute Map.has_key?(games, game_id)
+  end
+
   test "builds cleared and reset room states from room type" do
     public = GameState.new_game("game_1", settings())
     private = GameState.private_game("private_1", settings())
+    matchmaking = GameState.matchmaking_game("match_1", settings())
 
     assert GameRooms.cleared_game_state("game_1", public).private? == false
     assert GameRooms.reset_room_state("game_1", public).players == %{white: nil, black: nil}
     assert GameRooms.cleared_game_state("private_1", private).private? == true
     assert GameRooms.reset_room_state("private_1", private).private? == true
+    assert GameRooms.cleared_game_state("match_1", matchmaking).matchmaking? == true
+    assert GameRooms.reset_room_state("match_1", matchmaking).matchmaking? == true
   end
 
   test "builds reset practice room states" do

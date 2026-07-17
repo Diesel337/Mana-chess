@@ -16,6 +16,10 @@ defmodule ManaChessOnline.GameLobbyMatchmakingTest do
     %{global_settings: settings(), games: %{game.id => game}, players: %{}, rate_limits: %{}}
   end
 
+  defp empty_state do
+    %{global_settings: settings(), games: %{}, players: %{}, rate_limits: %{}}
+  end
+
   test "sits a player in a requested open seat" do
     game_id = "matchmaking_sit_" <> Integer.to_string(System.unique_integer([:positive]))
     game = GameRooms.new_game(game_id, settings())
@@ -46,10 +50,8 @@ defmodule ManaChessOnline.GameLobbyMatchmakingTest do
   end
 
   test "creates and seats the owner in a private room" do
-    state = %{global_settings: settings(), games: %{}, players: %{}, rate_limits: %{}}
-
     assert {:ok, state, game_id} =
-             GameLobbyMatchmaking.create_private(state, "private-owner", 1_000)
+             GameLobbyMatchmaking.create_private(empty_state(), "private-owner", 1_000)
 
     on_exit(fn -> GameSupervisor.stop_game(game_id) end)
 
@@ -57,6 +59,41 @@ defmodule ManaChessOnline.GameLobbyMatchmakingTest do
     assert state.players["private-owner"] == %{game_id: game_id, color: :white}
     assert state.games[game_id].private?
     assert GameLobbyServers.game_snapshot(game_id, state.games).players.white == "private-owner"
+  end
+
+  test "creates a rated matchmaking room when public rooms are exhausted" do
+    assert {:ok, state, game_id} =
+             GameLobbyMatchmaking.create_matchmaking(empty_state(), "queue-owner", 1_475)
+
+    on_exit(fn -> GameSupervisor.stop_game(game_id) end)
+
+    assert GameRooms.matchmaking_game_id?(game_id)
+    assert state.players["queue-owner"] == %{game_id: game_id, color: :white}
+    assert state.player_ratings["queue-owner"] == 1_475
+
+    game = GameLobbyServers.game_snapshot(game_id, state.games)
+    assert game.matchmaking?
+    refute game.private?
+    refute game.practice?
+  end
+
+  test "joins the closest dynamic opponent and starts the normal countdown" do
+    assert {:ok, state, far_game_id} =
+             GameLobbyMatchmaking.create_matchmaking(empty_state(), "far-player", 1_700)
+
+    assert {:ok, state, near_game_id} =
+             GameLobbyMatchmaking.create_matchmaking(state, "near-player", 1_230)
+
+    on_exit(fn -> GameSupervisor.stop_game(far_game_id) end)
+    on_exit(fn -> GameSupervisor.stop_game(near_game_id) end)
+
+    assert {:ok, state} =
+             GameLobbyMatchmaking.sit_anywhere(state, "seeker", 1_250, 10_000, 5_000)
+
+    assert state.players["seeker"] == %{game_id: near_game_id, color: :black}
+    assert state.games[near_game_id].players.black == "seeker"
+    assert state.games[near_game_id].status == {:starting, 15_000}
+    assert state.games[far_game_id].players.black == nil
   end
 
   test "owns the seat request rate limit" do

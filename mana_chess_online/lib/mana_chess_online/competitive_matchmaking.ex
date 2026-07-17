@@ -3,10 +3,11 @@ defmodule ManaChessOnline.CompetitiveMatchmaking do
 
   alias ManaChessOnline.{CompetitiveRating, GameDirectory}
 
-  def find_open_slot(games, player_ratings, seeker_rating) do
+  def find_open_slot(games, player_ratings, seeker_rating, seeker_id \\ nil) do
     games
     |> GameDirectory.public_games()
     |> Enum.flat_map(&open_slots/1)
+    |> Enum.reject(&same_player?(&1, seeker_id))
     |> Enum.min_by(&candidate_key(&1, player_ratings, seeker_rating), fn -> nil end)
     |> case do
       nil -> nil
@@ -29,6 +30,9 @@ defmodule ManaChessOnline.CompetitiveMatchmaking do
   end
 
   defp open_slot(_game_id, _color, _player_id, _opponent_id), do: nil
+
+  defp same_player?(%{opponent_id: player_id}, player_id) when is_binary(player_id), do: true
+  defp same_player?(_candidate, _seeker_id), do: false
 
   defp candidate_key(candidate, player_ratings, seeker_rating) do
     opponent_id = candidate.opponent_id

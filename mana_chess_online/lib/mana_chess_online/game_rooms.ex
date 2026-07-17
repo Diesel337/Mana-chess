@@ -17,12 +17,24 @@ defmodule ManaChessOnline.GameRooms do
   end
 
   def private_game(id, settings), do: GameState.private_game(id, settings)
+  def matchmaking_game(id, settings), do: GameState.matchmaking_game(id, settings)
 
   def private_game_id?("private_" <> rest), do: byte_size(rest) >= 6
   def private_game_id?(_game_id), do: false
 
+  def matchmaking_game_id?("match_" <> rest), do: byte_size(rest) >= 6
+  def matchmaking_game_id?(_game_id), do: false
+
   def empty_private_game?(%{private?: true, players: %{white: nil, black: nil}}), do: true
   def empty_private_game?(_game), do: false
+
+  def empty_matchmaking_game?(%{
+        matchmaking?: true,
+        players: %{white: nil, black: nil}
+      }),
+      do: true
+
+  def empty_matchmaking_game?(_game), do: false
 
   def drop_game(games, game_id), do: Map.delete(games, game_id)
 
@@ -32,7 +44,8 @@ defmodule ManaChessOnline.GameRooms do
 
   def drop_empty_private_game?(game), do: empty_private_game?(game)
 
-  def public_lobby_game?(%{practice?: false} = game), do: !Map.get(game, :private?, false)
+  def public_lobby_game?(%{practice?: false} = game), do: GameDirectory.lobby_game?(game)
+
   def public_lobby_game?(_game), do: false
 
   def empty_waiting_game?(game), do: GameDirectory.empty_waiting_game?(game)
@@ -51,6 +64,21 @@ defmodule ManaChessOnline.GameRooms do
       do: %{game | status: :ready, queue: [], log: ["Ambos jugadores sentados." | game.log]}
 
   def refresh_status(game), do: game
+
+  def start_countdown(game, starts_at, ready_players \\ [])
+
+  def start_countdown(%{status: :ready} = game, starts_at, ready_players) do
+    %{
+      game
+      | status: {:starting, starts_at},
+        queue: [],
+        reset_requests: MapSet.new(),
+        start_requests: MapSet.new(ready_players),
+        log: ["Cuenta regresiva iniciada." | game.log]
+    }
+  end
+
+  def start_countdown(game, _starts_at, _ready_players), do: game
 
   def maybe_start_when_everyone_ready(%{status: {:starting, _starts_at}} = game) do
     GameTick.start_when_ready(game, seated_players(game))
@@ -74,11 +102,17 @@ defmodule ManaChessOnline.GameRooms do
 
   def can_clear_room?(_assignment, _player_id, _game_id, _game), do: false
 
+  def cleared_game_state(game_id, %{matchmaking?: true, settings: settings}),
+    do: GameState.matchmaking_game(game_id, settings)
+
   def cleared_game_state(game_id, %{private?: true, settings: settings}),
     do: GameState.private_game(game_id, settings)
 
   def cleared_game_state(game_id, %{settings: settings}),
     do: GameState.new_game(game_id, settings)
+
+  def reset_room_state(game_id, %{matchmaking?: true, settings: settings}),
+    do: GameState.matchmaking_game(game_id, settings)
 
   def reset_room_state(game_id, %{private?: true, settings: settings}),
     do: GameState.private_game(game_id, settings)
@@ -126,12 +160,18 @@ defmodule ManaChessOnline.GameRooms do
   def seat_label(:black), do: "Negras"
 
   def unique_private_game_id(games) do
-    game_id = "private_" <> random_private_token()
+    game_id = "private_" <> random_room_token()
 
     if Map.has_key?(games, game_id), do: unique_private_game_id(games), else: game_id
   end
 
-  defp random_private_token do
+  def unique_matchmaking_game_id(games) do
+    game_id = "match_" <> random_room_token()
+
+    if Map.has_key?(games, game_id), do: unique_matchmaking_game_id(games), else: game_id
+  end
+
+  defp random_room_token do
     6
     |> :crypto.strong_rand_bytes()
     |> Base.url_encode64(padding: false)

@@ -19,6 +19,7 @@ defmodule ManaChessOnline.GameStateTest do
     assert game.players == %{white: nil, black: nil}
     assert game.practice? == false
     assert game.private? == false
+    assert game.matchmaking? == false
     assert game.elixir == %{white: 5.0, black: 5.0}
     assert game.status == :waiting
     assert game.log == ["Esperando jugadores..."]
@@ -27,6 +28,7 @@ defmodule ManaChessOnline.GameStateTest do
   test "builds practice and private game variants" do
     practice = GameState.practice_game("practice_1", "player-1", settings(), 1_000, 1_200)
     private = GameState.private_game("private_1", settings())
+    matchmaking = GameState.matchmaking_game("match_1", settings())
 
     assert practice.practice?
     assert practice.bot_enabled?
@@ -38,6 +40,11 @@ defmodule ManaChessOnline.GameStateTest do
     assert private.private?
     assert private.practice? == false
     assert private.log == ["Sala privada creada. Comparte el link para invitar."]
+
+    assert matchmaking.matchmaking?
+    assert matchmaking.private? == false
+    assert matchmaking.practice? == false
+    assert matchmaking.log == ["Buscando rival competitivo..."]
   end
 
   test "public snapshots expose full logs, countdowns and cooldowns" do
@@ -58,6 +65,7 @@ defmodule ManaChessOnline.GameStateTest do
     state = %{
       games: %{
         "game_1" => GameState.new_game("game_1", settings()),
+        "match_1" => GameState.matchmaking_game("match_1", settings()),
         "private_1" => GameState.private_game("private_1", settings()),
         "practice_1" =>
           GameState.practice_game("practice_1", "player-1", settings(), 1_000, 1_200)

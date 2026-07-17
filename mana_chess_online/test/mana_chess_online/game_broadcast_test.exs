@@ -57,6 +57,15 @@ defmodule ManaChessOnline.GameBroadcastTest do
     assert GameBroadcast.lobby_update_needed?([%{id: "game_1"}], [%{id: "game_1"}], %{
              "game_1" => %{status: {:starting, 1_000}}
            })
+
+    refute GameBroadcast.lobby_update_needed?([%{id: "game_1"}], [%{id: "game_1"}], %{
+             "match_1" => %{
+               practice?: false,
+               private?: false,
+               matchmaking?: true,
+               status: {:starting, 1_000}
+             }
+           })
   end
 
   test "requires lobby updates from raw states and public lobby builders" do

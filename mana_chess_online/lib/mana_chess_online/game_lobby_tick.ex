@@ -36,13 +36,13 @@ defmodule ManaChessOnline.GameLobbyTick do
     }
 
     next_public_lobby = public_lobby.(next_state, now)
-    public_games = next_state.games |> GameDirectory.public_games() |> Map.new()
+    lobby_games = next_state.games |> GameDirectory.lobby_games() |> Map.new()
 
     lobby_update? =
       GameBroadcast.lobby_update_needed?(
         previous_public_lobby,
         next_public_lobby,
-        public_games
+        lobby_games
       )
 
     {next_state, [], lobby_update?}

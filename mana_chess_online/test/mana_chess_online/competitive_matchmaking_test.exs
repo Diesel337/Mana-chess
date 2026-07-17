@@ -26,6 +26,13 @@ defmodule ManaChessOnline.CompetitiveMatchmakingTest do
              {"game_1", :white}
   end
 
+  test "never offers the seeker's own open seat" do
+    games = %{"match_self" => waiting_game("match_self", "seeker")}
+
+    assert CompetitiveMatchmaking.find_open_slot(games, %{"seeker" => 1_200}, 1_200, "seeker") ==
+             nil
+  end
+
   defp waiting_game(game_id, player_id) do
     game_id
     |> GameRooms.new_game(settings())

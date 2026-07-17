@@ -130,13 +130,16 @@ defmodule ManaChessOnline.GameLobby do
   def handle_call({:sit_anywhere, player_id, rating}, _from, state) do
     now = GameLobbyRuntime.now_ms()
 
-    case GameLobbyMatchmaking.sit_anywhere(state, player_id, rating, now) do
+    case GameLobbyMatchmaking.sit_anywhere(state, player_id, rating, now, @countdown_ms) do
       {:ok, state} ->
         state = GameLifecycle.touch_player(state, player_id, now)
         GameLobbyRuntime.broadcast_lobby(state)
         {:reply, GameLobbyRuntime.player_view(state, player_id), state}
 
       {:error, :rate_limited, state} ->
+        {:reply, GameLobbyRuntime.player_view(state, player_id), state}
+
+      {:error, :capacity, state} ->
         {:reply, GameLobbyRuntime.player_view(state, player_id), state}
     end
   end
@@ -212,8 +215,17 @@ defmodule ManaChessOnline.GameLobby do
   end
 
   def handle_call({:leave, player_id}, _from, state) do
+    previous_assignment = GamePlayers.assignment(state, player_id)
     {state, public_lobby_changed?} = GameLobbyPresence.leave(state, player_id)
     state = GameLifecycle.forget_missing_games(state)
+
+    case previous_assignment do
+      %{game_id: game_id} when is_binary(game_id) ->
+        GameLobbyRuntime.broadcast_game_snapshot(game_id, state)
+
+      _assignment ->
+        :ok
+    end
 
     if public_lobby_changed? do
       GameLobbyRuntime.broadcast_lobby(state)

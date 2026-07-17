@@ -10,6 +10,16 @@ defmodule ManaChessOnline.GameDirectory do
   def public_game?(%{practice?: true}), do: false
   def public_game?(game), do: not Map.get(game, :private?, false)
 
+  def lobby_games(games) do
+    games
+    |> public_games()
+    |> Enum.filter(fn {_game_id, game} -> lobby_game?(game) end)
+  end
+
+  def lobby_game?(game) do
+    public_game?(game) and not Map.get(game, :matchmaking?, false)
+  end
+
   def find_open_slot(games) do
     games
     |> public_games()

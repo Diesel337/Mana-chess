@@ -16,10 +16,17 @@ defmodule ManaChessOnline.GameDirectoryTest do
       "game_2" => GameState.new_game("game_2", settings()),
       "private_1" => GameState.private_game("private_1", settings()),
       "practice_1" => GameState.practice_game("practice_1", "player-1", settings(), 1_000, 1_200),
+      "match_1" => GameState.matchmaking_game("match_1", settings()),
       "game_1" => GameState.new_game("game_1", settings())
     }
 
     assert Enum.map(GameDirectory.public_games(games), fn {game_id, _game} -> game_id end) == [
+             "game_1",
+             "game_2",
+             "match_1"
+           ]
+
+    assert Enum.map(GameDirectory.lobby_games(games), fn {game_id, _game} -> game_id end) == [
              "game_1",
              "game_2"
            ]

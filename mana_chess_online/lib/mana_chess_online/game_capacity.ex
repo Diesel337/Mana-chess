@@ -4,7 +4,10 @@ defmodule ManaChessOnline.GameCapacity do
   alias ManaChessOnline.{GameLobbyServers, GamePlayers, GameRooms, GameRuntimeConfig}
 
   def dynamic_game?(%{practice?: true}), do: true
-  def dynamic_game?(game), do: Map.get(game, :private?, false) == true
+
+  def dynamic_game?(game) do
+    Map.get(game, :private?, false) == true or Map.get(game, :matchmaking?, false) == true
+  end
 
   def dynamic_game_count(games) when is_map(games) do
     Enum.count(games, fn {_game_id, game} -> dynamic_game?(game) end)
@@ -56,6 +59,13 @@ defmodule ManaChessOnline.GameCapacity do
   end
 
   defp releasable_by?(%{practice?: true}, _player_id), do: true
+
+  defp releasable_by?(%{matchmaking?: true} = game, player_id) do
+    case GameRooms.seated_players(game) do
+      [^player_id] -> true
+      _players -> false
+    end
+  end
 
   defp releasable_by?(%{private?: true} = game, player_id) do
     case GameRooms.seated_players(game) do

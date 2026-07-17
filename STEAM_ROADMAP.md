@@ -131,6 +131,7 @@ Goal: remove the single global bottleneck.
 - [x] Add a Registry keyed by `game_id`.
 - [x] Make each `GameServer` authoritative for board state, elixir, cooldowns, queue, chat, bot ticks, and match status.
 - [x] Keep lobby/matchmaking coordination separate from per-game live ownership.
+- [x] Scale rating-aware quick match beyond the four visible rooms with capacity-guarded dynamic games and TTL cleanup.
 - [~] Continue tuning changed-only broadcasts and launch telemetry under real-client load.
 
 ### Phase 3: Persistence

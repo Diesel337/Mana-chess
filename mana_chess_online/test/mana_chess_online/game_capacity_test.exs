@@ -47,6 +47,18 @@ defmodule ManaChessOnline.GameCapacityTest do
     assert next_state.players["capacity-replace"].game_id == second_game_id
   end
 
+  test "applies the shared capacity limit to competitive queue rooms" do
+    assert {:ok, state, game_id} =
+             GameLobbyMatchmaking.create_matchmaking(empty_state(), "queue-capacity-1", 1_200)
+
+    on_exit(fn -> GameSupervisor.stop_game(game_id) end)
+
+    assert {:error, :capacity, rejected_state} =
+             GameLobbyMatchmaking.create_matchmaking(state, "queue-capacity-2", 1_200)
+
+    assert rejected_state.capacity_stats.rejected_count == 1
+  end
+
   defp empty_state do
     %{
       global_settings: GameSettings.default_settings(),

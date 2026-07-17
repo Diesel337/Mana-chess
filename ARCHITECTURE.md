@@ -36,7 +36,10 @@ Live `GameServer` processes are the source of truth for active matches. New runt
 - `game_persistence.ex`: observes terminal state transitions and emits one match-summary event outside the game loop.
 - `game_supervisor.ex`: starts and supervises game processes.
 - `game_registry.ex`: names game processes.
-- `game_directory.ex`: lookup helpers for active game processes.
+- `game_directory.ex`: public-game lookup plus the explicit split between matchable games and the four lobby-visible rooms.
+- `competitive_matchmaking.ex`: rating-distance ordering for waiting public opponents, with self-match exclusion.
+- `game_capacity.ex`: shared admission accounting for practice, private, and dynamic competitive rooms.
+- `game_lifecycle.ex`: activity tracking and TTL cleanup for dynamic rooms and their player/rating references.
 - `game_lobby_actions.ex`: lobby-facing game actions for reset requests, start countdowns, ready confirmations, and promotions.
 - `game_broadcast.ex`: PubSub topics, broadcast-change predicates, and emitters for room/lobby payloads.
 - `game_chat.ex`: room chat sanitization, player names, roles, and lobby log labels.
@@ -45,8 +48,8 @@ Live `GameServer` processes are the source of truth for active matches. New runt
 - `game_lobby_servers.ex`: helpers for syncing, listing, reading, replacing, enqueueing, ticking, updating, assignment lookup, and stopping live game servers.
 - `game_lobby_runtime.ex`: boundary for live snapshots, public views, runtime topics, metrics process lists, and lobby/game broadcasts.
 - `game_lobby_presence.ex`: join/watch/leave flows, presence rate limits, and public-lobby change detection.
-- `game_lobby_matchmaking.ex`: requested seating, open-seat matchmaking, private-room creation, and their rate limits.
-- `game_lobby_rooms.ex`: lobby-state room lifecycle operations for seating, leaving, authorized clearing, resetting, practice rooms, and private rooms.
+- `game_lobby_matchmaking.ex`: requested seating, rating-aware quick match, capacity-guarded competitive/private creation, countdown startup, and their rate limits.
+- `game_lobby_rooms.ex`: lobby-state room lifecycle operations for seating, leaving, authorized clearing, resetting, practice, private, and ephemeral competitive rooms.
 - `game_lobby_settings.ex`: lobby/admin settings flow for global settings, practice refreshes, and player-controlled room settings.
 - `game_lobby_tick.ex`: lobby tick reducer for live game ticking, changed-game detection, lobby-change detection, and rate-limit pruning.
 - `game_lobby_moves.ex`: rate-limited move enqueue/rejection flow that validates player control, cooldowns, legal destinations, and logs rejected moves.
@@ -87,6 +90,8 @@ The normal request path is:
 4. `GameLobbyRuntime` builds public payloads and emits updates when required.
 
 Keep new game rules out of `GameLobby` callbacks. Add them to the focused flow/domain module and cover that module directly, then retain an integration assertion in `game_lobby_test.exs` for cross-process behavior.
+
+Quick match searches live waiting public games by rating distance. The four `game_1` through `game_4` rooms remain the only rooms listed in the lobby, but they are not a concurrency limit: when no seat exists, `GameLobbyMatchmaking` creates a capacity-guarded `match_*` `GameServer`. These rooms remain public and rated, begin the normal countdown when paired, disappear immediately when empty, and are also covered by `GameLifecycle` TTL cleanup. `MANA_CHESS_MAX_DYNAMIC_GAMES` is shared by competitive, private, and practice rooms.
 
 Current large UI module:
 

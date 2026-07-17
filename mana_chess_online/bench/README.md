@@ -10,6 +10,17 @@ The first argument is the number of active games and the second is the sample du
 
 This measures the game-process core only. Steam launch certification must also exercise two LiveView/WebSocket clients per online match at 100, 250, and 500 concurrent matches.
 
+## Logical lobby and matchmaking smoke
+
+Run the in-app lobby path, including practice, rating-aware quick match, private matches, spectators, metrics, and cleanup:
+
+```powershell
+mix run scripts/lobby_stress.exs -- --profile 100 --max-total-ms 30000 --max-mailbox 10 --max-run-queue 20
+mix run scripts/lobby_stress.exs -- --profile 500 --max-total-ms 90000 --max-mailbox 10 --max-run-queue 20
+```
+
+The July 17, 2026 local `500` profile completed 500 joins, 100 practice games, 75 competitive matches, 75 private matches, and 100 spectators with zero operation errors. It reached 250 live `GameServer` processes, including 71 hidden `match_*` rooms, with mailbox peak `0`, run queue peak `3`, and cleanup back to the four fixed rooms. Total wall time was 37.378 seconds. This validates serialized lobby admission and cleanup, not network/WebSocket capacity.
+
 ## LiveView/WebSocket capacity
 
 Install the isolated benchmark dependencies once:

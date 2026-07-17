@@ -50,6 +50,22 @@ defmodule ManaChessOnline.GameLobbyRoomsTest do
     assert state.games[game_id].status == :waiting
   end
 
+  test "stops and drops an empty matchmaking room immediately" do
+    game_id = "match_remove_" <> Integer.to_string(System.unique_integer([:positive]))
+    game = GameRooms.matchmaking_game(game_id, settings())
+    on_exit(fn -> GameSupervisor.stop_game(game_id) end)
+
+    state =
+      game
+      |> state()
+      |> GameLobbyRooms.assign_player("queue-player", game_id, :white)
+      |> GameLobbyRooms.remove_player("queue-player")
+
+    refute Map.has_key?(state.games, game_id)
+    refute Map.has_key?(state.players, "queue-player")
+    assert GameSupervisor.lookup_game(game_id) == :error
+  end
+
   test "creates private games on demand" do
     game_id = "private_test_" <> Integer.to_string(System.unique_integer([:positive]))
     state = %{global_settings: settings(), games: %{}, players: %{}, rate_limits: %{}}
