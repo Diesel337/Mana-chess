@@ -95,6 +95,7 @@ function main() {
   }
 
   run("Window mode smoke tests", node, ["scripts/smoke-win-app.cjs", "--all-modes"])
+  run("Saved window state restore smoke tests", node, ["scripts/smoke-win-app.cjs", "--all-modes", "--mode-source=saved"])
   run("Window env mode smoke test", node, ["scripts/smoke-win-app.cjs", "--mode=maximized", "--mode-source=env"])
   run("Window mode option smoke test", node, ["scripts/smoke-win-app.cjs", "--mode=fullscreen", "--mode-source=window-mode-arg"])
   run("Steam env smoke test", node, ["scripts/smoke-win-app.cjs", "--mode=windowed", "--steam-env"])

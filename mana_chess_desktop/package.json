@@ -23,6 +23,7 @@
     "smoke:win": "node scripts/smoke-win-app.cjs",
     "smoke:win:steam": "node scripts/smoke-win-app.cjs --mode=windowed --steam-env",
     "smoke:win:modes": "node scripts/smoke-win-app.cjs --all-modes",
+    "smoke:win:restore": "node scripts/smoke-win-app.cjs --all-modes --mode-source=saved",
     "smoke:win:installer": "node scripts/smoke-win-installer.cjs",
     "smoke:win:offline": "node scripts/smoke-win-offline.cjs",
     "smoke:win:deep-link": "node scripts/smoke-win-deep-link.cjs",

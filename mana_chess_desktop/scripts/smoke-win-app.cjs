@@ -12,7 +12,7 @@ const exePath = configuredExePath
 const userDataDir = smokeUserDataDir("app")
 const smokeModes = ["windowed", "maximized", "fullscreen"]
 const allowedModes = new Set(smokeModes)
-const allowedModeSources = new Set(["flag", "env", "window-mode-arg"])
+const allowedModeSources = new Set(["flag", "env", "window-mode-arg", "saved"])
 const modes = readFlag("--all-modes")
   ? smokeModes
   : [normalizeMode(readArg("--mode") || process.env.MANA_CHESS_SMOKE_MODE || "windowed")]
@@ -22,6 +22,9 @@ const simulateSteamEnv = readFlag("--steam-env")
 const registerProtocol = readFlag("--register-protocol")
 const channel = process.env.MANA_CHESS_DESKTOP_CHANNEL || (simulateSteamEnv ? "desktop-steam-smoke" : "desktop-smoke")
 const logPath = desktopLogPath(userDataDir)
+const windowStatePath = path.join(userDataDir, "window-state.json")
+const savedWindowBounds = {width: 1000, height: 700}
+const savedBoundsTolerance = 48
 const fakeSteamId = "111111"
 const fakeSteamKeys = [
   "SteamAppId",
@@ -58,7 +61,7 @@ function normalizeMode(value) {
 function normalizeModeSource(value) {
   const normalized = String(value || "").trim().toLowerCase()
   if (allowedModeSources.has(normalized)) return normalized
-  throw new Error(`Unsupported smoke mode source "${value}". Use flag, env, or window-mode-arg.`)
+  throw new Error(`Unsupported smoke mode source "${value}". Use flag, env, window-mode-arg, or saved.`)
 }
 
 function normalizeTimeout(value) {
@@ -158,12 +161,24 @@ function modeSmokePage() {
       const expectedMode = new URLSearchParams(window.location.search).get("mode") || "";
       const expectedSource = new URLSearchParams(window.location.search).get("source") || "";
 
+      const expectedWidth = Number(new URLSearchParams(window.location.search).get("width") || 0);
+      const expectedHeight = Number(new URLSearchParams(window.location.search).get("height") || 0);
+      const boundsTolerance = Number(new URLSearchParams(window.location.search).get("tolerance") || 0);
+
+      function boundsMatchWindow(mode, windowInfo) {
+        if (mode !== "windowed" || expectedWidth <= 0 || expectedHeight <= 0) return true;
+        const bounds = windowInfo?.bounds || {};
+        return Math.abs(Number(bounds.width) - expectedWidth) <= boundsTolerance &&
+          Math.abs(Number(bounds.height) - expectedHeight) <= boundsTolerance;
+      }
+
       function modeMatchesWindow(mode, windowInfo) {
         if (!windowInfo?.exists) return false;
-        if (mode === "fullscreen") return windowInfo.isFullScreen === true;
-        if (mode === "maximized") return windowInfo.isMaximized === true && windowInfo.isFullScreen !== true;
-        if (mode === "windowed") return windowInfo.isMaximized !== true && windowInfo.isFullScreen !== true;
-        return false;
+        let stateMatches = false;
+        if (mode === "fullscreen") stateMatches = windowInfo.isFullScreen === true;
+        if (mode === "maximized") stateMatches = windowInfo.isMaximized === true && windowInfo.isFullScreen !== true;
+        if (mode === "windowed") stateMatches = windowInfo.isMaximized !== true && windowInfo.isFullScreen !== true;
+        return stateMatches && boundsMatchWindow(mode, windowInfo);
       }
 
       async function modeDiagnostics(bridge) {
@@ -192,6 +207,7 @@ function modeSmokePage() {
           bridge: Boolean(bridge),
           datasetDesktop: document.documentElement.dataset.desktop === "true",
           modeOk: modeMatchesWindow(expectedMode, windowInfo),
+          boundsOk: boundsMatchWindow(expectedMode, windowInfo),
           window: {
             exists: windowInfo.exists === true,
             isMaximized: windowInfo.isMaximized === true,
@@ -282,8 +298,9 @@ function validateSteamPayload(entry) {
 
 function validateLaunchModePayload(entry, mode) {
   const launchMode = entry?.payload?.launchMode || ""
-  if (launchMode !== mode) {
-    throw new Error(`Expected desktop.session_started payload.launchMode ${mode}, received ${launchMode || "empty"}.`)
+  const expectedMode = modeSource === "saved" ? "saved" : mode
+  if (launchMode !== expectedMode) {
+    throw new Error(`Expected desktop.session_started payload.launchMode ${expectedMode}, received ${launchMode || "empty"}.`)
   }
 }
 
@@ -297,10 +314,13 @@ function validateModeSmokePayload(entry, mode) {
   if (payload.modeOk !== true) {
     throw new Error(`Expected ${mode} window diagnostics, received maximized=${windowInfo.isMaximized} fullscreen=${windowInfo.isFullScreen}.`)
   }
+  if (modeSource === "saved" && payload.boundsOk !== true) {
+    throw new Error(`Expected saved window bounds ${savedWindowBounds.width}x${savedWindowBounds.height}.`)
+  }
 }
 
 function launchArgsForMode(mode) {
-  if (modeSource === "env") return []
+  if (modeSource === "env" || modeSource === "saved") return []
   if (modeSource === "window-mode-arg") return [`--window-mode=${mode}`]
   return [`--${mode}`]
 }
@@ -313,18 +333,57 @@ function launchEnvForMode(mode, smokeUrl) {
     MANA_CHESS_OFFLINE_RETRY_SECONDS: process.env.MANA_CHESS_OFFLINE_RETRY_SECONDS || "0",
     MANA_CHESS_DISABLE_PROTOCOL_REGISTRATION: registerProtocol ? "0" : "1",
     ...(modeSource === "env" ? {MANA_CHESS_WINDOW_MODE: mode} : {}),
+    ...(modeSource === "saved" ? {MANA_CHESS_WINDOW_MODE: ""} : {}),
     ...fakeSteamEnv()
   })
 }
 
+function seedSavedWindowState(mode) {
+  if (modeSource !== "saved") return
+
+  const state = {
+    bounds: {...savedWindowBounds},
+    isMaximized: mode === "maximized",
+    isFullScreen: mode === "fullscreen"
+  }
+
+  fs.mkdirSync(userDataDir, {recursive: true})
+  fs.writeFileSync(windowStatePath, `${JSON.stringify(state, null, 2)}\n`)
+}
+
+function validateSavedWindowState(mode) {
+  if (modeSource !== "saved") return
+
+  const state = JSON.parse(fs.readFileSync(windowStatePath, "utf8"))
+  const expectedMaximized = mode === "maximized"
+  const expectedFullScreen = mode === "fullscreen"
+  const widthMatches = Math.abs(Number(state?.bounds?.width) - savedWindowBounds.width) <= savedBoundsTolerance
+  const heightMatches = Math.abs(Number(state?.bounds?.height) - savedWindowBounds.height) <= savedBoundsTolerance
+
+  if (state?.isMaximized !== expectedMaximized || state?.isFullScreen !== expectedFullScreen) {
+    throw new Error(`Saved ${mode} state changed before relaunch verification.`)
+  }
+  if (!widthMatches || !heightMatches) {
+    throw new Error(`Saved bounds changed from ${savedWindowBounds.width}x${savedWindowBounds.height}.`)
+  }
+}
+
 async function smokeMode(mode, serverUrl) {
+  seedSavedWindowState(mode)
   const startTime = Date.now()
-  const smokeUrl = `${serverUrl}?mode=${encodeURIComponent(mode)}&source=${encodeURIComponent(modeSource)}`
+  const smokeUrl = new URL(serverUrl)
+  smokeUrl.searchParams.set("mode", mode)
+  smokeUrl.searchParams.set("source", modeSource)
+  if (modeSource === "saved") {
+    smokeUrl.searchParams.set("width", String(savedWindowBounds.width))
+    smokeUrl.searchParams.set("height", String(savedWindowBounds.height))
+    smokeUrl.searchParams.set("tolerance", String(savedBoundsTolerance))
+  }
   child = spawn(exePath, launchArgsForMode(mode), {
     cwd: desktopRoot,
     detached: false,
     stdio: "ignore",
-    env: launchEnvForMode(mode, smokeUrl)
+    env: launchEnvForMode(mode, smokeUrl.toString())
   })
 
   child.unref()
@@ -335,6 +394,8 @@ async function smokeMode(mode, serverUrl) {
     validateLaunchModePayload(entry, mode)
     const modeEntry = await waitForModeSmokeLog(startTime, mode)
     validateModeSmokePayload(modeEntry, mode)
+    await wait(400)
+    validateSavedWindowState(mode)
     console.log(`Smoke launched ${path.relative(desktopRoot, exePath)} in ${mode} mode via ${modeSource}.`)
     console.log(`Log: ${entry.name} ${entry.version || ""} ${entry.commit || ""} ${entry.channel}`)
     console.log(`Window: maximized=${modeEntry.payload.window.isMaximized} fullscreen=${modeEntry.payload.window.isFullScreen}`)
