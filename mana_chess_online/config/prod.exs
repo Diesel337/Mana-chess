@@ -25,5 +25,25 @@ config :mana_chess_online, ManaChessOnlineWeb.Endpoint,
 # Do not print debug messages in production
 config :logger, level: :info
 
+config :logger, :default_formatter,
+  format: {ManaChessOnline.Operations.LogFormatter, :format},
+  metadata: [
+    :code,
+    :component,
+    :count,
+    :duration_ms,
+    :event,
+    :event_at,
+    :event_type,
+    :method,
+    :reason_class,
+    :request_id,
+    :route,
+    :source,
+    :status,
+    :suppressed_since_last
+  ],
+  utc_log: true
+
 # Runtime production configuration, including reading
 # of environment variables, is done on config/runtime.exs.

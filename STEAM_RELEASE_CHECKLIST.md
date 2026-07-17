@@ -166,7 +166,7 @@ Release candidate target:
 - [x] Move bot ticks into per-game processes or workers. `GameServer` runs the shared tick pipeline and bot decisions.
 - [~] Broadcast only changed game/lobby state. Idle ticks no longer emit unchanged game/lobby payloads.
 - [~] Add rate limits for chat, joins, moves, private room creation, and reconnects. Chat, move spam, private room bursts, seat spam, and reconnect/watch bursts are limited; launch tuning still needed after load tests.
-- [~] Add metrics for websocket latency, process mailbox sizes, game count, memory, CPU, PubSub fanout, and bot CPU. Admin now exposes a first process/game/memory/mailbox snapshot; websocket latency, PubSub fanout, CPU detail, and bot CPU still need launch telemetry/load tooling.
+- [~] Add metrics for websocket latency, process mailbox sizes, game count, memory, CPU, PubSub fanout, and bot CPU. Admin exposes process/game/memory/mailbox snapshots and production telemetry reports slow HTTP, socket, channel, and Ecto operations; PubSub fanout, CPU detail, bot CPU, and hosted dashboards remain.
 - [x] Load test at least 100 concurrent connections locally. Real LiveView/WebSocket private and competitive runners pass above this tier with health sampling and cleanup.
 - [x] Load test 500 concurrent connections locally. The competitive queue passes 250 matches, 500 clients, 246 dynamic rooms, opening moves, and cleanup with no setup or health failures.
 - [x] Load test 1000 concurrent connections before launch marketing push. Local and isolated Railway staging runs pass 500 matches and 1,000 clients in both private and competitive modes, including moves, health sampling, and cleanup.
@@ -179,10 +179,10 @@ Release candidate target:
 - [~] Persist match summaries and stats. Terminal `GameServer` transitions emit immutable summaries to production Postgres; richer aggregate player stats remain.
 - [~] Move admin/global settings out of local JSON. Postgres becomes primary when enabled, with JSON retained as a fail-safe fallback.
 - [ ] Decide whether active match snapshots are needed across deploys.
-- [~] Add backup/restore plan. `PERSISTENCE.md` defines safe additive rollback and backup prerequisites; scheduled backups and restore rehearsal remain.
+- [~] Add backup/restore plan. `PERSISTENCE.md` and `OPERATIONS.md` define safe additive rollback and a read-only restored-database verifier; provider scheduling, retention, and the recorded restore rehearsal remain.
 - [x] Add environment separation for launch QA/staging and production. Railway staging has a separate domain, Postgres service, database credentials, session secret, and leaderboard alias secret.
-- [~] Add structured logs. High-volume endpoint and socket connection logs are suppressed outside development, and a 1,000-client staging rerun produced zero Railway rate-limit or error entries; structured event schemas remain.
-- [ ] Add error reporting.
+- [x] Add structured logs. Production emits bounded one-line JSON with release/environment metadata, while high-volume routine endpoint and socket logs remain suppressed.
+- [~] Add error reporting. Phoenix, LiveView, Ecto, persistence, and GameServer recovery events are sanitized, deduplicated, counted in health, and retained in Railway logs; external paging/notification ownership remains.
 - [~] Add deploy rollback plan. Previous application commits remain schema-compatible and explicit release rollback exists; launch-day rehearsal remains.
 - [x] Add incident checklist for launch day. Roles, severity, evidence, rollback, and communication fields are defined in `STEAM_LAUNCH_RUNBOOK.md`.
 

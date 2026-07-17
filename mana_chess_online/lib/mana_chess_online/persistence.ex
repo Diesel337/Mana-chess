@@ -7,6 +7,7 @@ defmodule ManaChessOnline.Persistence do
   """
 
   alias ManaChessOnline.{CompetitiveLeaderboard, CompetitiveRating}
+  alias ManaChessOnline.Operations.EventLog
   alias ManaChessOnline.Persistence.{EctoStore, Event, Writer}
 
   @steam_id_pattern ~r/\A[0-9]{16,20}\z/
@@ -111,9 +112,19 @@ defmodule ManaChessOnline.Persistence do
   def health do
     if enabled?() do
       case safe_store_call(:health, []) do
-        :ok -> {:ok, health_payload(true, true)}
-        {:ok, _value} -> {:ok, health_payload(true, true)}
-        _error -> {:error, health_payload(true, false)}
+        :ok ->
+          {:ok, health_payload(true, true)}
+
+        {:ok, _value} ->
+          {:ok, health_payload(true, true)}
+
+        _error ->
+          EventLog.report(:error, "persistence_health_failed", %{
+            code: "health_check_failed",
+            component: "postgres"
+          })
+
+          {:error, health_payload(true, false)}
       end
     else
       {:ok, health_payload(false, true)}

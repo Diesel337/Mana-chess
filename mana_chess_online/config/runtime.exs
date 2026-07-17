@@ -53,6 +53,20 @@ positive_integer = fn name, default, maximum ->
   end
 end
 
+config :mana_chess_online, :operations,
+  max_events: positive_integer.("MANA_CHESS_OPERATION_EVENT_LIMIT", 100, 500),
+  dedupe_window_ms: positive_integer.("MANA_CHESS_OPERATION_DEDUPE_SECONDS", 60, 3_600) * 1_000,
+  slow_request_ms: positive_integer.("MANA_CHESS_SLOW_REQUEST_MS", 2_000, 60_000),
+  slow_query_ms: positive_integer.("MANA_CHESS_SLOW_QUERY_MS", 1_000, 60_000),
+  slow_socket_ms: positive_integer.("MANA_CHESS_SLOW_SOCKET_MS", 2_000, 60_000)
+
+config :mana_chess_online, :runtime_metadata,
+  environment: System.get_env("RAILWAY_ENVIRONMENT_NAME", Atom.to_string(config_env())),
+  release:
+    System.get_env("RAILWAY_GIT_COMMIT_SHA") ||
+      System.get_env("RELEASE_SHA") ||
+      "local"
+
 auto_tick =
   case System.get_env("MANA_CHESS_GAME_AUTO_TICK", "true")
        |> String.trim()

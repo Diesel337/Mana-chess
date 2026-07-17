@@ -167,9 +167,9 @@ Goal: know limits before Steam traffic.
 
 - [x] Simulate paired LiveView clients through private rooms and the real competitive queue.
 - [x] Test 100, 500, and 1000 concurrent connections. Local and isolated Railway staging private-room and competitive-queue tiers pass through 1,000 clients.
-- [~] Track CPU, memory, mailbox sizes, WebSocket latency, PubSub fanout, and bot CPU. Core and client runners cover process health and client latency; staging resource dashboards remain.
+- [~] Track CPU, memory, mailbox sizes, WebSocket latency, PubSub fanout, and bot CPU. Core/client runners cover process health and client latency, while production telemetry reports slow HTTP, socket, channel, and Ecto operations; hosted resource dashboards, PubSub fanout, and bot CPU remain.
 - [~] Rate limit chat, joins, moves, private room creation, and reconnect attempts. Core actions are guarded; reconnect-specific validation remains.
-- [~] Control production log volume and add structured logs and metrics dashboards. Routine endpoint and socket connection logs are suppressed outside development; structured event output and dashboards remain.
+- [~] Control production log volume and add structured logs and metrics dashboards. Routine endpoint/socket logs are suppressed and production emits deduplicated JSON operational events; hosted dashboards and external paging remain.
 
 ## Steam-only launch implications
 

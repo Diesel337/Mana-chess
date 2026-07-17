@@ -1,0 +1,2 @@
+mana_chess_online/rel/overlays/bin/* text eol=lf
+mana_chess_online/rel/overlays/bin/*.bat text eol=crlf

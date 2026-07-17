@@ -40,6 +40,13 @@ Create or refresh a dedicated Railway `staging` environment from `production`, t
 - `MANA_CHESS_MAX_DYNAMIC_GAMES` matches the test tier.
 - Steam publisher credentials are used only when staging a real Steam authentication rehearsal.
 - `/health` reports `ready: true` and the expected persistence mode.
+- `operations.running=true`, no unexplained error-count increase, and the release hash matches the candidate.
+
+Verify the staging database from the running release:
+
+```powershell
+railway ssh --service Mana-chess --environment staging -- sh /app/bin/verify-persistence
+```
 
 Run both private and competitive WebSocket scenarios from `mana_chess_online`:
 
@@ -138,7 +145,7 @@ Record the exact Steam build ID, app commit, backend deployment ID, database mig
 
 1. Freeze source and configuration changes.
 2. Confirm Railway production health, Postgres readiness, backups, capacity, and alert ownership.
-3. Deploy the already-tested backend commit and wait for Railway health checks.
+3. Deploy the already-tested backend commit, wait for Railway health checks, and run the read-only persistence verifier.
 4. Re-run the Steam authentication rehearsal against production with private test accounts.
 5. Confirm `MANA_CHESS_LAUNCH_ACCESS=steam_required` before commercial release.
 6. Promote the accepted Steam build from the internal branch according to Steamworks release controls.
@@ -172,6 +179,7 @@ For every launch incident, capture:
 
 - Start time, reporter, severity, affected build/deployment, and player impact.
 - `/health` response and Railway deployment/instance status.
+- Relevant structured `event` names, suppression count, and release hash from Railway logs.
 - Whether the problem is desktop, Steam authentication, network, game process, or persistence related.
 - Last known-good app commit, Steam build ID, and Railway deployment ID.
 - Mitigation owner, rollback decision, player communication, and next update time.

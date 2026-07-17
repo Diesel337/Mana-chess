@@ -26,6 +26,10 @@ defmodule ManaChessOnlineWeb.HealthControllerTest do
     assert response["ok"]
     assert response["persistence"]["mode"] == "memory"
     assert response["persistence"]["ready"]
+    assert response["operations"]["running"]
+    assert is_integer(response["operations"]["logged_count"])
+    assert is_binary(response["operations"]["environment"])
+    assert is_binary(response["operations"]["release"])
   end
 
   test "fails readiness without leaking database details", %{conn: conn} do
@@ -42,6 +46,7 @@ defmodule ManaChessOnlineWeb.HealthControllerTest do
     refute response["ok"]
     assert response["persistence"]["mode"] == "postgres"
     refute response["persistence"]["ready"]
+    assert response["operations"]["running"]
     refute conn.resp_body =~ "secret_url"
   end
 

@@ -7,8 +7,12 @@ defmodule ManaChessOnline.Application do
 
   @impl true
   def start(_type, _args) do
+    operations = Application.get_env(:mana_chess_online, :operations, [])
+
     children =
       [
+        {ManaChessOnline.Operations.EventLog, operations},
+        {ManaChessOnline.Operations.Telemetry, operations},
         ManaChessOnlineWeb.Telemetry,
         {DNSCluster,
          query: Application.get_env(:mana_chess_online, :dns_cluster_query) || :ignore},
@@ -25,7 +29,18 @@ defmodule ManaChessOnline.Application do
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: ManaChessOnline.Supervisor]
-    Supervisor.start_link(children, opts)
+
+    case Supervisor.start_link(children, opts) do
+      {:ok, _pid} = started ->
+        ManaChessOnline.Operations.EventLog.report(:info, "application_started", %{
+          component: "application"
+        })
+
+        started
+
+      error ->
+        error
+    end
   end
 
   # Tell Phoenix to update the endpoint configuration

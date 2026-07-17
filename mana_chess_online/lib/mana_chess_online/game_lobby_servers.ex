@@ -2,6 +2,7 @@ defmodule ManaChessOnline.GameLobbyServers do
   @moduledoc false
 
   alias ManaChessOnline.{GameDirectory, GameServer, GameSettings, GameSupervisor, GameTick}
+  alias ManaChessOnline.Operations.EventLog
 
   def sync_game_servers(games) do
     Enum.each(games, fn {_game_id, game} -> sync_game_server(game) end)
@@ -16,8 +17,14 @@ defmodule ManaChessOnline.GameLobbyServers do
         :ok
 
       :error ->
-        GameSupervisor.start_or_lookup_game(game)
-        :ok
+        case GameSupervisor.start_or_lookup_game(game) do
+          {:ok, _pid} ->
+            :ok
+
+          _error ->
+            report_recovery_failure("sync")
+            :ok
+        end
     end
   end
 
@@ -67,8 +74,12 @@ defmodule ManaChessOnline.GameLobbyServers do
 
   def replace_game_state(game) do
     case GameSupervisor.upsert_game(game) do
-      {:ok, pid} -> GameServer.snapshot(pid)
-      _error -> game
+      {:ok, pid} ->
+        GameServer.snapshot(pid)
+
+      _error ->
+        report_recovery_failure("replace")
+        game
     end
   end
 
@@ -96,9 +107,15 @@ defmodule ManaChessOnline.GameLobbyServers do
         GameServer.tick(pid, now)
 
       :error ->
+        report_recovery("tick")
+
         case GameSupervisor.start_or_lookup_game(game) do
-          {:ok, pid} -> GameServer.tick(pid, now)
-          _error -> GameTick.tick(game, now, tick_ms, GameSettings.default_cooldown_seconds())
+          {:ok, pid} ->
+            GameServer.tick(pid, now)
+
+          _error ->
+            report_recovery_failure("tick")
+            GameTick.tick(game, now, tick_ms, GameSettings.default_cooldown_seconds())
         end
     end
   end
@@ -106,9 +123,15 @@ defmodule ManaChessOnline.GameLobbyServers do
   def stop_game_server(game_id), do: GameSupervisor.stop_game(game_id)
 
   defp enqueue_unregistered_action(game, action, now) do
+    report_recovery("enqueue")
+
     case GameSupervisor.start_or_lookup_game(game) do
-      {:ok, pid} -> GameServer.enqueue(pid, action, now)
-      _error -> enqueue_local_action(game, action, now)
+      {:ok, pid} ->
+        GameServer.enqueue(pid, action, now)
+
+      _error ->
+        report_recovery_failure("enqueue")
+        enqueue_local_action(game, action, now)
     end
   end
 
@@ -119,9 +142,29 @@ defmodule ManaChessOnline.GameLobbyServers do
   end
 
   defp update_unregistered_state(game, fun) do
+    report_recovery("update")
+
     case GameSupervisor.start_or_lookup_game(game) do
-      {:ok, pid} -> GameServer.update(pid, fun)
-      _error -> fun.(game)
+      {:ok, pid} ->
+        GameServer.update(pid, fun)
+
+      _error ->
+        report_recovery_failure("update")
+        fun.(game)
     end
+  end
+
+  defp report_recovery(operation) do
+    EventLog.report(:warning, "game_server_recovered", %{
+      code: operation,
+      component: "game_server"
+    })
+  end
+
+  defp report_recovery_failure(operation) do
+    EventLog.report(:error, "game_server_recovery_failed", %{
+      code: operation,
+      component: "game_server"
+    })
   end
 end

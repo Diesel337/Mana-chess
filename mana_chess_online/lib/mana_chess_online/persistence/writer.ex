@@ -3,7 +3,7 @@ defmodule ManaChessOnline.Persistence.Writer do
 
   use GenServer
 
-  require Logger
+  alias ManaChessOnline.Operations.EventLog
 
   def start_link(opts) do
     name = Keyword.get(opts, :name, __MODULE__)
@@ -62,7 +62,11 @@ defmodule ManaChessOnline.Persistence.Writer do
          }}
 
       {:error, code} ->
-        Logger.warning("Mana Chess persistence write failed type=#{event_type} code=#{code}")
+        EventLog.report(:warning, "persistence_write_failed", %{
+          code: code,
+          component: "persistence_writer",
+          event_type: event_type
+        })
 
         {:noreply,
          %{

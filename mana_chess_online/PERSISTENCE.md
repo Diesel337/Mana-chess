@@ -15,6 +15,7 @@ Active match snapshots are not restored from Postgres yet. Enabling this layer d
 - `ManaChessOnline.Persistence.EctoStore`: Postgres reads and idempotent upserts.
 - `ManaChessOnline.Repo`: Ecto repository.
 - `ManaChessOnline.Release`: release migration entry point.
+- `ManaChessOnline.Persistence.Verifier`: read-only migration, table, and aggregate-count checks for restored databases.
 - `ManaChessOnline.GamePersistence`: detects the first transition into a terminal match state.
 - `ManaChessOnline.CompetitiveRating`: pure Elo calculation, eligibility rules, and record updates.
 - `ManaChessOnline.CompetitiveLeaderboard`: normalizes ranks and replaces private player IDs with server-keyed public aliases.
@@ -41,6 +42,7 @@ Raw Steam tickets, publisher keys, QA bypass keys, cookies, and database URLs ar
 5. Set `MANA_CHESS_DATABASE_SSL=true` only when the selected Postgres endpoint requires TLS.
 6. Deploy. Railway runs `sh /app/bin/migrate` before it starts the server.
 7. Confirm `GET /health` reports `persistence.mode=postgres` and `persistence.ready=true`.
+8. Run `sh /app/bin/verify-persistence` inside the deployed service and retain the sanitized report.
 
 Do not paste `DATABASE_URL` into source, logs, tickets, or chat.
 
@@ -77,6 +79,14 @@ The migration command exits successfully without touching a database when persis
 
 Before a destructive migration, take a Railway/Postgres backup and test restore in a non-production environment. Application rollback should normally deploy the previous Git commit without rolling the schema back because the initial migration is additive.
 
+The deployed release contains a read-only verifier:
+
+```sh
+bin/verify-persistence
+```
+
+It fails closed on an unavailable database, pending migration, missing table, or unreadable aggregate count. It only prints migration and row counts. Follow the complete disposable-environment restore rehearsal in [`OPERATIONS.md`](OPERATIONS.md); a passing verifier against the live database is not evidence that a backup can be restored.
+
 For an intentional schema rollback from a release console:
 
 ```elixir
@@ -87,8 +97,7 @@ Never roll back a schema that contains production entitlements or match history 
 
 ## Remaining work
 
-- Provision and verify the real Railway Postgres service.
 - Sync real Steam DLC/inventory ownership into `steam_entitlements`.
 - Make paid cosmetics consume the entitlement endpoint instead of local unlock state.
 - Decide, design, and test active-match snapshot restoration.
-- Add scheduled backups, restore rehearsal, retention, and production alerting.
+- Configure scheduled backups and retention, then complete and record the prepared restore rehearsal.

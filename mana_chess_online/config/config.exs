@@ -12,6 +12,13 @@ config :mana_chess_online,
   endpoint_request_log: false,
   generators: [timestamp_type: :utc_datetime_usec],
   live_socket_log: false,
+  operations: [
+    max_events: 100,
+    dedupe_window_ms: 60_000,
+    slow_request_ms: 2_000,
+    slow_query_ms: 1_000,
+    slow_socket_ms: 2_000
+  ],
   persistence: [
     enabled: false,
     store: ManaChessOnline.Persistence.EctoStore,
@@ -24,7 +31,8 @@ config :mana_chess_online,
     dynamic_idle_ttl_ms: 900_000,
     lifecycle_interval_ms: 5_000,
     heartbeat_interval_ms: 30_000
-  ]
+  ],
+  runtime_metadata: [environment: Atom.to_string(config_env()), release: "local"]
 
 config :mana_chess_online, ManaChessOnline.Repo,
   migration_primary_key: [name: :id, type: :bigserial],
