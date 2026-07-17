@@ -56,7 +56,7 @@ The four fixed public rooms remain visible for manual seating. They are no longe
 MANA_CHESS_MAX_DYNAMIC_GAMES=250
 ```
 
-That default is a shared admission ceiling for competitive queue, private, and practice rooms. Together with the four fixed rooms it permits at most 254 admitted game processes, but it is not a throughput guarantee; keep production at 250 until the Railway staging WebSocket scenarios in `bench/README.md` pass on production-sized resources.
+That default is a shared admission ceiling for competitive queue, private, and practice rooms. Together with the four fixed rooms it permits at most 254 admitted game processes, but it is not a throughput guarantee. Isolated Railway staging has passed private and competitive WebSocket scenarios through 500 matches and 1,000 clients; production remains at 250 while launch telemetry and real Steam-client rehearsals are completed. See `bench/README.md` for the measured baseline.
 
 See [`PERSISTENCE.md`](PERSISTENCE.md) for schema ownership, Railway activation, rollback, backup, and remaining active-match snapshot work.
 

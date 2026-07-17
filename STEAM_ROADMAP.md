@@ -25,6 +25,7 @@ Already in place:
 - A Windows 0.2.0 candidate has passed the complete local preflight, including install/uninstall, window modes, Steam environment metadata, deep links, bridge, reconnect, and offline recovery.
 - Main-process Steamworks runtime, one-use Web API ticket exchange, backend ticket/ownership verification, signed Steam sessions, and SteamID-bound player identity.
 - Real LiveView/WebSocket capacity runs pass locally through 500 competitive matches and 1,000 connected clients with moves, health sampling, and cleanup.
+- Isolated Railway staging with separate Postgres, secrets, and domain passes private and competitive tiers through 500 matches and 1,000 connected clients.
 - Railway production uses Postgres with migration and readiness gates.
 - Local desktop state for QA/Steam-ready hooks.
 - Cosmetic shop prototype with local unlocks and palette previews.
@@ -33,9 +34,9 @@ Already in place:
 Current constraints:
 
 - Active match state is owned by supervised per-game `GameServer` processes; `GameLobby` now coordinates the public API, discovery, policy flows, and global settings through focused modules.
-- Active matches still live in memory on one application node. Railway Postgres covers Steam users, entitlement records, terminal match summaries, ratings, and global settings, but active-game restoration, horizontal ownership, and production-sized staging load remain launch work.
+- Active matches still live in memory on one application node. Railway Postgres covers Steam users, entitlement records, terminal match summaries, ratings, and global settings, but active-game restoration and horizontal ownership remain launch work.
 
-The remaining critical path is external setup: Steamworks onboarding, real app/depot IDs, publisher credentials, Steamworks SDK/SteamCMD, a restricted build account, Authenticode signing, Railway staging, and a two-account Steam-client rehearsal. See [`STEAM_LAUNCH_RUNBOOK.md`](STEAM_LAUNCH_RUNBOOK.md).
+The remaining critical path is external setup: Steamworks onboarding, real app/depot IDs, publisher credentials, Steamworks SDK/SteamCMD, a restricted build account, Authenticode signing, and a two-account Steam-client rehearsal. See [`STEAM_LAUNCH_RUNBOOK.md`](STEAM_LAUNCH_RUNBOOK.md).
 
 ## Steam launch requirements
 
@@ -165,10 +166,10 @@ Goal: multiple app instances.
 Goal: know limits before Steam traffic.
 
 - [x] Simulate paired LiveView clients through private rooms and the real competitive queue.
-- [~] Test 100, 500, and 1000 concurrent connections. Local private-room and competitive-queue tiers pass through 1,000 clients; production-sized Railway staging remains.
-- [~] Track CPU, memory, mailbox sizes, WebSocket latency, PubSub fanout, and bot CPU. Core and client runners cover most local signals; staging dashboards remain.
+- [x] Test 100, 500, and 1000 concurrent connections. Local and isolated Railway staging private-room and competitive-queue tiers pass through 1,000 clients.
+- [~] Track CPU, memory, mailbox sizes, WebSocket latency, PubSub fanout, and bot CPU. Core and client runners cover process health and client latency; staging resource dashboards remain.
 - [~] Rate limit chat, joins, moves, private room creation, and reconnect attempts. Core actions are guarded; reconnect-specific validation remains.
-- [ ] Add structured logs and metrics dashboards.
+- [~] Control production log volume and add structured logs and metrics dashboards. Routine endpoint and socket connection logs are suppressed outside development; structured event output and dashboards remain.
 
 ## Steam-only launch implications
 

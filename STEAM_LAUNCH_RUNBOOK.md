@@ -30,6 +30,8 @@ The release candidate must start from a clean `main`. Record the commit, intende
 
 Never run a large competitive queue benchmark against the public production lobby.
 
+The dedicated launch QA environment is `https://mana-chess-staging.up.railway.app`. It has its own Railway Postgres service, database credentials, session secret, leaderboard alias secret, and domain. Keep `MANA_CHESS_MAX_DYNAMIC_GAMES=250` except during a controlled capacity tier, then restore it immediately after the run.
+
 Create or refresh a dedicated Railway `staging` environment from `production`, then verify all of the following before deploying:
 
 - The service root remains `mana_chess_online`.
@@ -47,6 +49,8 @@ pnpm --dir bench liveview -- --url https://<staging-domain> --allow-remote --mod
 ```
 
 Advance to 250 and 500 matches only after the previous tier passes. Competitive staging must be isolated from human players. Keep production at its current admission limit until staging CPU, memory, health, join latency, event latency, and cleanup are acceptable.
+
+The July 17, 2026 staging baseline passes private and competitive tiers at 100, 250, and 500 matches, including 1,000 connected clients, opening moves, health sampling, and cleanup. The post-logging-control 500-match competitive rerun also produced zero Railway rate-limit or error log entries. Record future regressions and measured percentiles in [`mana_chess_online/bench/README.md`](mana_chess_online/bench/README.md).
 
 ## 3. Windows candidate
 

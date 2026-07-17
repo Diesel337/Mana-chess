@@ -169,7 +169,7 @@ Release candidate target:
 - [~] Add metrics for websocket latency, process mailbox sizes, game count, memory, CPU, PubSub fanout, and bot CPU. Admin now exposes a first process/game/memory/mailbox snapshot; websocket latency, PubSub fanout, CPU detail, and bot CPU still need launch telemetry/load tooling.
 - [x] Load test at least 100 concurrent connections locally. Real LiveView/WebSocket private and competitive runners pass above this tier with health sampling and cleanup.
 - [x] Load test 500 concurrent connections locally. The competitive queue passes 250 matches, 500 clients, 246 dynamic rooms, opening moves, and cleanup with no setup or health failures.
-- [~] Load test 1000 concurrent connections before launch marketing push. The local competitive queue passes 500 matches and 1,000 clients with 496 dynamic rooms; production-sized Railway staging remains mandatory.
+- [x] Load test 1000 concurrent connections before launch marketing push. Local and isolated Railway staging runs pass 500 matches and 1,000 clients in both private and competitive modes, including moves, health sampling, and cleanup.
 
 ## 9. Persistence and operations
 
@@ -180,8 +180,8 @@ Release candidate target:
 - [~] Move admin/global settings out of local JSON. Postgres becomes primary when enabled, with JSON retained as a fail-safe fallback.
 - [ ] Decide whether active match snapshots are needed across deploys.
 - [~] Add backup/restore plan. `PERSISTENCE.md` defines safe additive rollback and backup prerequisites; scheduled backups and restore rehearsal remain.
-- [ ] Add environment separation for QA/staging/production.
-- [ ] Add structured logs.
+- [x] Add environment separation for launch QA/staging and production. Railway staging has a separate domain, Postgres service, database credentials, session secret, and leaderboard alias secret.
+- [~] Add structured logs. High-volume endpoint and socket connection logs are suppressed outside development, and a 1,000-client staging rerun produced zero Railway rate-limit or error entries; structured event schemas remain.
 - [ ] Add error reporting.
 - [~] Add deploy rollback plan. Previous application commits remain schema-compatible and explicit release rollback exists; launch-day rehearsal remains.
 - [x] Add incident checklist for launch day. Roles, severity, evidence, rollback, and communication fields are defined in `STEAM_LAUNCH_RUNBOOK.md`.

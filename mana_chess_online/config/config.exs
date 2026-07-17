@@ -9,7 +9,9 @@ import Config
 
 config :mana_chess_online,
   ecto_repos: [ManaChessOnline.Repo],
+  endpoint_request_log: false,
   generators: [timestamp_type: :utc_datetime_usec],
+  live_socket_log: false,
   persistence: [
     enabled: false,
     store: ManaChessOnline.Persistence.EctoStore,

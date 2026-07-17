@@ -9,8 +9,16 @@ defmodule ManaChessOnlineWeb.EndpointTest do
 
     websocket_options = Keyword.fetch!(options, :websocket)
 
+    refute Keyword.fetch!(websocket_options, :log)
     assert Keyword.fetch!(websocket_options, :max_frame_size) == 1_000_000
     refute Keyword.fetch!(websocket_options, :compress)
+  end
+
+  test "disables high-volume request and socket logs outside development" do
+    assert ManaChessOnlineWeb.Endpoint.routine_log_levels() == %{
+             request: false,
+             socket: false
+           }
   end
 
   test "vendored realtime clients match the installed Phoenix dependencies" do

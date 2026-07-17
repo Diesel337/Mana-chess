@@ -1,6 +1,13 @@
 defmodule ManaChessOnlineWeb.Endpoint do
   use Phoenix.Endpoint, otp_app: :mana_chess_online
 
+  @endpoint_request_log Application.compile_env(
+                          :mana_chess_online,
+                          :endpoint_request_log,
+                          false
+                        )
+  @live_socket_log Application.compile_env(:mana_chess_online, :live_socket_log, false)
+
   # The session will be stored in the cookie and signed,
   # this means its contents can be read but not tampered with.
   # Set :encryption_salt if you would also like to encrypt it.
@@ -15,10 +22,15 @@ defmodule ManaChessOnlineWeb.Endpoint do
   socket "/live", Phoenix.LiveView.Socket,
     websocket: [
       connect_info: [session: @session_options],
+      log: @live_socket_log,
       max_frame_size: 1_000_000,
       compress: false
     ],
-    longpoll: [connect_info: [session: @session_options]]
+    longpoll: [connect_info: [session: @session_options], log: @live_socket_log]
+
+  @doc false
+  def routine_log_levels,
+    do: %{request: @endpoint_request_log, socket: @live_socket_log}
 
   # Serve at "/" the static files from "priv/static" directory.
   #
@@ -34,7 +46,10 @@ defmodule ManaChessOnlineWeb.Endpoint do
     raise_on_missing_only: code_reloading?
 
   plug Plug.RequestId
-  plug Plug.Telemetry, event_prefix: [:phoenix, :endpoint]
+
+  plug Plug.Telemetry,
+    event_prefix: [:phoenix, :endpoint],
+    log: @endpoint_request_log
 
   plug Plug.Parsers,
     parsers: [:urlencoded, :multipart, :json],

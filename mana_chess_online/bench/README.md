@@ -75,4 +75,19 @@ The July 17, 2026 competitive-queue runs also completed without setup, health, o
 | 250 | 500 | 4 | 246 | 39.48 ms | 44.19 ms | 277.50 ms | 16.91 ms |
 | 500 | 1,000 | 4 | 496 | 58.20 ms | 68.20 ms | 289.11 ms | 18.73 ms |
 
-The 100- and 250-match runs used the production-default `MANA_CHESS_MAX_DYNAMIC_GAMES=250`; the 500-match margin run used `600`. These local results establish engineering margin, not Railway production capacity. Keep the production admission limit at 250 dynamic matches until both private and competitive scenarios pass against a dedicated Railway staging service with production-sized CPU, memory, database, and network settings.
+The 100- and 250-match runs used the production-default `MANA_CHESS_MAX_DYNAMIC_GAMES=250`; the 500-match margin run used `600`. These local results establish engineering margin; the Railway baseline below validates the same workflows over the deployed network path.
+
+### Railway staging baseline
+
+The July 17, 2026 isolated Railway staging runs used `https://mana-chess-staging.up.railway.app`, a separate Postgres service and secrets, and a temporary `MANA_CHESS_MAX_DYNAMIC_GAMES=600`. Every tier completed opening moves with zero setup, health, or cleanup errors.
+
+| Mode | Matches | Clients | Fixed | Dynamic | Join p95 | Assignment p95 | Event p95 | Health p95 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Private | 100 | 200 | 0 | 0 | 154.73 ms | n/a | 269.79 ms | 269.88 ms |
+| Private | 250 | 500 | 0 | 0 | 156.19 ms | n/a | 258.43 ms | 433.63 ms |
+| Private | 500 | 1,000 | 0 | 0 | 165.44 ms | n/a | 236.41 ms | 258.93 ms |
+| Competitive | 100 | 200 | 4 | 96 | 148.75 ms | 108.11 ms | 215.22 ms | 281.96 ms |
+| Competitive | 250 | 500 | 4 | 246 | 148.38 ms | 128.98 ms | 197.19 ms | 286.54 ms |
+| Competitive | 500 | 1,000 | 4 | 496 | 158.98 ms | 139.35 ms | 186.29 ms | 195.52 ms |
+
+The first high tiers exposed Railway log-rate limiting from routine endpoint and LiveView socket connection messages. After disabling those information logs outside development, the 500-match competitive tier passed again with 1,000 connected clients, join p95 `151.61 ms`, event p95 `171.46 ms`, health p95 `157.59 ms`, and zero rate-limit or error log entries. Staging was then restored to the conservative `250` dynamic-game limit used by production.

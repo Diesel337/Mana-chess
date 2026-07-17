@@ -1,5 +1,9 @@
 import Config
 
+config :mana_chess_online,
+  endpoint_request_log: :info,
+  live_socket_log: :info
+
 # For development, we disable any cache and enable
 # debugging and code reloading.
 #
