@@ -1,11 +1,13 @@
 import {mkdir, writeFile} from "node:fs/promises"
 import {dirname, resolve} from "node:path"
 import {performance} from "node:perf_hooks"
+import {pathToFileURL} from "node:url"
 
 import {load} from "cheerio"
 import WebSocket from "ws"
 
 const LOCAL_HOSTS = new Set(["127.0.0.1", "localhost", "::1", "[::1]"])
+const MODES = new Set(["private", "competitive"])
 const USER_AGENT = "ManaChessCapacityBench/1.0"
 
 const HELP = `Mana Chess LiveView capacity benchmark
@@ -15,7 +17,8 @@ Usage:
 
 Options:
   --url URL                       Target origin (default http://127.0.0.1:4000)
-  --matches N                     Private matches to create (default 10)
+  --mode MODE                     private or competitive (default private)
+  --matches N                     Matches to create (default 10)
   --ramp-per-second N             Match setup starts per second (default 10)
   --hold-seconds N                Hold connected clients after ramp (default 15)
   --request-timeout-ms N          HTTP/WebSocket operation timeout (default 15000)
@@ -37,9 +40,15 @@ function parsePositiveInteger(value, name, maximum = Number.MAX_SAFE_INTEGER) {
   return parsed
 }
 
+function parseMode(value) {
+  if (!MODES.has(value)) throw new Error("mode must be private or competitive")
+  return value
+}
+
 function parseArgs(argv) {
   const config = {
     url: "http://127.0.0.1:4000",
+    mode: "private",
     matches: 10,
     rampPerSecond: 10,
     holdSeconds: 15,
@@ -70,6 +79,10 @@ function parseArgs(argv) {
       config.allowCapacityRejections = true
     } else if (argument === "--no-moves") {
       config.exerciseMoves = false
+    } else if (argument === "--mode" || argument.startsWith("--mode=")) {
+      const [value, nextIndex] = takeValue(index, argument)
+      config.mode = parseMode(value)
+      index = nextIndex
     } else if (argument === "--url" || argument.startsWith("--url=")) {
       const [value, nextIndex] = takeValue(index, argument)
       config.url = value
@@ -143,6 +156,32 @@ function latencySummary(values) {
   }
 }
 
+function gameIdFromBoardId(boardId) {
+  const prefix = "mc-board-"
+  if (typeof boardId !== "string" || !boardId.startsWith(prefix)) return null
+
+  const gameId = boardId.slice(prefix.length)
+  return gameId || null
+}
+
+function roomType(gameId) {
+  if (gameId?.startsWith("private_")) return "private"
+  if (gameId?.startsWith("match_")) return "dynamic_public"
+  if (/^game_[1-4]$/.test(gameId || "")) return "fixed_public"
+  return "unknown"
+}
+
+function roomTypeSummary(matches) {
+  const summary = {private: 0, dynamic_public: 0, fixed_public: 0, unknown: 0}
+
+  for (const match of matches) {
+    const type = roomType(match.gameId)
+    summary[type] += 1
+  }
+
+  return summary
+}
+
 function errorMessage(error) {
   const message = error instanceof Error ? error.message : String(error)
   const cause = error instanceof Error ? error.cause : null
@@ -158,11 +197,16 @@ function cookieHeader(headers) {
   return setCookies.map((cookie) => cookie.split(";", 1)[0]).join("; ")
 }
 
-async function fetchLivePage(config, gameId, clientLabel) {
-  const pageUrl = new URL(`/game/${encodeURIComponent(gameId)}`, config.target)
+async function fetchLivePage(config, gameId, clientLabel, {cookie = null} = {}) {
+  const pathname = gameId ? `/game/${encodeURIComponent(gameId)}` : "/"
+  const pageUrl = new URL(pathname, config.target)
   const startedAt = performance.now()
   const response = await fetch(pageUrl, {
-    headers: {accept: "text/html", "user-agent": USER_AGENT},
+    headers: {
+      accept: "text/html",
+      "user-agent": USER_AGENT,
+      ...(cookie ? {cookie} : {})
+    },
     redirect: "follow",
     signal: AbortSignal.timeout(config.requestTimeoutMs)
   })
@@ -179,6 +223,7 @@ async function fetchLivePage(config, gameId, clientLabel) {
   const rootId = root.attr("id")
   const session = root.attr("data-phx-session")
   const staticToken = root.attr("data-phx-static") || null
+  const renderedGameId = gameIdFromBoardId($('[id^="mc-board-"]').first().attr("id"))
 
   if (!csrfToken || !rootId || !session) {
     throw new Error(`${clientLabel} response did not contain a LiveView root`)
@@ -200,8 +245,11 @@ async function fetchLivePage(config, gameId, clientLabel) {
     session,
     staticToken,
     trackedStatic,
-    cookie: cookieHeader(response.headers),
-    roomReady: $(`[id="mc-board-${gameId}"]`).length === 1,
+    cookie: cookieHeader(response.headers) || cookie || "",
+    renderedGameId,
+    roomReady: gameId
+      ? renderedGameId === gameId
+      : $('[phx-click="sit_anywhere"]').length === 1,
     httpMs,
     pageBytes: Buffer.byteLength(html)
   }
@@ -220,9 +268,11 @@ class LiveViewClient {
     this.isClosed = false
     this.joined = false
     this.seated = false
+    this.gameId = page.renderedGameId
     this.stats = {
       httpMs: page.httpMs,
       pageBytes: page.pageBytes,
+      assignmentCheckMs: null,
       websocketOpenMs: null,
       joinMs: null,
       eventMs: [],
@@ -403,7 +453,7 @@ class LiveViewClient {
   }
 }
 
-async function setupMatch(config, runId, index) {
+async function setupPrivateMatch(config, runId, index) {
   const gameId = `private_load_${runId}_${String(index).padStart(4, "0")}`
   const firstPage = await fetchLivePage(config, gameId, `${gameId}:white`)
 
@@ -442,6 +492,102 @@ async function setupMatch(config, runId, index) {
     await Promise.allSettled(clients.map((client) => client.close()))
     throw error
   }
+}
+
+let competitivePairLock = Promise.resolve()
+
+async function withCompetitivePairLock(operation) {
+  const previous = competitivePairLock
+  let release
+
+  competitivePairLock = new Promise((resolvePromise) => {
+    release = resolvePromise
+  })
+
+  await previous
+
+  try {
+    return await operation()
+  } finally {
+    release()
+  }
+}
+
+async function verifyAssignment(config, client) {
+  const page = await fetchLivePage(config, null, `${client.page.clientLabel}:assignment`, {
+    cookie: client.page.cookie
+  })
+
+  client.stats.assignmentCheckMs = page.httpMs
+  client.gameId = page.renderedGameId
+  client.seated = Boolean(page.renderedGameId)
+  return page.renderedGameId
+}
+
+async function setupCompetitiveMatch(config, runId, index) {
+  const pairId = `competitive_load_${runId}_${String(index).padStart(4, "0")}`
+  const [firstPage, secondPage] = await Promise.all([
+    fetchLivePage(config, null, `${pairId}:white`),
+    fetchLivePage(config, null, `${pairId}:black`)
+  ])
+
+  if (!firstPage.roomReady || !secondPage.roomReady) {
+    throw new Error(`${pairId} lobby did not expose quick match`)
+  }
+
+  const white = new LiveViewClient(config, firstPage)
+  const black = new LiveViewClient(config, secondPage)
+  const clients = [white, black]
+
+  try {
+    await Promise.all(clients.map((client) => client.connect()))
+
+    await withCompetitivePairLock(async () => {
+      await white.sendEvent("sit_anywhere")
+      white.seated = true
+      await black.sendEvent("sit_anywhere")
+      black.seated = true
+    })
+
+    const [whiteGameId, blackGameId] = await Promise.all(
+      clients.map((client) => verifyAssignment(config, client))
+    )
+
+    if (!whiteGameId || !blackGameId) {
+      await Promise.allSettled(clients.map((client) => client.leaveGame()))
+      await Promise.allSettled(clients.map((client) => client.close()))
+
+      return {
+        accepted: false,
+        gameId: whiteGameId || blackGameId || pairId,
+        clients: [],
+        httpMs: [firstPage.httpMs, secondPage.httpMs]
+      }
+    }
+
+    if (whiteGameId !== blackGameId) {
+      throw new Error(`${pairId} split across ${whiteGameId} and ${blackGameId}`)
+    }
+
+    await white.sendEvent("ready_to_start")
+    await black.sendEvent("ready_to_start")
+
+    if (config.exerciseMoves) {
+      await sleep(50)
+      await white.sendEvent("drag_move", {from_r: "6", from_c: "0", to_r: "5", to_c: "0"})
+      await black.sendEvent("drag_move", {from_r: "1", from_c: "0", to_r: "2", to_c: "0"})
+    }
+
+    return {accepted: true, gameId: whiteGameId, clients}
+  } catch (error) {
+    await Promise.allSettled(clients.map((client) => client.leaveGame()))
+    await Promise.allSettled(clients.map((client) => client.close()))
+    throw error
+  }
+}
+
+function matchSetup(config) {
+  return config.mode === "competitive" ? setupCompetitiveMatch : setupPrivateMatch
 }
 
 async function mapWithConcurrency(items, concurrency, operation) {
@@ -504,6 +650,7 @@ async function writeReport(path, report) {
 
 async function main() {
   const config = parseArgs(process.argv.slice(2))
+  const setupMatch = matchSetup(config)
   const runId = `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`
   const startedAt = performance.now()
   const setupResults = []
@@ -517,7 +664,7 @@ async function main() {
 
   console.log("Mana Chess LiveView capacity benchmark")
   console.log(
-    `target=${config.target.origin} matches=${config.matches} clients=${config.matches * 2} ramp_per_second=${config.rampPerSecond} hold_seconds=${config.holdSeconds}`
+    `target=${config.target.origin} mode=${config.mode} matches=${config.matches} clients=${config.matches * 2} ramp_per_second=${config.rampPerSecond} hold_seconds=${config.holdSeconds}`
   )
 
   const sampleHealth = async () => {
@@ -564,7 +711,7 @@ async function main() {
     rejectedMatches = setupResults.filter((result) => !result.accepted)
 
     console.log(
-      `ramp_complete accepted=${acceptedMatches.length} rejected=${rejectedMatches.length} errors=${setupErrors.length}`
+      `ramp_complete accepted=${acceptedMatches.length} rejected=${rejectedMatches.length} errors=${setupErrors.length} rooms=${JSON.stringify(roomTypeSummary(acceptedMatches))}`
     )
 
     await sleep(config.holdSeconds * 1_000)
@@ -580,6 +727,9 @@ async function main() {
   const healthFailures = healthSamples.filter((sample) => !sample.ok)
   const joinLatencies = clients.map((client) => client.stats.joinMs).filter(Number.isFinite)
   const httpLatencies = clients.map((client) => client.stats.httpMs).filter(Number.isFinite)
+  const assignmentCheckLatencies = clients
+    .map((client) => client.stats.assignmentCheckMs)
+    .filter(Number.isFinite)
   const openLatencies = clients
     .map((client) => client.stats.websocketOpenMs)
     .filter(Number.isFinite)
@@ -601,6 +751,7 @@ async function main() {
     generated_at: new Date().toISOString(),
     target: config.target.origin,
     config: {
+      mode: config.mode,
       matches: config.matches,
       expected_clients: config.matches * 2,
       ramp_per_second: config.rampPerSecond,
@@ -616,6 +767,7 @@ async function main() {
       attempted: config.matches,
       accepted: acceptedMatches.length,
       rejected_by_capacity: rejectedMatches.length,
+      room_types: roomTypeSummary(acceptedMatches),
       setup_errors: setupErrors
     },
     clients: {
@@ -626,6 +778,7 @@ async function main() {
     },
     latency: {
       http: latencySummary(httpLatencies),
+      assignment_check: latencySummary(assignmentCheckLatencies),
       websocket_open: latencySummary(openLatencies),
       liveview_join: joinSummary,
       liveview_event: latencySummary(eventLatencies),
@@ -653,7 +806,13 @@ async function main() {
   if (!passed) process.exitCode = 1
 }
 
-main().catch((error) => {
-  console.error(errorMessage(error))
-  process.exitCode = 1
-})
+export {gameIdFromBoardId, latencySummary, parseArgs, roomType, roomTypeSummary}
+
+const entrypoint = process.argv[1] ? pathToFileURL(resolve(process.argv[1])).href : null
+
+if (entrypoint === import.meta.url) {
+  main().catch((error) => {
+    console.error(errorMessage(error))
+    process.exitCode = 1
+  })
+}

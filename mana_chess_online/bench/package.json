@@ -6,7 +6,8 @@
     "node": ">=20"
   },
   "scripts": {
-    "liveview": "node liveview_capacity.mjs"
+    "liveview": "node liveview_capacity.mjs",
+    "test": "node --test liveview_capacity.test.mjs"
   },
   "dependencies": {
     "cheerio": "1.2.0",

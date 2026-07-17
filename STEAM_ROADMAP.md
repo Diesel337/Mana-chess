@@ -159,11 +159,11 @@ Goal: multiple app instances.
 
 Goal: know limits before Steam traffic.
 
-- Simulate LiveView clients in lobby and games.
-- Test 100, 500, 1000 concurrent connections.
-- Track CPU, memory, mailbox sizes, websocket latency, PubSub fanout, and bot CPU.
-- Rate limit chat, joins, moves, private room creation, and reconnect attempts.
-- Add structured logs and metrics dashboards.
+- [x] Simulate paired LiveView clients through private rooms and the real competitive queue.
+- [~] Test 100, 500, and 1000 concurrent connections. Local private-room and competitive-queue tiers pass through 1,000 clients; production-sized Railway staging remains.
+- [~] Track CPU, memory, mailbox sizes, WebSocket latency, PubSub fanout, and bot CPU. Core and client runners cover most local signals; staging dashboards remain.
+- [~] Rate limit chat, joins, moves, private room creation, and reconnect attempts. Core actions are guarded; reconnect-specific validation remains.
+- [ ] Add structured logs and metrics dashboards.
 
 ## Steam-only launch implications
 

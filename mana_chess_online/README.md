@@ -87,3 +87,13 @@ mix run scripts/lobby_stress.exs -- --profile 100 --operation-timeout-ms 30000 -
 ```
 
 Profiles are local logical-client runs. Profile `500` uses 100 practice players, 75 competitive matches, 75 private matches, and 100 watchers. This is an internal OTP/lobby smoke, not a replacement for real WebSocket or Steam-client load tests.
+
+## LiveView/WebSocket smoke
+
+With Phoenix running locally, exercise the real competitive queue with two LiveView sessions per match:
+
+```bash
+pnpm --dir bench liveview -- --mode competitive --matches 10 --ramp-per-second 5 --hold-seconds 15 --output bench/reports/local-competitive-10.json
+```
+
+The runner verifies that each pair lands in one fixed or dynamic public room and reports HTTP, assignment, WebSocket join, event, and health latency. See [`bench/README.md`](bench/README.md) for private-room mode, larger local tiers, remote safeguards, and report interpretation.
