@@ -209,6 +209,8 @@ npm run release:win:candidate
 
 This wraps the complete preflight, refuses dirty input, and then verifies that `dist/release-manifest.json` records the current commit with `dirty=false`.
 
+The full staging, signing, SteamPipe, internal acceptance, launch, incident, and rollback sequence is documented in [`../STEAM_LAUNCH_RUNBOOK.md`](../STEAM_LAUNCH_RUNBOOK.md).
+
 ## SteamPipe release flow
 
 The Steam scripts use `dist/win-unpacked` as the Windows depot and `Mana Chess.exe` as its launch executable. Configure the real IDs and Steam build account outside git:

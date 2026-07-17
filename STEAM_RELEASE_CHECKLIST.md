@@ -2,6 +2,8 @@
 
 This checklist tracks the Steam-only launch path. The public web deployment is QA/staging/backend infrastructure, not the commercial storefront for v1.
 
+Execution and rollback steps live in [`STEAM_LAUNCH_RUNBOOK.md`](STEAM_LAUNCH_RUNBOOK.md).
+
 Status key:
 
 - `[ ]` Not started
@@ -83,11 +85,11 @@ Official reference:
 
 ## 4. Desktop build
 
-- [~] Electron desktop wrapper exists.
+- [x] Electron desktop wrapper exists and produces a traceable Windows candidate.
 - [x] Windows unpacked build works.
 - [~] Deep links `manachess://` exist. `npm run smoke:win:deep-link` now verifies startup game links and `npm run smoke:win:second-instance` verifies runtime relaunch handoff to the existing desktop window; real Steam client/deep-link QA still pending.
-- [~] Desktop bridge exists. `npm run smoke:win:bridge` now verifies the packaged executable exposes `window.ManaChessDesktop`, reads/copies/resets desktop state, reads/copies diagnostics, copies share/deep links, marks desktop mode, and records bridge IPC events.
-- [~] Local desktop QA state exists.
+- [x] Desktop bridge exists. `npm run smoke:win:bridge` verifies the packaged executable exposes `window.ManaChessDesktop`, reads/copies/resets desktop state, reads/copies diagnostics, copies share/deep links, marks desktop mode, and records bridge IPC events.
+- [x] Local desktop QA state and capped diagnostics exist.
 - [~] Final app icon is approved. Windows builds now embed the Mana Chess icon instead of Electron's default and expose `Mana Chess`/`Diesel337` product metadata; `npm run verify:win` and `npm run verify:win:installer` validate both automatically. Final owner visual approval still pending.
 - [~] Installer is tested on a clean Windows machine. `npm run smoke:win:installer` now passes an isolated install, installed-app launch, and uninstall cycle with registry, publisher, shortcuts, protocol, and file checks; a separate clean-machine pass is still pending.
 - [ ] Windows executable and installer are signed with the intended release certificate and pass SmartScreen/publisher QA. Current local candidates intentionally remain unsigned.
@@ -165,16 +167,16 @@ Release candidate target:
 - [~] Broadcast only changed game/lobby state. Idle ticks no longer emit unchanged game/lobby payloads.
 - [~] Add rate limits for chat, joins, moves, private room creation, and reconnects. Chat, move spam, private room bursts, seat spam, and reconnect/watch bursts are limited; launch tuning still needed after load tests.
 - [~] Add metrics for websocket latency, process mailbox sizes, game count, memory, CPU, PubSub fanout, and bot CPU. Admin now exposes a first process/game/memory/mailbox snapshot; websocket latency, PubSub fanout, CPU detail, and bot CPU still need launch telemetry/load tooling.
-- [~] Load test 100 concurrent connections. Local logical-client lobby stress script exists and runs 100 players; real WebSocket/Steam-client load still pending.
-- [~] Load test 500 concurrent connections. Local logical-client profile 500 passes with 100 practice players, 150 private matches, 100 watchers, and cleanup under a 90s local gate; real WebSocket/Steam-client load and cleanup optimization still pending.
-- [ ] Load test 1000 concurrent connections before launch marketing push.
+- [x] Load test at least 100 concurrent connections locally. Real LiveView/WebSocket private and competitive runners pass above this tier with health sampling and cleanup.
+- [x] Load test 500 concurrent connections locally. The competitive queue passes 250 matches, 500 clients, 246 dynamic rooms, opening moves, and cleanup with no setup or health failures.
+- [~] Load test 1000 concurrent connections before launch marketing push. The local competitive queue passes 500 matches and 1,000 clients with 496 dynamic rooms; production-sized Railway staging remains mandatory.
 
 ## 9. Persistence and operations
 
-- [~] Add Postgres/Ecto. Repo, schemas, additive migration, pre-deploy migration, healthcheck, and memory-compatible mode are implemented; Railway Postgres is not provisioned yet.
+- [x] Add Postgres/Ecto. Railway production has a dedicated Postgres service, additive migrations run before deploy, and `/health` reports ready Postgres mode.
 - [~] Persist Steam users. Verified authentication emits safe upserts without raw tickets; real database/AppID QA remains.
 - [~] Persist entitlements/inventory. Durable model, idempotent writes, and authenticated desktop read endpoint exist; Valve ownership sync and cosmetic consumption remain.
-- [~] Persist match summaries and stats. Terminal `GameServer` transitions emit immutable summaries; production activation and aggregate player stats remain.
+- [~] Persist match summaries and stats. Terminal `GameServer` transitions emit immutable summaries to production Postgres; richer aggregate player stats remain.
 - [~] Move admin/global settings out of local JSON. Postgres becomes primary when enabled, with JSON retained as a fail-safe fallback.
 - [ ] Decide whether active match snapshots are needed across deploys.
 - [~] Add backup/restore plan. `PERSISTENCE.md` defines safe additive rollback and backup prerequisites; scheduled backups and restore rehearsal remain.
@@ -182,7 +184,7 @@ Release candidate target:
 - [ ] Add structured logs.
 - [ ] Add error reporting.
 - [~] Add deploy rollback plan. Previous application commits remain schema-compatible and explicit release rollback exists; launch-day rehearsal remains.
-- [ ] Add incident checklist for launch day.
+- [x] Add incident checklist for launch day. Roles, severity, evidence, rollback, and communication fields are defined in `STEAM_LAUNCH_RUNBOOK.md`.
 
 ## 10. Final review gate
 

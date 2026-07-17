@@ -22,7 +22,10 @@ Already in place:
 - `manachess://` deep links.
 - Desktop bridge exposed as `window.ManaChessDesktop`.
 - Reproducible Windows packaging, clean-commit candidate gate, release doctor, installer lifecycle QA, Steam depot inventory, safe SteamPipe preview, and guarded upload commands.
+- A Windows 0.2.0 candidate has passed the complete local preflight, including install/uninstall, window modes, Steam environment metadata, deep links, bridge, reconnect, and offline recovery.
 - Main-process Steamworks runtime, one-use Web API ticket exchange, backend ticket/ownership verification, signed Steam sessions, and SteamID-bound player identity.
+- Real LiveView/WebSocket capacity runs pass locally through 500 competitive matches and 1,000 connected clients with moves, health sampling, and cleanup.
+- Railway production uses Postgres with migration and readiness gates.
 - Local desktop state for QA/Steam-ready hooks.
 - Cosmetic shop prototype with local unlocks and palette previews.
 - Chat, private links, spectator flow, practice, tutorial, bot, local stats, sound.
@@ -30,7 +33,9 @@ Already in place:
 Current constraints:
 
 - Active match state is owned by supervised per-game `GameServer` processes; `GameLobby` now coordinates the public API, discovery, policy flows, and global settings through focused modules.
-- Active matches still live in memory on one application node. An optional Ecto/Postgres layer now covers Steam users, entitlement records, terminal match summaries, and global settings, but Railway Postgres provisioning, active-game restoration, horizontal ownership, and real-client load tuning remain launch work.
+- Active matches still live in memory on one application node. Railway Postgres covers Steam users, entitlement records, terminal match summaries, ratings, and global settings, but active-game restoration, horizontal ownership, and production-sized staging load remain launch work.
+
+The remaining critical path is external setup: Steamworks onboarding, real app/depot IDs, publisher credentials, Steamworks SDK/SteamCMD, a restricted build account, Authenticode signing, Railway staging, and a two-account Steam-client rehearsal. See [`STEAM_LAUNCH_RUNBOOK.md`](STEAM_LAUNCH_RUNBOOK.md).
 
 ## Steam launch requirements
 
