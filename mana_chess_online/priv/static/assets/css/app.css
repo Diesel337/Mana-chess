@@ -2390,6 +2390,27 @@ body {
   max-width: 420px;
 }
 
+.mc-admin-login .mc-admin-login-submit {
+  background: #283528;
+  color: #aeb8aa;
+  border: 1px solid #344032;
+  box-shadow: none;
+}
+
+.mc-admin-login:has(input:valid) .mc-admin-login-submit {
+  background: linear-gradient(180deg, #f0cb75, #e6bd68);
+  color: #211704;
+  border-color: rgba(255, 240, 182, .58);
+  box-shadow: 0 8px 18px rgba(232, 189, 99, .18), inset 0 1px rgba(255,255,255,.38);
+}
+
+.mc-admin-login .mc-admin-login-error {
+  margin: 2px 0 0;
+  color: #ffb6a8;
+  font-size: .82rem;
+  font-weight: 800;
+}
+
 .mc-metrics-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -8832,5 +8853,11 @@ html[data-desktop="true"] .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-pack-opti
 
   .mc-panel-game .mc-log-list {
     max-height: min(320px, 42dvh);
+  }
+}
+
+@media (max-width: 900px) {
+  .mc-admin > .mc-header {
+    order: 0;
   }
 }

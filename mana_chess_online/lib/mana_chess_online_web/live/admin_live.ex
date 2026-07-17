@@ -12,16 +12,18 @@ defmodule ManaChessOnlineWeb.AdminLive do
      |> assign(:page_title, "Admin | Mana Chess")
      |> assign(:player_id, Map.get(session, "player_id"))
      |> assign(:authenticated?, false)
+     |> assign(:login_error, nil)
      |> assign(:settings, GameLobby.global_settings())
      |> assign(:metrics, GameLobby.metrics())}
   end
 
   @impl true
   def handle_event("login", %{"password" => password}, socket) do
-    if password == admin_password() do
-      {:noreply, assign(socket, authenticated?: true, metrics: GameLobby.metrics())}
+    if valid_admin_password?(password) do
+      {:noreply,
+       assign(socket, authenticated?: true, login_error: nil, metrics: GameLobby.metrics())}
     else
-      {:noreply, put_flash(socket, :error, "Clave incorrecta.")}
+      {:noreply, assign(socket, :login_error, "Clave incorrecta.")}
     end
   end
 
@@ -61,7 +63,17 @@ defmodule ManaChessOnlineWeb.AdminLive do
   end
 
   defp admin_password do
-    System.get_env("ADMIN_PASSWORD") || "mana"
+    System.get_env("ADMIN_PASSWORD", "")
+  end
+
+  defp valid_admin_password?(password) do
+    configured_password = admin_password()
+
+    configured_password != "" and
+      Plug.Crypto.secure_compare(
+        :crypto.hash(:sha256, password),
+        :crypto.hash(:sha256, configured_password)
+      )
   end
 
   defp setting_value(value) when is_float(value), do: :erlang.float_to_binary(value, decimals: 2)
@@ -85,12 +97,17 @@ defmodule ManaChessOnlineWeb.AdminLive do
         <form :if={!@authenticated?} class="mc-settings mc-admin-login" phx-submit="login">
           <div class="mc-settings-head">
             <h2>Acceso</h2>
-            <button type="submit">Entrar</button>
+            <button class="mc-admin-login-submit" type="submit" phx-disable-with="Entrando...">
+              Entrar
+            </button>
           </div>
           <label>
             <span>Clave admin</span>
-            <input name="password" type="password" autocomplete="current-password" autofocus />
+            <input id="admin-password" name="password" type="password" autocomplete="current-password" aria-invalid={if @login_error, do: "true", else: "false"} aria-describedby={if @login_error, do: "admin-login-error"} required autofocus />
           </label>
+          <p :if={@login_error} id="admin-login-error" class="mc-admin-login-error" role="alert">
+            {@login_error}
+          </p>
         </form>
 
         <form :if={@authenticated?} class="mc-settings" phx-submit="save_settings">
