@@ -1,0 +1,71 @@
+/* Focused P0 responsive fixes loaded after the legacy CSS bundles. */
+@media (max-width: 480px) {
+  .mc-shell:has(.mc-menu) .mc-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+    gap: 8px;
+  }
+
+  .mc-shell:has(.mc-menu) .mc-header .mc-badge {
+    width: 100%;
+    justify-items: stretch;
+  }
+
+  .mc-shell:has(.mc-menu) .mc-header .mc-sound-control {
+    width: 100%;
+    max-width: none;
+    justify-content: space-between;
+  }
+
+  .mc-shell:has(.mc-menu) .mc-header .mc-sound-volume {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .mc-shell:has(.mc-menu) .mc-header .mc-sound-volume input {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 34px;
+  }
+}
+
+@media (max-width: 720px) {
+  .mc-tutorial > div {
+    display: grid;
+    justify-content: initial;
+    align-items: start;
+    gap: 4px;
+  }
+
+  .mc-tutorial strong {
+    white-space: normal;
+  }
+
+  .mc-tutorial ol {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (min-width: 1000px) {
+  .mc-game:has(.mc-play-area) > .mc-tutorial > div {
+    display: grid;
+    justify-content: initial;
+    align-items: start;
+    gap: 4px;
+  }
+
+  .mc-game:has(.mc-play-area) > .mc-tutorial strong {
+    white-space: normal;
+  }
+
+  .mc-game:has(.mc-play-area) > .mc-tutorial ol {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mc-game:has(.mc-play-area) > .mc-tutorial li {
+    min-height: 44px;
+    padding: 8px;
+    font-size: .78rem;
+  }
+}

@@ -64,11 +64,29 @@ defmodule ManaChessOnline.MixProject do
   # See the documentation for `Mix` for more info on aliases.
   defp aliases do
     [
-      setup: ["deps.get"],
-      "assets.setup": [],
-      "assets.build": ["compile"],
-      "assets.deploy": ["phx.digest"],
+      setup: ["deps.get", "assets.setup"],
+      "assets.setup": [&vendor_assets/1],
+      "assets.vendor": [&vendor_assets/1],
+      "assets.build": ["assets.vendor", "compile"],
+      "assets.deploy": ["assets.vendor", "phx.digest"],
       precommit: ["compile --warnings-as-errors", "deps.unlock --unused", "format", "test"]
     ]
+  end
+
+  defp vendor_assets(_) do
+    root = __DIR__
+
+    [
+      {"deps/phoenix/priv/static/phoenix.js", "priv/static/assets/js/phoenix.js"},
+      {"deps/phoenix_live_view/priv/static/phoenix_live_view.js",
+       "priv/static/assets/js/phoenix_live_view.js"}
+    ]
+    |> Enum.each(fn {source, destination} ->
+      source = Path.join(root, source)
+      destination = Path.join(root, destination)
+
+      File.mkdir_p!(Path.dirname(destination))
+      File.cp!(source, destination)
+    end)
   end
 end

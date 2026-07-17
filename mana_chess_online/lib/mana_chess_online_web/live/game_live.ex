@@ -1040,8 +1040,7 @@ defmodule ManaChessOnlineWeb.GameLive do
 
         <%= if @game do %>
           <div :if={@game.practice?} class="mc-practice-banner">
-            <strong>Modo practica</strong>
-            <span>{practice_banner_text(@game)}</span>
+            <strong>Modo practica</strong> <span>{practice_banner_text(@game)}</span>
             <div class="mc-bot-control">
               <span>BOT</span>
               <button
@@ -1429,11 +1428,6 @@ defmodule ManaChessOnlineWeb.GameLive do
               </button>
             </section>
 
-            <.cosmetic_shop
-              symbols={@symbols}
-              class="mc-skins mc-skins-inline"
-              aria_label="Tienda cosmetica"
-            />
             <section class="mc-offline">
               <div>
                 <h2>Offline</h2>
@@ -1536,6 +1530,12 @@ defmodule ManaChessOnlineWeb.GameLive do
                 </div>
               </div>
             </div>
+
+            <.cosmetic_shop
+              symbols={@symbols}
+              class="mc-skins mc-skins-inline"
+              aria_label="Tienda cosmetica"
+            />
           </div>
         <% end %>
       </section>

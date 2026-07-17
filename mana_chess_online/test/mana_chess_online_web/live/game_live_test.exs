@@ -46,4 +46,15 @@ defmodule ManaChessOnlineWeb.GameLiveTest do
     assert after_game.status == before_game.status
     assert {:ok, _pid} = GameSupervisor.lookup_game(game_id)
   end
+
+  test "lobby keeps play choices ahead of inline cosmetics", %{conn: conn} do
+    {:ok, _view, html} = live(conn, ~p"/")
+
+    {offline_position, _} = :binary.match(html, ~s(class="mc-offline"))
+    {lobby_position, _} = :binary.match(html, ~s(class="mc-lobby"))
+    {cosmetics_position, _} = :binary.match(html, ~s(class="mc-skins mc-skins-inline"))
+
+    assert offline_position < lobby_position
+    assert lobby_position < cosmetics_position
+  end
 end

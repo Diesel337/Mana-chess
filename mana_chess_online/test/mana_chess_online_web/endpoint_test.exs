@@ -12,4 +12,17 @@ defmodule ManaChessOnlineWeb.EndpointTest do
     assert Keyword.fetch!(websocket_options, :max_frame_size) == 1_000_000
     refute Keyword.fetch!(websocket_options, :compress)
   end
+
+  test "vendored realtime clients match the installed Phoenix dependencies" do
+    root = Path.expand("../..", __DIR__)
+
+    [
+      {"deps/phoenix/priv/static/phoenix.js", "priv/static/assets/js/phoenix.js"},
+      {"deps/phoenix_live_view/priv/static/phoenix_live_view.js",
+       "priv/static/assets/js/phoenix_live_view.js"}
+    ]
+    |> Enum.each(fn {source, destination} ->
+      assert File.read!(Path.join(root, destination)) == File.read!(Path.join(root, source))
+    end)
+  end
 end
