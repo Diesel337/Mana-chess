@@ -5,5 +5,7 @@ defmodule ManaChessOnline.Persistence.Store do
   @callback get_setting(String.t()) :: {:ok, map()} | {:error, term()}
   @callback entitlements_for(String.t()) :: {:ok, [map()]} | {:error, term()}
   @callback competitive_profile(String.t()) :: {:ok, map()} | {:error, term()}
+  @callback competitive_leaderboard(String.t(), pos_integer()) ::
+              {:ok, map()} | {:error, term()}
   @callback health() :: :ok | {:error, term()}
 end

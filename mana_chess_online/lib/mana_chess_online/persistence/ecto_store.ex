@@ -129,6 +129,39 @@ defmodule ManaChessOnline.Persistence.EctoStore do
   end
 
   @impl true
+  def competitive_leaderboard(player_id, limit) do
+    ranked_query = ranked_ratings_query()
+
+    entries =
+      ranked_query
+      |> order_by([rating],
+        desc: rating.rating,
+        desc: rating.games_played,
+        asc: rating.player_id
+      )
+      |> limit(^limit)
+      |> Repo.all()
+      |> Enum.with_index(1)
+      |> Enum.map(fn {rating, rank} -> leaderboard_profile(rating, rank) end)
+
+    current =
+      case Repo.get_by(PlayerRating, player_id: player_id) do
+        %{games_played: games_played} = rating when games_played > 0 ->
+          leaderboard_profile(rating, rank_for(rating))
+
+        _rating ->
+          nil
+      end
+
+    {:ok,
+     %{
+       entries: entries,
+       current: current,
+       total_players: Repo.aggregate(ranked_query, :count, :id)
+     }}
+  end
+
+  @impl true
   def health do
     case Ecto.Adapters.SQL.query(Repo, "SELECT 1", [], timeout: 2_000) do
       {:ok, _result} -> :ok
@@ -187,6 +220,33 @@ defmodule ManaChessOnline.Persistence.EctoStore do
       losses: rating.losses,
       draws: rating.draws
     })
+  end
+
+  defp leaderboard_profile(rating, rank) do
+    rating
+    |> rating_profile()
+    |> Map.put(:rank, rank)
+  end
+
+  defp ranked_ratings_query do
+    from(rating in PlayerRating, where: rating.games_played > 0)
+  end
+
+  defp rank_for(rating) do
+    better_players =
+      ranked_ratings_query()
+      |> where(
+        [candidate],
+        candidate.rating > ^rating.rating or
+          (candidate.rating == ^rating.rating and
+             candidate.games_played > ^rating.games_played) or
+          (candidate.rating == ^rating.rating and
+             candidate.games_played == ^rating.games_played and
+             candidate.player_id < ^rating.player_id)
+      )
+      |> Repo.aggregate(:count, :id)
+
+    better_players + 1
   end
 
   defp persist_rating(profile, finished_at) do

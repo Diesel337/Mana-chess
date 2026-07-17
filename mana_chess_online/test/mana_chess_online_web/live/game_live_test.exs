@@ -47,15 +47,17 @@ defmodule ManaChessOnlineWeb.GameLiveTest do
     assert {:ok, _pid} = GameSupervisor.lookup_game(game_id)
   end
 
-  test "lobby keeps play choices ahead of inline cosmetics", %{conn: conn} do
+  test "lobby keeps play choices ahead of ranking and inline cosmetics", %{conn: conn} do
     {:ok, _view, html} = live(conn, ~p"/")
 
     {offline_position, _} = :binary.match(html, ~s(class="mc-offline"))
     {lobby_position, _} = :binary.match(html, ~s(class="mc-lobby"))
+    {ranking_position, _} = :binary.match(html, ~s(class="mc-ranking"))
     {cosmetics_position, _} = :binary.match(html, ~s(class="mc-skins mc-skins-inline"))
 
     assert offline_position < lobby_position
-    assert lobby_position < cosmetics_position
+    assert lobby_position < ranking_position
+    assert ranking_position < cosmetics_position
   end
 
   test "lobby renders the competitive profile and rated quick match action", %{conn: conn} do
@@ -65,5 +67,60 @@ defmodule ManaChessOnlineWeb.GameLiveTest do
     assert html =~ "Prov. 0/10"
     assert html =~ "Buscar rival"
     assert html =~ "Cerca de 1200"
+    assert html =~ ~s(data-competitive-leaderboard)
+    assert html =~ "Sin posicion"
   end
+
+  test "leaderboard renders public aliases and the current rank without private ids", %{
+    conn: conn
+  } do
+    original_persistence = Application.get_env(:mana_chess_online, :persistence)
+
+    original_leaderboard =
+      Application.get_env(:mana_chess_online, :persistence_test_competitive_leaderboard)
+
+    on_exit(fn ->
+      restore_env(:persistence, original_persistence)
+      restore_env(:persistence_test_competitive_leaderboard, original_leaderboard)
+    end)
+
+    current_player_id = "steam_private_current"
+    leader_player_id = "steam_private_leader"
+
+    Application.put_env(:mana_chess_online, :persistence,
+      enabled: true,
+      store: ManaChessOnline.PersistenceTestStore,
+      writer: ManaChessOnline.PersistenceTestWriter
+    )
+
+    Application.put_env(:mana_chess_online, :persistence_test_competitive_leaderboard, %{
+      entries: [rating_entry(leader_player_id, 1, 1_440, 12)],
+      current: rating_entry(current_player_id, 7, 1_230, 3),
+      total_players: 19
+    })
+
+    conn = Plug.Test.init_test_session(conn, player_id: current_player_id)
+    {:ok, _view, html} = live(conn, ~p"/")
+
+    assert html =~ ManaChessOnline.CompetitiveLeaderboard.alias_for(leader_player_id)
+    assert html =~ "Tu puesto #7"
+    assert html =~ "19 jugadores"
+    refute html =~ leader_player_id
+    refute html =~ current_player_id
+  end
+
+  defp rating_entry(player_id, rank, rating, games) do
+    %{
+      player_id: player_id,
+      rank: rank,
+      rating: rating,
+      games_played: games,
+      wins: games,
+      losses: 0,
+      draws: 0
+    }
+  end
+
+  defp restore_env(key, nil), do: Application.delete_env(:mana_chess_online, key)
+  defp restore_env(key, value), do: Application.put_env(:mana_chess_online, key, value)
 end

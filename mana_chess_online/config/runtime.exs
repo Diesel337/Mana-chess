@@ -27,6 +27,12 @@ config :mana_chess_online, :launch_access,
   mode: System.get_env("MANA_CHESS_LAUNCH_ACCESS", "open"),
   qa_bypass_key: System.get_env("MANA_CHESS_QA_BYPASS_KEY", "")
 
+config :mana_chess_online,
+       :leaderboard_alias_secret,
+       System.get_env("MANA_CHESS_LEADERBOARD_ALIAS_SECRET") ||
+         System.get_env("SECRET_KEY_BASE") ||
+         "mana-chess-local-leaderboard-v1"
+
 config :mana_chess_online, :steam_auth,
   app_id: System.get_env("MANA_CHESS_STEAM_APP_ID", ""),
   publisher_key: System.get_env("MANA_CHESS_STEAM_WEB_API_PUBLISHER_KEY", ""),

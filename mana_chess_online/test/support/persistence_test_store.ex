@@ -34,6 +34,18 @@ defmodule ManaChessOnline.PersistenceTestStore do
   end
 
   @impl true
+  def competitive_leaderboard(player_id, limit) do
+    notify({:persistence_competitive_leaderboard_read, player_id, limit})
+
+    {:ok,
+     Application.get_env(:mana_chess_online, :persistence_test_competitive_leaderboard, %{
+       entries: [],
+       current: nil,
+       total_players: 0
+     })}
+  end
+
+  @impl true
   def health, do: Application.get_env(:mana_chess_online, :persistence_test_health, :ok)
 
   defp notify(message) do

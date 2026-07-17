@@ -17,6 +17,7 @@ Active match snapshots are not restored from Postgres yet. Enabling this layer d
 - `ManaChessOnline.Release`: release migration entry point.
 - `ManaChessOnline.GamePersistence`: detects the first transition into a terminal match state.
 - `ManaChessOnline.CompetitiveRating`: pure Elo calculation, eligibility rules, and record updates.
+- `ManaChessOnline.CompetitiveLeaderboard`: normalizes ranks and replaces private player IDs with server-keyed public aliases.
 - `ManaChessOnline.CompetitiveMatchmaking`: selects an open seat, preferring the closest-rated waiting opponent.
 
 ## Tables
@@ -27,7 +28,7 @@ Active match snapshots are not restored from Postgres yet. Enabling this layer d
 - `player_ratings`: one row per player identity with rating, games played, W/L/D totals, and last match time.
 - `system_settings`: versioned operational settings. `global_game_settings` replaces the JSON file as the primary read when Postgres is enabled.
 
-Only public matches with two distinct player identities are rated. Private rooms and practice games remain unranked. Rating updates and the corresponding match summary share one database transaction; the unique match event ID prevents duplicate delivery from applying score twice. The rating audit for each match is stored in `match_summaries.metadata.rating`.
+Only public matches with two distinct player identities are rated. Private rooms and practice games remain unranked. Rating updates and the corresponding match summary share one database transaction; the unique match event ID prevents duplicate delivery from applying score twice. The rating audit for each match is stored in `match_summaries.metadata.rating`. Leaderboard reads use the existing rating/games index, rank only players with completed public games, and strip the stored identity before returning UI data.
 
 Raw Steam tickets, publisher keys, QA bypass keys, cookies, and database URLs are never persisted in these tables.
 

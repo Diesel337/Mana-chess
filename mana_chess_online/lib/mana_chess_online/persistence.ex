@@ -6,7 +6,7 @@ defmodule ManaChessOnline.Persistence do
   database is configured, reads report `:disabled` and writes are safely skipped.
   """
 
-  alias ManaChessOnline.CompetitiveRating
+  alias ManaChessOnline.{CompetitiveLeaderboard, CompetitiveRating}
   alias ManaChessOnline.Persistence.{EctoStore, Event, Writer}
 
   @steam_id_pattern ~r/\A[0-9]{16,20}\z/
@@ -86,6 +86,27 @@ defmodule ManaChessOnline.Persistence do
   end
 
   def competitive_profile(player_id), do: default_competitive_profile(player_id)
+
+  def competitive_leaderboard(player_id, limit \\ 5)
+
+  def competitive_leaderboard(player_id, limit)
+      when is_binary(player_id) and byte_size(player_id) > 0 and is_integer(limit) do
+    limit = limit |> max(1) |> min(10)
+
+    if enabled?() do
+      case safe_store_call(:competitive_leaderboard, [player_id, limit]) do
+        {:ok, leaderboard} when is_map(leaderboard) ->
+          CompetitiveLeaderboard.normalize(leaderboard, player_id)
+
+        _error ->
+          CompetitiveLeaderboard.default()
+      end
+    else
+      CompetitiveLeaderboard.default()
+    end
+  end
+
+  def competitive_leaderboard(_player_id, _limit), do: CompetitiveLeaderboard.default()
 
   def health do
     if enabled?() do

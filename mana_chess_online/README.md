@@ -48,7 +48,7 @@ Railway runs `sh /app/bin/migrate` as a pre-deploy command, then checks `GET /he
 
 The persistence boundary stores verified Steam users, Steam entitlements, terminal match summaries, competitive player ratings, and versioned global game settings. Public matches between two distinct human players update rating and W/L/D records in the same transaction as the terminal match summary. Authentication and `GameServer` state changes enqueue writes through a separate supervised worker; database write errors do not crash those caller processes. `GET /auth/steam/entitlements` requires both the desktop header and a current verified Steam session, and fails closed when durable entitlement state is unavailable.
 
-Quick match prefers an already waiting opponent and, when several are available, chooses the smallest rating difference. Private and practice games never change competitive rating.
+Quick match prefers an already waiting opponent and, when several are available, chooses the smallest rating difference. The lobby leaderboard shows the top rated players plus the current player's position, but replaces every stored player identity with a server-keyed public alias. `MANA_CHESS_LEADERBOARD_ALIAS_SECRET` can provide a dedicated alias key; production otherwise derives it from `SECRET_KEY_BASE`. Private and practice games never change competitive rating.
 
 See [`PERSISTENCE.md`](PERSISTENCE.md) for schema ownership, Railway activation, rollback, backup, and remaining active-match snapshot work.
 

@@ -52,3 +52,155 @@
     font-size: 1.1rem;
   }
 }
+
+/* Compact public leaderboard. Player identifiers never reach this surface. */
+.mc-ranking {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 12px 0;
+  border-top: 1px solid rgba(255, 217, 130, .16);
+  border-bottom: 1px solid rgba(139, 217, 189, .14);
+}
+
+.mc-ranking-head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.mc-ranking-head > div:first-child {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.mc-ranking-head span,
+.mc-ranking-player small,
+.mc-ranking-empty {
+  color: var(--mc-muted);
+}
+
+.mc-ranking-head > div:first-child > span {
+  font-size: .58rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.mc-ranking-head h2 {
+  margin: 0;
+  color: var(--mc-cream);
+  font-size: 1.05rem;
+  line-height: 1.05;
+}
+
+.mc-ranking-summary {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  flex: 0 0 auto;
+  text-align: right;
+}
+
+.mc-ranking-summary span {
+  font-size: .62rem;
+}
+
+.mc-ranking-summary strong {
+  color: #8bd9bd;
+  font-size: .72rem;
+}
+
+.mc-ranking-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mc-ranking-list li {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) 58px;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 5px 8px;
+  border-top: 1px solid rgba(255, 243, 207, .08);
+}
+
+.mc-ranking-list li:first-child {
+  border-top: 0;
+}
+
+.mc-ranking-list .mc-ranking-current {
+  background: rgba(139, 217, 189, .08);
+  box-shadow: inset 3px 0 #8bd9bd;
+}
+
+.mc-ranking-position,
+.mc-ranking-rating {
+  font-variant-numeric: tabular-nums;
+}
+
+.mc-ranking-position {
+  color: #e6bd68;
+  font-size: .74rem;
+  font-weight: 950;
+}
+
+.mc-ranking-player {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.mc-ranking-player strong,
+.mc-ranking-player small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mc-ranking-player strong {
+  color: var(--mc-cream);
+  font-size: .76rem;
+}
+
+.mc-ranking-player small {
+  font-size: .58rem;
+}
+
+.mc-ranking-rating {
+  justify-self: end;
+  color: #fff3cf;
+  font-size: .86rem;
+}
+
+.mc-ranking-empty {
+  margin: 0;
+  padding: 8px 0 2px;
+  font-size: .72rem;
+  line-height: 1.35;
+}
+
+@media (max-width: 480px) {
+  .mc-ranking-head {
+    align-items: start;
+  }
+
+  .mc-ranking-list li {
+    grid-template-columns: 32px minmax(0, 1fr) 50px;
+    gap: 6px;
+    padding-inline: 4px;
+  }
+
+  .mc-ranking-player strong {
+    font-size: .7rem;
+  }
+
+  .mc-ranking-player small {
+    font-size: .54rem;
+  }
+}

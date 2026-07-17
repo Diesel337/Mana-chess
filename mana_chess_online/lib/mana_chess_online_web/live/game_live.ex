@@ -30,6 +30,7 @@ defmodule ManaChessOnlineWeb.GameLive do
   def mount(params, session, socket) do
     player_id = Map.get(session, "player_id") || random_player_id()
     competitive_profile = Persistence.competitive_profile(player_id)
+    competitive_leaderboard = Persistence.competitive_leaderboard(player_id)
 
     view =
       case params do
@@ -52,6 +53,7 @@ defmodule ManaChessOnlineWeb.GameLive do
      |> assign(:page_title, "Mana Chess")
      |> assign(:player_id, player_id)
      |> assign(:competitive_profile, competitive_profile)
+     |> assign(:competitive_leaderboard, competitive_leaderboard)
      |> assign(:game_id, view.game_id)
      |> assign(:color, view.color)
      |> assign(:game, view.game)
@@ -410,11 +412,11 @@ defmodule ManaChessOnlineWeb.GameLive do
   end
 
   defp refresh_competitive_profile(socket) do
-    assign(
-      socket,
-      :competitive_profile,
-      Persistence.competitive_profile(socket.assigns.player_id)
-    )
+    player_id = socket.assigns.player_id
+
+    socket
+    |> assign(:competitive_profile, Persistence.competitive_profile(player_id))
+    |> assign(:competitive_leaderboard, Persistence.competitive_leaderboard(player_id))
   end
 
   defp competitive_record(profile),
@@ -1584,6 +1586,48 @@ defmodule ManaChessOnlineWeb.GameLive do
                 </div>
               </div>
             </div>
+
+            <section class="mc-ranking" data-competitive-leaderboard>
+              <header class="mc-ranking-head">
+                <div>
+                  <span>Competitivo</span>
+                  <h2>Clasificacion</h2>
+                </div>
+
+                <div class="mc-ranking-summary">
+                  <span>{@competitive_leaderboard.total_players} jugadores</span>
+                  <strong :if={@competitive_leaderboard.current} data-current-rank>
+                    Tu puesto #{@competitive_leaderboard.current.rank}
+                  </strong>
+                  <strong :if={!@competitive_leaderboard.current}>Sin posicion</strong>
+                </div>
+              </header>
+
+              <ol :if={@competitive_leaderboard.entries != []} class="mc-ranking-list">
+                <li
+                  :for={entry <- @competitive_leaderboard.entries}
+                  class={entry.current? && "mc-ranking-current"}
+                  data-ranking-position={entry.rank}
+                >
+                  <span class="mc-ranking-position">#{entry.rank}</span>
+                  <span class="mc-ranking-player">
+                    <strong>{entry.name}</strong>
+                    <small>
+                      {competitive_status(entry)} | {competitive_record(entry)}
+                    </small>
+                  </span>
+                  <strong class="mc-ranking-rating">{entry.rating}</strong>
+                </li>
+              </ol>
+
+              <p :if={@competitive_leaderboard.entries == []} class="mc-ranking-empty">
+                <%= if @competitive_leaderboard.available? do %>
+                  La primera partida publica completada abre la clasificacion.
+                <% else %>
+                  La clasificacion estara disponible al conectar la persistencia.
+                <% end %>
+              </p>
+            </section>
 
             <.cosmetic_shop
               symbols={@symbols}
