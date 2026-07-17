@@ -94,6 +94,11 @@ defmodule ManaChessOnline.GameLifecycle do
         Map.get(assignment, :game_id) in stale_game_ids
       end)
     end)
+    |> then(fn next_state ->
+      Map.update(next_state, :player_ratings, %{}, fn ratings ->
+        Map.take(ratings, Map.keys(next_state.players))
+      end)
+    end)
     |> Map.update(:game_activity, %{}, &Map.drop(&1, stale_game_ids))
     |> record_cleanup(length(stale_game_ids))
   end

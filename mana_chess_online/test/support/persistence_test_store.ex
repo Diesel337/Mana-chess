@@ -22,6 +22,18 @@ defmodule ManaChessOnline.PersistenceTestStore do
   end
 
   @impl true
+  def competitive_profile(player_id) do
+    notify({:persistence_competitive_profile_read, player_id})
+
+    {:ok,
+     Application.get_env(
+       :mana_chess_online,
+       :persistence_test_competitive_profile,
+       ManaChessOnline.CompetitiveRating.default_profile(player_id)
+     )}
+  end
+
+  @impl true
   def health, do: Application.get_env(:mana_chess_online, :persistence_test_health, :ok)
 
   defp notify(message) do

@@ -57,4 +57,13 @@ defmodule ManaChessOnlineWeb.GameLiveTest do
     assert offline_position < lobby_position
     assert lobby_position < cosmetics_position
   end
+
+  test "lobby renders the competitive profile and rated quick match action", %{conn: conn} do
+    {:ok, _view, html} = live(conn, ~p"/")
+
+    assert html =~ ~s(data-competitive-rating)
+    assert html =~ "Prov. 0/10"
+    assert html =~ "Buscar rival"
+    assert html =~ "Cerca de 1200"
+  end
 end

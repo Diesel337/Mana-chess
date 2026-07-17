@@ -42,6 +42,7 @@ defmodule ManaChessOnline.GameLobbyMatchmakingTest do
 
     assert state.players["open-player"] == %{game_id: game_id, color: :white}
     assert state.games[game_id].players.white == "open-player"
+    assert state.player_ratings["open-player"] == 1_200
   end
 
   test "creates and seats the owner in a private room" do

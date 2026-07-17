@@ -1,7 +1,13 @@
 defmodule ManaChessOnline.Persistence.SchemaTest do
   use ExUnit.Case, async: true
 
-  alias ManaChessOnline.Persistence.{Entitlement, MatchSummary, SteamUser, SystemSetting}
+  alias ManaChessOnline.Persistence.{
+    Entitlement,
+    MatchSummary,
+    PlayerRating,
+    SteamUser,
+    SystemSetting
+  }
 
   @now ~U[2026-07-16 12:30:00.123456Z]
 
@@ -68,5 +74,31 @@ defmodule ManaChessOnline.Persistence.SchemaTest do
              winner_color: "black",
              finished_at: @now
            }).valid?
+  end
+
+  test "validates competitive rating totals" do
+    valid =
+      PlayerRating.changeset(%PlayerRating{}, %{
+        player_id: "steam_76561198000000001",
+        rating: 1_284,
+        games_played: 7,
+        wins: 4,
+        losses: 2,
+        draws: 1,
+        last_match_at: @now
+      })
+
+    invalid =
+      PlayerRating.changeset(%PlayerRating{}, %{
+        player_id: "player",
+        rating: 1_200,
+        games_played: 7,
+        wins: 1,
+        losses: 1,
+        draws: 1
+      })
+
+    assert valid.valid?
+    refute invalid.valid?
   end
 end

@@ -22,7 +22,11 @@ defmodule ManaChessOnline.GameLobbyPresence do
   def leave(state, player_id) do
     previous_assignment = GamePlayers.assignment(state, player_id)
     previous_game = GameLobbyServers.assigned_game(previous_assignment, state.games)
-    state = GameLobbyRooms.remove_player(state, player_id)
+
+    state =
+      state
+      |> GameLobbyRooms.remove_player(player_id)
+      |> Map.update(:player_ratings, %{}, &Map.delete(&1, player_id))
 
     GameLobbyServers.sync_assignment_game(previous_assignment, state.games)
 

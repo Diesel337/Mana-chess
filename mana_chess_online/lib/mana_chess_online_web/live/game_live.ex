@@ -1,7 +1,7 @@
 defmodule ManaChessOnlineWeb.GameLive do
   use ManaChessOnlineWeb, :live_view
 
-  alias ManaChessOnline.{GameLobby, GameRuntimeConfig}
+  alias ManaChessOnline.{GameLobby, GamePersistence, GameRuntimeConfig, Persistence}
   alias ManaChessOnline.GameRules
   alias ManaChessOnlineWeb.GameText
 
@@ -29,6 +29,7 @@ defmodule ManaChessOnlineWeb.GameLive do
   @impl true
   def mount(params, session, socket) do
     player_id = Map.get(session, "player_id") || random_player_id()
+    competitive_profile = Persistence.competitive_profile(player_id)
 
     view =
       case params do
@@ -50,6 +51,7 @@ defmodule ManaChessOnlineWeb.GameLive do
      socket
      |> assign(:page_title, "Mana Chess")
      |> assign(:player_id, player_id)
+     |> assign(:competitive_profile, competitive_profile)
      |> assign(:game_id, view.game_id)
      |> assign(:color, view.color)
      |> assign(:game, view.game)
@@ -270,7 +272,12 @@ defmodule ManaChessOnlineWeb.GameLive do
 
   def handle_event("leave", _params, socket) do
     :ok = GameLobby.leave(socket.assigns.player_id)
-    {:noreply, assign_view(socket, GameLobby.join(socket.assigns.player_id))}
+    Process.send_after(self(), :refresh_competitive_profile, 200)
+
+    {:noreply,
+     socket
+     |> assign_view(GameLobby.join(socket.assigns.player_id))
+     |> refresh_competitive_profile()}
   end
 
   def handle_event("clear_room", %{"game" => game_id}, socket) do
@@ -299,13 +306,23 @@ defmodule ManaChessOnlineWeb.GameLive do
   end
 
   def handle_event("sit_anywhere", _params, socket) do
-    view = GameLobby.sit_anywhere(socket.assigns.player_id)
+    view =
+      GameLobby.sit_anywhere(
+        socket.assigns.player_id,
+        socket.assigns.competitive_profile.rating
+      )
 
     if connected?(socket) and view.game_id do
       Phoenix.PubSub.subscribe(ManaChessOnline.PubSub, GameLobby.topic(view.game_id))
     end
 
-    {:noreply, assign_view(socket, view)}
+    socket = assign_view(socket, view)
+
+    if view.game_id do
+      {:noreply, socket}
+    else
+      {:noreply, put_flash(socket, :error, "No hay asientos disponibles en este momento.")}
+    end
   end
 
   def handle_event("create_private", _params, socket) do
@@ -350,6 +367,10 @@ defmodule ManaChessOnlineWeb.GameLive do
   end
 
   def handle_info({:game_update, %{id: game_id} = game}, %{assigns: %{game_id: game_id}} = socket) do
+    if not GamePersistence.terminal?(socket.assigns.game) and GamePersistence.terminal?(game) do
+      Process.send_after(self(), :refresh_competitive_profile, 200)
+    end
+
     {:noreply, assign(socket, :game, game)}
   end
 
@@ -357,6 +378,10 @@ defmodule ManaChessOnlineWeb.GameLive do
 
   def handle_info({:lobby_update, lobby}, socket) do
     {:noreply, assign(socket, :lobby, lobby)}
+  end
+
+  def handle_info(:refresh_competitive_profile, socket) do
+    {:noreply, refresh_competitive_profile(socket)}
   end
 
   defp refresh_assignment(socket) do
@@ -383,6 +408,22 @@ defmodule ManaChessOnlineWeb.GameLive do
     |> assign(:chat_error, nil)
     |> assign(:reconnected?, false)
   end
+
+  defp refresh_competitive_profile(socket) do
+    assign(
+      socket,
+      :competitive_profile,
+      Persistence.competitive_profile(socket.assigns.player_id)
+    )
+  end
+
+  defp competitive_record(profile),
+    do: "#{profile.wins}V #{profile.losses}D #{profile.draws}E"
+
+  defp competitive_status(%{games_played: games_played}) when games_played < 10,
+    do: "Prov. #{games_played}/10"
+
+  defp competitive_status(_profile), do: "Establecido"
 
   defp practice_view?(%{game: %{practice?: true}, game_id: game_id}) when is_binary(game_id),
     do: true
@@ -1395,7 +1436,19 @@ defmodule ManaChessOnlineWeb.GameLive do
             </section>
 
             <section class="mc-local-stats">
-              <div><strong>Tus stats</strong> <span>Guardadas en este navegador.</span></div>
+              <div class="mc-competitive-copy">
+                <strong>
+                  Competitivo
+                  <b class="mc-competitive-rating" data-competitive-rating>
+                    {@competitive_profile.rating}
+                  </b>
+                </strong>
+                <span data-competitive-record>
+                  {competitive_status(@competitive_profile)} · {competitive_record(
+                    @competitive_profile
+                  )}
+                </span>
+              </div>
 
               <dl>
                 <div>
@@ -1424,7 +1477,7 @@ defmodule ManaChessOnlineWeb.GameLive do
               </dl>
 
               <button type="button" data-stats-reset data-sound-action="reset">
-                Reiniciar stats
+                Reiniciar local
               </button>
             </section>
 
@@ -1474,7 +1527,8 @@ defmodule ManaChessOnlineWeb.GameLive do
                     phx-click="sit_anywhere"
                     data-sound-action="mode"
                   >
-                    Online rapido
+                    <strong>Buscar rival</strong>
+                    <small>Cerca de {@competitive_profile.rating}</small>
                   </button>
                 </div>
               </div>

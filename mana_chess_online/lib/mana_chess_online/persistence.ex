@@ -6,6 +6,7 @@ defmodule ManaChessOnline.Persistence do
   database is configured, reads report `:disabled` and writes are safely skipped.
   """
 
+  alias ManaChessOnline.CompetitiveRating
   alias ManaChessOnline.Persistence.{EctoStore, Event, Writer}
 
   @steam_id_pattern ~r/\A[0-9]{16,20}\z/
@@ -64,6 +65,27 @@ defmodule ManaChessOnline.Persistence do
   end
 
   def entitlements_for(_steam_id), do: {:error, :invalid_steam_id}
+
+  def competitive_profile(player_id) when is_binary(player_id) and byte_size(player_id) > 0 do
+    profile =
+      if enabled?() do
+        case safe_store_call(:competitive_profile, [player_id]) do
+          {:ok, profile} when is_map(profile) ->
+            profile
+            |> CompetitiveRating.normalize_profile(player_id)
+            |> Map.put(:available?, true)
+
+          _error ->
+            default_competitive_profile(player_id)
+        end
+      else
+        default_competitive_profile(player_id)
+      end
+
+    Map.put(profile, :provisional?, profile.games_played < 10)
+  end
+
+  def competitive_profile(player_id), do: default_competitive_profile(player_id)
 
   def health do
     if enabled?() do
@@ -136,6 +158,12 @@ defmodule ManaChessOnline.Persistence do
       mode: if(enabled, do: "postgres", else: "memory"),
       writer: writer_status()
     }
+  end
+
+  defp default_competitive_profile(player_id) do
+    player_id
+    |> CompetitiveRating.default_profile()
+    |> Map.put(:available?, false)
   end
 
   defp store_module, do: Keyword.get(config(), :store, EctoStore)

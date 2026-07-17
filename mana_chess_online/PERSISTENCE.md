@@ -3,7 +3,7 @@
 Mana Chess can run in two explicit modes:
 
 - `memory`: current QA-compatible mode. Active games and global settings keep their existing in-memory/file behavior.
-- `postgres`: durable Steam identities, entitlements, match summaries, and global settings through Ecto.
+- `postgres`: durable Steam identities, entitlements, match summaries, competitive ratings, and global settings through Ecto.
 
 Active match snapshots are not restored from Postgres yet. Enabling this layer does not make an in-progress game survive a deploy.
 
@@ -16,13 +16,18 @@ Active match snapshots are not restored from Postgres yet. Enabling this layer d
 - `ManaChessOnline.Repo`: Ecto repository.
 - `ManaChessOnline.Release`: release migration entry point.
 - `ManaChessOnline.GamePersistence`: detects the first transition into a terminal match state.
+- `ManaChessOnline.CompetitiveRating`: pure Elo calculation, eligibility rules, and record updates.
+- `ManaChessOnline.CompetitiveMatchmaking`: selects an open seat, preferring the closest-rated waiting opponent.
 
 ## Tables
 
 - `steam_users`: one row per verified SteamID, current owner/license metadata, first and last authentication timestamps.
 - `steam_entitlements`: active/revoked Steam DLC or inventory grants. The unique key is user, source, and external ID.
 - `match_summaries`: one immutable row per observed terminal match transition.
+- `player_ratings`: one row per player identity with rating, games played, W/L/D totals, and last match time.
 - `system_settings`: versioned operational settings. `global_game_settings` replaces the JSON file as the primary read when Postgres is enabled.
+
+Only public matches with two distinct player identities are rated. Private rooms and practice games remain unranked. Rating updates and the corresponding match summary share one database transaction; the unique match event ID prevents duplicate delivery from applying score twice. The rating audit for each match is stored in `match_summaries.metadata.rating`.
 
 Raw Steam tickets, publisher keys, QA bypass keys, cookies, and database URLs are never persisted in these tables.
 
@@ -62,6 +67,7 @@ The migration command exits successfully without touching a database when persis
 
 - Steam authentication issues its signed session before any database result is needed.
 - Match completion is sent to the writer after the `GameServer` commits its live state.
+- Competitive rating writes are serialized by the persistence writer and committed atomically with the match summary.
 - Global settings always keep the current JSON fallback; Postgres becomes the preferred read only when enabled.
 - Entitlement reads fail closed with `503` if persistence is disabled or unavailable.
 - `/health` returns `503` when Postgres is enabled but cannot answer `SELECT 1`; Railway will not route a failed deployment.

@@ -27,6 +27,7 @@ defmodule ManaChessOnlineWeb.PageControllerTest do
     assert response =~ "cosmetic-session-module-20260707"
     assert response =~ "lobby-p0-20260717b"
     assert response =~ "p0_lobby.css?v=lobby-p0-20260717"
+    assert response =~ "competitive.css?v=competitive-rating-20260717b"
     assert response =~ "realtime-client-20260717b"
     assert response =~ "local-stats-module-20260706"
     assert response =~ "local-stats-events-module-20260707"

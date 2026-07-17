@@ -5,6 +5,7 @@ defmodule ManaChessOnline.GameLobby do
 
   alias ManaChessOnline.{
     GameCapacity,
+    CompetitiveRating,
     GameLifecycle,
     GameLobbyActions,
     GameLobbyChat,
@@ -35,7 +36,9 @@ defmodule ManaChessOnline.GameLobby do
   def sit(player_id, game_id, color),
     do: GenServer.call(__MODULE__, {:sit, player_id, game_id, color})
 
-  def sit_anywhere(player_id), do: GenServer.call(__MODULE__, {:sit_anywhere, player_id})
+  def sit_anywhere(player_id, rating \\ CompetitiveRating.default_rating()),
+    do: GenServer.call(__MODULE__, {:sit_anywhere, player_id, rating})
+
   def create_private(player_id), do: GenServer.call(__MODULE__, {:create_private, player_id})
   def watch(player_id, game_id), do: GenServer.call(__MODULE__, {:watch, player_id, game_id})
   def snapshot(game_id), do: GenServer.call(__MODULE__, {:snapshot, game_id})
@@ -93,6 +96,7 @@ defmodule ManaChessOnline.GameLobby do
           {"game_#{n}", GameRooms.new_game("game_#{n}", settings)}
         end),
       players: %{},
+      player_ratings: %{},
       rate_limits: %{},
       game_activity: %{},
       last_lifecycle_at: now,
@@ -123,10 +127,10 @@ defmodule ManaChessOnline.GameLobby do
     end
   end
 
-  def handle_call({:sit_anywhere, player_id}, _from, state) do
+  def handle_call({:sit_anywhere, player_id, rating}, _from, state) do
     now = GameLobbyRuntime.now_ms()
 
-    case GameLobbyMatchmaking.sit_anywhere(state, player_id, now) do
+    case GameLobbyMatchmaking.sit_anywhere(state, player_id, rating, now) do
       {:ok, state} ->
         state = GameLifecycle.touch_player(state, player_id, now)
         GameLobbyRuntime.broadcast_lobby(state)

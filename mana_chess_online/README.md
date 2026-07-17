@@ -46,7 +46,9 @@ POOL_SIZE=10
 
 Railway runs `sh /app/bin/migrate` as a pre-deploy command, then checks `GET /health` before routing traffic. With no database configured, the migration is a no-op and health reports ready `memory` mode, so the current production behavior remains available. With Postgres enabled, health returns `503` until the database answers.
 
-The persistence boundary stores verified Steam users, Steam entitlements, terminal match summaries, and versioned global game settings. Authentication and `GameServer` state changes enqueue writes through a separate supervised worker; database write errors do not crash those caller processes. `GET /auth/steam/entitlements` requires both the desktop header and a current verified Steam session, and fails closed when durable entitlement state is unavailable.
+The persistence boundary stores verified Steam users, Steam entitlements, terminal match summaries, competitive player ratings, and versioned global game settings. Public matches between two distinct human players update rating and W/L/D records in the same transaction as the terminal match summary. Authentication and `GameServer` state changes enqueue writes through a separate supervised worker; database write errors do not crash those caller processes. `GET /auth/steam/entitlements` requires both the desktop header and a current verified Steam session, and fails closed when durable entitlement state is unavailable.
+
+Quick match prefers an already waiting opponent and, when several are available, chooses the smallest rating difference. Private and practice games never change competitive rating.
 
 See [`PERSISTENCE.md`](PERSISTENCE.md) for schema ownership, Railway activation, rollback, backup, and remaining active-match snapshot work.
 

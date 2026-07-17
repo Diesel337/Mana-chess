@@ -1,0 +1,54 @@
+/* Competitive profile and quick-match details loaded after the legacy bundles. */
+.mc-competitive-copy strong {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.mc-local-stats .mc-competitive-rating {
+  color: #fff3cf;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.mc-local-stats dt {
+  font-size: .58rem;
+  letter-spacing: 0;
+}
+
+.mc-lobby-head .mc-online-quick {
+  display: grid;
+  place-items: center;
+  gap: 2px;
+  min-height: 48px;
+  padding: 6px 12px;
+  line-height: 1.05;
+}
+
+.mc-lobby-head .mc-online-quick strong,
+.mc-lobby-head .mc-online-quick small {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.mc-lobby-head .mc-online-quick strong {
+  font-size: .82rem;
+}
+
+.mc-lobby-head .mc-online-quick small {
+  color: #4f3605;
+  font-size: .6rem;
+  font-weight: 900;
+}
+
+@media (max-width: 480px) {
+  .mc-competitive-copy strong {
+    justify-content: start;
+  }
+
+  .mc-local-stats .mc-competitive-rating {
+    font-size: 1.1rem;
+  }
+}
