@@ -93,6 +93,17 @@ El jugador debe entender claramente:
 
 La meta inicial son partidas promedio de 3 a 7 minutos.
 
+## Progresion Cosmetica Local
+
+La version base incluye los conjuntos Clasico y Mana. Los demas cosmeticos se ganan jugando y se guardan sin cuenta:
+
+- Arcano: completar 1 partida.
+- Cristal: ganar 3 partidas.
+- Elemental: completar 10 partidas.
+- Paleta custom: ganar 5 partidas.
+
+Las estadisticas viven en `mana-chess-local-stats` y los premios permanentes en `mana-chess-cosmetic-unlocks`. Reiniciar las estadisticas visibles no elimina premios ya ganados. `assets/js/cosmetic_catalog.js` declara los hitos y `assets/js/cosmetic_progression.js` aplica las reglas; los controladores de tienda solo equipan recompensas disponibles.
+
 ## No Agregar Todavia
 
 - Habilidades especiales.
@@ -100,7 +111,6 @@ La meta inicial son partidas promedio de 3 a 7 minutos.
 - Ranking.
 - Matchmaking.
 - Temporadas.
-- Cosméticos.
 - Steam/client nativo.
 
 Primero se debe validar que ajedrez + elixir + tiempo real sea divertido sin esconder problemas bajo mas sistemas.

@@ -11,11 +11,21 @@
     if (hook.cosmeticsController()) return
 
     const premiumId = control.dataset.cosmeticPremium || "palette:custom"
-    if (hook.cosmeticUnlocked(premiumId) && !control.matches("[data-palette-unlock]")) return
+    const unlocked = control.dataset.cosmeticPack
+      ? hook.cosmeticPackUnlocked(control.dataset.cosmeticPack)
+      : hook.cosmeticUnlocked(premiumId)
+
+    if (!unlocked) {
+      event.preventDefault()
+      event.stopImmediatePropagation()
+      hook.renderCosmetics()
+      return
+    }
+
+    if (!control.matches("[data-palette-unlock]")) return
 
     event.preventDefault()
     event.stopImmediatePropagation()
-    hook.unlockCosmetic(premiumId)
     hook.activateCosmeticControl(control)
     hook.renderCosmetics()
     playSkinSound(hook)
@@ -24,6 +34,7 @@
   const handleSoundAction = (event, hook) => {
     const control = event.target.closest("[data-sound-action]")
     if (!control || control.disabled) return
+    if (control.getAttribute("aria-disabled") === "true") return
     if (control.matches("[data-piece-skin-choice]")) {
       if (hook.cosmeticsController()) {
         if (hook.soundEnabled()) hook.playSound(control.dataset.soundAction || "skin")
@@ -116,6 +127,7 @@
     const control = event.target.closest("[data-cosmetic-pack]")
     if (!control || control.disabled) return
     if (hook.cosmeticsController()) return
+    if (!hook.cosmeticPackUnlocked(control.dataset.cosmeticPack)) return
 
     event.preventDefault()
     hook.applyCosmeticPack(control.dataset.cosmeticPack)

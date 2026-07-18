@@ -3865,6 +3865,35 @@ html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-elixir-bottom-track::a
   white-space: nowrap;
 }
 
+.mc-mastery-summary {
+  display: grid;
+  gap: 5px;
+  width: min(120px, 42%);
+}
+
+.mc-mastery-summary > small {
+  justify-self: end;
+}
+
+.mc-mastery-progress {
+  display: block;
+  width: 100%;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .09);
+}
+
+.mc-mastery-progress > i {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #8bd9bd, #e8bd63 58%, #a884ff);
+  box-shadow: 0 0 8px rgba(139, 217, 189, .36);
+  transition: width 180ms ease;
+}
+
 .mc-cosmetic-groups,
 .mc-cosmetic-group {
   display: grid;
@@ -3960,6 +3989,14 @@ html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-elixir-bottom-track::a
   color: #ffd982;
 }
 
+.mc-skin-option [data-cosmetic-state="mastery"],
+.mc-palette-unlock [data-palette-state="mastery"],
+.mc-skin-strip [data-cosmetic-state="mastery"] {
+  border-color: rgba(168, 132, 255, .34);
+  background: rgba(168, 132, 255, .1);
+  color: #c7b3ff;
+}
+
 .mc-skin-option [data-cosmetic-status]::before,
 .mc-palette-unlock [data-palette-status]::before,
 .mc-skin-strip [data-cosmetic-status]::before {
@@ -3987,6 +4024,19 @@ html[data-desktop="true"] .mc-game:has(.mc-play-area) .mc-elixir-bottom-track::a
   transform: translateY(-1px);
   border-color: rgba(255, 217, 130, .34);
   filter: brightness(1.06);
+}
+
+.mc-skin-option[aria-disabled="true"],
+.mc-skin-strip button[aria-disabled="true"],
+.mc-palette-unlock[aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+.mc-skin-option[aria-disabled="true"]:hover,
+.mc-skin-strip button[aria-disabled="true"]:hover,
+.mc-palette-unlock[aria-disabled="true"]:hover {
+  transform: none;
+  filter: saturate(.72);
 }
 
 .mc-skin-selected,
@@ -6834,6 +6884,13 @@ html[data-desktop="true"] .mc-chat-list {
 }
 
 /* Compact cosmetic shop cards and active preset state */
+.mc-menu .mc-skins-inline .mc-skins-head {
+  display: flex;
+  align-items: center;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 243, 207, .08);
+}
+
 .mc-skins .mc-skin-option > .mc-skin-preview,
 .mc-skins .mc-skin-option > .mc-piece-skin-preview,
 .mc-skins .mc-skin-option > .mc-pack-preview {
@@ -6879,6 +6936,14 @@ html[data-desktop="true"] .mc-shell:has(.mc-menu) > .mc-skins-rail .mc-pack-opti
 }
 
 @media (max-width: 480px) {
+  .mc-menu .mc-skins-inline .mc-skins-head {
+    gap: 8px;
+  }
+
+  .mc-menu .mc-skins-inline .mc-mastery-summary {
+    width: min(112px, 46%);
+  }
+
   .mc-menu .mc-pack-option {
     grid-template-columns: 34px minmax(0, 1fr) !important;
     justify-items: stretch;

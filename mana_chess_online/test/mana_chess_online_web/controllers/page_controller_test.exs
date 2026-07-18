@@ -21,22 +21,24 @@ defmodule ManaChessOnlineWeb.PageControllerTest do
     conn = get(conn, ~p"/")
     response = html_response(conn, 200)
     assert response =~ "Mana Chess"
+    assert response =~ "app.css?v=cosmetic-mastery-20260717"
     assert response =~ "premium_cosmetics.css?v=premium-cosmetics-20260717"
-    assert response =~ "cosmetic-catalog-20260717"
-    assert response =~ "cosmetics-premium-20260717"
-    assert response =~ "cosmetic-actions-module-20260707"
-    assert response =~ "cosmetic-fallback-premium-20260717"
-    assert response =~ "cosmetic-session-module-20260707"
+    assert response =~ "cosmetic-catalog-mastery-20260717"
+    assert response =~ "cosmetic-progression-20260717"
+    assert response =~ "cosmetics-mastery-20260717"
+    assert response =~ "cosmetic-actions-mastery-20260717"
+    assert response =~ "cosmetic-fallback-mastery-20260717"
+    assert response =~ "cosmetic-session-mastery-20260717"
     assert response =~ "lobby-p0-20260717b"
     assert response =~ "p0_lobby.css?v=lobby-p0-20260717"
     assert response =~ "competitive.css?v=competitive-leaderboard-20260717"
     assert response =~ "realtime-client-20260717b"
     assert response =~ "local-stats-module-20260706"
-    assert response =~ "local-stats-events-module-20260707"
+    assert response =~ "local-stats-events-mastery-20260717"
     assert response =~ "local-stats-lifecycle-module-20260707"
     assert response =~ "result-recording-module-20260707"
     assert response =~ "stats-session-module-20260707"
-    assert response =~ "local-stats-hook-module-20260707"
+    assert response =~ "local-stats-hook-mastery-20260717"
     assert response =~ "sound-premium-20260717"
     assert response =~ "sound-state-module-20260707"
     assert response =~ "sound-session-module-20260707"
@@ -71,7 +73,12 @@ defmodule ManaChessOnlineWeb.PageControllerTest do
 
   test "premium cosmetic catalog and artwork are served", %{conn: conn} do
     catalog = conn |> get("/assets/js/cosmetic_catalog.js") |> response(200)
+    progression = build_conn() |> get("/assets/js/cosmetic_progression.js") |> response(200)
     stylesheet = build_conn() |> get("/assets/css/premium_cosmetics.css") |> response(200)
+
+    assert catalog =~ "mastery"
+    assert progression =~ "syncUnlocks"
+    assert progression =~ "Maestria"
 
     for family <- ~w(arcane crystal elemental) do
       assert catalog =~ family

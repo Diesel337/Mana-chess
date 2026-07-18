@@ -138,10 +138,6 @@
       return this.cosmeticSessionController().cosmeticUnlocked(this, id)
     },
 
-    unlockCosmetic(id) {
-      this.cosmeticSessionController().unlockCosmetic(this, id)
-    },
-
     cosmeticAllowed(id) {
       return this.cosmeticSessionController().cosmeticAllowed(this, id)
     },

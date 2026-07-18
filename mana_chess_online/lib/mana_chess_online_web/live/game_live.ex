@@ -1280,14 +1280,13 @@ defmodule ManaChessOnlineWeb.GameLive do
                 data-board-skin-choice="arcane"
                 data-cosmetic-premium="board:arcane"
                 data-sound-action="skin"
-                title="Probar y desbloquear Arcano localmente"
-                aria-label="Probar y desbloquear Arcano localmente"
-                aria-disabled="false"
+                title="Completa 1 partida para desbloquear Arcano"
+                aria-label="Arcano: completa 1 partida para desbloquearlo"
+                aria-disabled="true"
                 aria-pressed="false"
               >
                 <i class="mc-skin-dot mc-skin-dot-arcane"></i>
-                Arcano
-                <small data-cosmetic-status data-cosmetic-state="premium">Premium proximamente</small>
+                Arcano <small data-cosmetic-status data-cosmetic-state="mastery">0/1 partida</small>
               </button>
               <button
                 type="button"
@@ -1295,14 +1294,14 @@ defmodule ManaChessOnlineWeb.GameLive do
                 data-board-skin-choice="crystal"
                 data-cosmetic-premium="board:crystal"
                 data-sound-action="skin"
-                title="Probar y desbloquear Cristal localmente"
-                aria-label="Probar y desbloquear Cristal localmente"
-                aria-disabled="false"
+                title="Gana 3 partidas para desbloquear Cristal"
+                aria-label="Cristal: gana 3 partidas para desbloquearlo"
+                aria-disabled="true"
                 aria-pressed="false"
               >
                 <i class="mc-skin-dot mc-skin-dot-crystal"></i>
                 Cristal
-                <small data-cosmetic-status data-cosmetic-state="premium">Premium proximamente</small>
+                <small data-cosmetic-status data-cosmetic-state="mastery">0/3 victorias</small>
               </button>
               <button
                 type="button"
@@ -1310,14 +1309,14 @@ defmodule ManaChessOnlineWeb.GameLive do
                 data-board-skin-choice="elemental"
                 data-cosmetic-premium="board:elemental"
                 data-sound-action="skin"
-                title="Probar y desbloquear Elemental localmente"
-                aria-label="Probar y desbloquear Elemental localmente"
-                aria-disabled="false"
+                title="Completa 10 partidas para desbloquear Elemental"
+                aria-label="Elemental: completa 10 partidas para desbloquearlo"
+                aria-disabled="true"
                 aria-pressed="false"
               >
                 <i class="mc-skin-dot mc-skin-dot-elemental"></i>
                 Elemental
-                <small data-cosmetic-status data-cosmetic-state="premium">Premium proximamente</small>
+                <small data-cosmetic-status data-cosmetic-state="mastery">0/10 partidas</small>
               </button>
               <button
                 type="button"
@@ -1325,14 +1324,13 @@ defmodule ManaChessOnlineWeb.GameLive do
                 data-board-skin-choice="custom"
                 data-cosmetic-premium="board:custom"
                 data-sound-action="skin"
-                title="Probar y desbloquear paleta localmente"
-                aria-label="Probar y desbloquear paleta localmente"
-                aria-disabled="false"
+                title="Gana 5 partidas para desbloquear la paleta"
+                aria-label="Paleta: gana 5 partidas para desbloquearla"
+                aria-disabled="true"
                 aria-pressed="false"
               >
                 <i class="mc-skin-dot mc-skin-dot-custom"></i>
-                Paleta
-                <small data-cosmetic-status data-cosmetic-state="premium">Premium proximamente</small>
+                Paleta <small data-cosmetic-status data-cosmetic-state="mastery">0/5 victorias</small>
               </button>
             </div>
 
@@ -1364,14 +1362,13 @@ defmodule ManaChessOnlineWeb.GameLive do
                 data-piece-skin-choice="arcane"
                 data-cosmetic-premium="piece:arcane"
                 data-sound-action="skin"
-                title="Probar y desbloquear Orden arcana localmente"
-                aria-label="Probar y desbloquear Orden arcana localmente"
-                aria-disabled="false"
+                title="Completa 1 partida para desbloquear Orden arcana"
+                aria-label="Orden arcana: completa 1 partida para desbloquearla"
+                aria-disabled="true"
                 aria-pressed="false"
               >
                 <i class="mc-piece-dot mc-piece-dot-arcane"></i>
-                Arcano
-                <small data-cosmetic-status data-cosmetic-state="premium">Premium proximamente</small>
+                Arcano <small data-cosmetic-status data-cosmetic-state="mastery">0/1 partida</small>
               </button>
               <button
                 type="button"
@@ -1379,14 +1376,14 @@ defmodule ManaChessOnlineWeb.GameLive do
                 data-piece-skin-choice="crystal"
                 data-cosmetic-premium="piece:crystal"
                 data-sound-action="skin"
-                title="Probar y desbloquear piezas localmente"
-                aria-label="Probar y desbloquear piezas localmente"
-                aria-disabled="false"
+                title="Gana 3 partidas para desbloquear Cristal boreal"
+                aria-label="Cristal boreal: gana 3 partidas para desbloquearlo"
+                aria-disabled="true"
                 aria-pressed="false"
               >
                 <i class="mc-piece-dot mc-piece-dot-crystal"></i>
                 Cristal
-                <small data-cosmetic-status data-cosmetic-state="premium">Premium proximamente</small>
+                <small data-cosmetic-status data-cosmetic-state="mastery">0/3 victorias</small>
               </button>
               <button
                 type="button"
@@ -1394,14 +1391,14 @@ defmodule ManaChessOnlineWeb.GameLive do
                 data-piece-skin-choice="elemental"
                 data-cosmetic-premium="piece:elemental"
                 data-sound-action="skin"
-                title="Probar y desbloquear Guardianes elementales localmente"
-                aria-label="Probar y desbloquear Guardianes elementales localmente"
-                aria-disabled="false"
+                title="Completa 10 partidas para desbloquear Guardianes elementales"
+                aria-label="Guardianes elementales: completa 10 partidas para desbloquearlos"
+                aria-disabled="true"
                 aria-pressed="false"
               >
                 <i class="mc-piece-dot mc-piece-dot-elemental"></i>
                 Elemental
-                <small data-cosmetic-status data-cosmetic-state="premium">Premium proximamente</small>
+                <small data-cosmetic-status data-cosmetic-state="mastery">0/10 partidas</small>
               </button>
               <button
                 type="button"
@@ -1409,14 +1406,13 @@ defmodule ManaChessOnlineWeb.GameLive do
                 data-piece-skin-choice="custom"
                 data-cosmetic-premium="piece:custom"
                 data-sound-action="skin"
-                title="Probar y desbloquear paleta localmente"
-                aria-label="Probar y desbloquear paleta localmente"
-                aria-disabled="false"
+                title="Gana 5 partidas para desbloquear la paleta"
+                aria-label="Paleta: gana 5 partidas para desbloquearla"
+                aria-disabled="true"
                 aria-pressed="false"
               >
                 <i class="mc-piece-dot mc-piece-dot-custom"></i>
-                Paleta
-                <small data-cosmetic-status data-cosmetic-state="premium">Premium proximamente</small>
+                Paleta <small data-cosmetic-status data-cosmetic-state="mastery">0/5 victorias</small>
               </button>
             </div>
 

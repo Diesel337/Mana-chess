@@ -18,7 +18,20 @@ defmodule ManaChessOnlineWeb.GameComponents do
           <h2>Tienda</h2>
           <span>Cosmeticos visuales</span>
         </div>
-        <small data-cosmetic-local-count>Local primero</small>
+        <div class="mc-mastery-summary">
+          <small data-cosmetic-local-count>Maestria 0/4</small>
+          <span
+            class="mc-mastery-progress"
+            role="progressbar"
+            aria-label="Recompensas de maestria"
+            aria-valuemin="0"
+            aria-valuemax="4"
+            aria-valuenow="0"
+            data-cosmetic-mastery-progress
+          >
+            <i></i>
+          </span>
+        </div>
       </div>
 
       <div class="mc-cosmetic-groups">
@@ -57,15 +70,15 @@ defmodule ManaChessOnlineWeb.GameComponents do
               data-board-skin-choice="arcane"
               data-cosmetic-premium="board:arcane"
               data-sound-action="skin"
-              title="Probar y desbloquear localmente"
-              aria-disabled="false"
+              title="Completa 1 partida para desbloquearlo"
+              aria-disabled="true"
               aria-pressed="false"
             >
               <span class="mc-skin-preview mc-skin-preview-arcane" aria-hidden="true">
                 <i></i><i></i><i></i><i></i>
               </span>
               <strong>Arcano oscuro</strong>
-              <small data-cosmetic-status data-cosmetic-state="premium">Probar local</small>
+              <small data-cosmetic-status data-cosmetic-state="mastery">0/1 partida</small>
             </button>
             <button
               type="button"
@@ -73,15 +86,15 @@ defmodule ManaChessOnlineWeb.GameComponents do
               data-board-skin-choice="crystal"
               data-cosmetic-premium="board:crystal"
               data-sound-action="skin"
-              title="Probar y desbloquear Cristal localmente"
-              aria-disabled="false"
+              title="Gana 3 partidas para desbloquearlo"
+              aria-disabled="true"
               aria-pressed="false"
             >
               <span class="mc-skin-preview mc-skin-preview-crystal" aria-hidden="true">
                 <i></i><i></i><i></i><i></i>
               </span>
               <strong>Prisma de cristal</strong>
-              <small data-cosmetic-status data-cosmetic-state="premium">Probar local</small>
+              <small data-cosmetic-status data-cosmetic-state="mastery">0/3 victorias</small>
             </button>
             <button
               type="button"
@@ -89,15 +102,15 @@ defmodule ManaChessOnlineWeb.GameComponents do
               data-board-skin-choice="elemental"
               data-cosmetic-premium="board:elemental"
               data-sound-action="skin"
-              title="Probar y desbloquear Elemental localmente"
-              aria-disabled="false"
+              title="Completa 10 partidas para desbloquearlo"
+              aria-disabled="true"
               aria-pressed="false"
             >
               <span class="mc-skin-preview mc-skin-preview-elemental" aria-hidden="true">
                 <i></i><i></i><i></i><i></i>
               </span>
               <strong>Forja elemental</strong>
-              <small data-cosmetic-status data-cosmetic-state="premium">Probar local</small>
+              <small data-cosmetic-status data-cosmetic-state="mastery">0/10 partidas</small>
             </button>
             <button
               type="button"
@@ -105,15 +118,15 @@ defmodule ManaChessOnlineWeb.GameComponents do
               data-board-skin-choice="custom"
               data-cosmetic-premium="board:custom"
               data-sound-action="skin"
-              title="Probar y desbloquear paleta localmente"
-              aria-disabled="false"
+              title="Gana 5 partidas para desbloquearlo"
+              aria-disabled="true"
               aria-pressed="false"
             >
               <span class="mc-skin-preview mc-skin-preview-custom" aria-hidden="true">
                 <i></i><i></i><i></i><i></i>
               </span>
               <strong>Paleta</strong>
-              <small data-cosmetic-status data-cosmetic-state="premium">Probar local</small>
+              <small data-cosmetic-status data-cosmetic-state="mastery">0/5 victorias</small>
             </button>
           </div>
         </div>
@@ -155,8 +168,8 @@ defmodule ManaChessOnlineWeb.GameComponents do
               data-piece-skin-choice="arcane"
               data-cosmetic-premium="piece:arcane"
               data-sound-action="skin"
-              title="Probar y desbloquear piezas Arcanas localmente"
-              aria-disabled="false"
+              title="Completa 1 partida para desbloquearlo"
+              aria-disabled="true"
               aria-pressed="false"
             >
               <span class="mc-piece-skin-preview mc-piece-skin-preview-arcane" aria-hidden="true">
@@ -164,7 +177,7 @@ defmodule ManaChessOnlineWeb.GameComponents do
                 <b class="mc-piece-sample mc-piece-sample-black mc-piece-queen">{@symbols["q"]}</b>
               </span>
               <strong>Orden arcana</strong>
-              <small data-cosmetic-status data-cosmetic-state="premium">Probar local</small>
+              <small data-cosmetic-status data-cosmetic-state="mastery">0/1 partida</small>
             </button>
             <button
               type="button"
@@ -172,8 +185,8 @@ defmodule ManaChessOnlineWeb.GameComponents do
               data-piece-skin-choice="crystal"
               data-cosmetic-premium="piece:crystal"
               data-sound-action="skin"
-              title="Probar y desbloquear localmente"
-              aria-disabled="false"
+              title="Gana 3 partidas para desbloquearlo"
+              aria-disabled="true"
               aria-pressed="false"
             >
               <span class="mc-piece-skin-preview mc-piece-skin-preview-crystal" aria-hidden="true">
@@ -181,7 +194,7 @@ defmodule ManaChessOnlineWeb.GameComponents do
                 <b class="mc-piece-sample mc-piece-sample-black mc-piece-queen">{@symbols["q"]}</b>
               </span>
               <strong>Cristal boreal</strong>
-              <small data-cosmetic-status data-cosmetic-state="premium">Probar local</small>
+              <small data-cosmetic-status data-cosmetic-state="mastery">0/3 victorias</small>
             </button>
             <button
               type="button"
@@ -189,8 +202,8 @@ defmodule ManaChessOnlineWeb.GameComponents do
               data-piece-skin-choice="elemental"
               data-cosmetic-premium="piece:elemental"
               data-sound-action="skin"
-              title="Probar y desbloquear piezas Elementales localmente"
-              aria-disabled="false"
+              title="Completa 10 partidas para desbloquearlo"
+              aria-disabled="true"
               aria-pressed="false"
             >
               <span class="mc-piece-skin-preview mc-piece-skin-preview-elemental" aria-hidden="true">
@@ -198,7 +211,7 @@ defmodule ManaChessOnlineWeb.GameComponents do
                 <b class="mc-piece-sample mc-piece-sample-black mc-piece-queen">{@symbols["q"]}</b>
               </span>
               <strong>Guardianes elementales</strong>
-              <small data-cosmetic-status data-cosmetic-state="premium">Probar local</small>
+              <small data-cosmetic-status data-cosmetic-state="mastery">0/10 partidas</small>
             </button>
             <button
               type="button"
@@ -206,8 +219,8 @@ defmodule ManaChessOnlineWeb.GameComponents do
               data-piece-skin-choice="custom"
               data-cosmetic-premium="piece:custom"
               data-sound-action="skin"
-              title="Probar y desbloquear paleta localmente"
-              aria-disabled="false"
+              title="Gana 5 partidas para desbloquearlo"
+              aria-disabled="true"
               aria-pressed="false"
             >
               <span class="mc-piece-skin-preview mc-piece-skin-preview-custom" aria-hidden="true">
@@ -215,7 +228,7 @@ defmodule ManaChessOnlineWeb.GameComponents do
                 <b class="mc-piece-sample mc-piece-sample-black">{@symbols["q"]}</b>
               </span>
               <strong>Paleta</strong>
-              <small data-cosmetic-status data-cosmetic-state="premium">Probar local</small>
+              <small data-cosmetic-status data-cosmetic-state="mastery">0/5 victorias</small>
             </button>
           </div>
         </div>
@@ -255,14 +268,14 @@ defmodule ManaChessOnlineWeb.GameComponents do
               data-cosmetic-pack="arcane"
               data-cosmetic-premium="pack:arcane"
               data-sound-action="skin"
-              title="Probar y desbloquear conjunto localmente"
-              aria-disabled="false"
+              title="Completa 1 partida para desbloquearlo"
+              aria-disabled="true"
               aria-pressed="false"
             >
               <.pack_preview symbols={@symbols} class="mc-pack-preview-arcane" />
               <strong>Arcano</strong>
-              <small data-cosmetic-status data-cosmetic-pack-status data-cosmetic-state="premium">
-                Probar local
+              <small data-cosmetic-status data-cosmetic-pack-status data-cosmetic-state="mastery">
+                0/1 partida
               </small>
             </button>
             <button
@@ -271,14 +284,14 @@ defmodule ManaChessOnlineWeb.GameComponents do
               data-cosmetic-pack="crystal"
               data-cosmetic-premium="pack:crystal"
               data-sound-action="skin"
-              title="Probar y desbloquear conjunto localmente"
-              aria-disabled="false"
+              title="Gana 3 partidas para desbloquearlo"
+              aria-disabled="true"
               aria-pressed="false"
             >
               <.pack_preview symbols={@symbols} class="mc-pack-preview-crystal" />
               <strong>Cristal</strong>
-              <small data-cosmetic-status data-cosmetic-pack-status data-cosmetic-state="premium">
-                Probar local
+              <small data-cosmetic-status data-cosmetic-pack-status data-cosmetic-state="mastery">
+                0/3 victorias
               </small>
             </button>
             <button
@@ -287,14 +300,14 @@ defmodule ManaChessOnlineWeb.GameComponents do
               data-cosmetic-pack="elemental"
               data-cosmetic-premium="pack:elemental"
               data-sound-action="skin"
-              title="Probar y desbloquear conjunto localmente"
-              aria-disabled="false"
+              title="Completa 10 partidas para desbloquearlo"
+              aria-disabled="true"
               aria-pressed="false"
             >
               <.pack_preview symbols={@symbols} class="mc-pack-preview-elemental" />
               <strong>Elemental</strong>
-              <small data-cosmetic-status data-cosmetic-pack-status data-cosmetic-state="premium">
-                Probar local
+              <small data-cosmetic-status data-cosmetic-pack-status data-cosmetic-state="mastery">
+                0/10 partidas
               </small>
             </button>
           </div>
@@ -357,11 +370,12 @@ defmodule ManaChessOnlineWeb.GameComponents do
               class="mc-palette-unlock mc-skin-locked"
               data-palette-unlock
               data-sound-action="skin"
-              aria-disabled="false"
+              aria-disabled="true"
+              title="Gana 5 partidas para desbloquearla"
             >
               <span class="mc-palette-preview" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
               <strong>Custom premium</strong>
-              <small data-palette-status data-palette-state="premium">Probar local</small>
+              <small data-palette-status data-palette-state="mastery">0/5 victorias</small>
             </button>
             <div class="mc-palette-fields">
               <label>

@@ -10,6 +10,7 @@
         localStorage.removeItem(hook.storageKey);
         hook.lastResultKey = null;
         hook.renderStats();
+        if (!hook.renderModularCosmetics()) hook.renderCosmetics();
       },
     },
     {

@@ -2,22 +2,22 @@
 // until Mana Chess has a real JS bundling step.
 (() => {
   const catalog = window.ManaChessCosmeticCatalog;
-  if (!catalog) return;
+  const progression = window.ManaChessCosmeticProgression;
+  if (!catalog || !progression) return;
 
   const boardKey = "mana-chess-board-skin";
   const pieceKey = "mana-chess-piece-skin";
   const unlockKey = "mana-chess-cosmetic-unlocks";
   const paletteKey = "mana-chess-custom-palette";
+  const statsKey = "mana-chess-local-stats";
   const boards = [...catalog.boards];
   const pieces = [...catalog.pieces];
   const cosmeticLabels = {
     included: "Incluido",
-    local: "Local",
-    locked: "Probar local"
+    unlocked: "Ganado"
   };
   const packs = catalog.packs;
   const included = new Set(catalog.includedIds);
-  const localUnlockIds = new Set(catalog.localUnlockIds);
   const defaultPalette = {
     boardLight: "#d9c58f",
     boardDark: "#243a31",
@@ -39,37 +39,34 @@
       return new Set();
     }
   };
-  const isPaletteUnlocked = () => {
-    const unlocks = readUnlocks();
+  const writeUnlocks = (unlocks) => {
+    try {
+      localStorage.setItem(unlockKey, JSON.stringify([...new Set(unlocks)]));
+    } catch (_error) {}
+  };
+  const syncProgression = () => {
+    const stats = progression.readStats(localStorage, statsKey);
+    const synced = progression.syncUnlocks(stats, readUnlocks());
+    if (synced.changed) writeUnlocks(synced.unlocks);
+    return {...synced, stats, unlocks: new Set(synced.unlocks)};
+  };
+  const isPaletteUnlocked = (unlocks = readUnlocks()) => {
     return unlocks.has("palette:custom") || unlocks.has("board:custom") || unlocks.has("piece:custom");
   };
-  const isUnlocked = (kind, skin) => {
-    if (skin === "custom") return isPaletteUnlocked();
-    return included.has(unlockId(kind, skin)) || readUnlocks().has(unlockId(kind, skin));
+  const isUnlocked = (kind, skin, unlocks = readUnlocks()) => {
+    if (skin === "custom") return isPaletteUnlocked(unlocks);
+    return included.has(unlockId(kind, skin)) || unlocks.has(unlockId(kind, skin));
   };
-  const isPackUnlocked = (pack) => {
+  const isPackUnlocked = (pack, unlocks = readUnlocks()) => {
     const config = packs[pack];
     if (!config) return false;
     if (config.included) return true;
     return (config.unlocks || []).every((id) => {
       const [kind, skin] = id.split(":");
-      return isUnlocked(kind, skin);
+      return isUnlocked(kind, skin, unlocks);
     });
   };
-  const unlock = (kind, skin) => {
-    if (isUnlocked(kind, skin)) return;
-    const unlocks = readUnlocks();
-    if (skin === "custom" || kind === "palette") {
-      unlocks.add("palette:custom");
-      unlocks.add("board:custom");
-      unlocks.add("piece:custom");
-    } else {
-      unlocks.add(unlockId(kind, skin));
-    }
-    try {
-      localStorage.setItem(unlockKey, JSON.stringify([...unlocks]));
-    } catch (_error) {}
-  };
+  const lockedTitle = id => `${progression.requirementLabel(id)} para desbloquearlo`;
   const validHex = (value) => /^#[0-9a-f]{6}$/i.test(value || "");
   const normalizePalette = (palette = {}) => {
     const next = {...defaultPalette};
@@ -158,7 +155,7 @@
       Object.entries(vars).forEach(([name, value]) => preview.style.setProperty(name, value));
     });
   };
-  const applyPalette = () => {
+  const applyPalette = (mastery) => {
     const palette = readPalette();
     const style = document.documentElement.style;
     style.setProperty("--mc-custom-board-light", palette.boardLight);
@@ -170,7 +167,7 @@
     style.setProperty("--mc-custom-piece-black-text", contrastFor(palette.pieceBlack));
     style.setProperty("--mc-custom-piece-white-glow", glowFor(palette.pieceWhite, ".42"));
     style.setProperty("--mc-custom-piece-black-glow", glowFor(palette.pieceBlack, ".46"));
-    const unlocked = isPaletteUnlocked();
+    const unlocked = isPaletteUnlocked(mastery.unlocks);
     document.querySelectorAll("[data-palette-color]").forEach((input) => {
       input.value = palette[input.dataset.paletteColor] || defaultPalette[input.dataset.paletteColor];
       input.disabled = !unlocked;
@@ -196,11 +193,14 @@
     document.querySelectorAll("[data-palette-unlock]").forEach((button) => {
       button.classList.toggle("mc-skin-locked", !unlocked);
       button.classList.toggle("mc-skin-unlocked", unlocked);
-      button.setAttribute("aria-disabled", "false");
+      button.setAttribute("aria-disabled", unlocked ? "false" : "true");
+      button.title = unlocked ? "Paleta ganada por maestria" : lockedTitle("palette:custom");
     });
     document.querySelectorAll("[data-palette-status]").forEach((status) => {
-      status.textContent = unlocked ? cosmeticLabels.local : cosmeticLabels.locked;
-      status.dataset.paletteState = unlocked ? "local" : "premium";
+      status.textContent = unlocked
+        ? cosmeticLabels.unlocked
+        : progression.progressLabel("palette:custom", mastery.stats);
+      status.dataset.paletteState = unlocked ? "local" : "mastery";
     });
   };
   const read = (key, fallback, valid) => {
@@ -223,12 +223,17 @@
     if (unlocked) return 2;
     return 3;
   };
-  const localUnlockCount = () => [...readUnlocks()].filter((id) => localUnlockIds.has(id) && !included.has(id)).length;
-  const renderLocalCount = () => {
-    const count = localUnlockCount();
-    const label = count === 0 ? "Local primero" : `${count} ${count === 1 ? "local" : "locales"}`;
+  const renderMasterySummary = (mastery) => {
+    const summary = progression.summary(mastery.stats, mastery.unlocks);
     document.querySelectorAll("[data-cosmetic-local-count]").forEach((element) => {
-      element.textContent = label;
+      element.textContent = summary.label;
+    });
+    document.querySelectorAll("[data-cosmetic-mastery-progress]").forEach((meter) => {
+      meter.setAttribute("aria-valuemax", String(summary.total));
+      meter.setAttribute("aria-valuenow", String(summary.completed));
+      meter.querySelectorAll("i").forEach((fill) => {
+        fill.style.width = `${summary.percent}%`;
+      });
     });
   };
   const orderCosmeticOption = (button, rank) => {
@@ -236,14 +241,15 @@
     button.style.order = String(rank);
   };
   const render = () => {
+    const mastery = syncProgression();
     const storedBoard = read(boardKey, "classic", boards);
     const storedPiece = read(pieceKey, "classic", pieces);
-    const board = isUnlocked("board", storedBoard) ? storedBoard : "classic";
-    const piece = isUnlocked("piece", storedPiece) ? storedPiece : "classic";
+    const board = isUnlocked("board", storedBoard, mastery.unlocks) ? storedBoard : "classic";
+    const piece = isUnlocked("piece", storedPiece, mastery.unlocks) ? storedPiece : "classic";
     if (board !== storedBoard) write(boardKey, board, boards);
     if (piece !== storedPiece) write(pieceKey, piece, pieces);
-    applyPalette();
-    renderLocalCount();
+    applyPalette(mastery);
+    renderMasterySummary(mastery);
     updateCosmeticPreview(board, piece, readPalette());
     document.documentElement.dataset.boardSkin = board;
     document.documentElement.dataset.pieceSkin = piece;
@@ -254,43 +260,51 @@
     });
     document.querySelectorAll("[data-board-skin-choice]").forEach((button) => {
       const skin = button.dataset.boardSkinChoice;
-      const unlocked = isUnlocked("board", skin);
-      const includedItem = included.has(unlockId("board", skin));
+      const rewardId = unlockId("board", skin);
+      const unlocked = isUnlocked("board", skin, mastery.unlocks);
+      const includedItem = included.has(rewardId);
       const selected = skin === board && unlocked;
       orderCosmeticOption(button, cosmeticRank(selected, includedItem, unlocked));
       button.classList.toggle("mc-skin-selected", selected);
       button.classList.toggle("mc-skin-locked", !unlocked);
       button.classList.toggle("mc-skin-unlocked", unlocked && !includedItem);
-      button.setAttribute("aria-disabled", "false");
+      button.setAttribute("aria-disabled", unlocked ? "false" : "true");
       button.setAttribute("aria-pressed", selected ? "true" : "false");
+      if (!includedItem) {
+        button.title = unlocked ? "Recompensa ganada por maestria" : lockedTitle(rewardId);
+      }
       button.querySelectorAll("[data-cosmetic-status]").forEach((status) => {
         if (includedItem) {
           status.textContent = cosmeticLabels.included;
           status.dataset.cosmeticState = "included";
         } else {
-          status.textContent = unlocked ? cosmeticLabels.local : cosmeticLabels.locked;
-          status.dataset.cosmeticState = unlocked ? "local" : "premium";
+          status.textContent = unlocked ? cosmeticLabels.unlocked : progression.progressLabel(rewardId, mastery.stats);
+          status.dataset.cosmeticState = unlocked ? "local" : "mastery";
         }
       });
     });
     document.querySelectorAll("[data-piece-skin-choice]").forEach((button) => {
       const skin = button.dataset.pieceSkinChoice;
-      const unlocked = isUnlocked("piece", skin);
-      const includedItem = included.has(unlockId("piece", skin));
+      const rewardId = unlockId("piece", skin);
+      const unlocked = isUnlocked("piece", skin, mastery.unlocks);
+      const includedItem = included.has(rewardId);
       const selected = skin === piece && unlocked;
       orderCosmeticOption(button, cosmeticRank(selected, includedItem, unlocked));
       button.classList.toggle("mc-skin-selected", selected);
       button.classList.toggle("mc-skin-locked", !unlocked);
       button.classList.toggle("mc-skin-unlocked", unlocked && !includedItem);
-      button.setAttribute("aria-disabled", "false");
+      button.setAttribute("aria-disabled", unlocked ? "false" : "true");
       button.setAttribute("aria-pressed", selected ? "true" : "false");
+      if (!includedItem) {
+        button.title = unlocked ? "Recompensa ganada por maestria" : lockedTitle(rewardId);
+      }
       button.querySelectorAll("[data-cosmetic-status]").forEach((status) => {
         if (includedItem) {
           status.textContent = cosmeticLabels.included;
           status.dataset.cosmeticState = "included";
         } else {
-          status.textContent = unlocked ? cosmeticLabels.local : cosmeticLabels.locked;
-          status.dataset.cosmeticState = unlocked ? "local" : "premium";
+          status.textContent = unlocked ? cosmeticLabels.unlocked : progression.progressLabel(rewardId, mastery.stats);
+          status.dataset.cosmeticState = unlocked ? "local" : "mastery";
         }
       });
     });
@@ -298,70 +312,76 @@
       const pack = button.dataset.cosmeticPack;
       const config = packs[pack];
       if (!config) return;
-      const unlocked = isPackUnlocked(pack);
+      const rewardId = `pack:${pack}`;
+      const unlocked = isPackUnlocked(pack, mastery.unlocks);
       const includedItem = !!config.included;
       const selected = unlocked && config.board === board && config.piece === piece;
       orderCosmeticOption(button, cosmeticRank(selected, includedItem, unlocked));
       button.classList.toggle("mc-skin-selected", selected);
       button.classList.toggle("mc-skin-locked", !unlocked);
       button.classList.toggle("mc-skin-unlocked", unlocked && !includedItem);
-      button.setAttribute("aria-disabled", "false");
+      button.setAttribute("aria-disabled", unlocked ? "false" : "true");
       button.setAttribute("aria-pressed", selected ? "true" : "false");
+      if (!includedItem) {
+        button.title = unlocked ? "Conjunto ganado por maestria" : lockedTitle(rewardId);
+      }
       button.querySelectorAll("[data-cosmetic-pack-status]").forEach((status) => {
         status.textContent = includedItem
           ? cosmeticLabels.included
           : unlocked
-            ? cosmeticLabels.local
-            : cosmeticLabels.locked;
-        status.dataset.cosmeticState = includedItem ? "included" : unlocked ? "local" : "premium";
+            ? cosmeticLabels.unlocked
+            : progression.progressLabel(rewardId, mastery.stats);
+        status.dataset.cosmeticState = includedItem ? "included" : unlocked ? "local" : "mastery";
       });
     });
   };
   window.ManaChessCosmetics = {
     choosePack: (pack) => {
       const config = packs[pack];
-      if (!config) return;
-      (config.unlocks || []).forEach((id) => {
-        const [kind, skin] = id.split(":");
-        unlock(kind, skin);
-      });
+      if (!config || !isPackUnlocked(pack)) return false;
       write(boardKey, config.board, boards);
       write(pieceKey, config.piece, pieces);
       render();
+      return true;
     },
     chooseBoard: (skin) => {
-      unlock("board", skin);
+      if (!isUnlocked("board", skin)) return false;
       write(boardKey, skin, boards);
       render();
+      return true;
     },
     choosePiece: (skin) => {
-      unlock("piece", skin);
+      if (!isUnlocked("piece", skin)) return false;
       write(pieceKey, skin, pieces);
       render();
+      return true;
     },
     choosePalette: (preset) => {
-      unlock("palette", "custom");
+      if (!isPaletteUnlocked()) return false;
       if (palettePresets[preset]) writePalette(palettePresets[preset]);
       write(boardKey, "custom", boards);
       write(pieceKey, "custom", pieces);
       render();
+      return true;
     },
     resetPalette: () => {
-      unlock("palette", "custom");
+      if (!isPaletteUnlocked()) return false;
       writePalette(defaultPalette);
       write(boardKey, "custom", boards);
       write(pieceKey, "custom", pieces);
       render();
+      return true;
     },
     setPaletteColor: (key, value) => {
       if (!validHex(value) || !Object.prototype.hasOwnProperty.call(defaultPalette, key)) return;
-      unlock("palette", "custom");
+      if (!isPaletteUnlocked()) return false;
       const palette = readPalette();
       palette[key] = value;
       writePalette(palette);
       if (key.startsWith("board")) write(boardKey, "custom", boards);
       if (key.startsWith("piece")) write(pieceKey, "custom", pieces);
       render();
+      return true;
     },
     render
   };

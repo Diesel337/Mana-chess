@@ -74,11 +74,16 @@ defmodule ManaChessOnlineWeb.GameLiveTest do
   test "lobby exposes the complete release cosmetic catalog", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/")
 
+    assert has_element?(view, ~s([data-cosmetic-mastery-progress][aria-valuemax="4"]))
+
     for skin <- ~w(arcane crystal elemental) do
       assert has_element?(view, ~s([data-board-skin-choice="#{skin}"]))
       assert has_element?(view, ~s([data-piece-skin-choice="#{skin}"]))
       assert has_element?(view, ~s([data-cosmetic-pack="#{skin}"]))
     end
+
+    refute render(view) =~ "Premium proximamente"
+    refute render(view) =~ "Probar local"
   end
 
   test "game pieces expose semantic type classes for premium silhouettes", %{conn: conn} do

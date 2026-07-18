@@ -17,7 +17,6 @@
     readCosmeticUnlocks: hook => fallback().readCosmeticUnlocks(hook),
     writeCosmeticUnlocks: (hook, unlocks) => fallback().writeCosmeticUnlocks(hook, unlocks),
     cosmeticUnlocked: (hook, id) => fallback().cosmeticUnlocked(hook, id),
-    unlockCosmetic: (hook, id) => fallback().unlockCosmetic(hook, id),
     cosmeticAllowed: (hook, id) => fallback().cosmeticAllowed(hook, id),
     cosmeticPackUnlocked: (hook, pack) => fallback().cosmeticPackUnlocked(hook, pack),
     applyCosmeticPack: (hook, pack) => fallback().applyCosmeticPack(hook, pack),

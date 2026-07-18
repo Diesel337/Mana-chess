@@ -2,7 +2,8 @@
 // until Mana Chess has a real JS bundling step.
 (() => {
   const catalog = window.ManaChessCosmeticCatalog
-  if (!catalog) return
+  const progression = window.ManaChessCosmeticProgression
+  if (!catalog || !progression) return
 
   const boards = [...catalog.boards]
   const pieces = [...catalog.pieces]
@@ -36,19 +37,15 @@
       localStorage.setItem(hook.cosmeticUnlockKey, JSON.stringify([...new Set(unlocks)]))
     },
 
-    cosmeticUnlocked(hook, id) {
-      return api.readCosmeticUnlocks(hook).includes(id)
+    syncCosmeticProgression(hook) {
+      const stats = progression.readStats(localStorage, hook.storageKey)
+      const synced = progression.syncUnlocks(stats, api.readCosmeticUnlocks(hook))
+      if (synced.changed) api.writeCosmeticUnlocks(hook, synced.unlocks)
+      return {...synced, stats, unlocks: new Set(synced.unlocks)}
     },
 
-    unlockCosmetic(hook, id) {
-      const unlocks = api.readCosmeticUnlocks(hook)
-      const next = [...unlocks, id]
-
-      if (id === "board:custom" || id === "piece:custom" || id === "palette:custom") {
-        next.push("board:custom", "piece:custom", "palette:custom")
-      }
-
-      api.writeCosmeticUnlocks(hook, next)
+    cosmeticUnlocked(hook, id) {
+      return api.readCosmeticUnlocks(hook).includes(id)
     },
 
     cosmeticAllowed(hook, id) {
@@ -68,11 +65,11 @@
 
     applyCosmeticPack(hook, pack) {
       const config = api.cosmeticPackConfig(pack)
-      if (!config) return
+      if (!config || !api.cosmeticPackUnlocked(hook, pack)) return false
 
-      ;(config.unlocks || []).forEach(id => api.unlockCosmetic(hook, id))
       api.setBoardSkin(hook, config.board)
       api.setPieceSkin(hook, config.piece)
+      return true
     },
 
     premiumIdForBoardSkin(skin) {
@@ -105,15 +102,33 @@
     },
 
     renderCosmetics(hook) {
+      const mastery = api.syncCosmeticProgression(hook)
+
+      const summary = progression.summary(mastery.stats, mastery.unlocks)
+      hook.el.querySelectorAll("[data-cosmetic-local-count]").forEach(element => {
+        element.textContent = summary.label
+      })
+      hook.el.querySelectorAll("[data-cosmetic-mastery-progress]").forEach(meter => {
+        meter.setAttribute("aria-valuemax", String(summary.total))
+        meter.setAttribute("aria-valuenow", String(summary.completed))
+        meter.querySelectorAll("i").forEach(fill => {
+          fill.style.width = `${summary.percent}%`
+        })
+      })
+
       hook.el.querySelectorAll("[data-cosmetic-premium]").forEach(control => {
-        const unlocked = api.cosmeticUnlocked(hook, control.dataset.cosmeticPremium)
+        const id = control.dataset.cosmeticPremium
+        const pack = control.dataset.cosmeticPack
+        const unlocked = pack ? api.cosmeticPackUnlocked(hook, pack) : api.cosmeticUnlocked(hook, id)
         control.classList.toggle("mc-skin-locked", !unlocked)
         control.classList.toggle("mc-skin-unlocked", unlocked)
-        control.setAttribute("aria-disabled", "false")
-        control.title = unlocked ? "Cosmetico desbloqueado localmente" : "Premium proximamente; probar localmente"
+        control.setAttribute("aria-disabled", unlocked ? "false" : "true")
+        control.title = unlocked
+          ? "Recompensa ganada por maestria"
+          : `${progression.requirementLabel(id)} para desbloquearlo`
         control.querySelectorAll("[data-cosmetic-status]").forEach(status => {
-          status.textContent = unlocked ? "Local" : "Premium proximamente"
-          status.dataset.cosmeticState = unlocked ? "local" : "premium"
+          status.textContent = unlocked ? "Ganado" : progression.progressLabel(id, mastery.stats)
+          status.dataset.cosmeticState = unlocked ? "local" : "mastery"
         })
       })
 
@@ -122,11 +137,14 @@
         editor.classList.toggle("is-locked", !unlocked)
         editor.classList.toggle("is-unlocked", unlocked)
         editor.querySelectorAll("[data-palette-status]").forEach(status => {
-          status.textContent = unlocked ? "Local" : "Premium proximamente"
-          status.dataset.paletteState = unlocked ? "local" : "premium"
+          status.textContent = unlocked ? "Ganado" : progression.progressLabel("palette:custom", mastery.stats)
+          status.dataset.paletteState = unlocked ? "local" : "mastery"
         })
         editor.querySelectorAll("[data-palette-unlock]").forEach(control => {
-          control.setAttribute("aria-disabled", "false")
+          control.setAttribute("aria-disabled", unlocked ? "false" : "true")
+          control.title = unlocked
+            ? "Paleta ganada por maestria"
+            : `${progression.requirementLabel("palette:custom")} para desbloquearla`
         })
         editor.querySelectorAll("[data-palette-color]").forEach(control => {
           control.disabled = !unlocked
@@ -138,10 +156,10 @@
         control.disabled = !paletteUnlocked
       })
 
-      api.renderCosmeticPacks(hook)
+      api.renderCosmeticPacks(hook, mastery)
     },
 
-    renderCosmeticPacks(hook) {
+    renderCosmeticPacks(hook, mastery = api.syncCosmeticProgression(hook)) {
       const board = api.boardSkin(hook)
       const piece = api.pieceSkin(hook)
 
@@ -156,11 +174,17 @@
         control.classList.toggle("mc-skin-locked", !unlocked)
         control.classList.toggle("mc-skin-unlocked", unlocked && !config.included)
         control.setAttribute("aria-pressed", selected ? "true" : "false")
-        control.setAttribute("aria-disabled", "false")
-        control.title = unlocked ? "Pack disponible localmente" : "Premium proximamente; probar localmente"
+        control.setAttribute("aria-disabled", unlocked ? "false" : "true")
+        control.title = unlocked
+          ? "Conjunto ganado por maestria"
+          : `${progression.requirementLabel(`pack:${pack}`)} para desbloquearlo`
         control.querySelectorAll("[data-cosmetic-pack-status]").forEach(status => {
-          status.textContent = config.included ? "Incluido" : unlocked ? "Local" : "Premium proximamente"
-          status.dataset.cosmeticState = config.included ? "included" : unlocked ? "local" : "premium"
+          status.textContent = config.included
+            ? "Incluido"
+            : unlocked
+              ? "Ganado"
+              : progression.progressLabel(`pack:${pack}`, mastery.stats)
+          status.dataset.cosmeticState = config.included ? "included" : unlocked ? "local" : "mastery"
         })
       })
     },
