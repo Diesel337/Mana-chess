@@ -44,10 +44,24 @@
       localStorage.setItem(unlockKey, JSON.stringify([...new Set(unlocks)]));
     } catch (_error) {}
   };
+  const announceUnlocks = (milestoneIds = []) => {
+    if (typeof window.dispatchEvent !== "function" || typeof window.CustomEvent !== "function") return;
+
+    milestoneIds.forEach((id) => {
+      const milestone = progression.milestones.find(item => item.id === id);
+      if (!milestone) return;
+      window.dispatchEvent(new window.CustomEvent("mana-chess:cosmetic-unlocked", {
+        detail: {id: milestone.id, label: milestone.label || milestone.id},
+      }));
+    });
+  };
   const syncProgression = () => {
     const stats = progression.readStats(localStorage, statsKey);
     const synced = progression.syncUnlocks(stats, readUnlocks());
-    if (synced.changed) writeUnlocks(synced.unlocks);
+    if (synced.changed) {
+      writeUnlocks(synced.unlocks);
+      announceUnlocks(synced.unlockedMilestones);
+    }
     return {...synced, stats, unlocks: new Set(synced.unlocks)};
   };
   const isPaletteUnlocked = (unlocks = readUnlocks()) => {

@@ -29,6 +29,7 @@ const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute
 const Hooks = {
   LocalStats: window.ManaChessLocalStatsHook,
   BoardDrag: window.ManaChessBoardDragHook,
+  GameEffects: window.ManaChessGameEffectsHook,
 }
 
 const liveSocket = new LiveSocket("/live", Socket, {

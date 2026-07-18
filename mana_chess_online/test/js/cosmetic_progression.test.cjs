@@ -16,6 +16,7 @@ const progression = context.window.ManaChessCosmeticProgression
 
 const loadCosmetics = () => {
   const values = new Map()
+  const events = []
   const localStorage = {
     getItem: key => values.has(key) ? values.get(key) : null,
     removeItem: key => values.delete(key),
@@ -29,12 +30,22 @@ const loadCosmetics = () => {
   class MutationObserver {
     observe() {}
   }
+  class CustomEvent {
+    constructor(type, init = {}) {
+      this.type = type
+      this.detail = init.detail
+    }
+  }
+  const window = {
+    CustomEvent,
+    dispatchEvent: event => events.push(event),
+  }
   const browser = vm.createContext({
     MutationObserver,
     document,
     localStorage,
     requestAnimationFrame: callback => callback(),
-    window: {},
+    window,
   })
 
   for (const file of ["cosmetic_catalog.js", "cosmetic_progression.js", "cosmetics.js"]) {
@@ -42,7 +53,7 @@ const loadCosmetics = () => {
     vm.runInContext(source, browser, {filename: file})
   }
 
-  return {controller: browser.window.ManaChessCosmetics, localStorage}
+  return {controller: browser.window.ManaChessCosmetics, events, localStorage}
 }
 
 test("defines the five release mastery milestones", () => {
@@ -133,4 +144,16 @@ test("equips the complete Celestial set only after ten wins", () => {
   const unlocks = JSON.parse(localStorage.getItem("mana-chess-cosmetic-unlocks"))
   assert.ok(unlocks.includes("board:celestial"))
   assert.ok(unlocks.includes("piece:celestial"))
+})
+
+test("announces each newly earned mastery reward only once", () => {
+  const {controller, events, localStorage} = loadCosmetics()
+  localStorage.setItem("mana-chess-local-stats", JSON.stringify({played: 1, wins: 0}))
+
+  controller.render()
+  controller.render()
+
+  assert.equal(events.length, 1)
+  assert.equal(events[0].type, "mana-chess:cosmetic-unlocked")
+  assert.deepEqual({...events[0].detail}, {id: "arcane", label: "Conjunto Arcano"})
 })

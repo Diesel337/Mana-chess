@@ -97,6 +97,45 @@ defmodule ManaChessOnlineWeb.GameLiveTest do
     assert has_element?(view, "#mc-board-#{game_id} .mc-piece-king")
     assert has_element?(view, "#mc-board-#{game_id} .mc-piece-queen")
     assert has_element?(view, "#mc-board-#{game_id} .mc-piece-pawn")
+
+    assert has_element?(
+             view,
+             "#mc-game-effects-#{game_id}[phx-hook='GameEffects'][phx-update='ignore']"
+           )
+
+    assert has_element?(view, "#mc-game-effects-#{game_id} [data-game-effect-result]")
+    assert has_element?(view, "#mc-game-effects-#{game_id} [data-game-effect-unlock]")
+    assert has_element?(view, "#mc-game-effects-#{game_id} [data-game-effect-capture]")
+    assert has_element?(view, "#mc-game-effects-#{game_id} [data-game-effect-check]")
+  end
+
+  test "practice checkmate pushes check and correctly toned result effects", %{conn: conn} do
+    player_id = "live-result-effects"
+    on_exit(fn -> GameLobby.leave(player_id) end)
+
+    conn = Plug.Test.init_test_session(conn, player_id: player_id)
+    {:ok, view, _html} = live(conn, ~p"/")
+    render_click(view, "start_practice")
+    render_click(view, "toggle_practice_bot")
+
+    play_move(view, {6, 5}, {5, 5})
+    play_move(view, {1, 4}, {3, 4})
+    play_move(view, {6, 6}, {4, 6})
+    play_move(view, {0, 3}, {4, 7})
+
+    assert_push_event view, "game_effect", %{
+      kind: "check",
+      row: 7,
+      col: 4,
+      color: "white"
+    }
+
+    assert_push_event view, "game_effect", %{
+      kind: "result",
+      title: "Gana el bot",
+      detail: "Jaque mate a Blancas.",
+      tone: "loss"
+    }
   end
 
   test "leaderboard renders public aliases and the current rank without private ids", %{
@@ -147,6 +186,11 @@ defmodule ManaChessOnlineWeb.GameLiveTest do
       losses: 0,
       draws: 0
     }
+  end
+
+  defp play_move(view, {from_row, from_col}, {to_row, to_col}) do
+    render_click(view, "move", %{"r" => to_string(from_row), "c" => to_string(from_col)})
+    render_click(view, "move", %{"r" => to_string(to_row), "c" => to_string(to_col)})
   end
 
   defp restore_env(key, nil), do: Application.delete_env(:mana_chess_online, key)

@@ -1,0 +1,234 @@
+/* Transient match presentation. Keep the priv/static copy in sync. */
+.mc-game-effects {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  pointer-events: none;
+}
+
+.mc-game-effect-result,
+.mc-game-effect-unlock {
+  visibility: hidden;
+  opacity: 0;
+  color: #fff8e7;
+}
+
+.mc-game-effect-impact {
+  position: absolute;
+  z-index: 82;
+  box-sizing: border-box;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.mc-game-effect-capture-impact.mc-effect-active {
+  visibility: visible;
+  border: 3px solid #ffd36b;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(239, 119, 112, .72), 0 0 28px rgba(255, 211, 107, .86);
+  animation: mc-effect-capture-burst .95s ease-out both;
+}
+
+.mc-game-effect-check-impact.mc-effect-active {
+  visibility: visible;
+  border: 3px solid #fff1b5;
+  border-radius: 6px;
+  box-shadow: inset 0 0 26px rgba(239, 87, 79, .72), 0 0 28px rgba(239, 87, 79, .66);
+  animation: mc-effect-check-square .9s ease-out both;
+}
+
+.mc-game-effect-result {
+  --mc-effect-accent: #ffd36b;
+  --mc-effect-secondary: #8bd9bd;
+  position: absolute;
+  top: max(74px, 13vh);
+  left: 50%;
+  display: grid;
+  width: min(92vw, 520px);
+  min-height: 118px;
+  padding: 18px 22px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--mc-effect-accent) 72%, transparent);
+  border-radius: 8px;
+  background:
+    linear-gradient(115deg, color-mix(in srgb, var(--mc-effect-accent) 13%, transparent), transparent 42%),
+    rgba(7, 16, 11, .97);
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, .48),
+    inset 0 0 0 1px color-mix(in srgb, var(--mc-effect-secondary) 13%, transparent);
+  transform: translate(-50%, -14px) scale(.98);
+  transition: opacity .18s ease, transform .24s ease, visibility .24s linear;
+}
+
+.mc-game-effect-result::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 5px;
+  background: var(--mc-effect-accent);
+  box-shadow: 0 0 24px color-mix(in srgb, var(--mc-effect-accent) 70%, transparent);
+}
+
+.mc-game-effect-result > span,
+.mc-game-effect-unlock > span {
+  color: var(--mc-effect-accent, #ffd36b);
+  font-size: .72rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.mc-game-effect-result > strong {
+  margin-top: 5px;
+  overflow-wrap: anywhere;
+  font-size: 1.65rem;
+  line-height: 1.05;
+}
+
+.mc-game-effect-result > small,
+.mc-game-effect-unlock > small {
+  margin-top: 7px;
+  color: #c8d0c8;
+  font-size: .82rem;
+  line-height: 1.35;
+}
+
+.mc-game-effect-result.mc-effect-tone-loss {
+  --mc-effect-accent: #ef7770;
+  --mc-effect-secondary: #f1b5a9;
+}
+
+.mc-game-effect-result.mc-effect-tone-draw {
+  --mc-effect-accent: #91d7dd;
+  --mc-effect-secondary: #d4c883;
+}
+
+.mc-game-effect-result.mc-effect-visible {
+  visibility: visible;
+  opacity: 1;
+  transform: translate(-50%, 0) scale(1);
+  animation: mc-effect-result-arrive .42s ease-out both;
+}
+
+.mc-game-effect-unlock {
+  --mc-effect-accent: #ffd36b;
+  position: absolute;
+  right: max(14px, env(safe-area-inset-right));
+  bottom: max(14px, env(safe-area-inset-bottom));
+  display: grid;
+  width: min(calc(100vw - 28px), 330px);
+  min-height: 88px;
+  padding: 14px 16px 13px 62px;
+  border: 1px solid rgba(255, 211, 107, .58);
+  border-radius: 8px;
+  background: rgba(7, 16, 11, .97);
+  box-shadow: 0 20px 54px rgba(0, 0, 0, .46), inset 0 0 0 1px rgba(139, 217, 189, .12);
+  transform: translateY(18px);
+  transition: opacity .18s ease, transform .22s ease, visibility .22s linear;
+}
+
+.mc-game-effect-unlock::before {
+  content: "\2726";
+  position: absolute;
+  top: 17px;
+  left: 17px;
+  display: grid;
+  width: 32px;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 1px solid rgba(255, 211, 107, .62);
+  border-radius: 50%;
+  background: #18241a;
+  color: #ffd36b;
+  font-size: 1.05rem;
+  box-shadow: 0 0 22px rgba(255, 211, 107, .2);
+}
+
+.mc-game-effect-unlock > strong {
+  margin-top: 4px;
+  overflow-wrap: anywhere;
+  font-size: 1rem;
+  line-height: 1.12;
+}
+
+.mc-game-effect-unlock.mc-effect-visible {
+  visibility: visible;
+  opacity: 1;
+  transform: translateY(0);
+  animation: mc-effect-unlock-arrive .38s ease-out both;
+}
+
+.mc-square.mc-effect-capture .mc-piece {
+  animation: mc-effect-capture-piece .46s ease-out both;
+}
+
+.mc-board.mc-effect-check-board {
+  animation: mc-effect-check-board .9s ease-out both;
+}
+
+@keyframes mc-effect-capture-burst {
+  0% { opacity: 0; transform: scale(.3); }
+  22% { opacity: 1; transform: scale(.78); }
+  100% { opacity: 0; transform: scale(1.5); }
+}
+
+@keyframes mc-effect-capture-piece {
+  0% { filter: brightness(1.75) drop-shadow(0 0 12px #ffd36b); transform: scale(1.14); }
+  100% { filter: none; transform: scale(1); }
+}
+
+@keyframes mc-effect-check-square {
+  0%, 100% { opacity: 0; transform: scale(.78); }
+  24%, 58% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes mc-effect-check-board {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 87, 79, 0); }
+  28%, 62% { box-shadow: 0 0 0 5px rgba(239, 87, 79, .72), 0 0 38px rgba(239, 87, 79, .4); }
+}
+
+@keyframes mc-effect-result-arrive {
+  0% { opacity: 0; transform: translate(-50%, -18px) scale(.97); }
+  100% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+
+@keyframes mc-effect-unlock-arrive {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 520px) {
+  .mc-game-effect-result {
+    top: 70px;
+    min-height: 104px;
+    padding: 15px 17px;
+  }
+
+  .mc-game-effect-result > strong {
+    font-size: 1.35rem;
+  }
+
+  .mc-game-effect-unlock {
+    right: 14px;
+    bottom: max(12px, env(safe-area-inset-bottom));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mc-game-effect-result,
+  .mc-game-effect-unlock,
+  .mc-game-effect-impact,
+  .mc-square.mc-effect-capture .mc-piece,
+  .mc-board.mc-effect-check-board {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .mc-game-effect-impact.mc-effect-active {
+    visibility: visible;
+    opacity: 1;
+    transform: none;
+  }
+}

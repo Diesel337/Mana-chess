@@ -23,10 +23,13 @@ defmodule ManaChessOnlineWeb.PageControllerTest do
     assert response =~ "Mana Chess"
     assert response =~ "app.css?v=cosmetic-mastery-20260717"
     assert response =~ "premium_cosmetics.css?v=premium-cosmetics-celestial-20260718"
+    assert response =~ "game_effects.css?v=game-effects-20260718c"
+    assert response =~ "game_effects.js?v=game-effects-20260718c"
     assert response =~ "cosmetic-catalog-celestial-20260718"
     assert response =~ "cosmetic-progression-20260717"
     assert response =~ "cosmetics-mastery-20260717"
     assert response =~ "cosmetic-actions-mastery-20260717"
+    assert response =~ "app.js?v=game-effects-20260718c"
     assert response =~ "cosmetic-fallback-mastery-20260717"
     assert response =~ "cosmetic-session-mastery-20260717"
     assert response =~ "lobby-p0-20260717b"
@@ -92,6 +95,16 @@ defmodule ManaChessOnlineWeb.PageControllerTest do
       frame = build_conn() |> get("/images/cosmetics/#{family}/frame.svg") |> response(200)
       assert frame =~ ~s(viewBox="0 0 1000 1000")
     end
+  end
+
+  test "game presentation assets are served", %{conn: conn} do
+    javascript = conn |> get("/assets/js/game_effects.js") |> response(200)
+    stylesheet = build_conn() |> get("/assets/css/game_effects.css") |> response(200)
+
+    assert javascript =~ "ManaChessGameEffectsHook"
+    assert javascript =~ "mana-chess:cosmetic-unlocked"
+    assert stylesheet =~ "mc-effect-capture"
+    assert stylesheet =~ "prefers-reduced-motion"
   end
 
   test "steam launch access mode blocks public game routes", %{conn: conn} do

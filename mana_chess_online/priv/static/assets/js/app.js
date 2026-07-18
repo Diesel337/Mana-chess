@@ -1,7 +1,8 @@
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content");
 const Hooks = {
   LocalStats: window.ManaChessLocalStatsHook,
-  BoardDrag: window.ManaChessBoardDragHook
+  BoardDrag: window.ManaChessBoardDragHook,
+  GameEffects: window.ManaChessGameEffectsHook
 };
 
 const liveSocket = new LiveView.LiveSocket("/live", Phoenix.Socket, {

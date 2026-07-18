@@ -1,9 +1,9 @@
 defmodule ManaChessOnlineWeb.GameLive do
   use ManaChessOnlineWeb, :live_view
 
-  alias ManaChessOnline.{GameLobby, GamePersistence, GameRuntimeConfig, Persistence}
+  alias ManaChessOnline.{GameLobby, GameRuntimeConfig, Persistence}
   alias ManaChessOnline.GameRules
-  alias ManaChessOnlineWeb.GameText
+  alias ManaChessOnlineWeb.{GameEffectEvents, GameText}
 
   import ManaChessOnlineWeb.GameBrandComponents
   import ManaChessOnlineWeb.GameComponents
@@ -369,11 +369,7 @@ defmodule ManaChessOnlineWeb.GameLive do
   end
 
   def handle_info({:game_update, %{id: game_id} = game}, %{assigns: %{game_id: game_id}} = socket) do
-    if not GamePersistence.terminal?(socket.assigns.game) and GamePersistence.terminal?(game) do
-      Process.send_after(self(), :refresh_competitive_profile, 200)
-    end
-
-    {:noreply, assign(socket, :game, game)}
+    {:noreply, assign_game_with_effects(socket, game, socket.assigns.color)}
   end
 
   def handle_info({:game_update, _game}, socket), do: {:noreply, socket}
@@ -401,7 +397,7 @@ defmodule ManaChessOnlineWeb.GameLive do
     socket
     |> assign(:game_id, view.game_id)
     |> assign(:color, view.color)
-    |> assign(:game, view.game)
+    |> assign_game_with_effects(view.game, view.color)
     |> assign(:lobby, view.lobby)
     |> assign(:valid_moves, [])
     |> assign(:selected, nil)
@@ -409,6 +405,27 @@ defmodule ManaChessOnlineWeb.GameLive do
     |> assign(:local_alert, nil)
     |> assign(:chat_error, nil)
     |> assign(:reconnected?, false)
+  end
+
+  defp assign_game_with_effects(socket, game, player_color) do
+    effects =
+      GameEffectEvents.derive(
+        socket.assigns[:game],
+        game,
+        final_result(game, player_color)
+      )
+
+    if Enum.any?(effects, &(&1.kind == "result")) do
+      Process.send_after(self(), :refresh_competitive_profile, 200)
+    end
+
+    socket
+    |> then(fn current ->
+      Enum.reduce(effects, current, fn effect, acc ->
+        push_event(acc, "game_effect", effect)
+      end)
+    end)
+    |> assign(:game, game)
   end
 
   defp refresh_competitive_profile(socket) do
@@ -713,7 +730,7 @@ defmodule ManaChessOnlineWeb.GameLive do
     %{
       title: final_title(game, winner, player_color),
       detail: "Jaque mate a #{color_label(loser)}.",
-      tone: if(player_color in [winner, :practice], do: :win, else: :loss)
+      tone: final_tone(game, winner, player_color)
     }
   end
 
@@ -721,7 +738,7 @@ defmodule ManaChessOnlineWeb.GameLive do
     %{
       title: final_title(game, winner, player_color),
       detail: "Partida terminada.",
-      tone: if(player_color in [winner, :practice], do: :win, else: :loss)
+      tone: final_tone(game, winner, player_color)
     }
   end
 
@@ -731,14 +748,24 @@ defmodule ManaChessOnlineWeb.GameLive do
 
   defp final_result(_game, _player_color), do: nil
 
-  defp final_title(%{practice?: true}, :white, _player_color), do: "Ganaste"
-  defp final_title(%{practice?: true}, :black, _player_color), do: "Gana el bot"
+  defp final_title(%{practice?: true} = game, winner, _player_color) do
+    if winner == practice_player_side(game), do: "Ganaste", else: "Gana el bot"
+  end
+
   defp final_title(_game, winner, winner), do: "Ganaste"
 
   defp final_title(_game, _winner, player_color) when player_color in [:white, :black],
     do: "Perdiste"
 
   defp final_title(_game, winner, _player_color), do: "Ganan #{color_label(winner)}"
+
+  defp final_tone(%{practice?: true} = game, winner, _player_color) do
+    if winner == practice_player_side(game), do: :win, else: :loss
+  end
+
+  defp final_tone(_game, winner, winner), do: :win
+  defp final_tone(_game, _winner, player_color) when player_color in [:white, :black], do: :loss
+  defp final_tone(_game, _winner, _player_color), do: :draw
 
   defp final_panel_class(%{tone: :win}), do: "mc-final-win"
   defp final_panel_class(%{tone: :loss}), do: "mc-final-loss"
@@ -781,8 +808,10 @@ defmodule ManaChessOnlineWeb.GameLive do
     end
   end
 
-  defp stats_winner_outcome(%{practice?: true}, :white, _player_color), do: "win"
-  defp stats_winner_outcome(%{practice?: true}, :black, _player_color), do: "loss"
+  defp stats_winner_outcome(%{practice?: true} = game, winner, _player_color) do
+    if winner == practice_player_side(game), do: "win", else: "loss"
+  end
+
   defp stats_winner_outcome(_game, winner, winner), do: "win"
 
   defp stats_winner_outcome(_game, _winner, player_color) when player_color in [:white, :black],
@@ -1085,6 +1114,48 @@ defmodule ManaChessOnlineWeb.GameLive do
         </div>
 
         <%= if @game do %>
+          <div
+            id={"mc-game-effects-#{@game.id}"}
+            class="mc-game-effects"
+            phx-hook="GameEffects"
+            phx-update="ignore"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            <div
+              class="mc-game-effect-impact mc-game-effect-capture-impact"
+              data-game-effect-capture
+              aria-hidden="true"
+            >
+            </div>
+            <div
+              class="mc-game-effect-impact mc-game-effect-check-impact"
+              data-game-effect-check
+              aria-hidden="true"
+            >
+            </div>
+            <div
+              class="mc-game-effect-result"
+              data-game-effect-result
+              role="status"
+              aria-hidden="true"
+            >
+              <span data-game-effect-kicker>Partida terminada</span>
+              <strong data-game-effect-title></strong>
+              <small data-game-effect-detail></small>
+            </div>
+            <div
+              class="mc-game-effect-unlock"
+              data-game-effect-unlock
+              role="status"
+              aria-hidden="true"
+            >
+              <span>Nuevo desbloqueo</span>
+              <strong data-game-effect-unlock-title></strong>
+              <small>Ya esta disponible en tu coleccion.</small>
+            </div>
+          </div>
+
           <div :if={@game.practice?} class="mc-practice-banner">
             <strong>Modo practica</strong> <span>{practice_banner_text(@game)}</span>
             <div class="mc-bot-control">

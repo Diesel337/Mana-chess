@@ -81,6 +81,7 @@
     mastery: [
       {
         id: "arcane",
+        label: "Conjunto Arcano",
         pack: "arcane",
         metric: "played",
         target: 1,
@@ -88,6 +89,7 @@
       },
       {
         id: "crystal",
+        label: "Conjunto Cristal",
         pack: "crystal",
         metric: "wins",
         target: 3,
@@ -95,6 +97,7 @@
       },
       {
         id: "elemental",
+        label: "Conjunto Elemental",
         pack: "elemental",
         metric: "played",
         target: 10,
@@ -102,12 +105,14 @@
       },
       {
         id: "custom",
+        label: "Paleta personalizada",
         metric: "wins",
         target: 5,
         rewardIds: ["board:custom", "piece:custom", "palette:custom"],
       },
       {
         id: "celestial",
+        label: "Conjunto Celestial",
         pack: "celestial",
         metric: "wins",
         target: 10,
