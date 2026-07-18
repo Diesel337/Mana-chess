@@ -480,7 +480,10 @@ defmodule ManaChessOnlineWeb.GameLive do
   end
 
   defp piece_class("."), do: "mc-piece"
-  defp piece_class(piece), do: "mc-piece mc-" <> Atom.to_string(GameRules.color(piece))
+
+  defp piece_class(piece) do
+    "mc-piece mc-#{GameRules.color(piece)} mc-piece-#{piece_type(piece)}"
+  end
 
   defp color_label(:white), do: "Blancas"
   defp color_label(:black), do: "Negras"
@@ -1289,6 +1292,36 @@ defmodule ManaChessOnlineWeb.GameLive do
               <button
                 type="button"
                 class="mc-skin-locked"
+                data-board-skin-choice="crystal"
+                data-cosmetic-premium="board:crystal"
+                data-sound-action="skin"
+                title="Probar y desbloquear Cristal localmente"
+                aria-label="Probar y desbloquear Cristal localmente"
+                aria-disabled="false"
+                aria-pressed="false"
+              >
+                <i class="mc-skin-dot mc-skin-dot-crystal"></i>
+                Cristal
+                <small data-cosmetic-status data-cosmetic-state="premium">Premium proximamente</small>
+              </button>
+              <button
+                type="button"
+                class="mc-skin-locked"
+                data-board-skin-choice="elemental"
+                data-cosmetic-premium="board:elemental"
+                data-sound-action="skin"
+                title="Probar y desbloquear Elemental localmente"
+                aria-label="Probar y desbloquear Elemental localmente"
+                aria-disabled="false"
+                aria-pressed="false"
+              >
+                <i class="mc-skin-dot mc-skin-dot-elemental"></i>
+                Elemental
+                <small data-cosmetic-status data-cosmetic-state="premium">Premium proximamente</small>
+              </button>
+              <button
+                type="button"
+                class="mc-skin-locked"
                 data-board-skin-choice="custom"
                 data-cosmetic-premium="board:custom"
                 data-sound-action="skin"
@@ -1319,11 +1352,26 @@ defmodule ManaChessOnlineWeb.GameLive do
                 type="button"
                 data-piece-skin-choice="runes"
                 data-sound-action="skin"
-                title="Piezas Arcano"
-                aria-label="Piezas Arcano"
+                title="Piezas Runas de mana"
+                aria-label="Piezas Runas de mana"
                 aria-pressed="false"
               >
-                <i class="mc-piece-dot mc-piece-dot-runes"></i> Arcano
+                <i class="mc-piece-dot mc-piece-dot-runes"></i> Runas
+              </button>
+              <button
+                type="button"
+                class="mc-skin-locked"
+                data-piece-skin-choice="arcane"
+                data-cosmetic-premium="piece:arcane"
+                data-sound-action="skin"
+                title="Probar y desbloquear Orden arcana localmente"
+                aria-label="Probar y desbloquear Orden arcana localmente"
+                aria-disabled="false"
+                aria-pressed="false"
+              >
+                <i class="mc-piece-dot mc-piece-dot-arcane"></i>
+                Arcano
+                <small data-cosmetic-status data-cosmetic-state="premium">Premium proximamente</small>
               </button>
               <button
                 type="button"
@@ -1337,7 +1385,22 @@ defmodule ManaChessOnlineWeb.GameLive do
                 aria-pressed="false"
               >
                 <i class="mc-piece-dot mc-piece-dot-crystal"></i>
-                Premium
+                Cristal
+                <small data-cosmetic-status data-cosmetic-state="premium">Premium proximamente</small>
+              </button>
+              <button
+                type="button"
+                class="mc-skin-locked"
+                data-piece-skin-choice="elemental"
+                data-cosmetic-premium="piece:elemental"
+                data-sound-action="skin"
+                title="Probar y desbloquear Guardianes elementales localmente"
+                aria-label="Probar y desbloquear Guardianes elementales localmente"
+                aria-disabled="false"
+                aria-pressed="false"
+              >
+                <i class="mc-piece-dot mc-piece-dot-elemental"></i>
+                Elemental
                 <small data-cosmetic-status data-cosmetic-state="premium">Premium proximamente</small>
               </button>
               <button

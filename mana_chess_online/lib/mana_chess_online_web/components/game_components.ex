@@ -70,6 +70,38 @@ defmodule ManaChessOnlineWeb.GameComponents do
             <button
               type="button"
               class="mc-skin-option mc-skin-locked"
+              data-board-skin-choice="crystal"
+              data-cosmetic-premium="board:crystal"
+              data-sound-action="skin"
+              title="Probar y desbloquear Cristal localmente"
+              aria-disabled="false"
+              aria-pressed="false"
+            >
+              <span class="mc-skin-preview mc-skin-preview-crystal" aria-hidden="true">
+                <i></i><i></i><i></i><i></i>
+              </span>
+              <strong>Prisma de cristal</strong>
+              <small data-cosmetic-status data-cosmetic-state="premium">Probar local</small>
+            </button>
+            <button
+              type="button"
+              class="mc-skin-option mc-skin-locked"
+              data-board-skin-choice="elemental"
+              data-cosmetic-premium="board:elemental"
+              data-sound-action="skin"
+              title="Probar y desbloquear Elemental localmente"
+              aria-disabled="false"
+              aria-pressed="false"
+            >
+              <span class="mc-skin-preview mc-skin-preview-elemental" aria-hidden="true">
+                <i></i><i></i><i></i><i></i>
+              </span>
+              <strong>Forja elemental</strong>
+              <small data-cosmetic-status data-cosmetic-state="premium">Probar local</small>
+            </button>
+            <button
+              type="button"
+              class="mc-skin-option mc-skin-locked"
               data-board-skin-choice="custom"
               data-cosmetic-premium="board:custom"
               data-sound-action="skin"
@@ -114,8 +146,25 @@ defmodule ManaChessOnlineWeb.GameComponents do
                 <b class="mc-piece-sample mc-piece-sample-white">{@symbols["K"]}</b>
                 <b class="mc-piece-sample mc-piece-sample-black">{@symbols["q"]}</b>
               </span>
-              <strong>Arcano</strong>
+              <strong>Runas de mana</strong>
               <small data-cosmetic-status data-cosmetic-state="included">Incluido</small>
+            </button>
+            <button
+              type="button"
+              class="mc-skin-option mc-skin-locked"
+              data-piece-skin-choice="arcane"
+              data-cosmetic-premium="piece:arcane"
+              data-sound-action="skin"
+              title="Probar y desbloquear piezas Arcanas localmente"
+              aria-disabled="false"
+              aria-pressed="false"
+            >
+              <span class="mc-piece-skin-preview mc-piece-skin-preview-arcane" aria-hidden="true">
+                <b class="mc-piece-sample mc-piece-sample-white mc-piece-king">{@symbols["K"]}</b>
+                <b class="mc-piece-sample mc-piece-sample-black mc-piece-queen">{@symbols["q"]}</b>
+              </span>
+              <strong>Orden arcana</strong>
+              <small data-cosmetic-status data-cosmetic-state="premium">Probar local</small>
             </button>
             <button
               type="button"
@@ -128,10 +177,27 @@ defmodule ManaChessOnlineWeb.GameComponents do
               aria-pressed="false"
             >
               <span class="mc-piece-skin-preview mc-piece-skin-preview-crystal" aria-hidden="true">
-                <b class="mc-piece-sample mc-piece-sample-white">{@symbols["K"]}</b>
-                <b class="mc-piece-sample mc-piece-sample-black">{@symbols["q"]}</b>
+                <b class="mc-piece-sample mc-piece-sample-white mc-piece-king">{@symbols["K"]}</b>
+                <b class="mc-piece-sample mc-piece-sample-black mc-piece-queen">{@symbols["q"]}</b>
               </span>
-              <strong>Cristal premium</strong>
+              <strong>Cristal boreal</strong>
+              <small data-cosmetic-status data-cosmetic-state="premium">Probar local</small>
+            </button>
+            <button
+              type="button"
+              class="mc-skin-option mc-skin-locked"
+              data-piece-skin-choice="elemental"
+              data-cosmetic-premium="piece:elemental"
+              data-sound-action="skin"
+              title="Probar y desbloquear piezas Elementales localmente"
+              aria-disabled="false"
+              aria-pressed="false"
+            >
+              <span class="mc-piece-skin-preview mc-piece-skin-preview-elemental" aria-hidden="true">
+                <b class="mc-piece-sample mc-piece-sample-white mc-piece-king">{@symbols["K"]}</b>
+                <b class="mc-piece-sample mc-piece-sample-black mc-piece-queen">{@symbols["q"]}</b>
+              </span>
+              <strong>Guardianes elementales</strong>
               <small data-cosmetic-status data-cosmetic-state="premium">Probar local</small>
             </button>
             <button
@@ -195,6 +261,38 @@ defmodule ManaChessOnlineWeb.GameComponents do
             >
               <.pack_preview symbols={@symbols} class="mc-pack-preview-arcane" />
               <strong>Arcano</strong>
+              <small data-cosmetic-status data-cosmetic-pack-status data-cosmetic-state="premium">
+                Probar local
+              </small>
+            </button>
+            <button
+              type="button"
+              class="mc-skin-option mc-pack-option mc-skin-locked"
+              data-cosmetic-pack="crystal"
+              data-cosmetic-premium="pack:crystal"
+              data-sound-action="skin"
+              title="Probar y desbloquear conjunto localmente"
+              aria-disabled="false"
+              aria-pressed="false"
+            >
+              <.pack_preview symbols={@symbols} class="mc-pack-preview-crystal" />
+              <strong>Cristal</strong>
+              <small data-cosmetic-status data-cosmetic-pack-status data-cosmetic-state="premium">
+                Probar local
+              </small>
+            </button>
+            <button
+              type="button"
+              class="mc-skin-option mc-pack-option mc-skin-locked"
+              data-cosmetic-pack="elemental"
+              data-cosmetic-premium="pack:elemental"
+              data-sound-action="skin"
+              title="Probar y desbloquear conjunto localmente"
+              aria-disabled="false"
+              aria-pressed="false"
+            >
+              <.pack_preview symbols={@symbols} class="mc-pack-preview-elemental" />
+              <strong>Elemental</strong>
               <small data-cosmetic-status data-cosmetic-pack-status data-cosmetic-state="premium">
                 Probar local
               </small>
@@ -329,8 +427,8 @@ defmodule ManaChessOnlineWeb.GameComponents do
     ~H"""
     <span class={["mc-pack-preview", @class]} aria-hidden="true">
       <i :for={_square <- 1..16}></i>
-      <b class="mc-pack-piece-black">{@symbols["q"]}</b>
-      <b class="mc-pack-piece-white">{@symbols["K"]}</b>
+      <b class="mc-pack-piece-black mc-piece-queen">{@symbols["q"]}</b>
+      <b class="mc-pack-piece-white mc-piece-king">{@symbols["K"]}</b>
     </span>
     """
   end

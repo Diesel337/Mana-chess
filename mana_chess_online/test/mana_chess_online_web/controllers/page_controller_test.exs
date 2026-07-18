@@ -21,9 +21,11 @@ defmodule ManaChessOnlineWeb.PageControllerTest do
     conn = get(conn, ~p"/")
     response = html_response(conn, 200)
     assert response =~ "Mana Chess"
-    assert response =~ "cosmetics-module-20260706"
+    assert response =~ "premium_cosmetics.css?v=premium-cosmetics-20260717"
+    assert response =~ "cosmetic-catalog-20260717"
+    assert response =~ "cosmetics-premium-20260717"
     assert response =~ "cosmetic-actions-module-20260707"
-    assert response =~ "cosmetic-fallback-module-20260707"
+    assert response =~ "cosmetic-fallback-premium-20260717"
     assert response =~ "cosmetic-session-module-20260707"
     assert response =~ "lobby-p0-20260717b"
     assert response =~ "p0_lobby.css?v=lobby-p0-20260717"
@@ -35,7 +37,7 @@ defmodule ManaChessOnlineWeb.PageControllerTest do
     assert response =~ "result-recording-module-20260707"
     assert response =~ "stats-session-module-20260707"
     assert response =~ "local-stats-hook-module-20260707"
-    assert response =~ "sound-module-20260706"
+    assert response =~ "sound-premium-20260717"
     assert response =~ "sound-state-module-20260707"
     assert response =~ "sound-session-module-20260707"
     assert response =~ "chat-module-20260706"
@@ -65,6 +67,19 @@ defmodule ManaChessOnlineWeb.PageControllerTest do
     response = html_response(conn, 200)
     assert response =~ "Partida"
     assert response =~ "game_4"
+  end
+
+  test "premium cosmetic catalog and artwork are served", %{conn: conn} do
+    catalog = conn |> get("/assets/js/cosmetic_catalog.js") |> response(200)
+    stylesheet = build_conn() |> get("/assets/css/premium_cosmetics.css") |> response(200)
+
+    for family <- ~w(arcane crystal elemental) do
+      assert catalog =~ family
+      assert stylesheet =~ "/images/cosmetics/#{family}/king.svg"
+
+      svg = build_conn() |> get("/images/cosmetics/#{family}/king.svg") |> response(200)
+      assert svg =~ ~s(viewBox="0 0 100 120")
+    end
   end
 
   test "steam launch access mode blocks public game routes", %{conn: conn} do

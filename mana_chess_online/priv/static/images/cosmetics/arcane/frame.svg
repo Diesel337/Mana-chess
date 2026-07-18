@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" fill="none">
+  <defs>
+    <linearGradient id="a" x1="40" y1="40" x2="960" y2="960" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8FE7C8"/><stop offset=".48" stop-color="#9A7DFF"/><stop offset="1" stop-color="#5DE0BE"/>
+    </linearGradient>
+  </defs>
+  <rect x="18" y="18" width="964" height="964" rx="34" stroke="#100B26" stroke-width="36"/>
+  <rect x="27" y="27" width="946" height="946" rx="27" stroke="url(#a)" stroke-width="10"/>
+  <rect x="47" y="47" width="906" height="906" rx="16" stroke="#C8B8FF" stroke-opacity=".44" stroke-width="3"/>
+  <g stroke="url(#a)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m30 118 42-42 46-8-22 31 27 25-50 4-30 39zM970 118l-42-42-46-8 22 31-27 25 50 4 30 39z"/>
+    <path d="m30 882 42 42 46 8-22-31 27-25-50-4-30-39zM970 882l-42 42-46 8 22-31-27-25 50-4 30-39z"/>
+    <path d="m454 31 46 22 46-22-18 42 18 42-46-21-46 21 18-42z"/>
+    <path d="m454 969 46-22 46 22-18-42 18-42-46 21-46-21 18 42z"/>
+    <path d="m31 454 22 46-22 46 42-18 42 18-21-46 21-46-42 18z"/>
+    <path d="m969 454-22 46 22 46-42-18-42 18 21-46-21-46 42 18z"/>
+  </g>
+  <g fill="#8FE7C8">
+    <circle cx="38" cy="38" r="9"/><circle cx="962" cy="38" r="9"/><circle cx="38" cy="962" r="9"/><circle cx="962" cy="962" r="9"/>
+  </g>
+</svg>

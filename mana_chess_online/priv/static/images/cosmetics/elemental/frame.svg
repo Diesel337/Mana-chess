@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" fill="none">
+  <defs>
+    <linearGradient id="e" x1="20" y1="80" x2="980" y2="920" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FF7A3D"/><stop offset=".3" stop-color="#FFD56E"/><stop offset=".62" stop-color="#4CE0C3"/><stop offset="1" stop-color="#79AFFF"/>
+    </linearGradient>
+  </defs>
+  <rect x="18" y="18" width="964" height="964" rx="32" stroke="#101817" stroke-width="38"/>
+  <rect x="29" y="29" width="942" height="942" rx="24" stroke="url(#e)" stroke-width="11"/>
+  <path d="M42 212c44-30 50-70 19-121 57 26 89 8 96-54 34 52 70 63 110 31M958 788c-44 30-50 70-19 121-57-26-89-8-96 54-34-52-70-63-110-31" stroke="#FFB54D" stroke-width="13" stroke-linecap="round"/>
+  <path d="M788 42c30 44 70 50 121 19-26 57-8 89 54 96-52 34-63 70-31 110M212 958c-30-44-70-50-121-19 26-57 8-89-54-96 52-34 63-70 31-110" stroke="#54DDCC" stroke-width="13" stroke-linecap="round"/>
+  <g fill="url(#e)">
+    <path d="m500 24 22 29-22 29-22-29zM500 976l22-29-22-29-22 29z"/>
+    <path d="m24 500 29 22 29-22-29-22zM976 500l-29 22-29-22 29-22z"/>
+  </g>
+  <path d="M61 61h116M61 61v116M939 61H823M939 61v116M61 939h116M61 939V823M939 939H823M939 939V823" stroke="url(#e)" stroke-width="6" stroke-linecap="round"/>
+</svg>

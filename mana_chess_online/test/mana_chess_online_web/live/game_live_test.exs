@@ -71,6 +71,29 @@ defmodule ManaChessOnlineWeb.GameLiveTest do
     assert html =~ "Sin posicion"
   end
 
+  test "lobby exposes the complete release cosmetic catalog", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/")
+
+    for skin <- ~w(arcane crystal elemental) do
+      assert has_element?(view, ~s([data-board-skin-choice="#{skin}"]))
+      assert has_element?(view, ~s([data-piece-skin-choice="#{skin}"]))
+      assert has_element?(view, ~s([data-cosmetic-pack="#{skin}"]))
+    end
+  end
+
+  test "game pieces expose semantic type classes for premium silhouettes", %{conn: conn} do
+    game_id = "game_3"
+
+    on_exit(fn -> GameLobby.force_clear_room(game_id) end)
+    GameLobby.force_clear_room(game_id)
+
+    {:ok, view, _html} = live(conn, ~p"/game/#{game_id}")
+
+    assert has_element?(view, "#mc-board-#{game_id} .mc-piece-king")
+    assert has_element?(view, "#mc-board-#{game_id} .mc-piece-queen")
+    assert has_element?(view, "#mc-board-#{game_id} .mc-piece-pawn")
+  end
+
   test "leaderboard renders public aliases and the current rank without private ids", %{
     conn: conn
   } do

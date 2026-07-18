@@ -1,13 +1,14 @@
 // Cosmetic fallback helper. Keep the assets/js and priv/static copies in sync
 // until Mana Chess has a real JS bundling step.
 (() => {
-  const boards = ["classic", "arcane", "gilded", "custom"]
-  const pieces = ["classic", "runes", "crystal", "custom"]
-  const packs = {
-    classic: {board: "classic", piece: "classic", included: true},
-    mana: {board: "gilded", piece: "runes", included: true},
-    arcane: {board: "arcane", piece: "crystal", unlocks: ["board:arcane", "piece:crystal"]},
-  }
+  const catalog = window.ManaChessCosmeticCatalog
+  if (!catalog) return
+
+  const boards = [...catalog.boards]
+  const pieces = [...catalog.pieces]
+  const packs = catalog.packs
+  const premiumBoards = new Set(catalog.premiumBoards)
+  const premiumPieces = new Set(catalog.premiumPieces)
   const defaultPalette = {
     boardLight: "#d9c58f",
     boardDark: "#243a31",
@@ -75,11 +76,11 @@
     },
 
     premiumIdForBoardSkin(skin) {
-      return skin === "arcane" || skin === "custom" ? `board:${skin}` : null
+      return premiumBoards.has(skin) ? `board:${skin}` : null
     },
 
     premiumIdForPieceSkin(skin) {
-      return skin === "crystal" || skin === "custom" ? `piece:${skin}` : null
+      return premiumPieces.has(skin) ? `piece:${skin}` : null
     },
 
     activateCosmeticControl(hook, control) {
@@ -212,10 +213,7 @@
     renderPieceSkin(hook) {
       const skin = api.pieceSkin(hook)
       hook.el.dataset.pieceSkin = skin
-      hook.el.classList.toggle("mc-piece-skin-classic", skin === "classic")
-      hook.el.classList.toggle("mc-piece-skin-runes", skin === "runes")
-      hook.el.classList.toggle("mc-piece-skin-crystal", skin === "crystal")
-      hook.el.classList.toggle("mc-piece-skin-custom", skin === "custom")
+      pieces.forEach(name => hook.el.classList.toggle(`mc-piece-skin-${name}`, skin === name))
       document.documentElement.dataset.pieceSkin = skin
 
       hook.el.querySelectorAll("[data-piece-skin-choice]").forEach(button => {
@@ -283,46 +281,15 @@
     },
 
     boardPreviewPalette(skin, palette) {
-      const palettes = {
-        classic: {frame: "#f7f2e8", light: "#f3eee2", dark: "#171817"},
-        gilded: {frame: "#fff0b6", light: "#f4d477", dark: "#6e3b1f"},
-        arcane: {frame: "#8b6bea", light: "#8bd9bd", dark: "#241745"},
-        custom: {frame: palette.boardLight, light: palette.boardLight, dark: palette.boardDark},
+      if (skin === "custom") {
+        return {frame: palette.boardLight, light: palette.boardLight, dark: palette.boardDark}
       }
-
-      return palettes[skin] || palettes.classic
+      return catalog.boardPreviewPalettes[skin] || catalog.boardPreviewPalettes.classic
     },
 
     piecePreviewPalette(skin, palette) {
-      const palettes = {
-        classic: {
-          frame: "#e6bd68",
-          white: "#f7ebce",
-          black: "#171a17",
-          whiteText: "#171a12",
-          blackText: "#7c5bd6",
-          whiteGlow: "rgba(247, 235, 206, .36)",
-          blackGlow: "rgba(124, 91, 214, .44)",
-        },
-        runes: {
-          frame: "#8bd9bd",
-          white: "#8bd9bd",
-          black: "#120b22",
-          whiteText: "#03251d",
-          blackText: "#c7b3ff",
-          whiteGlow: "rgba(139, 217, 189, .48)",
-          blackGlow: "rgba(168, 132, 255, .52)",
-        },
-        crystal: {
-          frame: "#fff0b6",
-          white: "#c7d2ff",
-          black: "#101623",
-          whiteText: "#101629",
-          blackText: "#fff0b6",
-          whiteGlow: "rgba(109, 143, 255, .48)",
-          blackGlow: "rgba(255, 240, 182, .5)",
-        },
-        custom: {
+      if (skin === "custom") {
+        return {
           frame: palette.boardLight,
           white: palette.pieceWhite,
           black: palette.pieceBlack,
@@ -330,10 +297,9 @@
           blackText: api.readableTextColor(palette.pieceBlack),
           whiteGlow: api.hexToRgba(palette.pieceWhite, 0.42),
           blackGlow: api.hexToRgba(palette.pieceBlack, 0.5),
-        },
+        }
       }
-
-      return palettes[skin] || palettes.classic
+      return catalog.piecePreviewPalettes[skin] || catalog.piecePreviewPalettes.classic
     },
 
     renderCosmeticPreview(hook) {

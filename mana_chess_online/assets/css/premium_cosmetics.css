@@ -1,0 +1,630 @@
+/* Release cosmetic families: Arcane, Crystal, and Elemental. */
+
+.mc-skin-preview-arcane,
+.mc-skin-preview-crystal,
+.mc-skin-preview-elemental,
+.mc-pack-preview-arcane,
+.mc-pack-preview-crystal,
+.mc-pack-preview-elemental {
+  position: relative;
+  isolation: isolate;
+}
+
+.mc-skin-preview-arcane::after,
+.mc-skin-preview-crystal::after,
+.mc-skin-preview-elemental::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  pointer-events: none;
+}
+
+.mc-skin-preview-arcane::after {
+  background-image: url("/images/cosmetics/arcane/frame.svg");
+}
+
+.mc-skin-preview-crystal,
+.mc-skin-dot-crystal {
+  --skin-frame: #dff8ff;
+  --skin-light: #ccecff;
+  --skin-dark: #27456f;
+}
+
+.mc-skin-preview-crystal::after {
+  background-image: url("/images/cosmetics/crystal/frame.svg");
+}
+
+.mc-skin-preview-crystal i:nth-child(1),
+.mc-skin-preview-crystal i:nth-child(4) {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, .72), transparent 48%),
+    #ccecff;
+}
+
+.mc-skin-preview-crystal i:nth-child(2),
+.mc-skin-preview-crystal i:nth-child(3) {
+  background:
+    linear-gradient(45deg, rgba(121, 217, 255, .28), transparent 52%),
+    #27456f;
+}
+
+.mc-skin-preview-elemental,
+.mc-skin-dot-elemental {
+  --skin-frame: #ffd27a;
+  --skin-light: #efb24f;
+  --skin-dark: #164f50;
+}
+
+.mc-skin-preview-elemental::after {
+  background-image: url("/images/cosmetics/elemental/frame.svg");
+}
+
+.mc-skin-preview-elemental i:nth-child(1),
+.mc-skin-preview-elemental i:nth-child(4) {
+  background:
+    radial-gradient(circle at 25% 22%, #ffe9a6, transparent 34%),
+    #efb24f;
+}
+
+.mc-skin-preview-elemental i:nth-child(2),
+.mc-skin-preview-elemental i:nth-child(3) {
+  background:
+    radial-gradient(circle at 70% 24%, rgba(78, 234, 205, .44), transparent 42%),
+    #164f50;
+}
+
+.mc-piece-skin-preview-arcane,
+.mc-piece-dot-arcane {
+  --piece-frame: #9a7dff;
+  --piece-a: #c7ffe9;
+  --piece-b: #160d2b;
+}
+
+.mc-piece-skin-preview-crystal,
+.mc-piece-dot-crystal {
+  --piece-frame: #dff8ff;
+  --piece-a: #d8f5ff;
+  --piece-b: #13243f;
+}
+
+.mc-piece-skin-preview-elemental,
+.mc-piece-dot-elemental {
+  --piece-frame: #ffd27a;
+  --piece-a: #ffbd54;
+  --piece-b: #103c42;
+}
+
+.mc-piece-skin-preview-arcane {
+  border-color: #9a7dff;
+  background:
+    radial-gradient(circle at 22% 20%, rgba(111, 242, 197, .32), transparent 37%),
+    linear-gradient(145deg, #19102f, #070b17);
+}
+
+.mc-piece-skin-preview-crystal {
+  border-color: #dff8ff;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, .24) 0 19%, transparent 19% 48%, rgba(121, 217, 255, .18) 48% 67%, transparent 67%),
+    #10213c;
+}
+
+.mc-piece-skin-preview-elemental {
+  border-color: #ffd27a;
+  background:
+    radial-gradient(circle at 18% 20%, rgba(255, 128, 56, .42), transparent 38%),
+    radial-gradient(circle at 80% 74%, rgba(76, 224, 195, .34), transparent 42%),
+    #102622;
+}
+
+:is(
+  .mc-piece-skin-preview-arcane,
+  .mc-piece-skin-preview-crystal,
+  .mc-piece-skin-preview-elemental
+) {
+  display: block;
+  position: relative;
+  padding: 2px;
+}
+
+.mc-shell:has(.mc-menu) :is(
+  .mc-piece-skin-preview-arcane,
+  .mc-piece-skin-preview-crystal,
+  .mc-piece-skin-preview-elemental
+) {
+  width: 36px;
+  padding: 2px;
+}
+
+:is(
+  .mc-piece-skin-preview-arcane,
+  .mc-piece-skin-preview-crystal,
+  .mc-piece-skin-preview-elemental
+) .mc-piece-sample {
+  position: absolute;
+  top: 7%;
+  left: 0;
+  width: 58%;
+  height: 84%;
+  aspect-ratio: auto;
+}
+
+:is(
+  .mc-piece-skin-preview-arcane,
+  .mc-piece-skin-preview-crystal,
+  .mc-piece-skin-preview-elemental
+) .mc-piece-sample-black {
+  top: 13%;
+  right: 0;
+  left: auto;
+  z-index: 2;
+}
+
+.mc-pack-preview-crystal {
+  --pack-frame: #dff8ff;
+  --pack-light: #ccecff;
+  --pack-dark: #27456f;
+  --pack-white: #d8f5ff;
+  --pack-black: #13243f;
+  --pack-white-text: #10233f;
+  --pack-black-text: #b8efff;
+  --pack-crest-mask: url("/images/cosmetics/crystal/king.svg");
+  --pack-crest-fill: linear-gradient(145deg, #fff 2%, #96e7ff 38%, #5b8be6 70%, #332a78 100%);
+  --pack-crest-outline: #17355f;
+}
+
+.mc-pack-preview-elemental {
+  --pack-frame: #ffd27a;
+  --pack-light: #efb24f;
+  --pack-dark: #164f50;
+  --pack-white: #ffd474;
+  --pack-black: #103c42;
+  --pack-white-text: #3d1707;
+  --pack-black-text: #8ff3dc;
+  --pack-crest-mask: url("/images/cosmetics/elemental/king.svg");
+  --pack-crest-fill: linear-gradient(145deg, #fffde2 2%, #ffdca0 39%, #ff6e58 70%, #982957 100%);
+  --pack-crest-outline: #521936;
+}
+
+.mc-shell:has(.mc-menu) .mc-pack-preview {
+  width: 38px;
+}
+
+.mc-pack-preview-arcane {
+  --pack-frame: #9a7dff;
+  --pack-light: #8fe7c8;
+  --pack-dark: #241745;
+  --pack-white: #c7ffe9;
+  --pack-black: #160d2b;
+  --pack-white-text: #10251f;
+  --pack-black-text: #d5c6ff;
+  --pack-crest-mask: url("/images/cosmetics/arcane/king.svg");
+  --pack-crest-fill: linear-gradient(145deg, #fffce8 3%, #f2d989 42%, #66cdb1 70%, #6447c5 100%);
+  --pack-crest-outline: #173c38;
+}
+
+:is(.mc-pack-preview-arcane, .mc-pack-preview-crystal, .mc-pack-preview-elemental)::after {
+  content: "";
+  position: absolute;
+  inset: 8% 18%;
+  z-index: 4;
+  background: var(--pack-crest-fill);
+  filter:
+    drop-shadow(0 0 1px var(--pack-crest-outline))
+    drop-shadow(0 2px 2px rgba(0, 0, 0, .62));
+  pointer-events: none;
+  -webkit-mask: var(--pack-crest-mask) center / contain no-repeat;
+  mask: var(--pack-crest-mask) center / contain no-repeat;
+}
+
+:is(.mc-pack-preview-arcane, .mc-pack-preview-crystal, .mc-pack-preview-elemental) > b {
+  display: none;
+}
+
+:is(
+  .mc-piece-skin-preview-arcane,
+  .mc-piece-skin-preview-crystal,
+  .mc-piece-skin-preview-elemental,
+  .mc-pack-preview-arcane,
+  .mc-pack-preview-crystal,
+  .mc-pack-preview-elemental
+) :is(.mc-piece-sample, b) {
+  border: 0;
+  border-radius: 0;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: transparent !important;
+  font-size: 0;
+  filter: none;
+  text-shadow: none !important;
+}
+
+:is(
+  .mc-piece-skin-preview-arcane,
+  .mc-piece-skin-preview-crystal,
+  .mc-piece-skin-preview-elemental,
+  .mc-pack-preview-arcane,
+  .mc-pack-preview-crystal,
+  .mc-pack-preview-elemental
+) :is(.mc-piece-sample, b)::before {
+  content: "";
+  width: 100%;
+  height: 100%;
+  background: var(--mc-preview-piece-fill);
+  filter:
+    drop-shadow(0 0 1px var(--mc-preview-piece-outline, rgba(255, 255, 255, .6)))
+    drop-shadow(0 2px 2px rgba(0, 0, 0, .58));
+  -webkit-mask: var(--mc-piece-mask) center / contain no-repeat;
+  mask: var(--mc-piece-mask) center / contain no-repeat;
+}
+
+:is(.mc-pack-preview-arcane, .mc-pack-preview-crystal, .mc-pack-preview-elemental) b {
+  z-index: 3;
+  width: 58%;
+  height: 75%;
+  aspect-ratio: auto;
+}
+
+:is(.mc-pack-preview-arcane, .mc-pack-preview-crystal, .mc-pack-preview-elemental) .mc-pack-piece-black {
+  top: 4%;
+  left: 5%;
+}
+
+:is(.mc-pack-preview-arcane, .mc-pack-preview-crystal, .mc-pack-preview-elemental) .mc-pack-piece-white {
+  right: 5%;
+  bottom: 3%;
+}
+
+:is(.mc-piece-skin-preview-arcane, .mc-pack-preview-arcane) .mc-piece-sample-white,
+.mc-pack-preview-arcane .mc-pack-piece-white {
+  --mc-preview-piece-fill: linear-gradient(145deg, #fffce8 3%, #f2d989 42%, #66cdb1 70%, #6447c5 100%);
+  --mc-preview-piece-outline: #173c38;
+}
+
+:is(.mc-piece-skin-preview-arcane, .mc-pack-preview-arcane) .mc-piece-sample-black,
+.mc-pack-preview-arcane .mc-pack-piece-black {
+  --mc-preview-piece-fill: linear-gradient(145deg, #d9cbff 4%, #7358dc 42%, #120926 100%);
+  --mc-preview-piece-outline: #d9fff2;
+}
+
+:is(.mc-piece-skin-preview-crystal, .mc-pack-preview-crystal) .mc-piece-sample-white,
+.mc-pack-preview-crystal .mc-pack-piece-white {
+  --mc-preview-piece-fill: linear-gradient(145deg, #ffffff 2%, #96e7ff 38%, #5b8be6 70%, #332a78 100%);
+  --mc-preview-piece-outline: #17355f;
+}
+
+:is(.mc-piece-skin-preview-crystal, .mc-pack-preview-crystal) .mc-piece-sample-black,
+.mc-pack-preview-crystal .mc-pack-piece-black {
+  --mc-preview-piece-fill: linear-gradient(145deg, #c8f3ff 2%, #5879ca 43%, #101a35 100%);
+  --mc-preview-piece-outline: #ecfcff;
+}
+
+:is(.mc-piece-skin-preview-elemental, .mc-pack-preview-elemental) .mc-piece-sample-white,
+.mc-pack-preview-elemental .mc-pack-piece-white {
+  --mc-preview-piece-fill: linear-gradient(145deg, #fffde2 2%, #ffdca0 39%, #ff6e58 70%, #982957 100%);
+  --mc-preview-piece-outline: #521936;
+}
+
+:is(.mc-piece-skin-preview-elemental, .mc-pack-preview-elemental) .mc-piece-sample-black,
+.mc-pack-preview-elemental .mc-pack-piece-black {
+  --mc-preview-piece-fill: linear-gradient(145deg, #a4ffe9 2%, #39bda9 45%, #0b3039 100%);
+  --mc-preview-piece-outline: #e6fff7;
+}
+
+:is(.mc-piece-skin-preview-arcane, .mc-pack-preview-arcane) .mc-piece-king {
+  --mc-piece-mask: url("/images/cosmetics/arcane/king.svg");
+}
+
+:is(.mc-piece-skin-preview-arcane, .mc-pack-preview-arcane) .mc-piece-queen {
+  --mc-piece-mask: url("/images/cosmetics/arcane/queen.svg");
+}
+
+:is(.mc-piece-skin-preview-crystal, .mc-pack-preview-crystal) .mc-piece-king {
+  --mc-piece-mask: url("/images/cosmetics/crystal/king.svg");
+}
+
+:is(.mc-piece-skin-preview-crystal, .mc-pack-preview-crystal) .mc-piece-queen {
+  --mc-piece-mask: url("/images/cosmetics/crystal/queen.svg");
+}
+
+:is(.mc-piece-skin-preview-elemental, .mc-pack-preview-elemental) .mc-piece-king {
+  --mc-piece-mask: url("/images/cosmetics/elemental/king.svg");
+}
+
+:is(.mc-piece-skin-preview-elemental, .mc-pack-preview-elemental) .mc-piece-queen {
+  --mc-piece-mask: url("/images/cosmetics/elemental/queen.svg");
+}
+
+html[data-piece-skin="arcane"] :is(.mc-board .mc-piece-pawn, .mc-drag-ghost.mc-piece-pawn) { --mc-piece-mask: url("/images/cosmetics/arcane/pawn.svg"); }
+html[data-piece-skin="arcane"] :is(.mc-board .mc-piece-knight, .mc-drag-ghost.mc-piece-knight) { --mc-piece-mask: url("/images/cosmetics/arcane/knight.svg"); }
+html[data-piece-skin="arcane"] :is(.mc-board .mc-piece-bishop, .mc-drag-ghost.mc-piece-bishop) { --mc-piece-mask: url("/images/cosmetics/arcane/bishop.svg"); }
+html[data-piece-skin="arcane"] :is(.mc-board .mc-piece-rook, .mc-drag-ghost.mc-piece-rook) { --mc-piece-mask: url("/images/cosmetics/arcane/rook.svg"); }
+html[data-piece-skin="arcane"] :is(.mc-board .mc-piece-queen, .mc-drag-ghost.mc-piece-queen) { --mc-piece-mask: url("/images/cosmetics/arcane/queen.svg"); }
+html[data-piece-skin="arcane"] :is(.mc-board .mc-piece-king, .mc-drag-ghost.mc-piece-king) { --mc-piece-mask: url("/images/cosmetics/arcane/king.svg"); }
+
+html[data-piece-skin="crystal"] :is(.mc-board .mc-piece-pawn, .mc-drag-ghost.mc-piece-pawn) { --mc-piece-mask: url("/images/cosmetics/crystal/pawn.svg"); }
+html[data-piece-skin="crystal"] :is(.mc-board .mc-piece-knight, .mc-drag-ghost.mc-piece-knight) { --mc-piece-mask: url("/images/cosmetics/crystal/knight.svg"); }
+html[data-piece-skin="crystal"] :is(.mc-board .mc-piece-bishop, .mc-drag-ghost.mc-piece-bishop) { --mc-piece-mask: url("/images/cosmetics/crystal/bishop.svg"); }
+html[data-piece-skin="crystal"] :is(.mc-board .mc-piece-rook, .mc-drag-ghost.mc-piece-rook) { --mc-piece-mask: url("/images/cosmetics/crystal/rook.svg"); }
+html[data-piece-skin="crystal"] :is(.mc-board .mc-piece-queen, .mc-drag-ghost.mc-piece-queen) { --mc-piece-mask: url("/images/cosmetics/crystal/queen.svg"); }
+html[data-piece-skin="crystal"] :is(.mc-board .mc-piece-king, .mc-drag-ghost.mc-piece-king) { --mc-piece-mask: url("/images/cosmetics/crystal/king.svg"); }
+
+html[data-piece-skin="elemental"] :is(.mc-board .mc-piece-pawn, .mc-drag-ghost.mc-piece-pawn) { --mc-piece-mask: url("/images/cosmetics/elemental/pawn.svg"); }
+html[data-piece-skin="elemental"] :is(.mc-board .mc-piece-knight, .mc-drag-ghost.mc-piece-knight) { --mc-piece-mask: url("/images/cosmetics/elemental/knight.svg"); }
+html[data-piece-skin="elemental"] :is(.mc-board .mc-piece-bishop, .mc-drag-ghost.mc-piece-bishop) { --mc-piece-mask: url("/images/cosmetics/elemental/bishop.svg"); }
+html[data-piece-skin="elemental"] :is(.mc-board .mc-piece-rook, .mc-drag-ghost.mc-piece-rook) { --mc-piece-mask: url("/images/cosmetics/elemental/rook.svg"); }
+html[data-piece-skin="elemental"] :is(.mc-board .mc-piece-queen, .mc-drag-ghost.mc-piece-queen) { --mc-piece-mask: url("/images/cosmetics/elemental/queen.svg"); }
+html[data-piece-skin="elemental"] :is(.mc-board .mc-piece-king, .mc-drag-ghost.mc-piece-king) { --mc-piece-mask: url("/images/cosmetics/elemental/king.svg"); }
+
+html:is([data-piece-skin="arcane"], [data-piece-skin="crystal"], [data-piece-skin="elemental"])
+  :is(.mc-game .mc-piece[class*="mc-piece-"], .mc-drag-ghost[class*="mc-piece-"]) {
+  position: relative;
+  width: 82%;
+  border: 0;
+  border-radius: 0;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: transparent !important;
+  font-size: 0;
+  filter: none;
+  isolation: isolate;
+  text-shadow: none !important;
+}
+
+html:is([data-piece-skin="arcane"], [data-piece-skin="crystal"], [data-piece-skin="elemental"])
+  :is(.mc-game .mc-piece[class*="mc-piece-"], .mc-drag-ghost[class*="mc-piece-"])::before {
+  content: "";
+  position: absolute;
+  inset: -7% -2%;
+  z-index: 1;
+  background: var(--mc-premium-piece-fill);
+  filter:
+    drop-shadow(0 0 1px var(--mc-premium-piece-outline))
+    drop-shadow(0 0 2px var(--mc-premium-piece-outline))
+    drop-shadow(0 7px 4px rgba(0, 0, 0, .58))
+    drop-shadow(0 0 8px var(--mc-premium-piece-glow));
+  -webkit-mask: var(--mc-piece-mask) center / contain no-repeat;
+  mask: var(--mc-piece-mask) center / contain no-repeat;
+}
+
+html[data-piece-skin="arcane"] .mc-white {
+  --mc-premium-piece-fill: linear-gradient(145deg, #fffce8 2%, #f3da8c 36%, #65ccb0 67%, #6041bd 100%);
+  --mc-premium-piece-glow: rgba(111, 242, 197, .5);
+  --mc-premium-piece-outline: #173c38;
+}
+
+html[data-piece-skin="arcane"] .mc-black {
+  --mc-premium-piece-fill: linear-gradient(145deg, #e0d5ff 1%, #8e72ed 35%, #3e277d 63%, #100722 100%);
+  --mc-premium-piece-glow: rgba(154, 125, 255, .55);
+  --mc-premium-piece-outline: #d9fff2;
+}
+
+html[data-piece-skin="crystal"] .mc-white {
+  --mc-premium-piece-fill: linear-gradient(145deg, #ffffff 1%, #9be9ff 34%, #5d91e8 66%, #342a7a 100%);
+  --mc-premium-piece-glow: rgba(126, 218, 255, .56);
+  --mc-premium-piece-outline: #244a78;
+}
+
+html[data-piece-skin="crystal"] .mc-black {
+  --mc-premium-piece-fill: linear-gradient(145deg, #c9f4ff 1%, #6e9ee7 34%, #304d96 64%, #0d1730 100%);
+  --mc-premium-piece-glow: rgba(122, 163, 255, .54);
+  --mc-premium-piece-outline: #e8fbff;
+}
+
+html[data-piece-skin="elemental"] .mc-white {
+  --mc-premium-piece-fill: linear-gradient(145deg, #fffde2 1%, #ffe0a6 34%, #ff7059 65%, #982957 100%);
+  --mc-premium-piece-glow: rgba(255, 132, 63, .6);
+  --mc-premium-piece-outline: #521936;
+}
+
+html[data-piece-skin="elemental"] .mc-black {
+  --mc-premium-piece-fill: linear-gradient(145deg, #c1fff0 1%, #50d7c0 35%, #168a83 63%, #092d39 100%);
+  --mc-premium-piece-glow: rgba(66, 222, 196, .56);
+  --mc-premium-piece-outline: #d8fff3;
+}
+
+.mc-board-stack:is([data-board-skin="arcane"], [data-board-skin="crystal"], [data-board-skin="elemental"]) .mc-board {
+  position: relative;
+  isolation: isolate;
+}
+
+.mc-board-stack:is([data-board-skin="arcane"], [data-board-skin="crystal"], [data-board-skin="elemental"]) .mc-board::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  box-sizing: border-box;
+  padding: clamp(5px, 1.4%, 8px);
+  border-radius: inherit;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  opacity: .92;
+  pointer-events: none;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+}
+
+.mc-board-stack[data-board-skin="arcane"] .mc-board::after {
+  background-image: url("/images/cosmetics/arcane/frame.svg");
+}
+
+.mc-board-stack[data-board-skin="arcane"] {
+  background:
+    radial-gradient(circle at 15% 10%, rgba(111, 242, 197, .18), transparent 30%),
+    radial-gradient(circle at 86% 90%, rgba(154, 125, 255, .24), transparent 34%),
+    linear-gradient(145deg, #111025, #07110f 72%);
+  border-color: rgba(154, 125, 255, .7);
+}
+
+.mc-board-stack[data-board-skin="arcane"] .mc-light {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, .26), transparent 44%),
+    repeating-linear-gradient(45deg, transparent 0 10px, rgba(19, 78, 66, .08) 10px 11px),
+    #8fe7c8;
+}
+
+.mc-board-stack[data-board-skin="arcane"] .mc-dark {
+  background:
+    radial-gradient(circle at 70% 24%, rgba(154, 125, 255, .42), transparent 45%),
+    linear-gradient(135deg, transparent 48%, rgba(143, 231, 200, .08) 49% 51%, transparent 52%),
+    #241745;
+}
+
+.mc-board-stack[data-board-skin="crystal"] {
+  background:
+    linear-gradient(135deg, rgba(223, 248, 255, .26), transparent 30%),
+    linear-gradient(315deg, rgba(124, 153, 255, .25), transparent 38%),
+    #0d1b31;
+  border-color: rgba(199, 239, 255, .78);
+  box-shadow: 0 28px 66px rgba(0, 0, 0, .52), 0 0 34px rgba(121, 217, 255, .2), inset 0 1px rgba(255, 255, 255, .14);
+}
+
+.mc-board-stack[data-board-skin="crystal"] .mc-board {
+  border-color: #08152a;
+  background: #08152a;
+  box-shadow: 0 0 0 1px rgba(223, 248, 255, .42), 0 18px 40px rgba(0, 0, 0, .5);
+}
+
+.mc-board-stack[data-board-skin="crystal"] .mc-board::after {
+  background-image: url("/images/cosmetics/crystal/frame.svg");
+}
+
+.mc-board-stack[data-board-skin="crystal"] .mc-light {
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, .76), transparent 35%),
+    linear-gradient(45deg, transparent 0 49%, rgba(91, 168, 220, .18) 50% 52%, transparent 53%),
+    #ccecff;
+}
+
+.mc-board-stack[data-board-skin="crystal"] .mc-dark {
+  background:
+    linear-gradient(145deg, rgba(121, 217, 255, .3), transparent 38%),
+    linear-gradient(35deg, transparent 0 47%, rgba(210, 244, 255, .12) 48% 51%, transparent 52%),
+    #27456f;
+}
+
+.mc-board-stack[data-board-skin="crystal"] .mc-selected {
+  box-shadow: inset 0 0 0 5px #dff8ff, inset 0 0 34px rgba(121, 217, 255, .5), 0 0 0 1px rgba(140, 156, 255, .34);
+}
+
+.mc-board-stack[data-board-skin="crystal"] .mc-valid {
+  box-shadow: inset 0 0 0 999px rgba(108, 165, 241, .26), inset 0 0 0 3px rgba(223, 248, 255, .54);
+}
+
+.mc-board-stack[data-board-skin="crystal"] .mc-valid::after {
+  background: #dff8ff;
+  box-shadow: 0 0 0 7px rgba(121, 217, 255, .15), 0 0 22px rgba(121, 217, 255, .58);
+}
+
+.mc-board-stack[data-board-skin="crystal"] .mc-cooldown-ring-fill {
+  stroke: #8cdfff;
+}
+
+.mc-board-stack[data-board-skin="elemental"] {
+  background:
+    radial-gradient(circle at 12% 12%, rgba(255, 122, 61, .3), transparent 34%),
+    radial-gradient(circle at 88% 88%, rgba(76, 224, 195, .26), transparent 36%),
+    linear-gradient(145deg, #28140d, #0c2524 70%);
+  border-color: rgba(255, 210, 122, .76);
+  box-shadow: 0 28px 66px rgba(0, 0, 0, .54), 0 0 34px rgba(76, 224, 195, .14), inset 0 1px rgba(255, 255, 255, .12);
+}
+
+.mc-board-stack[data-board-skin="elemental"] .mc-board {
+  border-color: #111c19;
+  background: #111c19;
+  box-shadow: 0 0 0 1px rgba(255, 210, 122, .38), 0 18px 40px rgba(0, 0, 0, .5);
+}
+
+.mc-board-stack[data-board-skin="elemental"] .mc-board::after {
+  background-image: url("/images/cosmetics/elemental/frame.svg");
+}
+
+.mc-board-stack[data-board-skin="elemental"] .mc-light {
+  background:
+    radial-gradient(circle at 22% 18%, rgba(255, 245, 186, .56), transparent 32%),
+    linear-gradient(135deg, rgba(255, 102, 50, .22), transparent 58%),
+    #efb24f;
+}
+
+.mc-board-stack[data-board-skin="elemental"] .mc-dark {
+  background:
+    radial-gradient(circle at 76% 22%, rgba(76, 224, 195, .42), transparent 38%),
+    linear-gradient(315deg, rgba(73, 126, 255, .16), transparent 58%),
+    #164f50;
+}
+
+.mc-board-stack[data-board-skin="elemental"] .mc-selected {
+  box-shadow: inset 0 0 0 5px #ffd56e, inset 0 0 34px rgba(255, 122, 61, .46), 0 0 0 1px rgba(76, 224, 195, .34);
+}
+
+.mc-board-stack[data-board-skin="elemental"] .mc-valid {
+  box-shadow: inset 0 0 0 999px rgba(55, 201, 176, .27), inset 0 0 0 3px rgba(255, 210, 122, .52);
+}
+
+.mc-board-stack[data-board-skin="elemental"] .mc-valid::after {
+  background: #82f2d9;
+  box-shadow: 0 0 0 7px rgba(76, 224, 195, .16), 0 0 22px rgba(76, 224, 195, .58);
+}
+
+.mc-board-stack[data-board-skin="elemental"] .mc-cooldown-ring-fill {
+  stroke: #ffb54d;
+}
+
+.mc-game:has(.mc-play-area) .mc-play-area > .mc-skin-strip {
+  width: min(46%, 232px);
+  max-width: calc(50% - 12px);
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: none;
+  scroll-snap-type: x proximity;
+}
+
+.mc-game:has(.mc-play-area) .mc-play-area > .mc-skin-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.mc-game:has(.mc-play-area) .mc-play-area > .mc-skin-strip button {
+  flex: 0 0 29px;
+  scroll-snap-align: start;
+}
+
+@media (max-width: 680px) {
+  .mc-shell:has(.mc-menu) .mc-skin-options,
+  .mc-pack-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .mc-skin-option strong {
+    white-space: normal;
+  }
+}
+
+@media (max-width: 420px) {
+  .mc-game:has(.mc-play-area) .mc-play-area > .mc-skin-strip {
+    width: calc(50% - 10px);
+    max-width: calc(50% - 10px);
+  }
+
+  .mc-board-stack:is([data-board-skin="arcane"], [data-board-skin="crystal"], [data-board-skin="elemental"]) .mc-board::after {
+    opacity: .84;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mc-skin-option,
+  .mc-skin-strip button {
+    transition: none;
+  }
+}

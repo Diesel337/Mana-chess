@@ -1,24 +1,23 @@
 // Source of the cosmetic shop controller. Keep the priv/static copy in sync
 // until Mana Chess has a real JS bundling step.
 (() => {
+  const catalog = window.ManaChessCosmeticCatalog;
+  if (!catalog) return;
+
   const boardKey = "mana-chess-board-skin";
   const pieceKey = "mana-chess-piece-skin";
   const unlockKey = "mana-chess-cosmetic-unlocks";
   const paletteKey = "mana-chess-custom-palette";
-  const boards = ["classic", "gilded", "arcane", "custom"];
-  const pieces = ["classic", "runes", "crystal", "custom"];
+  const boards = [...catalog.boards];
+  const pieces = [...catalog.pieces];
   const cosmeticLabels = {
     included: "Incluido",
     local: "Local",
     locked: "Probar local"
   };
-  const packs = {
-    classic: {board: "classic", piece: "classic", included: true},
-    mana: {board: "gilded", piece: "runes", included: true},
-    arcane: {board: "arcane", piece: "crystal", unlocks: [["board", "arcane"], ["piece", "crystal"]]}
-  };
-  const included = new Set(["board:classic", "board:gilded", "piece:classic", "piece:runes"]);
-  const localUnlockIds = new Set(["board:arcane", "piece:crystal", "board:custom", "piece:custom", "palette:custom"]);
+  const packs = catalog.packs;
+  const included = new Set(catalog.includedIds);
+  const localUnlockIds = new Set(catalog.localUnlockIds);
   const defaultPalette = {
     boardLight: "#d9c58f",
     boardDark: "#243a31",
@@ -52,7 +51,10 @@
     const config = packs[pack];
     if (!config) return false;
     if (config.included) return true;
-    return (config.unlocks || []).every(([kind, skin]) => isUnlocked(kind, skin));
+    return (config.unlocks || []).every((id) => {
+      const [kind, skin] = id.split(":");
+      return isUnlocked(kind, skin);
+    });
   };
   const unlock = (kind, skin) => {
     if (isUnlocked(kind, skin)) return;
@@ -116,44 +118,14 @@
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   };
   const boardPreviewPalette = (skin, palette) => {
-    const palettes = {
-      classic: {frame: "#f7f2e8", light: "#f3eee2", dark: "#171817"},
-      gilded: {frame: "#fff0b6", light: "#f4d477", dark: "#6e3b1f"},
-      arcane: {frame: "#8b6bea", light: "#8bd9bd", dark: "#241745"},
-      custom: {frame: palette.boardLight, light: palette.boardLight, dark: palette.boardDark}
-    };
-    return palettes[skin] || palettes.classic;
+    if (skin === "custom") {
+      return {frame: palette.boardLight, light: palette.boardLight, dark: palette.boardDark};
+    }
+    return catalog.boardPreviewPalettes[skin] || catalog.boardPreviewPalettes.classic;
   };
   const piecePreviewPalette = (skin, palette) => {
-    const palettes = {
-      classic: {
-        frame: "#e6bd68",
-        white: "#f7ebce",
-        black: "#171a17",
-        whiteText: "#171a12",
-        blackText: "#7c5bd6",
-        whiteGlow: "rgba(247, 235, 206, .36)",
-        blackGlow: "rgba(124, 91, 214, .44)"
-      },
-      runes: {
-        frame: "#8bd9bd",
-        white: "#8bd9bd",
-        black: "#120b22",
-        whiteText: "#03251d",
-        blackText: "#c7b3ff",
-        whiteGlow: "rgba(139, 217, 189, .48)",
-        blackGlow: "rgba(168, 132, 255, .52)"
-      },
-      crystal: {
-        frame: "#fff0b6",
-        white: "#c7d2ff",
-        black: "#101623",
-        whiteText: "#101629",
-        blackText: "#fff0b6",
-        whiteGlow: "rgba(109, 143, 255, .48)",
-        blackGlow: "rgba(255, 240, 182, .5)"
-      },
-      custom: {
+    if (skin === "custom") {
+      return {
         frame: palette.boardLight,
         white: palette.pieceWhite,
         black: palette.pieceBlack,
@@ -161,9 +133,9 @@
         blackText: contrastFor(palette.pieceBlack),
         whiteGlow: glowFor(palette.pieceWhite, ".42"),
         blackGlow: glowFor(palette.pieceBlack, ".5")
-      }
-    };
-    return palettes[skin] || palettes.classic;
+      };
+    }
+    return catalog.piecePreviewPalettes[skin] || catalog.piecePreviewPalettes.classic;
   };
   const updateCosmeticPreview = (boardSkin, pieceSkin, palette) => {
     const board = boardPreviewPalette(boardSkin, palette);
@@ -278,10 +250,7 @@
     document.querySelectorAll(".mc-board-stack").forEach((stack) => stack.dataset.boardSkin = board);
     document.querySelectorAll(".mc-shell").forEach((shell) => {
       shell.dataset.pieceSkin = piece;
-      shell.classList.toggle("mc-piece-skin-classic", piece === "classic");
-      shell.classList.toggle("mc-piece-skin-runes", piece === "runes");
-      shell.classList.toggle("mc-piece-skin-crystal", piece === "crystal");
-      shell.classList.toggle("mc-piece-skin-custom", piece === "custom");
+      pieces.forEach((skin) => shell.classList.toggle(`mc-piece-skin-${skin}`, piece === skin));
     });
     document.querySelectorAll("[data-board-skin-choice]").forEach((button) => {
       const skin = button.dataset.boardSkinChoice;
@@ -352,7 +321,10 @@
     choosePack: (pack) => {
       const config = packs[pack];
       if (!config) return;
-      (config.unlocks || []).forEach(([kind, skin]) => unlock(kind, skin));
+      (config.unlocks || []).forEach((id) => {
+        const [kind, skin] = id.split(":");
+        unlock(kind, skin);
+      });
       write(boardKey, config.board, boards);
       write(pieceKey, config.piece, pieces);
       render();

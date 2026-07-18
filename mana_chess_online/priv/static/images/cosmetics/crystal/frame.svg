@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" fill="none">
+  <defs>
+    <linearGradient id="c" x1="80" y1="20" x2="920" y2="980" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F7FDFF"/><stop offset=".38" stop-color="#79D9FF"/><stop offset=".72" stop-color="#8C9CFF"/><stop offset="1" stop-color="#DDF8FF"/>
+    </linearGradient>
+  </defs>
+  <rect x="18" y="18" width="964" height="964" rx="24" stroke="#0C1932" stroke-width="36"/>
+  <path d="M28 145 145 28h710l117 117v710L855 972H145L28 855z" stroke="url(#c)" stroke-width="12"/>
+  <path d="m51 152 101-101 66 19-59 36 26 62-69-21-43 61zm898 0L848 51l-66 19 59 36-26 62 69-21 43 61z" fill="url(#c)" fill-opacity=".72"/>
+  <path d="m51 848 101 101 66-19-59-36 26-62-69 21-43-61zm898 0L848 949l-66-19 59-36-26-62 69 21 43-61z" fill="url(#c)" fill-opacity=".72"/>
+  <g stroke="#DDF8FF" stroke-opacity=".66" stroke-width="5">
+    <path d="M250 35 290 62l42-27 42 27 42-27 42 27 42-27 42 27 42-27 42 27 42-27 42 27 42-27"/>
+    <path d="M250 965 290 938l42 27 42-27 42 27 42-27 42 27 42-27 42 27 42-27 42 27 42-27"/>
+    <path d="M35 250 62 290l-27 42 27 42-27 42 27 42-27 42 27 42-27 42 27 42-27 42 27 42-27 42"/>
+    <path d="M965 250 938 290l27 42-27 42 27 42-27 42 27 42-27 42 27 42-27 42 27 42-27 42 27 42"/>
+  </g>
+</svg>

@@ -23,6 +23,41 @@
     loss: [[392, 0, .09, "triangle", .032, 360], [330, .095, .11, "triangle", .028, 294], [247, .2, .15, "sine", .024, 220], [196, .34, .12, "sine", .018, 185]]
   };
 
+  const themedPatterns = {
+    arcane: {
+      skin: [[392, 0, .08, "sine", .024], [587, .055, .1, "sine", .022], [932, .12, .13, "triangle", .018]],
+      move: [[330, 0, .055, "triangle", .022, 392], [659, .045, .08, "sine", .018, 784]],
+      capture: [[147, 0, .07, "sawtooth", .04, 110], [466, .05, .1, "triangle", .028, 698], [932, .13, .09, "sine", .018, 1244]],
+      check: [[740, 0, .07, "square", .03], [988, .06, .09, "triangle", .026], [1480, .14, .1, "sine", .018]],
+    },
+    crystal: {
+      skin: [[784, 0, .09, "sine", .022], [1175, .055, .12, "sine", .019], [1568, .13, .14, "triangle", .015]],
+      move: [[698, 0, .05, "sine", .02], [1046, .035, .075, "triangle", .017]],
+      capture: [[196, 0, .045, "triangle", .035, 150], [1046, .035, .09, "sine", .024], [1397, .095, .11, "triangle", .018]],
+      check: [[1046, 0, .06, "triangle", .028], [1318, .05, .08, "sine", .023], [1760, .12, .11, "sine", .017]],
+    },
+    elemental: {
+      skin: [[220, 0, .07, "sawtooth", .032, 294], [440, .055, .08, "triangle", .026, 554], [880, .12, .1, "sine", .018]],
+      move: [[196, 0, .055, "triangle", .03, 247], [494, .04, .07, "sine", .019, 554]],
+      capture: [[110, 0, .08, "sawtooth", .05, 82], [294, .045, .09, "square", .033, 220], [740, .12, .08, "triangle", .022, 988]],
+      check: [[392, 0, .06, "sawtooth", .035], [784, .05, .08, "triangle", .028], [1175, .12, .1, "sine", .02]],
+    },
+  };
+
+  const activeTheme = () => {
+    const root = document.documentElement;
+    const pieceTheme = root.dataset.pieceSkin;
+    const boardTheme = root.dataset.boardSkin;
+    if (themedPatterns[pieceTheme]) return pieceTheme;
+    if (themedPatterns[boardTheme]) return boardTheme;
+    return null;
+  };
+
+  const patternFor = (kind) => {
+    const theme = activeTheme();
+    return themedPatterns[theme]?.[kind] || patterns[kind] || patterns.move;
+  };
+
   const enabled = (soundKey) => localStorage.getItem(soundKey) === "on";
 
   const setEnabled = (soundKey, nextEnabled) => {
@@ -110,12 +145,12 @@
       if (audioContext.state === "suspended") audioContext.resume();
 
       const currentVolume = volume(volumeKey);
-      for (const tone of patterns[kind] || patterns.move) {
+      for (const tone of patternFor(kind)) {
         playTone(tone, currentVolume);
       }
     } catch (_error) {
     }
   };
 
-  window.ManaChessSound = {enabled, patterns, play, render, setEnabled, setVolume, volume};
+  window.ManaChessSound = {enabled, patterns, play, render, setEnabled, setVolume, themedPatterns, volume};
 })();
