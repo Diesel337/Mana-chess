@@ -131,6 +131,24 @@ test("locked cosmetic actions cannot grant or equip their own reward", () => {
   )
 })
 
+test("locked cosmetics can be previewed without being equipped", () => {
+  const {controller, localStorage} = loadCosmetics()
+
+  assert.equal(controller.previewPack("celestial"), true)
+  assert.deepEqual({...controller.previewSelection()}, {kind: "pack", value: "celestial"})
+  assert.equal(controller.equipPreview(), false)
+  assert.equal(localStorage.getItem("mana-chess-board-skin"), null)
+  assert.equal(localStorage.getItem("mana-chess-piece-skin"), null)
+  assert.equal(localStorage.getItem("mana-chess-cosmetic-unlocks"), null)
+
+  localStorage.setItem("mana-chess-local-stats", JSON.stringify({played: 10, wins: 10}))
+  controller.render()
+
+  assert.equal(controller.equipPreview(), true)
+  assert.equal(localStorage.getItem("mana-chess-board-skin"), "celestial")
+  assert.equal(localStorage.getItem("mana-chess-piece-skin"), "celestial")
+})
+
 test("equips the complete Celestial set only after ten wins", () => {
   const {controller, localStorage} = loadCosmetics()
   localStorage.setItem("mana-chess-local-stats", JSON.stringify({played: 10, wins: 10}))

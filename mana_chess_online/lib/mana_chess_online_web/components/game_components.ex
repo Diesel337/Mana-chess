@@ -12,11 +12,11 @@ defmodule ManaChessOnlineWeb.GameComponents do
 
   def cosmetic_shop(assigns) do
     ~H"""
-    <section class={@class} aria-label={@aria_label}>
+    <section class={@class} aria-label={@aria_label} data-cosmetic-browser>
       <div class="mc-skins-head">
         <div>
-          <h2>Tienda</h2>
-          <span>Cosmeticos visuales</span>
+          <h2>Cosméticos</h2>
+          <span>Colección y maestría</span>
         </div>
         <div class="mc-mastery-summary">
           <small data-cosmetic-local-count>Maestria 0/5</small>
@@ -31,6 +31,39 @@ defmodule ManaChessOnlineWeb.GameComponents do
           >
             <i></i>
           </span>
+        </div>
+      </div>
+
+      <div class="mc-cosmetic-preview" data-cosmetic-preview>
+        <div class="mc-cosmetic-preview-copy">
+          <span>Vista previa</span>
+          <strong data-cosmetic-preview-title>Tu estilo actual</strong>
+          <small data-cosmetic-preview-status>Equipado</small>
+        </div>
+
+        <div class="mc-cosmetic-preview-stage" data-cosmetic-preview-stage>
+          <div class="mc-cosmetic-preview-board" aria-hidden="true">
+            <i :for={_square <- 1..16}></i>
+            <b class="mc-cosmetic-preview-piece mc-cosmetic-preview-piece-white mc-piece-king">
+              {@symbols["K"]}
+            </b>
+            <b class="mc-cosmetic-preview-piece mc-cosmetic-preview-piece-black mc-piece-queen">
+              {@symbols["q"]}
+            </b>
+          </div>
+        </div>
+
+        <div class="mc-cosmetic-preview-actions">
+          <button
+            type="button"
+            class="mc-cosmetic-preview-equip"
+            data-cosmetic-preview-equip
+            data-sound-action="skin"
+            disabled
+          >
+            Equipado
+          </button>
+          <small data-cosmetic-preview-requirement></small>
         </div>
       </div>
 

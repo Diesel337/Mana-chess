@@ -66,6 +66,7 @@ defmodule ManaChessOnlineWeb.GameLive do
      |> assign(:chat_draft, "")
      |> assign(:chat_error, nil)
      |> assign(:reconnected?, recovered_session?(params, view))
+     |> assign(:lobby_tab, :play)
      |> assign(:tutorial?, false)}
   end
 
@@ -74,6 +75,17 @@ defmodule ManaChessOnlineWeb.GameLive do
     |> :crypto.strong_rand_bytes()
     |> Base.url_encode64(padding: false)
   end
+
+  @impl true
+  def handle_event("show_lobby_tab", %{"tab" => "play"}, socket) do
+    {:noreply, assign(socket, :lobby_tab, :play)}
+  end
+
+  def handle_event("show_lobby_tab", %{"tab" => "cosmetics"}, socket) do
+    {:noreply, assign(socket, :lobby_tab, :cosmetics)}
+  end
+
+  def handle_event("show_lobby_tab", _params, socket), do: {:noreply, socket}
 
   @impl true
   def handle_event("select", %{"r" => r, "c" => c}, socket) do
@@ -1584,6 +1596,33 @@ defmodule ManaChessOnlineWeb.GameLive do
           </div>
         <% else %>
           <div class="mc-menu">
+            <nav class="mc-lobby-tabs" aria-label="Secciones del menu principal">
+              <button
+                type="button"
+                class={@lobby_tab == :play && "is-active"}
+                phx-click="show_lobby_tab"
+                phx-value-tab="play"
+                aria-pressed={to_string(@lobby_tab == :play)}
+              >
+                Jugar
+              </button>
+              <button
+                type="button"
+                class={@lobby_tab == :cosmetics && "is-active"}
+                phx-click="show_lobby_tab"
+                phx-value-tab="cosmetics"
+                aria-pressed={to_string(@lobby_tab == :cosmetics)}
+              >
+                Cosméticos
+                <small data-cosmetic-local-count>Maestría 0/5</small>
+              </button>
+            </nav>
+
+            <div
+              class="mc-lobby-tab-panel mc-lobby-play-panel"
+              data-lobby-tab-panel="play"
+              hidden={@lobby_tab != :play}
+            >
             <section class="mc-menu-hero">
               <div>
                 <p class="mc-kicker">Ajedrez en tiempo real con elixir</p>
@@ -1789,21 +1828,22 @@ defmodule ManaChessOnlineWeb.GameLive do
               </p>
             </section>
 
-            <.cosmetic_shop
-              symbols={@symbols}
-              class="mc-skins mc-skins-inline"
-              aria_label="Tienda cosmetica"
-            />
+            </div>
+
+            <div
+              class="mc-lobby-tab-panel mc-lobby-cosmetics-panel"
+              data-lobby-tab-panel="cosmetics"
+              hidden={@lobby_tab != :cosmetics}
+            >
+              <.cosmetic_shop
+                symbols={@symbols}
+                class="mc-skins mc-cosmetic-browser"
+                aria_label="Catálogo de cosméticos"
+              />
+            </div>
           </div>
         <% end %>
       </section>
-
-      <.cosmetic_shop
-        :if={!@game}
-        symbols={@symbols}
-        class="mc-skins mc-skins-rail"
-        aria_label="Tienda cosmetica lateral"
-      />
       <.side_panel
         game={@game}
         player_id={@player_id}

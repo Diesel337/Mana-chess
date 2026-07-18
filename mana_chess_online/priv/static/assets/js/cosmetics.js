@@ -31,6 +31,44 @@
     solar: {boardLight: "#f2c15f", boardDark: "#174a45", pieceWhite: "#fff4d2", pieceBlack: "#31204f"},
     ruby: {boardLight: "#f0b7a6", boardDark: "#3b141c", pieceWhite: "#fff0ea", pieceBlack: "#4c0f23"}
   };
+  const previewLabels = {
+    board: {
+      classic: "Tablero clásico B/N",
+      gilded: "Tablero dorado",
+      arcane: "Tablero Arcano oscuro",
+      crystal: "Tablero Prisma de cristal",
+      elemental: "Tablero Forja elemental",
+      celestial: "Tablero Firmamento",
+      custom: "Tablero personalizado"
+    },
+    piece: {
+      classic: "Piezas clásicas",
+      runes: "Piezas Runas de mana",
+      arcane: "Piezas Orden arcana",
+      crystal: "Piezas Cristal boreal",
+      elemental: "Piezas Guardianes elementales",
+      celestial: "Piezas Corte celestial",
+      custom: "Piezas personalizadas"
+    },
+    pack: {
+      classic: "Conjunto Base",
+      mana: "Conjunto Mana",
+      arcane: "Conjunto Arcano",
+      crystal: "Conjunto Cristal",
+      elemental: "Conjunto Elemental",
+      celestial: "Conjunto Celestial"
+    },
+    palette: {
+      base: "Paleta Base",
+      midnight: "Paleta Noche",
+      emerald: "Paleta Jade",
+      frost: "Paleta Hielo",
+      solar: "Paleta Solar",
+      ruby: "Paleta Rubí",
+      custom: "Paleta personalizada"
+    }
+  };
+  let previewSelection = null;
   const unlockId = (kind, skin) => `${kind}:${skin}`;
   const readUnlocks = () => {
     try {
@@ -148,10 +186,10 @@
     }
     return catalog.piecePreviewPalettes[skin] || catalog.piecePreviewPalettes.classic;
   };
-  const updateCosmeticPreview = (boardSkin, pieceSkin, palette) => {
+  const previewVariables = (boardSkin, pieceSkin, palette) => {
     const board = boardPreviewPalette(boardSkin, palette);
     const piece = piecePreviewPalette(pieceSkin, palette);
-    const vars = {
+    return {
       "--mc-preview-board-frame": board.frame,
       "--mc-preview-board-light": board.light,
       "--mc-preview-board-dark": board.dark,
@@ -163,10 +201,17 @@
       "--mc-preview-piece-white-glow": piece.whiteGlow,
       "--mc-preview-piece-black-glow": piece.blackGlow
     };
+  };
+  const applyPreviewTheme = (preview, boardSkin, pieceSkin, palette) => {
+    preview.dataset.boardSkin = boardSkin;
+    preview.dataset.pieceSkin = pieceSkin;
+    Object.entries(previewVariables(boardSkin, pieceSkin, palette)).forEach(([name, value]) => {
+      preview.style.setProperty(name, value);
+    });
+  };
+  const updateCosmeticPreview = (boardSkin, pieceSkin, palette) => {
     document.querySelectorAll("[data-palette-live-preview]").forEach((preview) => {
-      preview.dataset.boardSkin = boardSkin;
-      preview.dataset.pieceSkin = pieceSkin;
-      Object.entries(vars).forEach(([name, value]) => preview.style.setProperty(name, value));
+      applyPreviewTheme(preview, boardSkin, pieceSkin, palette);
     });
   };
   const applyPalette = (mastery) => {
@@ -187,7 +232,10 @@
       input.disabled = !unlocked;
     });
     document.querySelectorAll("[data-palette-preset], [data-palette-reset]").forEach((button) => {
-      button.disabled = !unlocked;
+      const previewable = !!button.closest("[data-cosmetic-browser]");
+      button.disabled = !unlocked && !previewable;
+      button.dataset.cosmeticLocked = unlocked ? "false" : "true";
+      button.setAttribute("aria-disabled", !unlocked && !previewable ? "true" : "false");
     });
     const activePreset = activePalettePreset(palette);
     document.querySelectorAll("[data-palette-reset]").forEach((button) => {
@@ -205,9 +253,11 @@
       editor.classList.toggle("is-unlocked", unlocked);
     });
     document.querySelectorAll("[data-palette-unlock]").forEach((button) => {
+      const previewable = !!button.closest("[data-cosmetic-browser]");
       button.classList.toggle("mc-skin-locked", !unlocked);
       button.classList.toggle("mc-skin-unlocked", unlocked);
-      button.setAttribute("aria-disabled", unlocked ? "false" : "true");
+      button.dataset.cosmeticLocked = unlocked ? "false" : "true";
+      button.setAttribute("aria-disabled", !unlocked && !previewable ? "true" : "false");
       button.title = unlocked ? "Paleta ganada por maestria" : lockedTitle("palette:custom");
     });
     document.querySelectorAll("[data-palette-status]").forEach((status) => {
@@ -251,8 +301,136 @@
     });
   };
   const orderCosmeticOption = (button, rank) => {
+    if (button.closest("[data-cosmetic-browser]")) {
+      delete button.dataset.cosmeticRank;
+      button.style.removeProperty("order");
+      return;
+    }
     button.dataset.cosmeticRank = String(rank);
     button.style.order = String(rank);
+  };
+  const selectionDetails = (selection, board, piece, palette, mastery) => {
+    if (!selection) {
+      return {
+        board,
+        piece,
+        palette,
+        title: "Tu estilo actual",
+        rewardId: null,
+        unlocked: true,
+        equipped: true
+      };
+    }
+
+    if (selection.kind === "board") {
+      return {
+        board: selection.value,
+        piece,
+        palette,
+        title: previewLabels.board[selection.value],
+        rewardId: unlockId("board", selection.value),
+        unlocked: isUnlocked("board", selection.value, mastery.unlocks),
+        equipped: selection.value === board
+      };
+    }
+
+    if (selection.kind === "piece") {
+      return {
+        board,
+        piece: selection.value,
+        palette,
+        title: previewLabels.piece[selection.value],
+        rewardId: unlockId("piece", selection.value),
+        unlocked: isUnlocked("piece", selection.value, mastery.unlocks),
+        equipped: selection.value === piece
+      };
+    }
+
+    if (selection.kind === "pack") {
+      const config = packs[selection.value];
+      return {
+        board: config.board,
+        piece: config.piece,
+        palette,
+        title: previewLabels.pack[selection.value],
+        rewardId: `pack:${selection.value}`,
+        unlocked: isPackUnlocked(selection.value, mastery.unlocks),
+        equipped: config.board === board && config.piece === piece
+      };
+    }
+
+    const selectedPalette = selection.value === "base"
+      ? defaultPalette
+      : palettePresets[selection.value] || palette;
+    return {
+      board: "custom",
+      piece: "custom",
+      palette: selectedPalette,
+      title: previewLabels.palette[selection.value] || previewLabels.palette.custom,
+      rewardId: "palette:custom",
+      unlocked: isPaletteUnlocked(mastery.unlocks),
+      equipped: board === "custom" && piece === "custom" && (
+        selection.value === "custom" || paletteEquals(palette, selectedPalette)
+      )
+    };
+  };
+  const selectionControl = (browser, selection) => {
+    if (!selection) return null;
+    if (selection.kind === "board") {
+      return browser.querySelector(`[data-board-skin-choice="${selection.value}"]`);
+    }
+    if (selection.kind === "piece") {
+      return browser.querySelector(`[data-piece-skin-choice="${selection.value}"]`);
+    }
+    if (selection.kind === "pack") {
+      return browser.querySelector(`[data-cosmetic-pack="${selection.value}"]`);
+    }
+    if (selection.value === "base") return browser.querySelector("[data-palette-reset]");
+    if (selection.value === "custom") return browser.querySelector("[data-palette-unlock]");
+    return browser.querySelector(`[data-palette-preset="${selection.value}"]`);
+  };
+  const renderCosmeticBrowser = (mastery, board, piece) => {
+    const palette = readPalette();
+    const details = selectionDetails(previewSelection, board, piece, palette, mastery);
+
+    document.querySelectorAll("[data-cosmetic-browser]").forEach((browser) => {
+      browser.querySelectorAll(".mc-skin-previewing").forEach((control) => {
+        control.classList.remove("mc-skin-previewing");
+      });
+      const activeControl = selectionControl(browser, previewSelection);
+      if (activeControl) activeControl.classList.add("mc-skin-previewing");
+
+      browser.querySelectorAll("[data-cosmetic-preview-stage]").forEach((stage) => {
+        applyPreviewTheme(stage, details.board, details.piece, details.palette);
+      });
+      browser.querySelectorAll("[data-cosmetic-preview-title]").forEach((title) => {
+        title.textContent = details.title;
+      });
+      browser.querySelectorAll("[data-cosmetic-preview-status]").forEach((status) => {
+        status.textContent = details.equipped
+          ? "Equipado"
+          : details.unlocked ? "Disponible" : "Bloqueado";
+        status.dataset.previewState = details.equipped
+          ? "equipped"
+          : details.unlocked ? "available" : "locked";
+      });
+      browser.querySelectorAll("[data-cosmetic-preview-requirement]").forEach((requirement) => {
+        requirement.textContent = details.equipped
+          ? "Activo ahora"
+          : details.unlocked
+            ? "Listo para equipar"
+            : progression.requirementLabel(details.rewardId);
+      });
+      browser.querySelectorAll("[data-cosmetic-preview-equip]").forEach((button) => {
+        button.disabled = details.equipped || !details.unlocked;
+        button.textContent = details.equipped
+          ? "Equipado"
+          : details.unlocked ? "Equipar" : "Bloqueado";
+        button.dataset.previewState = details.equipped
+          ? "equipped"
+          : details.unlocked ? "available" : "locked";
+      });
+    });
   };
   const render = () => {
     const mastery = syncProgression();
@@ -278,11 +456,13 @@
       const unlocked = isUnlocked("board", skin, mastery.unlocks);
       const includedItem = included.has(rewardId);
       const selected = skin === board && unlocked;
+      const previewable = !!button.closest("[data-cosmetic-browser]");
       orderCosmeticOption(button, cosmeticRank(selected, includedItem, unlocked));
       button.classList.toggle("mc-skin-selected", selected);
       button.classList.toggle("mc-skin-locked", !unlocked);
       button.classList.toggle("mc-skin-unlocked", unlocked && !includedItem);
-      button.setAttribute("aria-disabled", unlocked ? "false" : "true");
+      button.dataset.cosmeticLocked = unlocked ? "false" : "true";
+      button.setAttribute("aria-disabled", !unlocked && !previewable ? "true" : "false");
       button.setAttribute("aria-pressed", selected ? "true" : "false");
       if (!includedItem) {
         button.title = unlocked ? "Recompensa ganada por maestria" : lockedTitle(rewardId);
@@ -303,11 +483,13 @@
       const unlocked = isUnlocked("piece", skin, mastery.unlocks);
       const includedItem = included.has(rewardId);
       const selected = skin === piece && unlocked;
+      const previewable = !!button.closest("[data-cosmetic-browser]");
       orderCosmeticOption(button, cosmeticRank(selected, includedItem, unlocked));
       button.classList.toggle("mc-skin-selected", selected);
       button.classList.toggle("mc-skin-locked", !unlocked);
       button.classList.toggle("mc-skin-unlocked", unlocked && !includedItem);
-      button.setAttribute("aria-disabled", unlocked ? "false" : "true");
+      button.dataset.cosmeticLocked = unlocked ? "false" : "true";
+      button.setAttribute("aria-disabled", !unlocked && !previewable ? "true" : "false");
       button.setAttribute("aria-pressed", selected ? "true" : "false");
       if (!includedItem) {
         button.title = unlocked ? "Recompensa ganada por maestria" : lockedTitle(rewardId);
@@ -330,11 +512,13 @@
       const unlocked = isPackUnlocked(pack, mastery.unlocks);
       const includedItem = !!config.included;
       const selected = unlocked && config.board === board && config.piece === piece;
+      const previewable = !!button.closest("[data-cosmetic-browser]");
       orderCosmeticOption(button, cosmeticRank(selected, includedItem, unlocked));
       button.classList.toggle("mc-skin-selected", selected);
       button.classList.toggle("mc-skin-locked", !unlocked);
       button.classList.toggle("mc-skin-unlocked", unlocked && !includedItem);
-      button.setAttribute("aria-disabled", unlocked ? "false" : "true");
+      button.dataset.cosmeticLocked = unlocked ? "false" : "true";
+      button.setAttribute("aria-disabled", !unlocked && !previewable ? "true" : "false");
       button.setAttribute("aria-pressed", selected ? "true" : "false");
       if (!includedItem) {
         button.title = unlocked ? "Conjunto ganado por maestria" : lockedTitle(rewardId);
@@ -348,6 +532,44 @@
         status.dataset.cosmeticState = includedItem ? "included" : unlocked ? "local" : "mastery";
       });
     });
+    renderCosmeticBrowser(mastery, board, piece);
+  };
+  const setPreviewSelection = (kind, value) => {
+    const valid = (
+      (kind === "board" && boards.includes(value)) ||
+      (kind === "piece" && pieces.includes(value)) ||
+      (kind === "pack" && !!packs[value]) ||
+      (kind === "palette" && ["base", "custom", ...Object.keys(palettePresets)].includes(value))
+    );
+    if (!valid) return false;
+    previewSelection = {kind, value};
+    render();
+    return true;
+  };
+  const equipPreview = () => {
+    if (!previewSelection) return false;
+
+    if (previewSelection.kind === "board") {
+      if (!isUnlocked("board", previewSelection.value)) return false;
+      write(boardKey, previewSelection.value, boards);
+    } else if (previewSelection.kind === "piece") {
+      if (!isUnlocked("piece", previewSelection.value)) return false;
+      write(pieceKey, previewSelection.value, pieces);
+    } else if (previewSelection.kind === "pack") {
+      const config = packs[previewSelection.value];
+      if (!config || !isPackUnlocked(previewSelection.value)) return false;
+      write(boardKey, config.board, boards);
+      write(pieceKey, config.piece, pieces);
+    } else {
+      if (!isPaletteUnlocked()) return false;
+      if (previewSelection.value === "base") writePalette(defaultPalette);
+      if (palettePresets[previewSelection.value]) writePalette(palettePresets[previewSelection.value]);
+      write(boardKey, "custom", boards);
+      write(pieceKey, "custom", pieces);
+    }
+
+    render();
+    return true;
   };
   window.ManaChessCosmetics = {
     choosePack: (pack) => {
@@ -397,9 +619,40 @@
       render();
       return true;
     },
+    previewBoard: (skin) => setPreviewSelection("board", skin),
+    previewPiece: (skin) => setPreviewSelection("piece", skin),
+    previewPack: (pack) => setPreviewSelection("pack", pack),
+    previewPalette: (preset) => setPreviewSelection("palette", preset),
+    equipPreview,
+    previewSelection: () => previewSelection ? {...previewSelection} : null,
     render
   };
   document.addEventListener("click", (event) => {
+    const browser = event.target.closest("[data-cosmetic-browser]");
+    if (browser) {
+      const equip = event.target.closest("[data-cosmetic-preview-equip]");
+      const pack = event.target.closest("[data-cosmetic-pack]");
+      const paletteReset = event.target.closest("[data-palette-reset]");
+      const palettePreset = event.target.closest("[data-palette-preset]");
+      const paletteUnlock = event.target.closest("[data-palette-unlock]");
+      const piece = event.target.closest("[data-piece-skin-choice]");
+      const board = event.target.closest("[data-board-skin-choice]");
+      const control = equip || pack || paletteReset || palettePreset || paletteUnlock || piece || board;
+
+      if (control) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (equip) equipPreview();
+        else if (pack) setPreviewSelection("pack", pack.dataset.cosmeticPack);
+        else if (paletteReset) setPreviewSelection("palette", "base");
+        else if (palettePreset) setPreviewSelection("palette", palettePreset.dataset.palettePreset);
+        else if (paletteUnlock) setPreviewSelection("palette", "custom");
+        else if (piece) setPreviewSelection("piece", piece.dataset.pieceSkinChoice);
+        else if (board) setPreviewSelection("board", board.dataset.boardSkinChoice);
+        return;
+      }
+    }
+
     const pack = event.target.closest("[data-cosmetic-pack]");
     if (pack && !pack.disabled) {
       event.preventDefault();

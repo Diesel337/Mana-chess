@@ -47,17 +47,22 @@ defmodule ManaChessOnlineWeb.GameLiveTest do
     assert {:ok, _pid} = GameSupervisor.lookup_game(game_id)
   end
 
-  test "lobby keeps play choices ahead of ranking and inline cosmetics", %{conn: conn} do
-    {:ok, _view, html} = live(conn, ~p"/")
+  test "lobby separates play and cosmetics into a single tabbed catalog", %{conn: conn} do
+    {:ok, view, html} = live(conn, ~p"/")
 
-    {offline_position, _} = :binary.match(html, ~s(class="mc-offline"))
-    {lobby_position, _} = :binary.match(html, ~s(class="mc-lobby"))
-    {ranking_position, _} = :binary.match(html, ~s(class="mc-ranking"))
-    {cosmetics_position, _} = :binary.match(html, ~s(class="mc-skins mc-skins-inline"))
+    assert has_element?(view, ~s(.mc-lobby-tabs button[phx-value-tab="play"][aria-pressed="true"]))
+    assert has_element?(view, ~s|[data-lobby-tab-panel="play"]:not([hidden])|)
+    assert has_element?(view, ~s([data-lobby-tab-panel="cosmetics"][hidden]))
+    assert length(:binary.matches(html, "data-cosmetic-browser")) == 1
+    refute html =~ "mc-skins-rail"
 
-    assert offline_position < lobby_position
-    assert lobby_position < ranking_position
-    assert ranking_position < cosmetics_position
+    render_click(view, "show_lobby_tab", %{"tab" => "cosmetics"})
+
+    assert has_element?(view, ~s(.mc-lobby-tabs button[phx-value-tab="cosmetics"][aria-pressed="true"]))
+    assert has_element?(view, ~s([data-lobby-tab-panel="play"][hidden]))
+    assert has_element?(view, ~s|[data-lobby-tab-panel="cosmetics"]:not([hidden])|)
+    assert has_element?(view, "[data-cosmetic-preview-stage]")
+    assert has_element?(view, "[data-cosmetic-preview-equip][disabled]")
   end
 
   test "lobby renders the competitive profile and rated quick match action", %{conn: conn} do
