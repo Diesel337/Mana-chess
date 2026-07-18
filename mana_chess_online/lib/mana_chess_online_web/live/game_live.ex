@@ -1321,6 +1321,21 @@ defmodule ManaChessOnlineWeb.GameLive do
               <button
                 type="button"
                 class="mc-skin-locked"
+                data-board-skin-choice="celestial"
+                data-cosmetic-premium="board:celestial"
+                data-sound-action="skin"
+                title="Gana 10 partidas para desbloquear Celestial"
+                aria-label="Celestial: gana 10 partidas para desbloquearlo"
+                aria-disabled="true"
+                aria-pressed="false"
+              >
+                <i class="mc-skin-dot mc-skin-dot-celestial"></i>
+                Celestial
+                <small data-cosmetic-status data-cosmetic-state="mastery">0/10 victorias</small>
+              </button>
+              <button
+                type="button"
+                class="mc-skin-locked"
                 data-board-skin-choice="custom"
                 data-cosmetic-premium="board:custom"
                 data-sound-action="skin"
@@ -1399,6 +1414,21 @@ defmodule ManaChessOnlineWeb.GameLive do
                 <i class="mc-piece-dot mc-piece-dot-elemental"></i>
                 Elemental
                 <small data-cosmetic-status data-cosmetic-state="mastery">0/10 partidas</small>
+              </button>
+              <button
+                type="button"
+                class="mc-skin-locked"
+                data-piece-skin-choice="celestial"
+                data-cosmetic-premium="piece:celestial"
+                data-sound-action="skin"
+                title="Gana 10 partidas para desbloquear Corte celestial"
+                aria-label="Corte celestial: gana 10 partidas para desbloquearla"
+                aria-disabled="true"
+                aria-pressed="false"
+              >
+                <i class="mc-piece-dot mc-piece-dot-celestial"></i>
+                Celestial
+                <small data-cosmetic-status data-cosmetic-state="mastery">0/10 victorias</small>
               </button>
               <button
                 type="button"

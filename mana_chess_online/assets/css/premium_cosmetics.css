@@ -1,18 +1,21 @@
-/* Release cosmetic families: Arcane, Crystal, and Elemental. */
+/* Release cosmetic families: Arcane, Crystal, Elemental, and Celestial. */
 
 .mc-skin-preview-arcane,
 .mc-skin-preview-crystal,
 .mc-skin-preview-elemental,
+.mc-skin-preview-celestial,
 .mc-pack-preview-arcane,
 .mc-pack-preview-crystal,
-.mc-pack-preview-elemental {
+.mc-pack-preview-elemental,
+.mc-pack-preview-celestial {
   position: relative;
   isolation: isolate;
 }
 
 .mc-skin-preview-arcane::after,
 .mc-skin-preview-crystal::after,
-.mc-skin-preview-elemental::after {
+.mc-skin-preview-elemental::after,
+.mc-skin-preview-celestial::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -77,6 +80,33 @@
     #164f50;
 }
 
+.mc-skin-preview-celestial,
+.mc-skin-dot-celestial {
+  --skin-frame: #f4d98a;
+  --skin-light: #d8e8f2;
+  --skin-dark: #17213e;
+}
+
+.mc-skin-preview-celestial::after {
+  background-image: url("/images/cosmetics/celestial/frame.svg");
+}
+
+.mc-skin-preview-celestial i:nth-child(1),
+.mc-skin-preview-celestial i:nth-child(4) {
+  background:
+    radial-gradient(circle at 24% 22%, #fff8d8 0 2px, transparent 3px),
+    linear-gradient(135deg, rgba(244, 217, 138, .34), transparent 52%),
+    #d8e8f2;
+}
+
+.mc-skin-preview-celestial i:nth-child(2),
+.mc-skin-preview-celestial i:nth-child(3) {
+  background:
+    radial-gradient(circle at 72% 25%, #76d7e4 0 2px, transparent 3px),
+    linear-gradient(45deg, transparent 45%, rgba(195, 167, 255, .3) 47% 50%, transparent 52%),
+    #17213e;
+}
+
 .mc-piece-skin-preview-arcane,
 .mc-piece-dot-arcane {
   --piece-frame: #9a7dff;
@@ -96,6 +126,13 @@
   --piece-frame: #ffd27a;
   --piece-a: #ffbd54;
   --piece-b: #103c42;
+}
+
+.mc-piece-skin-preview-celestial,
+.mc-piece-dot-celestial {
+  --piece-frame: #f4d98a;
+  --piece-a: #f7edcf;
+  --piece-b: #11172f;
 }
 
 .mc-piece-skin-preview-arcane {
@@ -120,10 +157,19 @@
     #102622;
 }
 
+.mc-piece-skin-preview-celestial {
+  border-color: #f4d98a;
+  background:
+    radial-gradient(circle at 20% 18%, rgba(244, 217, 138, .34), transparent 34%),
+    radial-gradient(circle at 80% 76%, rgba(118, 215, 228, .3), transparent 38%),
+    linear-gradient(145deg, #20294d, #090d1f);
+}
+
 :is(
   .mc-piece-skin-preview-arcane,
   .mc-piece-skin-preview-crystal,
-  .mc-piece-skin-preview-elemental
+  .mc-piece-skin-preview-elemental,
+  .mc-piece-skin-preview-celestial
 ) {
   display: block;
   position: relative;
@@ -133,7 +179,8 @@
 .mc-shell:has(.mc-menu) :is(
   .mc-piece-skin-preview-arcane,
   .mc-piece-skin-preview-crystal,
-  .mc-piece-skin-preview-elemental
+  .mc-piece-skin-preview-elemental,
+  .mc-piece-skin-preview-celestial
 ) {
   width: 36px;
   padding: 2px;
@@ -142,7 +189,8 @@
 :is(
   .mc-piece-skin-preview-arcane,
   .mc-piece-skin-preview-crystal,
-  .mc-piece-skin-preview-elemental
+  .mc-piece-skin-preview-elemental,
+  .mc-piece-skin-preview-celestial
 ) .mc-piece-sample {
   position: absolute;
   top: 7%;
@@ -155,7 +203,8 @@
 :is(
   .mc-piece-skin-preview-arcane,
   .mc-piece-skin-preview-crystal,
-  .mc-piece-skin-preview-elemental
+  .mc-piece-skin-preview-elemental,
+  .mc-piece-skin-preview-celestial
 ) .mc-piece-sample-black {
   top: 13%;
   right: 0;
@@ -189,6 +238,19 @@
   --pack-crest-outline: #521936;
 }
 
+.mc-pack-preview-celestial {
+  --pack-frame: #f4d98a;
+  --pack-light: #d8e8f2;
+  --pack-dark: #17213e;
+  --pack-white: #f7edcf;
+  --pack-black: #11172f;
+  --pack-white-text: #292041;
+  --pack-black-text: #8ce5ed;
+  --pack-crest-mask: url("/images/cosmetics/celestial/king.svg");
+  --pack-crest-fill: linear-gradient(145deg, #fff8d8 2%, #f4d98a 38%, #76d7e4 69%, #352b73 100%);
+  --pack-crest-outline: #11172f;
+}
+
 .mc-shell:has(.mc-menu) .mc-pack-preview {
   width: 38px;
 }
@@ -206,7 +268,7 @@
   --pack-crest-outline: #173c38;
 }
 
-:is(.mc-pack-preview-arcane, .mc-pack-preview-crystal, .mc-pack-preview-elemental)::after {
+:is(.mc-pack-preview-arcane, .mc-pack-preview-crystal, .mc-pack-preview-elemental, .mc-pack-preview-celestial)::after {
   content: "";
   position: absolute;
   inset: 8% 18%;
@@ -220,7 +282,7 @@
   mask: var(--pack-crest-mask) center / contain no-repeat;
 }
 
-:is(.mc-pack-preview-arcane, .mc-pack-preview-crystal, .mc-pack-preview-elemental) > b {
+:is(.mc-pack-preview-arcane, .mc-pack-preview-crystal, .mc-pack-preview-elemental, .mc-pack-preview-celestial) > b {
   display: none;
 }
 
@@ -228,9 +290,11 @@
   .mc-piece-skin-preview-arcane,
   .mc-piece-skin-preview-crystal,
   .mc-piece-skin-preview-elemental,
+  .mc-piece-skin-preview-celestial,
   .mc-pack-preview-arcane,
   .mc-pack-preview-crystal,
-  .mc-pack-preview-elemental
+  .mc-pack-preview-elemental,
+  .mc-pack-preview-celestial
 ) :is(.mc-piece-sample, b) {
   border: 0;
   border-radius: 0;
@@ -246,9 +310,11 @@
   .mc-piece-skin-preview-arcane,
   .mc-piece-skin-preview-crystal,
   .mc-piece-skin-preview-elemental,
+  .mc-piece-skin-preview-celestial,
   .mc-pack-preview-arcane,
   .mc-pack-preview-crystal,
-  .mc-pack-preview-elemental
+  .mc-pack-preview-elemental,
+  .mc-pack-preview-celestial
 ) :is(.mc-piece-sample, b)::before {
   content: "";
   width: 100%;
@@ -261,19 +327,19 @@
   mask: var(--mc-piece-mask) center / contain no-repeat;
 }
 
-:is(.mc-pack-preview-arcane, .mc-pack-preview-crystal, .mc-pack-preview-elemental) b {
+:is(.mc-pack-preview-arcane, .mc-pack-preview-crystal, .mc-pack-preview-elemental, .mc-pack-preview-celestial) b {
   z-index: 3;
   width: 58%;
   height: 75%;
   aspect-ratio: auto;
 }
 
-:is(.mc-pack-preview-arcane, .mc-pack-preview-crystal, .mc-pack-preview-elemental) .mc-pack-piece-black {
+:is(.mc-pack-preview-arcane, .mc-pack-preview-crystal, .mc-pack-preview-elemental, .mc-pack-preview-celestial) .mc-pack-piece-black {
   top: 4%;
   left: 5%;
 }
 
-:is(.mc-pack-preview-arcane, .mc-pack-preview-crystal, .mc-pack-preview-elemental) .mc-pack-piece-white {
+:is(.mc-pack-preview-arcane, .mc-pack-preview-crystal, .mc-pack-preview-elemental, .mc-pack-preview-celestial) .mc-pack-piece-white {
   right: 5%;
   bottom: 3%;
 }
@@ -314,6 +380,18 @@
   --mc-preview-piece-outline: #e6fff7;
 }
 
+:is(.mc-piece-skin-preview-celestial, .mc-pack-preview-celestial) .mc-piece-sample-white,
+.mc-pack-preview-celestial .mc-pack-piece-white {
+  --mc-preview-piece-fill: linear-gradient(145deg, #fffdf1 2%, #f4d98a 38%, #76d7e4 69%, #5b4a9c 100%);
+  --mc-preview-piece-outline: #292041;
+}
+
+:is(.mc-piece-skin-preview-celestial, .mc-pack-preview-celestial) .mc-piece-sample-black,
+.mc-pack-preview-celestial .mc-pack-piece-black {
+  --mc-preview-piece-fill: linear-gradient(145deg, #d8f7f7 2%, #5dbfdc 40%, #353878 68%, #090d1f 100%);
+  --mc-preview-piece-outline: #fff2bd;
+}
+
 :is(.mc-piece-skin-preview-arcane, .mc-pack-preview-arcane) .mc-piece-king {
   --mc-piece-mask: url("/images/cosmetics/arcane/king.svg");
 }
@@ -338,6 +416,14 @@
   --mc-piece-mask: url("/images/cosmetics/elemental/queen.svg");
 }
 
+:is(.mc-piece-skin-preview-celestial, .mc-pack-preview-celestial) .mc-piece-king {
+  --mc-piece-mask: url("/images/cosmetics/celestial/king.svg");
+}
+
+:is(.mc-piece-skin-preview-celestial, .mc-pack-preview-celestial) .mc-piece-queen {
+  --mc-piece-mask: url("/images/cosmetics/celestial/queen.svg");
+}
+
 html[data-piece-skin="arcane"] :is(.mc-board .mc-piece-pawn, .mc-drag-ghost.mc-piece-pawn) { --mc-piece-mask: url("/images/cosmetics/arcane/pawn.svg"); }
 html[data-piece-skin="arcane"] :is(.mc-board .mc-piece-knight, .mc-drag-ghost.mc-piece-knight) { --mc-piece-mask: url("/images/cosmetics/arcane/knight.svg"); }
 html[data-piece-skin="arcane"] :is(.mc-board .mc-piece-bishop, .mc-drag-ghost.mc-piece-bishop) { --mc-piece-mask: url("/images/cosmetics/arcane/bishop.svg"); }
@@ -359,7 +445,14 @@ html[data-piece-skin="elemental"] :is(.mc-board .mc-piece-rook, .mc-drag-ghost.m
 html[data-piece-skin="elemental"] :is(.mc-board .mc-piece-queen, .mc-drag-ghost.mc-piece-queen) { --mc-piece-mask: url("/images/cosmetics/elemental/queen.svg"); }
 html[data-piece-skin="elemental"] :is(.mc-board .mc-piece-king, .mc-drag-ghost.mc-piece-king) { --mc-piece-mask: url("/images/cosmetics/elemental/king.svg"); }
 
-html:is([data-piece-skin="arcane"], [data-piece-skin="crystal"], [data-piece-skin="elemental"])
+html[data-piece-skin="celestial"] :is(.mc-board .mc-piece-pawn, .mc-drag-ghost.mc-piece-pawn) { --mc-piece-mask: url("/images/cosmetics/celestial/pawn.svg"); }
+html[data-piece-skin="celestial"] :is(.mc-board .mc-piece-knight, .mc-drag-ghost.mc-piece-knight) { --mc-piece-mask: url("/images/cosmetics/celestial/knight.svg"); }
+html[data-piece-skin="celestial"] :is(.mc-board .mc-piece-bishop, .mc-drag-ghost.mc-piece-bishop) { --mc-piece-mask: url("/images/cosmetics/celestial/bishop.svg"); }
+html[data-piece-skin="celestial"] :is(.mc-board .mc-piece-rook, .mc-drag-ghost.mc-piece-rook) { --mc-piece-mask: url("/images/cosmetics/celestial/rook.svg"); }
+html[data-piece-skin="celestial"] :is(.mc-board .mc-piece-queen, .mc-drag-ghost.mc-piece-queen) { --mc-piece-mask: url("/images/cosmetics/celestial/queen.svg"); }
+html[data-piece-skin="celestial"] :is(.mc-board .mc-piece-king, .mc-drag-ghost.mc-piece-king) { --mc-piece-mask: url("/images/cosmetics/celestial/king.svg"); }
+
+html:is([data-piece-skin="arcane"], [data-piece-skin="crystal"], [data-piece-skin="elemental"], [data-piece-skin="celestial"])
   :is(.mc-game .mc-piece[class*="mc-piece-"], .mc-drag-ghost[class*="mc-piece-"]) {
   position: relative;
   width: 82%;
@@ -374,7 +467,7 @@ html:is([data-piece-skin="arcane"], [data-piece-skin="crystal"], [data-piece-ski
   text-shadow: none !important;
 }
 
-html:is([data-piece-skin="arcane"], [data-piece-skin="crystal"], [data-piece-skin="elemental"])
+html:is([data-piece-skin="arcane"], [data-piece-skin="crystal"], [data-piece-skin="elemental"], [data-piece-skin="celestial"])
   :is(.mc-game .mc-piece[class*="mc-piece-"], .mc-drag-ghost[class*="mc-piece-"])::before {
   content: "";
   position: absolute;
@@ -426,12 +519,24 @@ html[data-piece-skin="elemental"] .mc-black {
   --mc-premium-piece-outline: #d8fff3;
 }
 
-.mc-board-stack:is([data-board-skin="arcane"], [data-board-skin="crystal"], [data-board-skin="elemental"]) .mc-board {
+html[data-piece-skin="celestial"] .mc-white {
+  --mc-premium-piece-fill: linear-gradient(145deg, #fffdf1 1%, #f5dfa0 34%, #78d4df 66%, #5b4a9c 100%);
+  --mc-premium-piece-glow: rgba(244, 217, 138, .58);
+  --mc-premium-piece-outline: #292041;
+}
+
+html[data-piece-skin="celestial"] .mc-black {
+  --mc-premium-piece-fill: linear-gradient(145deg, #d8f7f7 1%, #65c3dc 34%, #363978 65%, #080c1d 100%);
+  --mc-premium-piece-glow: rgba(93, 191, 220, .58);
+  --mc-premium-piece-outline: #fff2bd;
+}
+
+.mc-board-stack:is([data-board-skin="arcane"], [data-board-skin="crystal"], [data-board-skin="elemental"], [data-board-skin="celestial"]) .mc-board {
   position: relative;
   isolation: isolate;
 }
 
-.mc-board-stack:is([data-board-skin="arcane"], [data-board-skin="crystal"], [data-board-skin="elemental"]) .mc-board::after {
+.mc-board-stack:is([data-board-skin="arcane"], [data-board-skin="crystal"], [data-board-skin="elemental"], [data-board-skin="celestial"]) .mc-board::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -580,6 +685,58 @@ html[data-piece-skin="elemental"] .mc-black {
   stroke: #ffb54d;
 }
 
+.mc-board-stack[data-board-skin="celestial"] {
+  background:
+    radial-gradient(circle at 12% 10%, rgba(244, 217, 138, .24), transparent 31%),
+    radial-gradient(circle at 88% 90%, rgba(118, 215, 228, .22), transparent 35%),
+    linear-gradient(145deg, #20294d, #080d1f 72%);
+  border-color: rgba(244, 217, 138, .78);
+  box-shadow: 0 28px 68px rgba(0, 0, 0, .56), 0 0 36px rgba(118, 215, 228, .16), inset 0 1px rgba(255, 248, 216, .14);
+}
+
+.mc-board-stack[data-board-skin="celestial"] .mc-board {
+  border-color: #080d1f;
+  background: #080d1f;
+  box-shadow: 0 0 0 1px rgba(244, 217, 138, .42), 0 18px 42px rgba(0, 0, 0, .52);
+}
+
+.mc-board-stack[data-board-skin="celestial"] .mc-board::after {
+  background-image: url("/images/cosmetics/celestial/frame.svg");
+}
+
+.mc-board-stack[data-board-skin="celestial"] .mc-light {
+  background:
+    radial-gradient(circle at 23% 21%, #fff8d8 0 2px, transparent 3px),
+    linear-gradient(135deg, rgba(244, 217, 138, .38), transparent 52%),
+    linear-gradient(315deg, rgba(118, 215, 228, .16), transparent 58%),
+    #d8e8f2;
+}
+
+.mc-board-stack[data-board-skin="celestial"] .mc-dark {
+  background:
+    radial-gradient(circle at 27% 24%, #f4d98a 0 2px, transparent 3px),
+    radial-gradient(circle at 74% 72%, #76d7e4 0 1px, transparent 2px),
+    linear-gradient(35deg, transparent 0 46%, rgba(195, 167, 255, .2) 47% 49%, transparent 50%),
+    #17213e;
+}
+
+.mc-board-stack[data-board-skin="celestial"] .mc-selected {
+  box-shadow: inset 0 0 0 5px #fff1b5, inset 0 0 34px rgba(118, 215, 228, .44), 0 0 0 1px rgba(195, 167, 255, .42);
+}
+
+.mc-board-stack[data-board-skin="celestial"] .mc-valid {
+  box-shadow: inset 0 0 0 999px rgba(118, 215, 228, .22), inset 0 0 0 3px rgba(244, 217, 138, .56);
+}
+
+.mc-board-stack[data-board-skin="celestial"] .mc-valid::after {
+  background: #fff1b5;
+  box-shadow: 0 0 0 7px rgba(118, 215, 228, .15), 0 0 22px rgba(244, 217, 138, .56);
+}
+
+.mc-board-stack[data-board-skin="celestial"] .mc-cooldown-ring-fill {
+  stroke: #76d7e4;
+}
+
 .mc-game:has(.mc-play-area) .mc-play-area > .mc-skin-strip {
   width: min(46%, 232px);
   max-width: calc(50% - 12px);
@@ -617,7 +774,7 @@ html[data-piece-skin="elemental"] .mc-black {
     max-width: calc(50% - 10px);
   }
 
-  .mc-board-stack:is([data-board-skin="arcane"], [data-board-skin="crystal"], [data-board-skin="elemental"]) .mc-board::after {
+  .mc-board-stack:is([data-board-skin="arcane"], [data-board-skin="crystal"], [data-board-skin="elemental"], [data-board-skin="celestial"]) .mc-board::after {
     opacity: .84;
   }
 }

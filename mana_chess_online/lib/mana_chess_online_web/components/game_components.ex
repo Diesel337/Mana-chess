@@ -19,13 +19,13 @@ defmodule ManaChessOnlineWeb.GameComponents do
           <span>Cosmeticos visuales</span>
         </div>
         <div class="mc-mastery-summary">
-          <small data-cosmetic-local-count>Maestria 0/4</small>
+          <small data-cosmetic-local-count>Maestria 0/5</small>
           <span
             class="mc-mastery-progress"
             role="progressbar"
             aria-label="Recompensas de maestria"
             aria-valuemin="0"
-            aria-valuemax="4"
+            aria-valuemax="5"
             aria-valuenow="0"
             data-cosmetic-mastery-progress
           >
@@ -111,6 +111,22 @@ defmodule ManaChessOnlineWeb.GameComponents do
               </span>
               <strong>Forja elemental</strong>
               <small data-cosmetic-status data-cosmetic-state="mastery">0/10 partidas</small>
+            </button>
+            <button
+              type="button"
+              class="mc-skin-option mc-skin-locked"
+              data-board-skin-choice="celestial"
+              data-cosmetic-premium="board:celestial"
+              data-sound-action="skin"
+              title="Gana 10 partidas para desbloquearlo"
+              aria-disabled="true"
+              aria-pressed="false"
+            >
+              <span class="mc-skin-preview mc-skin-preview-celestial" aria-hidden="true">
+                <i></i><i></i><i></i><i></i>
+              </span>
+              <strong>Firmamento</strong>
+              <small data-cosmetic-status data-cosmetic-state="mastery">0/10 victorias</small>
             </button>
             <button
               type="button"
@@ -216,6 +232,23 @@ defmodule ManaChessOnlineWeb.GameComponents do
             <button
               type="button"
               class="mc-skin-option mc-skin-locked"
+              data-piece-skin-choice="celestial"
+              data-cosmetic-premium="piece:celestial"
+              data-sound-action="skin"
+              title="Gana 10 partidas para desbloquearlo"
+              aria-disabled="true"
+              aria-pressed="false"
+            >
+              <span class="mc-piece-skin-preview mc-piece-skin-preview-celestial" aria-hidden="true">
+                <b class="mc-piece-sample mc-piece-sample-white mc-piece-king">{@symbols["K"]}</b>
+                <b class="mc-piece-sample mc-piece-sample-black mc-piece-queen">{@symbols["q"]}</b>
+              </span>
+              <strong>Corte celestial</strong>
+              <small data-cosmetic-status data-cosmetic-state="mastery">0/10 victorias</small>
+            </button>
+            <button
+              type="button"
+              class="mc-skin-option mc-skin-locked"
               data-piece-skin-choice="custom"
               data-cosmetic-premium="piece:custom"
               data-sound-action="skin"
@@ -308,6 +341,22 @@ defmodule ManaChessOnlineWeb.GameComponents do
               <strong>Elemental</strong>
               <small data-cosmetic-status data-cosmetic-pack-status data-cosmetic-state="mastery">
                 0/10 partidas
+              </small>
+            </button>
+            <button
+              type="button"
+              class="mc-skin-option mc-pack-option mc-skin-locked"
+              data-cosmetic-pack="celestial"
+              data-cosmetic-premium="pack:celestial"
+              data-sound-action="skin"
+              title="Gana 10 partidas para desbloquearlo"
+              aria-disabled="true"
+              aria-pressed="false"
+            >
+              <.pack_preview symbols={@symbols} class="mc-pack-preview-celestial" />
+              <strong>Celestial</strong>
+              <small data-cosmetic-status data-cosmetic-pack-status data-cosmetic-state="mastery">
+                0/10 victorias
               </small>
             </button>
           </div>

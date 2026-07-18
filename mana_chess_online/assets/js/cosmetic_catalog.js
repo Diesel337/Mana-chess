@@ -7,6 +7,7 @@
     arcane: {frame: "#9a7dff", light: "#8fe7c8", dark: "#241745"},
     crystal: {frame: "#dff8ff", light: "#ccecff", dark: "#27456f"},
     elemental: {frame: "#ffd27a", light: "#efb24f", dark: "#164f50"},
+    celestial: {frame: "#f4d98a", light: "#d8e8f2", dark: "#17213e"},
   }
 
   const piecePreviewPalettes = {
@@ -55,17 +56,27 @@
       whiteGlow: "rgba(255, 132, 63, .56)",
       blackGlow: "rgba(66, 222, 196, .5)",
     },
+    celestial: {
+      frame: "#f4d98a",
+      white: "#f7edcf",
+      black: "#11172f",
+      whiteText: "#292041",
+      blackText: "#8ce5ed",
+      whiteGlow: "rgba(244, 217, 138, .56)",
+      blackGlow: "rgba(93, 191, 220, .54)",
+    },
   }
 
   window.ManaChessCosmeticCatalog = Object.freeze({
-    boards: ["classic", "gilded", "arcane", "crystal", "elemental", "custom"],
-    pieces: ["classic", "runes", "arcane", "crystal", "elemental", "custom"],
+    boards: ["classic", "gilded", "arcane", "crystal", "elemental", "celestial", "custom"],
+    pieces: ["classic", "runes", "arcane", "crystal", "elemental", "celestial", "custom"],
     packs: {
       classic: {board: "classic", piece: "classic", included: true, unlocks: []},
       mana: {board: "gilded", piece: "runes", included: true, unlocks: []},
       arcane: {board: "arcane", piece: "arcane", unlocks: ["board:arcane", "piece:arcane"]},
       crystal: {board: "crystal", piece: "crystal", unlocks: ["board:crystal", "piece:crystal"]},
       elemental: {board: "elemental", piece: "elemental", unlocks: ["board:elemental", "piece:elemental"]},
+      celestial: {board: "celestial", piece: "celestial", unlocks: ["board:celestial", "piece:celestial"]},
     },
     mastery: [
       {
@@ -95,17 +106,26 @@
         target: 5,
         rewardIds: ["board:custom", "piece:custom", "palette:custom"],
       },
+      {
+        id: "celestial",
+        pack: "celestial",
+        metric: "wins",
+        target: 10,
+        rewardIds: ["board:celestial", "piece:celestial"],
+      },
     ],
     includedIds: ["board:classic", "board:gilded", "piece:classic", "piece:runes"],
-    premiumBoards: ["arcane", "crystal", "elemental", "custom"],
-    premiumPieces: ["arcane", "crystal", "elemental", "custom"],
+    premiumBoards: ["arcane", "crystal", "elemental", "celestial", "custom"],
+    premiumPieces: ["arcane", "crystal", "elemental", "celestial", "custom"],
     localUnlockIds: [
       "board:arcane",
       "board:crystal",
       "board:elemental",
+      "board:celestial",
       "piece:arcane",
       "piece:crystal",
       "piece:elemental",
+      "piece:celestial",
       "board:custom",
       "piece:custom",
       "palette:custom",

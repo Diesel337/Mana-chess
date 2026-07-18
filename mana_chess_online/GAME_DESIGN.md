@@ -101,6 +101,7 @@ La version base incluye los conjuntos Clasico y Mana. Los demas cosmeticos se ga
 - Cristal: ganar 3 partidas.
 - Elemental: completar 10 partidas.
 - Paleta custom: ganar 5 partidas.
+- Celestial: ganar 10 partidas.
 
 Las estadisticas viven en `mana-chess-local-stats` y los premios permanentes en `mana-chess-cosmetic-unlocks`. Reiniciar las estadisticas visibles no elimina premios ya ganados. `assets/js/cosmetic_catalog.js` declara los hitos y `assets/js/cosmetic_progression.js` aplica las reglas; los controladores de tienda solo equipan recompensas disponibles.
 

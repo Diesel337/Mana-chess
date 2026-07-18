@@ -45,7 +45,7 @@ const loadCosmetics = () => {
   return {controller: browser.window.ManaChessCosmetics, localStorage}
 }
 
-test("defines the four release mastery milestones", () => {
+test("defines the five release mastery milestones", () => {
   assert.deepEqual(
     Array.from(progression.milestones, milestone => [milestone.id, milestone.metric, milestone.target]),
     [
@@ -53,6 +53,7 @@ test("defines the four release mastery milestones", () => {
       ["crystal", "wins", 3],
       ["elemental", "played", 10],
       ["custom", "wins", 5],
+      ["celestial", "wins", 10],
     ]
   )
 })
@@ -69,9 +70,12 @@ test("unlocks complete rewards only after their local milestone", () => {
     "piece:crystal",
   ])
 
-  const fullRoute = progression.syncUnlocks({played: 10, wins: 5}, [])
-  assert.equal(fullRoute.unlocks.length, 9)
-  assert.deepEqual(Array.from(fullRoute.unlockedMilestones), ["arcane", "crystal", "elemental", "custom"])
+  const fullRoute = progression.syncUnlocks({played: 10, wins: 10}, [])
+  assert.equal(fullRoute.unlocks.length, 11)
+  assert.deepEqual(
+    Array.from(fullRoute.unlockedMilestones),
+    ["arcane", "crystal", "elemental", "custom", "celestial"]
+  )
 })
 
 test("preserves old unlocks and repairs legacy custom palette groups", () => {
@@ -91,7 +95,7 @@ test("reports compact progress and mastery summary labels", () => {
   const synced = progression.syncUnlocks({played: 4, wins: 3}, [])
   assert.deepEqual(
     {...progression.summary({played: 4, wins: 3}, synced.unlocks)},
-    {completed: 2, total: 4, percent: 50, label: "Maestria 2/4"}
+    {completed: 2, total: 5, percent: 40, label: "Maestria 2/5"}
   )
 })
 
@@ -100,6 +104,7 @@ test("locked cosmetic actions cannot grant or equip their own reward", () => {
 
   assert.equal(controller.chooseBoard("arcane"), false)
   assert.equal(controller.choosePack("crystal"), false)
+  assert.equal(controller.choosePack("celestial"), false)
   assert.equal(controller.choosePalette("midnight"), false)
   assert.equal(localStorage.getItem("mana-chess-cosmetic-unlocks"), null)
   assert.equal(localStorage.getItem("mana-chess-board-skin"), null)
@@ -113,4 +118,19 @@ test("locked cosmetic actions cannot grant or equip their own reward", () => {
     JSON.parse(localStorage.getItem("mana-chess-cosmetic-unlocks")).sort(),
     ["board:arcane", "piece:arcane"]
   )
+})
+
+test("equips the complete Celestial set only after ten wins", () => {
+  const {controller, localStorage} = loadCosmetics()
+  localStorage.setItem("mana-chess-local-stats", JSON.stringify({played: 10, wins: 10}))
+
+  controller.render()
+
+  assert.equal(controller.choosePack("celestial"), true)
+  assert.equal(localStorage.getItem("mana-chess-board-skin"), "celestial")
+  assert.equal(localStorage.getItem("mana-chess-piece-skin"), "celestial")
+
+  const unlocks = JSON.parse(localStorage.getItem("mana-chess-cosmetic-unlocks"))
+  assert.ok(unlocks.includes("board:celestial"))
+  assert.ok(unlocks.includes("piece:celestial"))
 })

@@ -2,7 +2,7 @@ defmodule ManaChessOnlineWeb.CosmeticAssetSyncTest do
   use ExUnit.Case, async: true
 
   @root Path.expand("../..", __DIR__)
-  @assets ~w(
+  @js_assets ~w(
     cosmetic_actions.js
     cosmetic_catalog.js
     cosmetic_fallback.js
@@ -14,11 +14,18 @@ defmodule ManaChessOnlineWeb.CosmeticAssetSyncTest do
   )
 
   test "cosmetic source modules match their served static copies" do
-    for asset <- @assets do
+    for asset <- @js_assets do
       source = File.read!(Path.join([@root, "assets", "js", asset]))
       served = File.read!(Path.join([@root, "priv", "static", "assets", "js", asset]))
 
       assert served == source, "#{asset} must be copied to priv/static after editing"
     end
+  end
+
+  test "premium cosmetic stylesheet matches its served static copy" do
+    source = File.read!(Path.join([@root, "assets", "css", "premium_cosmetics.css"]))
+    served = File.read!(Path.join([@root, "priv", "static", "assets", "css", "premium_cosmetics.css"]))
+
+    assert served == source
   end
 end

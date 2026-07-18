@@ -22,8 +22,8 @@ defmodule ManaChessOnlineWeb.PageControllerTest do
     response = html_response(conn, 200)
     assert response =~ "Mana Chess"
     assert response =~ "app.css?v=cosmetic-mastery-20260717"
-    assert response =~ "premium_cosmetics.css?v=premium-cosmetics-20260717"
-    assert response =~ "cosmetic-catalog-mastery-20260717"
+    assert response =~ "premium_cosmetics.css?v=premium-cosmetics-celestial-20260718"
+    assert response =~ "cosmetic-catalog-celestial-20260718"
     assert response =~ "cosmetic-progression-20260717"
     assert response =~ "cosmetics-mastery-20260717"
     assert response =~ "cosmetic-actions-mastery-20260717"
@@ -80,12 +80,17 @@ defmodule ManaChessOnlineWeb.PageControllerTest do
     assert progression =~ "syncUnlocks"
     assert progression =~ "Maestria"
 
-    for family <- ~w(arcane crystal elemental) do
+    for family <- ~w(arcane crystal elemental celestial) do
       assert catalog =~ family
       assert stylesheet =~ "/images/cosmetics/#{family}/king.svg"
 
-      svg = build_conn() |> get("/images/cosmetics/#{family}/king.svg") |> response(200)
-      assert svg =~ ~s(viewBox="0 0 100 120")
+      for piece <- ~w(pawn knight bishop rook queen king) do
+        svg = build_conn() |> get("/images/cosmetics/#{family}/#{piece}.svg") |> response(200)
+        assert svg =~ ~s(viewBox="0 0 100 120")
+      end
+
+      frame = build_conn() |> get("/images/cosmetics/#{family}/frame.svg") |> response(200)
+      assert frame =~ ~s(viewBox="0 0 1000 1000")
     end
   end
 
