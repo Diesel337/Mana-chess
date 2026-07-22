@@ -25,6 +25,7 @@ defmodule ManaChessOnlineWeb.PageControllerTest do
     assert response =~ "premium_cosmetics.css?v=premium-cosmetics-celestial-20260718"
     assert response =~ "game_effects.css?v=game-effects-20260718c"
     assert response =~ "cosmetic_browser.css?v=cosmetic-gallery-20260722b"
+    assert response =~ "flat_pieces.css?v=flat-pieces-20260722e"
     assert response =~ "game_effects.js?v=game-effects-20260718c"
     assert response =~ "cosmetic-catalog-celestial-20260718"
     assert response =~ "cosmetic-progression-20260717"
@@ -111,6 +112,7 @@ defmodule ManaChessOnlineWeb.PageControllerTest do
   test "cosmetic browser assets are served", %{conn: conn} do
     javascript = conn |> get("/assets/js/cosmetics.js") |> response(200)
     stylesheet = build_conn() |> get("/assets/css/cosmetic_browser.css") |> response(200)
+    flat_pieces = build_conn() |> get("/assets/css/flat_pieces.css") |> response(200)
 
     assert javascript =~ "previewSelection"
     assert javascript =~ "equipPreview"
@@ -119,6 +121,14 @@ defmodule ManaChessOnlineWeb.PageControllerTest do
     assert stylesheet =~ "mc-lobby-tabs"
     assert stylesheet =~ "mc-cosmetic-preview-stage"
     assert stylesheet =~ "mc-cosmetic-gallery-board"
+    assert flat_pieces =~ "--mc-flat-piece-mask"
+    assert flat_pieces =~ "/images/pieces/flat/king.svg"
+
+    for piece <- ~w(pawn knight bishop rook queen king) do
+      svg = build_conn() |> get("/images/pieces/flat/#{piece}.svg") |> response(200)
+      assert svg =~ ~s(viewBox="0 0 100 120")
+      assert svg =~ "<path"
+    end
   end
 
   test "steam launch access mode blocks public game routes", %{conn: conn} do

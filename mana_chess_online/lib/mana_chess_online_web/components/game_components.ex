@@ -278,8 +278,8 @@ defmodule ManaChessOnlineWeb.GameComponents do
               aria-pressed="false"
             >
               <span class="mc-piece-skin-preview mc-piece-skin-preview-classic" aria-hidden="true">
-                <b class="mc-piece-sample mc-piece-sample-white">{@symbols["K"]}</b>
-                <b class="mc-piece-sample mc-piece-sample-black">{@symbols["q"]}</b>
+                <b class="mc-piece-sample mc-piece-sample-white mc-piece-king">{@symbols["K"]}</b>
+                <b class="mc-piece-sample mc-piece-sample-black mc-piece-queen">{@symbols["q"]}</b>
               </span>
               <strong>Clasicas</strong>
               <small data-cosmetic-status data-cosmetic-state="included">Incluido</small>
@@ -292,8 +292,8 @@ defmodule ManaChessOnlineWeb.GameComponents do
               aria-pressed="false"
             >
               <span class="mc-piece-skin-preview mc-piece-skin-preview-runes" aria-hidden="true">
-                <b class="mc-piece-sample mc-piece-sample-white">{@symbols["K"]}</b>
-                <b class="mc-piece-sample mc-piece-sample-black">{@symbols["q"]}</b>
+                <b class="mc-piece-sample mc-piece-sample-white mc-piece-king">{@symbols["K"]}</b>
+                <b class="mc-piece-sample mc-piece-sample-black mc-piece-queen">{@symbols["q"]}</b>
               </span>
               <strong>Runas de mana</strong>
               <small data-cosmetic-status data-cosmetic-state="included">Incluido</small>
@@ -377,8 +377,8 @@ defmodule ManaChessOnlineWeb.GameComponents do
               aria-pressed="false"
             >
               <span class="mc-piece-skin-preview mc-piece-skin-preview-custom" aria-hidden="true">
-                <b class="mc-piece-sample mc-piece-sample-white">{@symbols["K"]}</b>
-                <b class="mc-piece-sample mc-piece-sample-black">{@symbols["q"]}</b>
+                <b class="mc-piece-sample mc-piece-sample-white mc-piece-king">{@symbols["K"]}</b>
+                <b class="mc-piece-sample mc-piece-sample-black mc-piece-queen">{@symbols["q"]}</b>
               </span>
               <strong>Paleta</strong>
               <small data-cosmetic-status data-cosmetic-state="mastery">0/5 victorias</small>
@@ -592,8 +592,8 @@ defmodule ManaChessOnlineWeb.GameComponents do
             >
               <div class="mc-palette-board-preview" aria-hidden="true">
                 <i></i><i></i><i></i><i></i> <i></i><i></i><i></i><i></i> <i></i><i></i><i></i><i></i>
-                <i></i><i></i><i></i><i></i> <b class="mc-palette-piece-white">{@symbols["K"]}</b>
-                <b class="mc-palette-piece-black">{@symbols["q"]}</b>
+                <i></i><i></i><i></i><i></i> <b class="mc-palette-piece-white mc-piece-king">{@symbols["K"]}</b>
+                <b class="mc-palette-piece-black mc-piece-queen">{@symbols["q"]}</b>
               </div>
             </div>
           </div>

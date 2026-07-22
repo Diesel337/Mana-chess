@@ -1,0 +1,459 @@
+/* Original flat silhouettes used by the included piece families. */
+
+:is(.mc-piece-pawn, [data-piece-type="pawn"]) {
+  --mc-flat-piece-mask: url("/images/pieces/flat/pawn.svg");
+}
+
+:is(.mc-piece-knight, [data-piece-type="knight"]) {
+  --mc-flat-piece-mask: url("/images/pieces/flat/knight.svg");
+}
+
+:is(.mc-piece-bishop, [data-piece-type="bishop"]) {
+  --mc-flat-piece-mask: url("/images/pieces/flat/bishop.svg");
+}
+
+:is(.mc-piece-rook, [data-piece-type="rook"]) {
+  --mc-flat-piece-mask: url("/images/pieces/flat/rook.svg");
+}
+
+:is(.mc-piece-queen, [data-piece-type="queen"]) {
+  --mc-flat-piece-mask: url("/images/pieces/flat/queen.svg");
+}
+
+:is(.mc-piece-king, [data-piece-type="king"]) {
+  --mc-flat-piece-mask: url("/images/pieces/flat/king.svg");
+}
+
+html:not(:is(
+  [data-piece-skin="arcane"],
+  [data-piece-skin="crystal"],
+  [data-piece-skin="elemental"],
+  [data-piece-skin="celestial"]
+)) :is(.mc-game .mc-piece[class*="mc-piece-"], .mc-drag-ghost[class*="mc-piece-"]) {
+  border: 0;
+  border-radius: 0;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: transparent !important;
+  font-size: 0;
+  isolation: isolate;
+  text-shadow: none !important;
+}
+
+html:not(:is(
+  [data-piece-skin="arcane"],
+  [data-piece-skin="crystal"],
+  [data-piece-skin="elemental"],
+  [data-piece-skin="celestial"]
+)) .mc-game .mc-piece[class*="mc-piece-"] {
+  position: relative;
+  width: 82%;
+}
+
+html:not(:is(
+  [data-piece-skin="arcane"],
+  [data-piece-skin="crystal"],
+  [data-piece-skin="elemental"],
+  [data-piece-skin="celestial"]
+)) :is(.mc-game .mc-piece[class*="mc-piece-"], .mc-drag-ghost[class*="mc-piece-"])::before {
+  content: "";
+  position: absolute;
+  inset: -6% 0;
+  z-index: 1;
+  background: var(--mc-flat-piece-fill);
+  filter: none;
+  pointer-events: none;
+  -webkit-mask: var(--mc-flat-piece-mask) center / contain no-repeat;
+  mask: var(--mc-flat-piece-mask) center / contain no-repeat;
+}
+
+html:not(:is(
+  [data-piece-skin="arcane"],
+  [data-piece-skin="crystal"],
+  [data-piece-skin="elemental"],
+  [data-piece-skin="celestial"]
+)) :is(.mc-game .mc-white, .mc-drag-ghost.mc-white) {
+  --mc-flat-piece-fill: #f1dcb2;
+  --mc-flat-piece-outline: #27332c;
+}
+
+html:not(:is(
+  [data-piece-skin="arcane"],
+  [data-piece-skin="crystal"],
+  [data-piece-skin="elemental"],
+  [data-piece-skin="celestial"]
+)) :is(.mc-game .mc-black, .mc-drag-ghost.mc-black) {
+  --mc-flat-piece-fill: #243f46;
+  --mc-flat-piece-outline: #e8d49c;
+}
+
+html[data-piece-skin="runes"] :is(.mc-game .mc-white, .mc-drag-ghost.mc-white),
+.mc-shell.mc-piece-skin-runes .mc-game .mc-white {
+  --mc-flat-piece-fill: #afe9d4;
+  --mc-flat-piece-outline: #17483a;
+}
+
+html[data-piece-skin="runes"] :is(.mc-game .mc-black, .mc-drag-ghost.mc-black),
+.mc-shell.mc-piece-skin-runes .mc-game .mc-black {
+  --mc-flat-piece-fill: #30204d;
+  --mc-flat-piece-outline: #d1bdff;
+}
+
+html[data-piece-skin="custom"] :is(.mc-game .mc-white, .mc-drag-ghost.mc-white),
+.mc-shell.mc-piece-skin-custom .mc-game .mc-white {
+  --mc-flat-piece-fill: var(--mc-custom-piece-white, #f6f1df);
+  --mc-flat-piece-outline: var(--mc-custom-piece-white-text, #10140f);
+}
+
+html[data-piece-skin="custom"] :is(.mc-game .mc-black, .mc-drag-ghost.mc-black),
+.mc-shell.mc-piece-skin-custom .mc-game .mc-black {
+  --mc-flat-piece-fill: var(--mc-custom-piece-black, #241745);
+  --mc-flat-piece-outline: var(--mc-custom-piece-black-text, #fff8dc);
+}
+
+.mc-cosmetic-preview-stage:is(
+  [data-piece-skin="classic"],
+  [data-piece-skin="runes"],
+  [data-piece-skin="custom"]
+) .mc-cosmetic-preview-piece {
+  border: 0;
+  border-radius: 0;
+  background: var(--mc-flat-piece-fill) !important;
+  box-shadow: none;
+  color: transparent;
+  font-size: 0;
+  filter: drop-shadow(0 7px 5px rgba(0, 0, 0, .42));
+  text-shadow: none;
+  -webkit-mask: var(--mc-flat-piece-mask) center / contain no-repeat;
+  mask: var(--mc-flat-piece-mask) center / contain no-repeat;
+}
+
+.mc-cosmetic-preview-stage:is(
+  [data-piece-skin="classic"],
+  [data-piece-skin="runes"],
+  [data-piece-skin="custom"]
+) .mc-cosmetic-preview-piece-white {
+  --mc-flat-piece-fill: var(--mc-preview-piece-white, #f4edd9);
+  --mc-flat-piece-outline: color-mix(in srgb, var(--mc-preview-piece-white-text, #27332c) 82%, #020504);
+}
+
+.mc-cosmetic-preview-stage:is(
+  [data-piece-skin="classic"],
+  [data-piece-skin="runes"],
+  [data-piece-skin="custom"]
+) .mc-cosmetic-preview-piece-black {
+  --mc-flat-piece-fill: var(--mc-preview-piece-black, #17221d);
+  --mc-flat-piece-outline: color-mix(in srgb, var(--mc-preview-piece-black-text, #7c5bd6) 44%, #fff3cf);
+}
+
+.mc-cosmetic-preview-stage[data-piece-skin="classic"] .mc-cosmetic-preview-piece-white {
+  --mc-flat-piece-fill: color-mix(in srgb, var(--mc-preview-piece-white, #f7ebce) 72%, #e3b95f);
+  --mc-flat-piece-outline: #27332c;
+}
+
+.mc-cosmetic-preview-stage[data-piece-skin="classic"] .mc-cosmetic-preview-piece-black {
+  --mc-flat-piece-fill: color-mix(in srgb, var(--mc-preview-piece-black, #171a17) 68%, #315b65);
+  --mc-flat-piece-outline: #e8d49c;
+}
+
+:is(
+  .mc-piece-skin-preview-classic,
+  .mc-piece-skin-preview-runes,
+  .mc-piece-skin-preview-custom
+) .mc-piece-sample {
+  border: 0;
+  border-radius: 0;
+  background: var(--mc-flat-piece-fill) !important;
+  box-shadow: none !important;
+  color: transparent !important;
+  font-size: 0;
+  filter: drop-shadow(0 3px 2px rgba(0, 0, 0, .48));
+  text-shadow: none !important;
+  -webkit-mask: var(--mc-flat-piece-mask) center / contain no-repeat;
+  mask: var(--mc-flat-piece-mask) center / contain no-repeat;
+}
+
+.mc-piece-skin-preview-classic .mc-piece-sample-white {
+  --mc-flat-piece-fill: #f1dcb2;
+  --mc-flat-piece-outline: #27332c;
+}
+
+.mc-piece-skin-preview-classic .mc-piece-sample-black {
+  --mc-flat-piece-fill: #243f46;
+  --mc-flat-piece-outline: #e8d49c;
+}
+
+.mc-piece-skin-preview-runes .mc-piece-sample-white {
+  --mc-flat-piece-fill: #afe9d4;
+  --mc-flat-piece-outline: #17483a;
+}
+
+.mc-piece-skin-preview-runes .mc-piece-sample-black {
+  --mc-flat-piece-fill: #30204d;
+  --mc-flat-piece-outline: #d1bdff;
+}
+
+.mc-piece-skin-preview-custom .mc-piece-sample-white {
+  --mc-flat-piece-fill: var(--mc-custom-piece-white, #f6f1df);
+  --mc-flat-piece-outline: var(--mc-custom-piece-white-text, #10140f);
+}
+
+.mc-piece-skin-preview-custom .mc-piece-sample-black {
+  --mc-flat-piece-fill: var(--mc-custom-piece-black, #241745);
+  --mc-flat-piece-outline: var(--mc-custom-piece-black-text, #fff8dc);
+}
+
+.mc-pack-preview:not(.mc-pack-preview-arcane):not(.mc-pack-preview-crystal):not(.mc-pack-preview-elemental):not(.mc-pack-preview-celestial) > b,
+.mc-palette-board-preview > b {
+  border: 0;
+  border-radius: 0;
+  background: var(--mc-flat-piece-fill) !important;
+  box-shadow: none !important;
+  color: transparent !important;
+  font-size: 0;
+  filter: drop-shadow(0 3px 2px rgba(0, 0, 0, .5));
+  text-shadow: none !important;
+  -webkit-mask: var(--mc-flat-piece-mask) center / contain no-repeat;
+  mask: var(--mc-flat-piece-mask) center / contain no-repeat;
+}
+
+.mc-pack-preview:not(.mc-pack-preview-arcane):not(.mc-pack-preview-crystal):not(.mc-pack-preview-elemental):not(.mc-pack-preview-celestial) > .mc-pack-piece-white {
+  --mc-flat-piece-fill: var(--pack-white);
+  --mc-flat-piece-outline: var(--pack-white-text);
+}
+
+.mc-pack-preview:not(.mc-pack-preview-arcane):not(.mc-pack-preview-crystal):not(.mc-pack-preview-elemental):not(.mc-pack-preview-celestial) > .mc-pack-piece-black {
+  --mc-flat-piece-fill: var(--pack-black);
+  --mc-flat-piece-outline: color-mix(in srgb, var(--pack-black-text) 44%, #fff3cf);
+}
+
+.mc-palette-board-preview > .mc-palette-piece-white {
+  --mc-flat-piece-fill: var(--mc-preview-piece-white, var(--mc-custom-piece-white, #f6f1df));
+  --mc-flat-piece-outline: var(--mc-preview-piece-white-text, var(--mc-custom-piece-white-text, #10140f));
+}
+
+.mc-palette-board-preview > .mc-palette-piece-black {
+  --mc-flat-piece-fill: var(--mc-preview-piece-black, var(--mc-custom-piece-black, #241745));
+  --mc-flat-piece-outline: color-mix(in srgb, var(--mc-preview-piece-black-text, var(--mc-custom-piece-black-text, #fff8dc)) 52%, #fff3cf);
+}
+
+.mc-cosmetic-gallery-stage:is(
+  [data-piece-skin="classic"],
+  [data-piece-skin="runes"],
+  [data-piece-skin="custom"]
+) .mc-cosmetic-gallery-piece {
+  border: 0;
+  border-radius: 0;
+  background: var(--mc-flat-piece-fill);
+  color: transparent;
+  font-size: 0;
+  text-shadow: none;
+  -webkit-mask: var(--mc-flat-piece-mask) center / contain no-repeat;
+  mask: var(--mc-flat-piece-mask) center / contain no-repeat;
+}
+
+.mc-cosmetic-gallery-stage:is(
+  [data-piece-skin="classic"],
+  [data-piece-skin="runes"],
+  [data-piece-skin="custom"]
+) .mc-cosmetic-gallery-piece-white {
+  --mc-flat-piece-fill: var(--mc-preview-piece-white, #f4edd9);
+  --mc-flat-piece-outline: color-mix(in srgb, var(--mc-preview-piece-white-text, #27332c) 82%, #020504);
+  filter: drop-shadow(0 4px 3px rgba(0, 0, 0, .44));
+}
+
+.mc-cosmetic-gallery-stage:is(
+  [data-piece-skin="classic"],
+  [data-piece-skin="runes"],
+  [data-piece-skin="custom"]
+) .mc-cosmetic-gallery-piece-black {
+  --mc-flat-piece-fill: var(--mc-preview-piece-black, #17221d);
+  --mc-flat-piece-outline: color-mix(in srgb, var(--mc-preview-piece-black-text, #7c5bd6) 44%, #fff3cf);
+  filter: drop-shadow(0 4px 3px rgba(0, 0, 0, .5));
+}
+
+.mc-cosmetic-gallery-stage[data-piece-skin="classic"] .mc-cosmetic-gallery-piece-white {
+  --mc-flat-piece-fill: color-mix(in srgb, var(--mc-preview-piece-white, #f7ebce) 72%, #e3b95f);
+  --mc-flat-piece-outline: #27332c;
+}
+
+.mc-cosmetic-gallery-stage[data-piece-skin="classic"] .mc-cosmetic-gallery-piece-black {
+  --mc-flat-piece-fill: color-mix(in srgb, var(--mc-preview-piece-black, #171a17) 68%, #315b65);
+  --mc-flat-piece-outline: #e8d49c;
+}
+
+/* A second masked layer keeps every flat fill distinct from every board square. */
+html:not(:is(
+  [data-piece-skin="arcane"],
+  [data-piece-skin="crystal"],
+  [data-piece-skin="elemental"],
+  [data-piece-skin="celestial"]
+)) :is(.mc-game .mc-piece[class*="mc-piece-"], .mc-drag-ghost[class*="mc-piece-"]),
+.mc-cosmetic-preview-stage:is(
+  [data-piece-skin="classic"],
+  [data-piece-skin="runes"],
+  [data-piece-skin="custom"]
+) .mc-cosmetic-preview-piece,
+:is(
+  .mc-piece-skin-preview-classic,
+  .mc-piece-skin-preview-runes,
+  .mc-piece-skin-preview-custom
+) .mc-piece-sample,
+.mc-pack-preview:not(.mc-pack-preview-arcane):not(.mc-pack-preview-crystal):not(.mc-pack-preview-elemental):not(.mc-pack-preview-celestial) > b,
+.mc-palette-board-preview > b,
+.mc-cosmetic-gallery-stage:is(
+  [data-piece-skin="classic"],
+  [data-piece-skin="runes"],
+  [data-piece-skin="custom"]
+) .mc-cosmetic-gallery-piece {
+  --mc-flat-piece-fill-inset: 1%;
+  --mc-flat-piece-outline-inset: -3%;
+  isolation: isolate;
+  background: transparent !important;
+  -webkit-mask: none !important;
+  mask: none !important;
+}
+
+:is(
+  .mc-piece-skin-preview-classic,
+  .mc-piece-skin-preview-runes,
+  .mc-piece-skin-preview-custom
+) .mc-piece-sample,
+.mc-cosmetic-gallery-stage:is(
+  [data-piece-skin="classic"],
+  [data-piece-skin="runes"],
+  [data-piece-skin="custom"]
+) .mc-cosmetic-gallery-piece {
+  position: relative;
+}
+
+html:not(:is(
+  [data-piece-skin="arcane"],
+  [data-piece-skin="crystal"],
+  [data-piece-skin="elemental"],
+  [data-piece-skin="celestial"]
+)) :is(.mc-game .mc-piece[class*="mc-piece-"], .mc-drag-ghost[class*="mc-piece-"]) {
+  --mc-flat-piece-fill-inset: -6% 0;
+  --mc-flat-piece-outline-inset: -9% -3%;
+}
+
+html:not(:is(
+  [data-piece-skin="arcane"],
+  [data-piece-skin="crystal"],
+  [data-piece-skin="elemental"],
+  [data-piece-skin="celestial"]
+)) :is(.mc-game .mc-piece[class*="mc-piece-"], .mc-drag-ghost[class*="mc-piece-"])::before,
+html:not(:is(
+  [data-piece-skin="arcane"],
+  [data-piece-skin="crystal"],
+  [data-piece-skin="elemental"],
+  [data-piece-skin="celestial"]
+)) :is(.mc-game .mc-piece[class*="mc-piece-"], .mc-drag-ghost[class*="mc-piece-"])::after,
+.mc-cosmetic-preview-stage:is(
+  [data-piece-skin="classic"],
+  [data-piece-skin="runes"],
+  [data-piece-skin="custom"]
+) .mc-cosmetic-preview-piece::before,
+.mc-cosmetic-preview-stage:is(
+  [data-piece-skin="classic"],
+  [data-piece-skin="runes"],
+  [data-piece-skin="custom"]
+) .mc-cosmetic-preview-piece::after,
+:is(
+  .mc-piece-skin-preview-classic,
+  .mc-piece-skin-preview-runes,
+  .mc-piece-skin-preview-custom
+) .mc-piece-sample::before,
+:is(
+  .mc-piece-skin-preview-classic,
+  .mc-piece-skin-preview-runes,
+  .mc-piece-skin-preview-custom
+) .mc-piece-sample::after,
+.mc-pack-preview:not(.mc-pack-preview-arcane):not(.mc-pack-preview-crystal):not(.mc-pack-preview-elemental):not(.mc-pack-preview-celestial) > b::before,
+.mc-pack-preview:not(.mc-pack-preview-arcane):not(.mc-pack-preview-crystal):not(.mc-pack-preview-elemental):not(.mc-pack-preview-celestial) > b::after,
+.mc-palette-board-preview > b::before,
+.mc-palette-board-preview > b::after,
+.mc-cosmetic-gallery-stage:is(
+  [data-piece-skin="classic"],
+  [data-piece-skin="runes"],
+  [data-piece-skin="custom"]
+) .mc-cosmetic-gallery-piece::before,
+.mc-cosmetic-gallery-stage:is(
+  [data-piece-skin="classic"],
+  [data-piece-skin="runes"],
+  [data-piece-skin="custom"]
+) .mc-cosmetic-gallery-piece::after {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  -webkit-mask: var(--mc-flat-piece-mask) center / contain no-repeat;
+  mask: var(--mc-flat-piece-mask) center / contain no-repeat;
+}
+
+html:not(:is(
+  [data-piece-skin="arcane"],
+  [data-piece-skin="crystal"],
+  [data-piece-skin="elemental"],
+  [data-piece-skin="celestial"]
+)) :is(.mc-game .mc-piece[class*="mc-piece-"], .mc-drag-ghost[class*="mc-piece-"])::after,
+.mc-cosmetic-preview-stage:is(
+  [data-piece-skin="classic"],
+  [data-piece-skin="runes"],
+  [data-piece-skin="custom"]
+) .mc-cosmetic-preview-piece::after,
+:is(
+  .mc-piece-skin-preview-classic,
+  .mc-piece-skin-preview-runes,
+  .mc-piece-skin-preview-custom
+) .mc-piece-sample::after,
+.mc-pack-preview:not(.mc-pack-preview-arcane):not(.mc-pack-preview-crystal):not(.mc-pack-preview-elemental):not(.mc-pack-preview-celestial) > b::after,
+.mc-palette-board-preview > b::after,
+.mc-cosmetic-gallery-stage:is(
+  [data-piece-skin="classic"],
+  [data-piece-skin="runes"],
+  [data-piece-skin="custom"]
+) .mc-cosmetic-gallery-piece::after {
+  inset: var(--mc-flat-piece-outline-inset);
+  z-index: 1;
+  background: var(--mc-flat-piece-outline);
+}
+
+html:not(:is(
+  [data-piece-skin="arcane"],
+  [data-piece-skin="crystal"],
+  [data-piece-skin="elemental"],
+  [data-piece-skin="celestial"]
+)) :is(.mc-game .mc-piece[class*="mc-piece-"], .mc-drag-ghost[class*="mc-piece-"])::before,
+.mc-cosmetic-preview-stage:is(
+  [data-piece-skin="classic"],
+  [data-piece-skin="runes"],
+  [data-piece-skin="custom"]
+) .mc-cosmetic-preview-piece::before,
+:is(
+  .mc-piece-skin-preview-classic,
+  .mc-piece-skin-preview-runes,
+  .mc-piece-skin-preview-custom
+) .mc-piece-sample::before,
+.mc-pack-preview:not(.mc-pack-preview-arcane):not(.mc-pack-preview-crystal):not(.mc-pack-preview-elemental):not(.mc-pack-preview-celestial) > b::before,
+.mc-palette-board-preview > b::before,
+.mc-cosmetic-gallery-stage:is(
+  [data-piece-skin="classic"],
+  [data-piece-skin="runes"],
+  [data-piece-skin="custom"]
+) .mc-cosmetic-gallery-piece::before {
+  inset: var(--mc-flat-piece-fill-inset);
+  z-index: 2;
+  background: var(--mc-flat-piece-fill);
+  filter: none;
+}
+
+@media (max-width: 480px) {
+  html:not(:is(
+    [data-piece-skin="arcane"],
+    [data-piece-skin="crystal"],
+    [data-piece-skin="elemental"],
+    [data-piece-skin="celestial"]
+  )) .mc-game .mc-piece[class*="mc-piece-"] {
+    width: 84%;
+  }
+}

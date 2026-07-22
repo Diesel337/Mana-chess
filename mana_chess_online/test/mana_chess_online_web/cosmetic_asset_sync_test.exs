@@ -37,4 +37,11 @@ defmodule ManaChessOnlineWeb.CosmeticAssetSyncTest do
 
     assert served == source
   end
+
+  test "flat piece stylesheet matches its served static copy" do
+    source = File.read!(Path.join([@root, "assets", "css", "flat_pieces.css"]))
+    served = File.read!(Path.join([@root, "priv", "static", "assets", "css", "flat_pieces.css"]))
+
+    assert served == source
+  end
 end
