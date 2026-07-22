@@ -24,11 +24,11 @@ defmodule ManaChessOnlineWeb.PageControllerTest do
     assert response =~ "app.css?v=cosmetic-mastery-20260717"
     assert response =~ "premium_cosmetics.css?v=premium-cosmetics-celestial-20260718"
     assert response =~ "game_effects.css?v=game-effects-20260718c"
-    assert response =~ "cosmetic_browser.css?v=cosmetic-browser-20260718"
+    assert response =~ "cosmetic_browser.css?v=cosmetic-gallery-20260722b"
     assert response =~ "game_effects.js?v=game-effects-20260718c"
     assert response =~ "cosmetic-catalog-celestial-20260718"
     assert response =~ "cosmetic-progression-20260717"
-    assert response =~ "cosmetics-browser-20260718"
+    assert response =~ "cosmetics-gallery-20260722"
     assert response =~ "cosmetic-actions-mastery-20260717"
     assert response =~ "app.js?v=game-effects-20260718c"
     assert response =~ "cosmetic-fallback-mastery-20260717"
@@ -114,8 +114,11 @@ defmodule ManaChessOnlineWeb.PageControllerTest do
 
     assert javascript =~ "previewSelection"
     assert javascript =~ "equipPreview"
+    assert javascript =~ "openCosmeticGallery"
+    assert javascript =~ "closeCosmeticGallery"
     assert stylesheet =~ "mc-lobby-tabs"
     assert stylesheet =~ "mc-cosmetic-preview-stage"
+    assert stylesheet =~ "mc-cosmetic-gallery-board"
   end
 
   test "steam launch access mode blocks public game routes", %{conn: conn} do

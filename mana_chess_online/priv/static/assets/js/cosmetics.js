@@ -69,6 +69,7 @@
     }
   };
   let previewSelection = null;
+  let cosmeticGalleryTrigger = null;
   const unlockId = (kind, skin) => `${kind}:${skin}`;
   const readUnlocks = () => {
     try {
@@ -400,7 +401,7 @@
       const activeControl = selectionControl(browser, previewSelection);
       if (activeControl) activeControl.classList.add("mc-skin-previewing");
 
-      browser.querySelectorAll("[data-cosmetic-preview-stage]").forEach((stage) => {
+      browser.querySelectorAll("[data-cosmetic-preview-stage], [data-cosmetic-gallery-stage]").forEach((stage) => {
         applyPreviewTheme(stage, details.board, details.piece, details.palette);
       });
       browser.querySelectorAll("[data-cosmetic-preview-title]").forEach((title) => {
@@ -571,6 +572,28 @@
     render();
     return true;
   };
+  const openCosmeticGallery = (browser, trigger) => {
+    const gallery = browser.querySelector("[data-cosmetic-gallery]");
+    if (!gallery) return false;
+
+    cosmeticGalleryTrigger = trigger;
+    trigger.setAttribute("aria-expanded", "true");
+    gallery.hidden = false;
+    document.documentElement.classList.add("mc-cosmetic-gallery-open");
+    gallery.querySelector(".mc-cosmetic-gallery-close")?.focus();
+    return true;
+  };
+  const closeCosmeticGallery = (gallery) => {
+    if (!gallery || gallery.hidden) return false;
+
+    gallery.hidden = true;
+    document.documentElement.classList.remove("mc-cosmetic-gallery-open");
+    const trigger = cosmeticGalleryTrigger;
+    cosmeticGalleryTrigger = null;
+    trigger?.setAttribute("aria-expanded", "false");
+    trigger?.focus();
+    return true;
+  };
   window.ManaChessCosmetics = {
     choosePack: (pack) => {
       const config = packs[pack];
@@ -630,6 +653,8 @@
   document.addEventListener("click", (event) => {
     const browser = event.target.closest("[data-cosmetic-browser]");
     if (browser) {
+      const galleryOpen = event.target.closest("[data-cosmetic-preview-open]");
+      const galleryClose = event.target.closest("[data-cosmetic-gallery-close]");
       const equip = event.target.closest("[data-cosmetic-preview-equip]");
       const pack = event.target.closest("[data-cosmetic-pack]");
       const paletteReset = event.target.closest("[data-palette-reset]");
@@ -637,12 +662,15 @@
       const paletteUnlock = event.target.closest("[data-palette-unlock]");
       const piece = event.target.closest("[data-piece-skin-choice]");
       const board = event.target.closest("[data-board-skin-choice]");
-      const control = equip || pack || paletteReset || palettePreset || paletteUnlock || piece || board;
+      const control = galleryOpen || galleryClose || equip || pack || paletteReset || palettePreset ||
+        paletteUnlock || piece || board;
 
       if (control) {
         event.preventDefault();
         event.stopImmediatePropagation();
-        if (equip) equipPreview();
+        if (galleryOpen) openCosmeticGallery(browser, galleryOpen);
+        else if (galleryClose) closeCosmeticGallery(galleryClose.closest("[data-cosmetic-gallery]"));
+        else if (equip) equipPreview();
         else if (pack) setPreviewSelection("pack", pack.dataset.cosmeticPack);
         else if (paletteReset) setPreviewSelection("palette", "base");
         else if (palettePreset) setPreviewSelection("palette", palettePreset.dataset.palettePreset);
@@ -689,6 +717,18 @@
       window.ManaChessCosmetics.chooseBoard(board.dataset.boardSkinChoice);
     }
   }, true);
+  document.addEventListener("keydown", (event) => {
+    const gallery = document.querySelector("[data-cosmetic-gallery]:not([hidden])");
+    if (!gallery) return;
+
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeCosmeticGallery(gallery);
+    } else if (event.key === "Tab") {
+      event.preventDefault();
+      gallery.querySelector(".mc-cosmetic-gallery-close")?.focus();
+    }
+  });
   document.addEventListener("input", (event) => {
     const input = event.target.closest("[data-palette-color]");
     if (!input || input.disabled) return;

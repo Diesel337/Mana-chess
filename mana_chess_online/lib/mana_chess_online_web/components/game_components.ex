@@ -5,12 +5,24 @@ defmodule ManaChessOnlineWeb.GameComponents do
   alias ManaChessOnlineWeb.GameText
 
   @files ~w(a b c d e f g h)
+  @cosmetic_preview_position Enum.with_index(~w(
+    r n b q k b n r
+    p p p p p p p p
+    . . . . . . . .
+    . . . . . . . .
+    . . . . . . . .
+    . . . . . . . .
+    P P P P P P P P
+    R N B Q K B N R
+  ))
 
   attr :symbols, :map, required: true
   attr :class, :string, required: true
   attr :aria_label, :string, required: true
 
   def cosmetic_shop(assigns) do
+    assigns = assign(assigns, :cosmetic_preview_position, @cosmetic_preview_position)
+
     ~H"""
     <section class={@class} aria-label={@aria_label} data-cosmetic-browser>
       <div class="mc-skins-head">
@@ -41,7 +53,16 @@ defmodule ManaChessOnlineWeb.GameComponents do
           <small data-cosmetic-preview-status>Equipado</small>
         </div>
 
-        <div class="mc-cosmetic-preview-stage" data-cosmetic-preview-stage>
+        <button
+          type="button"
+          class="mc-cosmetic-preview-stage"
+          data-cosmetic-preview-stage
+          data-cosmetic-preview-open
+          aria-haspopup="dialog"
+          aria-expanded="false"
+          aria-label="Abrir vista completa de todas las piezas"
+          title="Ver todas las piezas"
+        >
           <div class="mc-cosmetic-preview-board" aria-hidden="true">
             <i :for={_square <- 1..16}></i>
             <b class="mc-cosmetic-preview-piece mc-cosmetic-preview-piece-white mc-piece-king">
@@ -51,7 +72,8 @@ defmodule ManaChessOnlineWeb.GameComponents do
               {@symbols["q"]}
             </b>
           </div>
-        </div>
+          <span class="mc-cosmetic-preview-expand" aria-hidden="true">&#x26F6;</span>
+        </button>
 
         <div class="mc-cosmetic-preview-actions">
           <button
@@ -65,6 +87,71 @@ defmodule ManaChessOnlineWeb.GameComponents do
           </button>
           <small data-cosmetic-preview-requirement></small>
         </div>
+      </div>
+
+      <div
+        class="mc-cosmetic-gallery"
+        data-cosmetic-gallery
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="mc-cosmetic-gallery-title"
+        hidden
+      >
+        <button
+          type="button"
+          class="mc-cosmetic-gallery-backdrop"
+          data-cosmetic-gallery-close
+          tabindex="-1"
+          aria-label="Cerrar vista completa"
+        >
+        </button>
+
+        <section class="mc-cosmetic-gallery-dialog">
+          <header class="mc-cosmetic-gallery-header">
+            <div>
+              <span>Vista completa</span>
+              <h3 id="mc-cosmetic-gallery-title" data-cosmetic-preview-title>Tu estilo actual</h3>
+              <small data-cosmetic-preview-status>Equipado</small>
+            </div>
+            <button
+              type="button"
+              class="mc-cosmetic-gallery-close"
+              data-cosmetic-gallery-close
+              aria-label="Cerrar vista completa"
+              title="Cerrar"
+            >
+              &times;
+            </button>
+          </header>
+
+          <div class="mc-cosmetic-gallery-stage" data-cosmetic-gallery-stage>
+            <div
+              class="mc-cosmetic-gallery-board"
+              data-cosmetic-gallery-board
+              role="img"
+              aria-label="Tablero completo con todas las piezas"
+            >
+              <i
+                :for={{piece, index} <- @cosmetic_preview_position}
+                class={[
+                  "mc-cosmetic-gallery-square",
+                  cosmetic_preview_square_class(index)
+                ]}
+              >
+                <b
+                  :if={piece != "."}
+                  class={[
+                    "mc-cosmetic-gallery-piece",
+                    "mc-cosmetic-gallery-piece-#{cosmetic_preview_piece_color(piece)}"
+                  ]}
+                  data-piece-type={cosmetic_preview_piece_type(piece)}
+                >
+                  {@symbols[piece]}
+                </b>
+              </i>
+            </div>
+          </div>
+        </section>
       </div>
 
       <div class="mc-cosmetic-groups">
@@ -514,6 +601,24 @@ defmodule ManaChessOnlineWeb.GameComponents do
       </div>
     </section>
     """
+  end
+
+  defp cosmetic_preview_square_class(index) do
+    if rem(div(index, 8) + rem(index, 8), 2) == 0, do: "is-light", else: "is-dark"
+  end
+
+  defp cosmetic_preview_piece_color(piece) when piece in ~w(P N B R Q K), do: "white"
+  defp cosmetic_preview_piece_color(_piece), do: "black"
+
+  defp cosmetic_preview_piece_type(piece) do
+    case String.downcase(piece) do
+      "p" -> "pawn"
+      "n" -> "knight"
+      "b" -> "bishop"
+      "r" -> "rook"
+      "q" -> "queen"
+      "k" -> "king"
+    end
   end
 
   attr :symbols, :map, required: true

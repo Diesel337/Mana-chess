@@ -62,7 +62,14 @@ defmodule ManaChessOnlineWeb.GameLiveTest do
     assert has_element?(view, ~s([data-lobby-tab-panel="play"][hidden]))
     assert has_element?(view, ~s|[data-lobby-tab-panel="cosmetics"]:not([hidden])|)
     assert has_element?(view, "[data-cosmetic-preview-stage]")
+    assert has_element?(view, ~s([data-cosmetic-preview-open][aria-expanded="false"]))
     assert has_element?(view, "[data-cosmetic-preview-equip][disabled]")
+    assert has_element?(view, "[data-cosmetic-gallery][hidden]")
+    assert has_element?(view, "[data-cosmetic-gallery-close]")
+
+    cosmetic_html = render(view)
+    assert length(:binary.matches(cosmetic_html, "mc-cosmetic-gallery-square")) == 64
+    assert length(:binary.matches(cosmetic_html, "data-piece-type=")) == 32
   end
 
   test "lobby renders the competitive profile and rated quick match action", %{conn: conn} do
