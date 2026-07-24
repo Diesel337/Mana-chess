@@ -52,7 +52,7 @@ defmodule ManaChessOnline.MixProject do
       {:postgrex, "~> 0.22.2"},
       {:req, "~> 0.6.2"},
       {:dns_cluster, "~> 0.2.0"},
-      {:bandit, "~> 1.5"}
+      {:bandit, ">= 1.12.1 and < 2.0.0"}
     ]
   end
 

@@ -149,6 +149,18 @@ test("locked cosmetics can be previewed without being equipped", () => {
   assert.equal(localStorage.getItem("mana-chess-piece-skin"), "celestial")
 })
 
+test("board previews retain the previously selected piece set", () => {
+  const {controller} = loadCosmetics()
+
+  assert.equal(controller.previewPiece("celestial"), true)
+  assert.equal(controller.previewBoard("gilded"), true)
+  assert.deepEqual(
+    {...controller.previewComposition()},
+    {board: "gilded", piece: "celestial"}
+  )
+  assert.deepEqual({...controller.previewSelection()}, {kind: "board", value: "gilded"})
+})
+
 test("equips the complete Celestial set only after ten wins", () => {
   const {controller, localStorage} = loadCosmetics()
   localStorage.setItem("mana-chess-local-stats", JSON.stringify({played: 10, wins: 10}))

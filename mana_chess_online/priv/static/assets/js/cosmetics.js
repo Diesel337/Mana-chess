@@ -69,6 +69,8 @@
     }
   };
   let previewSelection = null;
+  let previewBoardSkin = null;
+  let previewPieceSkin = null;
   let cosmeticGalleryTrigger = null;
   const unlockId = (kind, skin) => `${kind}:${skin}`;
   const readUnlocks = () => {
@@ -311,6 +313,9 @@
     button.style.order = String(rank);
   };
   const selectionDetails = (selection, board, piece, palette, mastery) => {
+    const composedBoard = previewBoardSkin || board;
+    const composedPiece = previewPieceSkin || piece;
+
     if (!selection) {
       return {
         board,
@@ -326,7 +331,7 @@
     if (selection.kind === "board") {
       return {
         board: selection.value,
-        piece,
+        piece: composedPiece,
         palette,
         title: previewLabels.board[selection.value],
         rewardId: unlockId("board", selection.value),
@@ -337,7 +342,7 @@
 
     if (selection.kind === "piece") {
       return {
-        board,
+        board: composedBoard,
         piece: selection.value,
         palette,
         title: previewLabels.piece[selection.value],
@@ -543,6 +548,19 @@
       (kind === "palette" && ["base", "custom", ...Object.keys(palettePresets)].includes(value))
     );
     if (!valid) return false;
+
+    if (kind === "board") {
+      previewBoardSkin = value;
+    } else if (kind === "piece") {
+      previewPieceSkin = value;
+    } else if (kind === "pack") {
+      previewBoardSkin = packs[value].board;
+      previewPieceSkin = packs[value].piece;
+    } else {
+      previewBoardSkin = "custom";
+      previewPieceSkin = "custom";
+    }
+
     previewSelection = {kind, value};
     render();
     return true;
@@ -648,6 +666,10 @@
     previewPalette: (preset) => setPreviewSelection("palette", preset),
     equipPreview,
     previewSelection: () => previewSelection ? {...previewSelection} : null,
+    previewComposition: () => ({
+      board: previewBoardSkin || read(boardKey, "classic", boards),
+      piece: previewPieceSkin || read(pieceKey, "classic", pieces)
+    }),
     render
   };
   document.addEventListener("click", (event) => {

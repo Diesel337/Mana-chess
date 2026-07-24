@@ -29,7 +29,7 @@ defmodule ManaChessOnlineWeb.PageControllerTest do
     assert response =~ "game_effects.js?v=game-effects-20260718c"
     assert response =~ "cosmetic-catalog-celestial-20260718"
     assert response =~ "cosmetic-progression-20260717"
-    assert response =~ "cosmetics-gallery-20260722"
+    assert response =~ "cosmetics-composition-20260724"
     assert response =~ "cosmetic-actions-mastery-20260717"
     assert response =~ "app.js?v=game-effects-20260718c"
     assert response =~ "cosmetic-fallback-mastery-20260717"
