@@ -535,7 +535,6 @@ html.mc-cosmetic-gallery-open body {
 
 .mc-cosmetic-gallery-square {
   position: relative;
-  z-index: 1;
   display: grid;
   place-items: center;
   min-width: 0;
@@ -565,7 +564,7 @@ html.mc-cosmetic-gallery-open body {
 
 .mc-cosmetic-gallery-piece {
   position: relative;
-  z-index: 2;
+  z-index: 5;
   display: grid;
   place-items: center;
   width: 84%;
@@ -744,6 +743,13 @@ html.mc-cosmetic-gallery-open body {
   gap: 7px;
 }
 
+.mc-menu .mc-cosmetic-browser :is(
+  [data-board-skin-choice="custom"],
+  [data-piece-skin-choice="custom"]
+) {
+  grid-column: 1 / -1;
+}
+
 .mc-menu .mc-cosmetic-browser .mc-skin-option {
   grid-template-columns: 38px minmax(0, 1fr);
   grid-template-rows: auto auto;
@@ -849,12 +855,7 @@ html.mc-cosmetic-gallery-open body {
   }
 
   .mc-menu .mc-cosmetic-browser .mc-cosmetic-groups {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .mc-menu .mc-cosmetic-browser .mc-pack-group {
-    grid-column: 1 / -1;
-    order: -1;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .mc-menu .mc-cosmetic-browser .mc-pack-options {

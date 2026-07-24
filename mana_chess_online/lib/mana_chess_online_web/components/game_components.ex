@@ -155,6 +155,102 @@ defmodule ManaChessOnlineWeb.GameComponents do
       </div>
 
       <div class="mc-cosmetic-groups">
+        <div class="mc-cosmetic-group mc-pack-group">
+          <span class="mc-cosmetic-group-label">Conjuntos</span>
+          <div class="mc-pack-options" aria-label="Conjuntos visuales">
+            <button
+              type="button"
+              class="mc-skin-option mc-pack-option"
+              data-cosmetic-pack="classic"
+              data-sound-action="skin"
+              aria-pressed="false"
+            >
+              <.pack_preview symbols={@symbols} />
+              <strong>Base</strong>
+              <small data-cosmetic-status data-cosmetic-pack-status data-cosmetic-state="included">
+                Incluido
+              </small>
+            </button>
+            <button
+              type="button"
+              class="mc-skin-option mc-pack-option"
+              data-cosmetic-pack="mana"
+              data-sound-action="skin"
+              aria-pressed="false"
+            >
+              <.pack_preview symbols={@symbols} class="mc-pack-preview-mana" />
+              <strong>Mana</strong>
+              <small data-cosmetic-status data-cosmetic-pack-status data-cosmetic-state="included">
+                Incluido
+              </small>
+            </button>
+            <button
+              type="button"
+              class="mc-skin-option mc-pack-option mc-skin-locked"
+              data-cosmetic-pack="arcane"
+              data-cosmetic-premium="pack:arcane"
+              data-sound-action="skin"
+              title="Completa 1 partida para desbloquearlo"
+              aria-disabled="true"
+              aria-pressed="false"
+            >
+              <.pack_preview symbols={@symbols} class="mc-pack-preview-arcane" />
+              <strong>Arcano</strong>
+              <small data-cosmetic-status data-cosmetic-pack-status data-cosmetic-state="mastery">
+                0/1 partida
+              </small>
+            </button>
+            <button
+              type="button"
+              class="mc-skin-option mc-pack-option mc-skin-locked"
+              data-cosmetic-pack="crystal"
+              data-cosmetic-premium="pack:crystal"
+              data-sound-action="skin"
+              title="Gana 3 partidas para desbloquearlo"
+              aria-disabled="true"
+              aria-pressed="false"
+            >
+              <.pack_preview symbols={@symbols} class="mc-pack-preview-crystal" />
+              <strong>Cristal</strong>
+              <small data-cosmetic-status data-cosmetic-pack-status data-cosmetic-state="mastery">
+                0/3 victorias
+              </small>
+            </button>
+            <button
+              type="button"
+              class="mc-skin-option mc-pack-option mc-skin-locked"
+              data-cosmetic-pack="elemental"
+              data-cosmetic-premium="pack:elemental"
+              data-sound-action="skin"
+              title="Completa 10 partidas para desbloquearlo"
+              aria-disabled="true"
+              aria-pressed="false"
+            >
+              <.pack_preview symbols={@symbols} class="mc-pack-preview-elemental" />
+              <strong>Elemental</strong>
+              <small data-cosmetic-status data-cosmetic-pack-status data-cosmetic-state="mastery">
+                0/10 partidas
+              </small>
+            </button>
+            <button
+              type="button"
+              class="mc-skin-option mc-pack-option mc-skin-locked"
+              data-cosmetic-pack="celestial"
+              data-cosmetic-premium="pack:celestial"
+              data-sound-action="skin"
+              title="Gana 10 partidas para desbloquearlo"
+              aria-disabled="true"
+              aria-pressed="false"
+            >
+              <.pack_preview symbols={@symbols} class="mc-pack-preview-celestial" />
+              <strong>Celestial</strong>
+              <small data-cosmetic-status data-cosmetic-pack-status data-cosmetic-state="mastery">
+                0/10 victorias
+              </small>
+            </button>
+          </div>
+        </div>
+
         <div class="mc-cosmetic-group mc-board-group">
           <span class="mc-cosmetic-group-label">Tableros</span>
           <div class="mc-skin-options">
@@ -382,151 +478,6 @@ defmodule ManaChessOnlineWeb.GameComponents do
               </span>
               <strong>Paleta</strong>
               <small data-cosmetic-status data-cosmetic-state="mastery">0/5 victorias</small>
-            </button>
-          </div>
-        </div>
-
-        <div class="mc-cosmetic-group mc-pack-group">
-          <span class="mc-cosmetic-group-label">Conjuntos</span>
-          <div class="mc-pack-options" aria-label="Conjuntos visuales">
-            <button
-              type="button"
-              class="mc-skin-option mc-pack-option"
-              data-cosmetic-pack="classic"
-              data-sound-action="skin"
-              aria-pressed="false"
-            >
-              <.pack_preview symbols={@symbols} />
-              <strong>Base</strong>
-              <small data-cosmetic-status data-cosmetic-pack-status data-cosmetic-state="included">
-                Incluido
-              </small>
-            </button>
-            <button
-              type="button"
-              class="mc-skin-option mc-pack-option"
-              data-cosmetic-pack="mana"
-              data-sound-action="skin"
-              aria-pressed="false"
-            >
-              <.pack_preview symbols={@symbols} class="mc-pack-preview-mana" />
-              <strong>Mana</strong>
-              <small data-cosmetic-status data-cosmetic-pack-status data-cosmetic-state="included">
-                Incluido
-              </small>
-            </button>
-            <button
-              type="button"
-              class="mc-skin-option mc-pack-option mc-skin-locked"
-              data-cosmetic-pack="arcane"
-              data-cosmetic-premium="pack:arcane"
-              data-sound-action="skin"
-              title="Completa 1 partida para desbloquearlo"
-              aria-disabled="true"
-              aria-pressed="false"
-            >
-              <.pack_preview symbols={@symbols} class="mc-pack-preview-arcane" />
-              <strong>Arcano</strong>
-              <small data-cosmetic-status data-cosmetic-pack-status data-cosmetic-state="mastery">
-                0/1 partida
-              </small>
-            </button>
-            <button
-              type="button"
-              class="mc-skin-option mc-pack-option mc-skin-locked"
-              data-cosmetic-pack="crystal"
-              data-cosmetic-premium="pack:crystal"
-              data-sound-action="skin"
-              title="Gana 3 partidas para desbloquearlo"
-              aria-disabled="true"
-              aria-pressed="false"
-            >
-              <.pack_preview symbols={@symbols} class="mc-pack-preview-crystal" />
-              <strong>Cristal</strong>
-              <small data-cosmetic-status data-cosmetic-pack-status data-cosmetic-state="mastery">
-                0/3 victorias
-              </small>
-            </button>
-            <button
-              type="button"
-              class="mc-skin-option mc-pack-option mc-skin-locked"
-              data-cosmetic-pack="elemental"
-              data-cosmetic-premium="pack:elemental"
-              data-sound-action="skin"
-              title="Completa 10 partidas para desbloquearlo"
-              aria-disabled="true"
-              aria-pressed="false"
-            >
-              <.pack_preview symbols={@symbols} class="mc-pack-preview-elemental" />
-              <strong>Elemental</strong>
-              <small data-cosmetic-status data-cosmetic-pack-status data-cosmetic-state="mastery">
-                0/10 partidas
-              </small>
-            </button>
-            <button
-              type="button"
-              class="mc-skin-option mc-pack-option mc-skin-locked"
-              data-cosmetic-pack="celestial"
-              data-cosmetic-premium="pack:celestial"
-              data-sound-action="skin"
-              title="Gana 10 partidas para desbloquearlo"
-              aria-disabled="true"
-              aria-pressed="false"
-            >
-              <.pack_preview symbols={@symbols} class="mc-pack-preview-celestial" />
-              <strong>Celestial</strong>
-              <small data-cosmetic-status data-cosmetic-pack-status data-cosmetic-state="mastery">
-                0/10 victorias
-              </small>
-            </button>
-          </div>
-        </div>
-
-        <div class="mc-cosmetic-group mc-preset-group">
-          <span class="mc-cosmetic-group-label">Paletas</span>
-          <div class="mc-palette-presets mc-conjunto-options" aria-label="Paletas de color">
-            <button type="button" data-palette-reset data-sound-action="skin" aria-pressed="false">
-              Base
-            </button>
-            <button
-              type="button"
-              data-palette-preset="midnight"
-              data-sound-action="skin"
-              aria-pressed="false"
-            >
-              Noche
-            </button>
-            <button
-              type="button"
-              data-palette-preset="emerald"
-              data-sound-action="skin"
-              aria-pressed="false"
-            >
-              Jade
-            </button>
-            <button
-              type="button"
-              data-palette-preset="frost"
-              data-sound-action="skin"
-              aria-pressed="false"
-            >
-              Hielo
-            </button>
-            <button
-              type="button"
-              data-palette-preset="solar"
-              data-sound-action="skin"
-              aria-pressed="false"
-            >
-              Solar
-            </button>
-            <button
-              type="button"
-              data-palette-preset="ruby"
-              data-sound-action="skin"
-              aria-pressed="false"
-            >
-              Rubi
             </button>
           </div>
         </div>

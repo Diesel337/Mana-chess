@@ -22,9 +22,9 @@ defmodule ManaChessOnlineWeb.PageControllerTest do
     response = html_response(conn, 200)
     assert response =~ "Mana Chess"
     assert response =~ "app.css?v=cosmetic-mastery-20260717"
-    assert response =~ "premium_cosmetics.css?v=premium-cosmetics-celestial-20260718"
+    assert response =~ "premium_cosmetics.css?v=premium-cosmetics-layering-20260724"
     assert response =~ "game_effects.css?v=game-effects-20260718c"
-    assert response =~ "cosmetic_browser.css?v=cosmetic-gallery-20260722b"
+    assert response =~ "cosmetic_browser.css?v=cosmetic-layout-20260724"
     assert response =~ "flat_pieces.css?v=flat-pieces-20260722e"
     assert response =~ "game_effects.js?v=game-effects-20260718c"
     assert response =~ "cosmetic-catalog-celestial-20260718"
@@ -55,6 +55,25 @@ defmodule ManaChessOnlineWeb.PageControllerTest do
     assert response =~ "invite-clipboard-module-20260707"
     assert response =~ "board-drag-module-20260707"
     assert response =~ "board-drag-hook-module-20260707"
+  end
+
+  test "cosmetic catalog follows the customization flow", %{conn: conn} do
+    response = conn |> get(~p"/") |> html_response(200)
+
+    group_label = fn label ->
+      :binary.match(response, ~s(<span class="mc-cosmetic-group-label">#{label}</span>))
+    end
+
+    {packs_index, _} = group_label.("Conjuntos")
+    {boards_index, _} = group_label.("Tableros")
+    {pieces_index, _} = group_label.("Piezas")
+    {palette_index, _} = group_label.("Paleta")
+
+    assert packs_index < boards_index
+    assert boards_index < pieces_index
+    assert pieces_index < palette_index
+    refute response =~ "data-palette-preset"
+    refute response =~ "data-palette-reset"
   end
 
   test "GET /admin", %{conn: conn} do
@@ -121,6 +140,8 @@ defmodule ManaChessOnlineWeb.PageControllerTest do
     assert stylesheet =~ "mc-lobby-tabs"
     assert stylesheet =~ "mc-cosmetic-preview-stage"
     assert stylesheet =~ "mc-cosmetic-gallery-board"
+    assert stylesheet =~ ~s([data-board-skin-choice="custom"])
+    assert stylesheet =~ "grid-column: 1 / -1"
     assert flat_pieces =~ "--mc-flat-piece-mask"
     assert flat_pieces =~ "/images/pieces/flat/king.svg"
 

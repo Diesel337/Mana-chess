@@ -559,6 +559,14 @@ html[data-piece-skin="celestial"] .mc-black {
   mask-composite: exclude;
 }
 
+.mc-board-stack:is([data-board-skin="arcane"], [data-board-skin="crystal"], [data-board-skin="elemental"], [data-board-skin="celestial"]) .mc-board .mc-piece {
+  z-index: 6;
+}
+
+.mc-board-stack:is([data-board-skin="arcane"], [data-board-skin="crystal"], [data-board-skin="elemental"], [data-board-skin="celestial"]) .mc-board .mc-cooldown-ring {
+  z-index: 7;
+}
+
 .mc-board-stack[data-board-skin="arcane"] .mc-board::after {
   background-image: url("/images/cosmetics/arcane/frame.svg");
 }

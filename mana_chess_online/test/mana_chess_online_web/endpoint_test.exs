@@ -23,6 +23,7 @@ defmodule ManaChessOnlineWeb.EndpointTest do
 
   test "vendored realtime clients match the installed Phoenix dependencies" do
     root = Path.expand("../..", __DIR__)
+    normalize_newlines = &String.replace(&1, "\r\n", "\n")
 
     [
       {"deps/phoenix/priv/static/phoenix.js", "priv/static/assets/js/phoenix.js"},
@@ -30,7 +31,10 @@ defmodule ManaChessOnlineWeb.EndpointTest do
        "priv/static/assets/js/phoenix_live_view.js"}
     ]
     |> Enum.each(fn {source, destination} ->
-      assert File.read!(Path.join(root, destination)) == File.read!(Path.join(root, source))
+      vendored = destination |> then(&Path.join(root, &1)) |> File.read!()
+      installed = source |> then(&Path.join(root, &1)) |> File.read!()
+
+      assert normalize_newlines.(vendored) == normalize_newlines.(installed)
     end)
   end
 end
