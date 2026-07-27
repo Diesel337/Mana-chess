@@ -1,7 +1,7 @@
 defmodule ManaChessOnlineWeb.GameLive do
   use ManaChessOnlineWeb, :live_view
 
-  alias ManaChessOnline.{GameLobby, GameRuntimeConfig, Persistence}
+  alias ManaChessOnline.{GameBot, GameLobby, GameRuntimeConfig, Persistence}
   alias ManaChessOnline.GameRules
   alias ManaChessOnlineWeb.{GameEffectEvents, GameText}
 
@@ -252,7 +252,7 @@ defmodule ManaChessOnlineWeb.GameLive do
   end
 
   def handle_event("start_tutorial", _params, socket) do
-    view = GameLobby.start_practice(socket.assigns.player_id)
+    view = GameLobby.start_practice(socket.assigns.player_id, :apprentice)
 
     if practice_view?(view) do
       if connected?(socket),
@@ -282,6 +282,17 @@ defmodule ManaChessOnlineWeb.GameLive do
     end
 
     {:noreply, assign_view(socket, view)}
+  end
+
+  def handle_event("set_practice_difficulty", %{"difficulty" => difficulty}, socket) do
+    case GameBot.parse_difficulty(difficulty) do
+      {:ok, difficulty} ->
+        view = GameLobby.set_practice_difficulty(socket.assigns.player_id, difficulty)
+        {:noreply, assign_view(socket, view)}
+
+      :error ->
+        {:noreply, socket}
+    end
   end
 
   def handle_event("leave", _params, socket) do
@@ -1058,8 +1069,13 @@ defmodule ManaChessOnlineWeb.GameLive do
   defp bot_color(%{bot_color: color}) when color in [:white, :black], do: color
   defp bot_color(_game), do: :black
 
+  defp bot_difficulty(game), do: GameBot.difficulty(game)
+  defp bot_difficulty_label(game), do: game |> bot_difficulty() |> GameBot.difficulty_label()
+
   defp practice_player_side(game), do: game |> bot_color() |> opposite_color()
-  defp practice_banner_text(%{bot_enabled?: true}), do: "Bot ON, juegas contra el bot."
+
+  defp practice_banner_text(%{bot_enabled?: true} = game),
+    do: "Bot #{bot_difficulty_label(game)}, juegas contra el bot."
 
   defp practice_banner_text(_game),
     do: "Bot OFF, controlas ambos lados para probar reglas, elixir y cooldowns."
@@ -1189,6 +1205,24 @@ defmodule ManaChessOnlineWeb.GameLive do
               >
                 Juegas {color_label(practice_player_side(@game))}
               </button>
+              <form class="mc-bot-difficulty-form" phx-change="set_practice_difficulty">
+                <label for={"bot-difficulty-#{@game.id}"}>Nivel</label>
+                <select
+                  id={"bot-difficulty-#{@game.id}"}
+                  name="difficulty"
+                  aria-label="Dificultad del bot"
+                  data-bot-difficulty
+                >
+                  <option
+                    :for={difficulty <- GameBot.difficulties()}
+                    value={Atom.to_string(difficulty)}
+                    selected={bot_difficulty(@game) == difficulty}
+                    title={GameBot.difficulty_description(difficulty)}
+                  >
+                    {GameBot.difficulty_label(difficulty)}
+                  </option>
+                </select>
+              </form>
             </div>
           </div>
 
@@ -1695,7 +1729,8 @@ defmodule ManaChessOnlineWeb.GameLive do
                   phx-click="start_practice"
                   data-sound-action="mode"
                 >
-                  <strong>Practica</strong> <span>Prueba elixir, cooldown y BOT.</span>
+                  <strong>Practica</strong>
+                  <span>Juega contra BOT Aprendiz, Normal o Experto.</span>
                 </button>
                 <button
                   type="button"

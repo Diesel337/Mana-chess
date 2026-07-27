@@ -150,6 +150,37 @@ defmodule ManaChessOnlineWeb.GameLiveTest do
     }
   end
 
+  test "practice exposes real bot difficulties and tutorial starts on apprentice", %{conn: conn} do
+    player_id = "live-bot-difficulty"
+    on_exit(fn -> GameLobby.leave(player_id) end)
+
+    conn = Plug.Test.init_test_session(conn, player_id: player_id)
+    {:ok, view, _html} = live(conn, ~p"/")
+    render_click(view, "start_practice")
+
+    assert has_element?(
+             view,
+             ~s(select[data-bot-difficulty] option[value="normal"][selected])
+           )
+
+    render_change(view, "set_practice_difficulty", %{"difficulty" => "expert"})
+
+    assert has_element?(
+             view,
+             ~s(select[data-bot-difficulty] option[value="expert"][selected])
+           )
+
+    assert render(view) =~ "Bot Experto"
+
+    render_click(view, "leave")
+    render_click(view, "start_tutorial")
+
+    assert has_element?(
+             view,
+             ~s(select[data-bot-difficulty] option[value="apprentice"][selected])
+           )
+  end
+
   test "leaderboard renders public aliases and the current rank without private ids", %{
     conn: conn
   } do

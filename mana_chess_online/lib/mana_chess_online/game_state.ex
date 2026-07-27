@@ -1,7 +1,7 @@
 defmodule ManaChessOnline.GameState do
   @moduledoc false
 
-  alias ManaChessOnline.{GameDirectory, GameRules}
+  alias ManaChessOnline.{GameBotDifficulty, GameDirectory, GameRules}
 
   def new_game(id, settings) do
     %{
@@ -23,6 +23,7 @@ defmodule ManaChessOnline.GameState do
       bot_enabled?: false,
       bot_ready_at: nil,
       bot_color: nil,
+      bot_difficulty: nil,
       promotion_pending: nil,
       finished_at: nil,
       first_move_pending: :white,
@@ -35,7 +36,15 @@ defmodule ManaChessOnline.GameState do
     }
   end
 
-  def practice_game(id, player_id, settings, now_ms, bot_move_ms, bot_color \\ :black) do
+  def practice_game(
+        id,
+        player_id,
+        settings,
+        now_ms,
+        bot_move_ms,
+        bot_color \\ :black,
+        bot_difficulty \\ :normal
+      ) do
     %{
       new_game(id, settings)
       | players: %{white: player_id, black: player_id},
@@ -43,6 +52,7 @@ defmodule ManaChessOnline.GameState do
         bot_enabled?: true,
         bot_ready_at: now_ms + bot_move_ms,
         bot_color: bot_color,
+        bot_difficulty: GameBotDifficulty.normalize(bot_difficulty),
         status: :playing,
         log: ["BOT encendido.", "Practica iniciada. Blancas abren."]
     }
@@ -78,6 +88,7 @@ defmodule ManaChessOnline.GameState do
       settings: game.settings,
       bot_enabled?: game.bot_enabled?,
       bot_color: Map.get(game, :bot_color),
+      bot_difficulty: Map.get(game, :bot_difficulty),
       castling_rights: game.castling_rights,
       cooldowns: public_cooldowns(game, now_ms, default_cooldown_seconds),
       queue: game.queue,

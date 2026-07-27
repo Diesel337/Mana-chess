@@ -38,6 +38,7 @@ defmodule ManaChessOnline.Persistence.EventTest do
       players: %{white: "steam_#{@steam_id}", black: "steam_#{@owner_steam_id}"},
       bot_enabled?: false,
       bot_color: nil,
+      bot_difficulty: :expert,
       finished_at: 42_000,
       settings: %{cooldown_enabled: true, costs: %{queen: 6.0}},
       log: ["mate", "move"]
@@ -51,6 +52,7 @@ defmodule ManaChessOnline.Persistence.EventTest do
     assert attrs.settings == %{"cooldown_enabled" => true, "costs" => %{"queen" => 6.0}}
     assert attrs.metadata["game_finished_at_ms"] == 42_000
     assert attrs.metadata["log_entries"] == 2
+    assert attrs.metadata["bot_difficulty"] == "expert"
 
     assert :ignore = Event.match_summary(%{game | status: :playing}, @now)
   end

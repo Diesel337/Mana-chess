@@ -8,12 +8,43 @@ defmodule ManaChessOnline.GameRooms do
 
   def new_game(id, settings), do: GameState.new_game(id, settings)
 
-  def practice_game(id, player_id, settings, now, bot_delay_ms, bot_color \\ :black) do
-    GameState.practice_game(id, player_id, settings, now, bot_delay_ms, bot_color)
+  def practice_game(
+        id,
+        player_id,
+        settings,
+        now,
+        bot_delay_ms,
+        bot_color \\ :black,
+        bot_difficulty \\ :normal
+      ) do
+    GameState.practice_game(
+      id,
+      player_id,
+      settings,
+      now,
+      bot_delay_ms,
+      bot_color,
+      bot_difficulty
+    )
   end
 
-  def practice_game_for_player(id, player_id, settings, now, bot_color \\ :black) do
-    practice_game(id, player_id, settings, now, GameBot.move_delay_ms(settings), bot_color)
+  def practice_game_for_player(
+        id,
+        player_id,
+        settings,
+        now,
+        bot_color \\ :black,
+        bot_difficulty \\ :normal
+      ) do
+    practice_game(
+      id,
+      player_id,
+      settings,
+      now,
+      GameBot.move_delay_ms(settings, bot_difficulty),
+      bot_color,
+      bot_difficulty
+    )
   end
 
   def private_game(id, settings), do: GameState.private_game(id, settings)
@@ -127,7 +158,8 @@ defmodule ManaChessOnline.GameRooms do
       player_id,
       old_game.settings,
       now,
-      GameControl.bot_color(old_game)
+      GameControl.bot_color(old_game),
+      GameBot.difficulty(old_game)
     )
     |> preserve_practice_bot_state(old_game)
     |> preserve_chat(old_game)

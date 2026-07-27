@@ -133,8 +133,22 @@ defmodule ManaChessOnline.GameLobbyRooms do
     end
   end
 
-  def practice_game(id, player_id, settings, now, bot_color \\ :black) do
-    GameRooms.practice_game_for_player(id, player_id, settings, now, bot_color)
+  def practice_game(
+        id,
+        player_id,
+        settings,
+        now,
+        bot_color \\ :black,
+        bot_difficulty \\ :normal
+      ) do
+    GameRooms.practice_game_for_player(
+      id,
+      player_id,
+      settings,
+      now,
+      bot_color,
+      bot_difficulty
+    )
   end
 
   defp maybe_drop_empty_ephemeral_game(state, game_id, game) do

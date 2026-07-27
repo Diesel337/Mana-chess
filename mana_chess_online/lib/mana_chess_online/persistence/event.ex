@@ -87,6 +87,7 @@ defmodule ManaChessOnline.Persistence.Event do
           metadata: %{
             "bot_enabled" => Map.get(game, :bot_enabled?, false) == true,
             "bot_color" => color(Map.get(game, :bot_color)),
+            "bot_difficulty" => bot_difficulty(Map.get(game, :bot_difficulty)),
             "game_finished_at_ms" => Map.get(game, :finished_at),
             "log_entries" => length(Map.get(game, :log, []))
           }
@@ -131,6 +132,11 @@ defmodule ManaChessOnline.Persistence.Event do
 
   defp color(value) when value in [:white, :black], do: Atom.to_string(value)
   defp color(_value), do: nil
+
+  defp bot_difficulty(value) when value in [:apprentice, :normal, :expert],
+    do: Atom.to_string(value)
+
+  defp bot_difficulty(_value), do: nil
 
   defp steam_id(value) do
     value = clean_string(value, 20)

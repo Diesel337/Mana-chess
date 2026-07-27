@@ -61,13 +61,18 @@ defmodule ManaChessOnline.GameLobby do
   def reset(player_id), do: GenServer.call(__MODULE__, {:reset, player_id})
   def start_game(player_id), do: GenServer.call(__MODULE__, {:start_game, player_id})
   def ready_to_start(player_id), do: GenServer.call(__MODULE__, {:ready_to_start, player_id})
-  def start_practice(player_id), do: GenServer.call(__MODULE__, {:start_practice, player_id})
+
+  def start_practice(player_id, bot_difficulty \\ :normal),
+    do: GenServer.call(__MODULE__, {:start_practice, player_id, bot_difficulty})
 
   def toggle_practice_bot(player_id),
     do: GenServer.call(__MODULE__, {:toggle_practice_bot, player_id})
 
   def toggle_practice_side(player_id),
     do: GenServer.call(__MODULE__, {:toggle_practice_side, player_id})
+
+  def set_practice_difficulty(player_id, difficulty),
+    do: GenServer.call(__MODULE__, {:set_practice_difficulty, player_id, difficulty})
 
   def update_settings(player_id, params),
     do: GenServer.call(__MODULE__, {:update_settings, player_id, params})
@@ -270,9 +275,9 @@ defmodule ManaChessOnline.GameLobby do
     {:reply, :ok, state}
   end
 
-  def handle_call({:start_practice, player_id}, _from, state) do
+  def handle_call({:start_practice, player_id, bot_difficulty}, _from, state) do
     now = GameLobbyRuntime.now_ms()
-    state = GameLobbyPractice.start_practice(state, player_id, now)
+    state = GameLobbyPractice.start_practice(state, player_id, now, bot_difficulty)
     state = GameLifecycle.touch_player(state, player_id, now)
     GameLobbyRuntime.broadcast_lobby(state)
     {:reply, GameLobbyRuntime.player_view(state, player_id), state}
@@ -286,6 +291,19 @@ defmodule ManaChessOnline.GameLobby do
 
   def handle_call({:toggle_practice_side, player_id}, _from, state) do
     state = GameLobbyPractice.toggle_side(state, player_id, GameLobbyRuntime.now_ms())
+    GameLobbyRuntime.broadcast_lobby(state)
+    {:reply, GameLobbyRuntime.player_view(state, player_id), state}
+  end
+
+  def handle_call({:set_practice_difficulty, player_id, difficulty}, _from, state) do
+    state =
+      GameLobbyPractice.set_difficulty(
+        state,
+        player_id,
+        difficulty,
+        GameLobbyRuntime.now_ms()
+      )
+
     GameLobbyRuntime.broadcast_lobby(state)
     {:reply, GameLobbyRuntime.player_view(state, player_id), state}
   end

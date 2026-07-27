@@ -27,6 +27,7 @@ defmodule ManaChessOnline.GameLobbyPracticeTest do
     assert state.games[game_id].practice?
     assert state.games[game_id].bot_enabled?
     assert state.games[game_id].bot_color == :black
+    assert state.games[game_id].bot_difficulty == :normal
   end
 
   test "toggles practice bots" do
@@ -56,9 +57,26 @@ defmodule ManaChessOnline.GameLobbyPracticeTest do
     state = GameLobbyPractice.toggle_side(state, player_id, 2_000)
 
     assert state.games[game_id].bot_color == :white
+    assert state.games[game_id].bot_difficulty == :normal
     assert state.games[game_id].chat == chat
 
     assert hd(state.games[game_id].log) ==
              "Ahora juegas Negras; BOT controla Blancas."
+  end
+
+  test "sets difficulty in the live game server and preserves it when swapping sides" do
+    player_id = "practice-difficulty-player"
+    game_id = GameRooms.practice_game_id(player_id)
+    on_exit(fn -> GameSupervisor.stop_game(game_id) end)
+
+    state =
+      state()
+      |> GameLobbyPractice.start_practice(player_id, 1_000)
+      |> GameLobbyPractice.set_difficulty(player_id, :expert, 2_000)
+      |> GameLobbyPractice.toggle_side(player_id, 3_000)
+
+    assert state.games[game_id].bot_difficulty == :expert
+    assert state.games[game_id].bot_color == :white
+    assert GameLobbyServers.game_snapshot(game_id, state.games).bot_difficulty == :expert
   end
 end
