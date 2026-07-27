@@ -22,7 +22,7 @@ defmodule ManaChessOnlineWeb.PageControllerTest do
     response = html_response(conn, 200)
     assert response =~ "Mana Chess"
     assert response =~ "app.css?v=cosmetic-mastery-20260717"
-    assert response =~ "premium_cosmetics.css?v=premium-cosmetics-layering-20260724"
+    assert response =~ "premium_cosmetics.css?v=premium-cosmetics-game-elixir-20260727"
     assert response =~ "game_effects.css?v=game-effects-20260718c"
     assert response =~ "cosmetic_browser.css?v=cosmetic-layout-20260724"
     assert response =~ "flat_pieces.css?v=flat-pieces-20260722e"
@@ -103,6 +103,12 @@ defmodule ManaChessOnlineWeb.PageControllerTest do
     assert catalog =~ "mastery"
     assert progression =~ "syncUnlocks"
     assert progression =~ "Maestria"
+
+    assert stylesheet =~ """
+           .mc-game:has(.mc-play-area) .mc-play-area > .mc-skin-strip {
+             display: none;
+           }
+           """
 
     for family <- ~w(arcane crystal elemental celestial) do
       assert catalog =~ family

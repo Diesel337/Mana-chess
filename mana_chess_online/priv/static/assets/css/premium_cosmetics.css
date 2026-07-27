@@ -746,23 +746,7 @@ html[data-piece-skin="celestial"] .mc-black {
 }
 
 .mc-game:has(.mc-play-area) .mc-play-area > .mc-skin-strip {
-  width: min(46%, 232px);
-  max-width: calc(50% - 12px);
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  overflow-y: hidden;
-  overscroll-behavior-inline: contain;
-  scrollbar-width: none;
-  scroll-snap-type: x proximity;
-}
-
-.mc-game:has(.mc-play-area) .mc-play-area > .mc-skin-strip::-webkit-scrollbar {
   display: none;
-}
-
-.mc-game:has(.mc-play-area) .mc-play-area > .mc-skin-strip button {
-  flex: 0 0 29px;
-  scroll-snap-align: start;
 }
 
 @media (max-width: 680px) {
@@ -777,11 +761,6 @@ html[data-piece-skin="celestial"] .mc-black {
 }
 
 @media (max-width: 420px) {
-  .mc-game:has(.mc-play-area) .mc-play-area > .mc-skin-strip {
-    width: calc(50% - 10px);
-    max-width: calc(50% - 10px);
-  }
-
   .mc-board-stack:is([data-board-skin="arcane"], [data-board-skin="crystal"], [data-board-skin="elemental"], [data-board-skin="celestial"]) .mc-board::after {
     opacity: .84;
   }
