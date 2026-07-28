@@ -61,6 +61,7 @@ defmodule ManaChessOnlineWeb.GameLiveTest do
     refute html =~ "mc-skins-rail"
 
     render_click(view, "show_lobby_tab", %{"tab" => "cosmetics"})
+    assert_patch(view, ~p"/?tab=cosmetics")
 
     assert has_element?(
              view,
@@ -78,6 +79,44 @@ defmodule ManaChessOnlineWeb.GameLiveTest do
     cosmetic_html = render(view)
     assert length(:binary.matches(cosmetic_html, "mc-cosmetic-gallery-square")) == 64
     assert length(:binary.matches(cosmetic_html, "data-piece-type=")) == 32
+  end
+
+  test "cosmetics route restores the selected tab after a remount", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/?tab=cosmetics")
+
+    assert has_element?(
+             view,
+             ~s(.mc-lobby-tabs button[phx-value-tab="cosmetics"][aria-pressed="true"])
+           )
+
+    assert has_element?(view, ~s([data-lobby-tab-panel="play"][hidden]))
+    assert has_element?(view, ~s|[data-lobby-tab-panel="cosmetics"]:not([hidden])|)
+  end
+
+  test "practice keeps a restorable game route until the player leaves", %{conn: conn} do
+    player_id = "live-restorable-practice"
+    on_exit(fn -> GameLobby.leave(player_id) end)
+
+    conn = Plug.Test.init_test_session(conn, player_id: player_id)
+    {:ok, view, _html} = live(conn, ~p"/")
+
+    render_click(view, "start_practice")
+
+    %{game_id: game_id} = GameLobby.join(player_id)
+    game_path = ~p"/game/#{game_id}"
+
+    assert_patch(view, game_path)
+    assert has_element?(view, "#mc-board-#{game_id}")
+
+    {:ok, restored_view, _html} = live(conn, game_path)
+
+    assert has_element?(restored_view, "#mc-board-#{game_id}")
+    assert render(restored_view) =~ "Practica"
+
+    render_click(restored_view, "leave")
+
+    assert_patch(restored_view, ~p"/")
+    assert has_element?(restored_view, ".mc-menu")
   end
 
   test "lobby renders the competitive profile and rated quick match action", %{conn: conn} do

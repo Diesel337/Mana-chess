@@ -69,7 +69,7 @@ defmodule ManaChessOnlineWeb.GameLive do
      |> assign(:chat_draft, "")
      |> assign(:chat_error, nil)
      |> assign(:reconnected?, recovered_session?(params, view))
-     |> assign(:lobby_tab, :play)}
+     |> assign(:lobby_tab, lobby_tab(params))}
   end
 
   defp random_player_id do
@@ -79,12 +79,23 @@ defmodule ManaChessOnlineWeb.GameLive do
   end
 
   @impl true
+  def handle_params(params, _uri, socket) do
+    {:noreply, assign(socket, :lobby_tab, lobby_tab(params))}
+  end
+
+  @impl true
   def handle_event("show_lobby_tab", %{"tab" => "play"}, socket) do
-    {:noreply, assign(socket, :lobby_tab, :play)}
+    {:noreply,
+     socket
+     |> assign(:lobby_tab, :play)
+     |> push_patch(to: ~p"/", replace: true)}
   end
 
   def handle_event("show_lobby_tab", %{"tab" => "cosmetics"}, socket) do
-    {:noreply, assign(socket, :lobby_tab, :cosmetics)}
+    {:noreply,
+     socket
+     |> assign(:lobby_tab, :cosmetics)
+     |> push_patch(to: ~p"/?tab=cosmetics", replace: true)}
   end
 
   def handle_event("show_lobby_tab", _params, socket), do: {:noreply, socket}
@@ -236,7 +247,7 @@ defmodule ManaChessOnlineWeb.GameLive do
       if connected?(socket),
         do: Phoenix.PubSub.subscribe(ManaChessOnline.PubSub, GameLobby.topic(view.game_id))
 
-      {:noreply, assign_view(socket, view)}
+      {:noreply, enter_game(socket, view)}
     else
       {:noreply, put_flash(socket, :error, "Servidor ocupado. Intenta de nuevo en un momento.")}
     end
@@ -249,7 +260,7 @@ defmodule ManaChessOnlineWeb.GameLive do
       if connected?(socket),
         do: Phoenix.PubSub.subscribe(ManaChessOnline.PubSub, GameLobby.topic(view.game_id))
 
-      {:noreply, assign_view(socket, view)}
+      {:noreply, enter_game(socket, view)}
     else
       {:noreply, put_flash(socket, :error, "Servidor ocupado. Intenta de nuevo en un momento.")}
     end
@@ -259,7 +270,7 @@ defmodule ManaChessOnlineWeb.GameLive do
     view = GameLobby.start_practice(socket.assigns.player_id, :apprentice)
 
     if practice_view?(view) do
-      {:noreply, assign_view(socket, view)}
+      {:noreply, enter_game(socket, view)}
     else
       {:noreply, put_flash(socket, :error, "Servidor ocupado. Intenta de nuevo en un momento.")}
     end
@@ -267,7 +278,7 @@ defmodule ManaChessOnlineWeb.GameLive do
 
   def handle_event("continue_tutorial", _params, socket) do
     view = GameLobby.continue_tutorial(socket.assigns.player_id)
-    {:noreply, assign_view(socket, view)}
+    {:noreply, enter_game(socket, view)}
   end
 
   def handle_event("toggle_practice_bot", _params, socket) do
@@ -308,7 +319,8 @@ defmodule ManaChessOnlineWeb.GameLive do
     {:noreply,
      socket
      |> assign_view(GameLobby.join(socket.assigns.player_id))
-     |> refresh_competitive_profile()}
+     |> refresh_competitive_profile()
+     |> push_patch(to: ~p"/", replace: true)}
   end
 
   def handle_event("clear_room", %{"game" => game_id}, socket) do
@@ -333,7 +345,7 @@ defmodule ManaChessOnlineWeb.GameLive do
       Phoenix.PubSub.subscribe(ManaChessOnline.PubSub, GameLobby.topic(view.game_id))
     end
 
-    {:noreply, assign_view(socket, view)}
+    {:noreply, enter_game(socket, view)}
   end
 
   def handle_event("sit_anywhere", _params, socket) do
@@ -347,12 +359,13 @@ defmodule ManaChessOnlineWeb.GameLive do
       Phoenix.PubSub.subscribe(ManaChessOnline.PubSub, GameLobby.topic(view.game_id))
     end
 
-    socket = assign_view(socket, view)
-
     if view.game_id do
-      {:noreply, socket}
+      {:noreply, enter_game(socket, view)}
     else
-      {:noreply, put_flash(socket, :error, "No hay asientos disponibles en este momento.")}
+      {:noreply,
+       socket
+       |> assign_view(view)
+       |> put_flash(:error, "No hay asientos disponibles en este momento.")}
     end
   end
 
@@ -435,6 +448,17 @@ defmodule ManaChessOnlineWeb.GameLive do
     |> assign(:chat_error, nil)
     |> assign(:reconnected?, false)
   end
+
+  defp enter_game(socket, %{game_id: game_id} = view) when is_binary(game_id) do
+    socket
+    |> assign_view(view)
+    |> push_patch(to: ~p"/game/#{game_id}", replace: true)
+  end
+
+  defp enter_game(socket, view), do: assign_view(socket, view)
+
+  defp lobby_tab(%{"tab" => "cosmetics"}), do: :cosmetics
+  defp lobby_tab(_params), do: :play
 
   defp assign_game_with_effects(socket, game, player_color) do
     effects =
