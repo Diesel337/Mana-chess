@@ -1,0 +1,401 @@
+.mc-tutorial-lesson {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 8px;
+  padding: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(230, 189, 104, .46);
+  border-left: 4px solid #8bd9bd;
+  border-radius: 8px;
+  background: #101b17;
+  color: #f7f2e8;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, .3);
+}
+
+.mc-tutorial-lesson-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: start;
+}
+
+.mc-tutorial-lesson-head > div {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.mc-tutorial-lesson-head span {
+  color: #8bd9bd;
+  font-size: .67rem;
+  font-weight: 900;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.mc-tutorial-lesson-head strong {
+  color: #fff2c7;
+  font-size: 1.08rem;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.mc-tutorial-lesson-head p {
+  margin: 2px 0 0;
+  color: #d4ddd7;
+  font-size: .79rem;
+  line-height: 1.35;
+}
+
+.mc-tutorial-lesson-head > small {
+  min-width: 64px;
+  padding: 5px 7px;
+  border: 1px solid rgba(142, 104, 234, .5);
+  border-radius: 999px;
+  color: #d8c9ff;
+  font-size: .64rem;
+  font-weight: 900;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.mc-tutorial-progress {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.mc-tutorial-progress i {
+  display: block;
+  height: 4px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, .12);
+}
+
+.mc-tutorial-progress i.is-complete {
+  background: #e6bd68;
+  box-shadow: 0 0 10px rgba(230, 189, 104, .42);
+}
+
+.mc-tutorial-rules {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+  border-top: 1px solid rgba(255, 255, 255, .09);
+  border-bottom: 1px solid rgba(255, 255, 255, .09);
+}
+
+.mc-tutorial-rules > div {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+  padding: 8px 7px;
+}
+
+.mc-tutorial-rules > div:nth-child(odd) {
+  border-right: 1px solid rgba(255, 255, 255, .09);
+}
+
+.mc-tutorial-rules > div:nth-child(-n + 2) {
+  border-bottom: 1px solid rgba(255, 255, 255, .09);
+}
+
+.mc-tutorial-rules dt {
+  color: #9eaaa2;
+  font-size: .62rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.mc-tutorial-rules dd {
+  margin: 0;
+  color: #fff2c7;
+  font-size: .92rem;
+  font-weight: 950;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.mc-tutorial-rules small {
+  color: #77867d;
+  font-size: .57rem;
+  line-height: 1.15;
+}
+
+.mc-tutorial-steps {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mc-tutorial-steps li {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  min-width: 0;
+  padding: 7px 2px;
+  border-bottom: 1px solid rgba(255, 255, 255, .07);
+}
+
+.mc-tutorial-steps li:last-child {
+  border-bottom: 0;
+}
+
+.mc-tutorial-steps li > span {
+  display: grid;
+  width: 22px;
+  height: 22px;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, .18);
+  border-radius: 50%;
+  color: #9aa59e;
+  font-size: .66rem;
+  font-weight: 900;
+}
+
+.mc-tutorial-steps li > div {
+  display: grid;
+  min-width: 0;
+  gap: 1px;
+}
+
+.mc-tutorial-steps strong {
+  color: #d4ddd7;
+  font-size: .73rem;
+  line-height: 1.15;
+}
+
+.mc-tutorial-steps small {
+  color: #85938a;
+  font-size: .61rem;
+  line-height: 1.15;
+}
+
+.mc-tutorial-steps .is-active > span {
+  border-color: #e6bd68;
+  background: #e6bd68;
+  color: #171207;
+  box-shadow: 0 0 14px rgba(230, 189, 104, .45);
+}
+
+.mc-tutorial-steps .is-active strong {
+  color: #fff2c7;
+}
+
+.mc-tutorial-steps .is-done > span {
+  border-color: #8bd9bd;
+  background: #17382e;
+  color: #bdf4df;
+}
+
+.mc-tutorial-steps .is-pending {
+  opacity: .5;
+}
+
+.mc-tutorial-costs {
+  display: grid;
+  gap: 6px;
+  padding-top: 9px;
+  border-top: 1px solid rgba(142, 104, 234, .25);
+}
+
+.mc-tutorial-costs > span {
+  color: #b9a4ef;
+  font-size: .64rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.mc-tutorial-costs dl {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px 8px;
+  margin: 0;
+}
+
+.mc-tutorial-costs dl > div {
+  display: flex;
+  min-width: 0;
+  justify-content: space-between;
+  gap: 4px;
+  padding: 4px 0;
+  border-bottom: 1px dotted rgba(255, 255, 255, .1);
+}
+
+.mc-tutorial-costs dt {
+  color: #a9b4ad;
+  font-size: .62rem;
+  overflow-wrap: anywhere;
+}
+
+.mc-tutorial-costs dd {
+  margin: 0;
+  color: #fff2c7;
+  font-size: .68rem;
+  font-weight: 950;
+}
+
+.mc-tutorial-finish {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 7px;
+}
+
+.mc-tutorial-continue {
+  display: grid;
+  gap: 4px;
+}
+
+.mc-tutorial-continue small {
+  color: #85938a;
+  font-size: .59rem;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.mc-tutorial-continue button,
+.mc-tutorial-finish button {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid rgba(255, 255, 255, .16);
+  border-radius: 6px;
+  padding: 8px 10px;
+  cursor: pointer;
+  font: inherit;
+  font-size: .72rem;
+  font-weight: 900;
+}
+
+.mc-tutorial-continue .mc-action-primary,
+.mc-tutorial-finish .mc-action-primary {
+  border-color: #e6bd68;
+  background: #e6bd68;
+  color: #171207;
+}
+
+.mc-tutorial-finish .mc-action-secondary {
+  border-color: rgba(139, 217, 189, .42);
+  background: #17382e;
+  color: #dff8ef;
+}
+
+.mc-tutorial-continue button:hover,
+.mc-tutorial-finish button:hover {
+  filter: brightness(1.06);
+}
+
+.mc-tutorial-continue button:disabled {
+  cursor: wait;
+  opacity: .58;
+}
+
+.mc-square.mc-tutorial-source {
+  z-index: 1;
+  box-shadow:
+    inset 0 0 0 4px #e6bd68,
+    inset 0 0 28px rgba(230, 189, 104, .36) !important;
+  animation: mc-tutorial-source-pulse 1.35s ease-in-out infinite;
+}
+
+.mc-square.mc-tutorial-target {
+  box-shadow:
+    inset 0 0 0 4px #8bd9bd,
+    inset 0 0 26px rgba(139, 217, 189, .3) !important;
+}
+
+.mc-square.mc-valid.mc-tutorial-target {
+  box-shadow:
+    inset 0 0 0 5px #8bd9bd,
+    inset 0 0 0 999px rgba(42, 126, 91, .34),
+    0 0 18px rgba(139, 217, 189, .32) !important;
+}
+
+.mc-tutorial-cost-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  z-index: 8;
+  display: grid;
+  min-width: 18px;
+  height: 18px;
+  place-items: center;
+  padding: 0 3px;
+  border: 1px solid #fff2c7;
+  border-radius: 999px;
+  background: #171207;
+  color: #ffe08f;
+  font-size: .56rem;
+  font-weight: 950;
+  line-height: 1;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, .4);
+  pointer-events: none;
+}
+
+@keyframes mc-tutorial-source-pulse {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+
+  50% {
+    filter: brightness(1.13);
+  }
+}
+
+@media (min-width: 1000px) {
+  .mc-game:has(.mc-play-area) > .mc-tutorial-lesson,
+  html[data-desktop="true"] .mc-game:has(.mc-play-area) > .mc-tutorial-lesson {
+    grid-column: 1;
+    width: 100%;
+    max-width: var(--mc-game-rail);
+    max-height: calc(100dvh - 124px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    justify-self: stretch;
+  }
+}
+
+@media (max-width: 720px) {
+  .mc-tutorial-lesson {
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .mc-tutorial-lesson-head strong {
+    font-size: 1rem;
+  }
+
+  .mc-tutorial-lesson-head p {
+    font-size: .75rem;
+  }
+
+  .mc-tutorial-rules > div {
+    padding: 7px 6px;
+  }
+}
+
+@media (max-width: 380px) {
+  .mc-tutorial-lesson-head {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mc-tutorial-lesson-head > small {
+    justify-self: start;
+  }
+
+  .mc-tutorial-costs dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mc-square.mc-tutorial-source {
+    animation: none;
+  }
+}

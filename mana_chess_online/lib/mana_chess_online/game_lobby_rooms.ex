@@ -151,6 +151,9 @@ defmodule ManaChessOnline.GameLobbyRooms do
     )
   end
 
+  def tutorial_game(id, player_id, settings),
+    do: GameRooms.tutorial_game(id, player_id, settings)
+
   defp maybe_drop_empty_ephemeral_game(state, game_id, game) do
     if GameRooms.drop_empty_private_game?(game) or GameRooms.empty_matchmaking_game?(game) do
       GameLobbyServers.stop_game_server(game_id)

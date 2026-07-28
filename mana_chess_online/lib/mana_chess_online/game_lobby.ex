@@ -65,6 +65,11 @@ defmodule ManaChessOnline.GameLobby do
   def start_practice(player_id, bot_difficulty \\ :normal),
     do: GenServer.call(__MODULE__, {:start_practice, player_id, bot_difficulty})
 
+  def start_tutorial(player_id), do: GenServer.call(__MODULE__, {:start_tutorial, player_id})
+
+  def continue_tutorial(player_id),
+    do: GenServer.call(__MODULE__, {:continue_tutorial, player_id})
+
   def toggle_practice_bot(player_id),
     do: GenServer.call(__MODULE__, {:toggle_practice_bot, player_id})
 
@@ -280,6 +285,21 @@ defmodule ManaChessOnline.GameLobby do
     state = GameLobbyPractice.start_practice(state, player_id, now, bot_difficulty)
     state = GameLifecycle.touch_player(state, player_id, now)
     GameLobbyRuntime.broadcast_lobby(state)
+    {:reply, GameLobbyRuntime.player_view(state, player_id), state}
+  end
+
+  def handle_call({:start_tutorial, player_id}, _from, state) do
+    now = GameLobbyRuntime.now_ms()
+    state = GameLobbyPractice.start_tutorial(state, player_id)
+    state = GameLifecycle.touch_player(state, player_id, now)
+    GameLobbyRuntime.broadcast_lobby(state)
+    {:reply, GameLobbyRuntime.player_view(state, player_id), state}
+  end
+
+  def handle_call({:continue_tutorial, player_id}, _from, state) do
+    state =
+      GameLobbyPractice.continue_tutorial(state, player_id, GameLobbyRuntime.now_ms())
+
     {:reply, GameLobbyRuntime.player_view(state, player_id), state}
   end
 

@@ -1,7 +1,7 @@
 defmodule ManaChessOnline.GameStateTest do
   use ExUnit.Case, async: true
 
-  alias ManaChessOnline.GameState
+  alias ManaChessOnline.{GameRules, GameState}
 
   defp settings do
     %{
@@ -27,6 +27,7 @@ defmodule ManaChessOnline.GameStateTest do
 
   test "builds practice and private game variants" do
     practice = GameState.practice_game("practice_1", "player-1", settings(), 1_000, 1_200)
+    tutorial = GameState.tutorial_game("tutorial_1", "player-1", settings())
     private = GameState.private_game("private_1", settings())
     matchmaking = GameState.matchmaking_game("match_1", settings())
 
@@ -36,6 +37,14 @@ defmodule ManaChessOnline.GameStateTest do
     assert practice.bot_color == :black
     assert practice.players == %{white: "player-1", black: "player-1"}
     assert practice.status == :playing
+
+    assert tutorial.practice?
+    assert tutorial.tutorial?
+    assert tutorial.tutorial_step == :move
+    refute tutorial.bot_enabled?
+    assert tutorial.bot_difficulty == :apprentice
+    assert GameRules.at(tutorial.board, 6, 3) == "P"
+    assert GameRules.at(tutorial.board, 4, 4) == "p"
 
     assert private.private?
     assert private.practice? == false

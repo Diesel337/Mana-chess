@@ -6,10 +6,12 @@ defmodule ManaChessOnline.GameLobbyPractice do
     GameBot,
     GameChat,
     GameControl,
+    GameEngine,
     GameLobbyRooms,
     GameLobbyServers,
     GamePlayers,
-    GameRooms
+    GameRooms,
+    GameTutorial
   }
 
   def start_practice(state, player_id, now, bot_difficulty \\ :normal) do
@@ -38,9 +40,48 @@ defmodule ManaChessOnline.GameLobbyPractice do
     end
   end
 
+  def start_tutorial(state, player_id) do
+    if GameCapacity.available_after_leaving?(state, player_id) do
+      game_id = GameRooms.practice_game_id(player_id)
+
+      state
+      |> GameLobbyRooms.remove_player(player_id)
+      |> put_in(
+        [:games, game_id],
+        replace_game_state(
+          GameLobbyRooms.tutorial_game(game_id, player_id, state.global_settings)
+        )
+      )
+      |> put_in([:players, player_id], %{game_id: game_id, color: :practice})
+    else
+      GameCapacity.record_rejection(state)
+    end
+  end
+
+  def continue_tutorial(state, player_id, now) do
+    with %{game_id: game_id, color: :practice} <- GamePlayers.assignment(state, player_id),
+         %{practice?: true, tutorial?: true, tutorial_step: :cooldown} = game <-
+           game_snapshot(game_id, state) do
+      if GameEngine.cooldown_active?(game, GameTutorial.source_square(game), now) do
+        state
+      else
+        game =
+          update_game_state(game, fn game ->
+            game
+            |> GameTutorial.acknowledge_cooldown()
+            |> update_in([:log], &["Cooldown observado. Ahora captura el peon de e4." | &1])
+          end)
+
+        put_in(state.games[game_id], game)
+      end
+    else
+      _ -> state
+    end
+  end
+
   def toggle_bot(state, player_id, now) do
     with %{game_id: game_id, color: :practice} <- GamePlayers.assignment(state, player_id),
-         %{practice?: true} = game <- game_snapshot(game_id, state) do
+         %{practice?: true, tutorial?: false} = game <- game_snapshot(game_id, state) do
       game =
         update_game_state(game, fn game ->
           enabled? = not game.bot_enabled?
@@ -66,7 +107,7 @@ defmodule ManaChessOnline.GameLobbyPractice do
 
   def toggle_side(state, player_id, now) do
     with %{game_id: game_id, color: :practice} <- GamePlayers.assignment(state, player_id),
-         %{practice?: true} = game <- game_snapshot(game_id, state) do
+         %{practice?: true, tutorial?: false} = game <- game_snapshot(game_id, state) do
       game =
         update_game_state(game, fn game ->
           next_bot_color = game |> GameControl.bot_color() |> GameControl.opposite_color()
@@ -99,7 +140,7 @@ defmodule ManaChessOnline.GameLobbyPractice do
 
   def set_difficulty(state, player_id, difficulty, now) do
     with %{game_id: game_id, color: :practice} <- GamePlayers.assignment(state, player_id),
-         %{practice?: true} = game <- game_snapshot(game_id, state) do
+         %{practice?: true, tutorial?: false} = game <- game_snapshot(game_id, state) do
       difficulty = GameBot.normalize_difficulty(difficulty)
 
       game =

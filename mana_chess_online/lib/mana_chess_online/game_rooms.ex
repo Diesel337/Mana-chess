@@ -47,6 +47,9 @@ defmodule ManaChessOnline.GameRooms do
     )
   end
 
+  def tutorial_game(id, player_id, settings),
+    do: GameState.tutorial_game(id, player_id, settings)
+
   def private_game(id, settings), do: GameState.private_game(id, settings)
   def matchmaking_game(id, settings), do: GameState.matchmaking_game(id, settings)
 
@@ -149,6 +152,13 @@ defmodule ManaChessOnline.GameRooms do
     do: GameState.private_game(game_id, settings)
 
   def reset_room_state(game_id, %{settings: settings}), do: GameState.new_game(game_id, settings)
+
+  def reset_practice_room_state(game_id, %{tutorial?: true} = old_game, _now) do
+    game_id
+    |> tutorial_game(old_game.players.white, old_game.settings)
+    |> preserve_chat(old_game)
+    |> prepend_log("Tutorial reiniciado.")
+  end
 
   def reset_practice_room_state(game_id, old_game, now) do
     player_id = old_game.players.white

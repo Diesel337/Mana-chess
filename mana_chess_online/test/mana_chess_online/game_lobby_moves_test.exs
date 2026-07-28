@@ -70,4 +70,30 @@ defmodule ManaChessOnline.GameLobbyMovesTest do
     assert GameRules.at(state.games[game_id].board, 4, 4) == "P"
     assert state.games[game_id].first_move_pending == nil
   end
+
+  test "tutorial games only accept the guided move" do
+    game_id = "tutorial_move_" <> Integer.to_string(System.unique_integer([:positive]))
+    player_id = "tutorial-player"
+    on_exit(fn -> GameSupervisor.stop_game(game_id) end)
+
+    game = GameRooms.tutorial_game(game_id, player_id, settings())
+
+    state = %{
+      global_settings: settings(),
+      games: %{game_id => game},
+      players: %{player_id => %{game_id: game_id, color: :practice}},
+      rate_limits: %{}
+    }
+
+    {state, ^game_id} =
+      GameLobbyMoves.enqueue_move(state, player_id, {6, 3}, {4, 3}, 1_000)
+
+    assert hd(state.games[game_id].log) ==
+             "Movimiento rechazado: sigue el objetivo del tutorial."
+
+    {state, ^game_id} =
+      GameLobbyMoves.enqueue_move(state, player_id, {6, 3}, {5, 3}, 1_100)
+
+    assert GameRules.at(state.games[game_id].board, 5, 3) == "P"
+  end
 end

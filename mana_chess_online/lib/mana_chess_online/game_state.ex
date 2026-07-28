@@ -1,7 +1,7 @@
 defmodule ManaChessOnline.GameState do
   @moduledoc false
 
-  alias ManaChessOnline.{GameBotDifficulty, GameDirectory, GameRules}
+  alias ManaChessOnline.{GameBotDifficulty, GameDirectory, GameRules, GameTutorial}
 
   def new_game(id, settings) do
     %{
@@ -9,6 +9,8 @@ defmodule ManaChessOnline.GameState do
       board: GameRules.initial_board(),
       players: %{white: nil, black: nil},
       practice?: false,
+      tutorial?: false,
+      tutorial_step: nil,
       private?: false,
       matchmaking?: false,
       settings: settings,
@@ -58,6 +60,24 @@ defmodule ManaChessOnline.GameState do
     }
   end
 
+  def tutorial_game(id, player_id, settings) do
+    %{
+      new_game(id, settings)
+      | board: GameTutorial.board(),
+        players: %{white: player_id, black: player_id},
+        practice?: true,
+        tutorial?: true,
+        tutorial_step: :move,
+        castling_rights: GameTutorial.castling_rights(),
+        bot_enabled?: false,
+        bot_ready_at: nil,
+        bot_color: :black,
+        bot_difficulty: :apprentice,
+        status: :playing,
+        log: ["Leccion iniciada. Mueve el peon d2 a d3."]
+    }
+  end
+
   def private_game(id, settings) do
     %{
       new_game(id, settings)
@@ -82,6 +102,8 @@ defmodule ManaChessOnline.GameState do
       board: game.board,
       players: game.players,
       practice?: game.practice?,
+      tutorial?: Map.get(game, :tutorial?, false),
+      tutorial_step: Map.get(game, :tutorial_step),
       private?: Map.get(game, :private?, false),
       matchmaking?: Map.get(game, :matchmaking?, false),
       elixir: game.elixir,

@@ -45,6 +45,37 @@ defmodule ManaChessOnline.GameLobbyPracticeTest do
     assert hd(state.games[game_id].log) == "Bot desactivado."
   end
 
+  test "starts an isolated tutorial and does not allow bot controls" do
+    player_id = "tutorial-player"
+    game_id = GameRooms.practice_game_id(player_id)
+    on_exit(fn -> GameSupervisor.stop_game(game_id) end)
+
+    state = GameLobbyPractice.start_tutorial(state(), player_id)
+    tutorial = state.games[game_id]
+
+    assert state.players[player_id] == %{game_id: game_id, color: :practice}
+    assert tutorial.tutorial?
+    refute tutorial.bot_enabled?
+    assert tutorial.bot_ready_at == nil
+    assert tutorial.bot_difficulty == :apprentice
+
+    unchanged = GameLobbyPractice.toggle_bot(state, player_id, 2_000)
+    refute unchanged.games[game_id].bot_enabled?
+
+    tutorial =
+      GameLobbyServers.update_state(tutorial, fn game ->
+        %{game | tutorial_step: :cooldown, cooldowns: %{{5, 3} => 3_000}}
+      end)
+
+    state = %{state | games: Map.put(state.games, game_id, tutorial)}
+
+    waiting = GameLobbyPractice.continue_tutorial(state, player_id, 2_000)
+    assert waiting.games[game_id].tutorial_step == :cooldown
+
+    continued = GameLobbyPractice.continue_tutorial(waiting, player_id, 3_001)
+    assert continued.games[game_id].tutorial_step == :capture
+  end
+
   test "toggles practice sides and preserves chat" do
     player_id = "practice-side-player"
     game_id = GameRooms.practice_game_id(player_id)

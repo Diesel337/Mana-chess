@@ -1,7 +1,7 @@
 defmodule ManaChessOnline.GameEngine do
   @moduledoc false
 
-  alias ManaChessOnline.{GameRules, GameSettings, GameState}
+  alias ManaChessOnline.{GameRules, GameSettings, GameState, GameTutorial}
 
   @files ~w(a b c d e f g h)
 
@@ -72,6 +72,7 @@ defmodule ManaChessOnline.GameEngine do
             finished_at: if(terminal_status?(next_status), do: now_ms, else: game.finished_at),
             log: [move_message(action, piece, captured) | game.log]
         }
+        |> GameTutorial.after_move(action)
     end
   end
 

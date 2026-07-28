@@ -1,7 +1,7 @@
 defmodule ManaChessOnlineWeb.GameLive do
   use ManaChessOnlineWeb, :live_view
 
-  alias ManaChessOnline.{GameBot, GameLobby, GameRuntimeConfig, Persistence}
+  alias ManaChessOnline.{GameBot, GameLobby, GameRuntimeConfig, GameTutorial, Persistence}
   alias ManaChessOnline.GameRules
   alias ManaChessOnlineWeb.{GameEffectEvents, GameText}
 
@@ -9,6 +9,7 @@ defmodule ManaChessOnlineWeb.GameLive do
   import ManaChessOnlineWeb.GameComponents
   import ManaChessOnlineWeb.GameMatchComponents
   import ManaChessOnlineWeb.GameSoundComponents
+  import ManaChessOnlineWeb.GameTutorialComponents
 
   @symbols %{
     "r" => "♜",
@@ -66,8 +67,7 @@ defmodule ManaChessOnlineWeb.GameLive do
      |> assign(:chat_draft, "")
      |> assign(:chat_error, nil)
      |> assign(:reconnected?, recovered_session?(params, view))
-     |> assign(:lobby_tab, :play)
-     |> assign(:tutorial?, false)}
+     |> assign(:lobby_tab, :play)}
   end
 
   defp random_player_id do
@@ -95,18 +95,7 @@ defmodule ManaChessOnlineWeb.GameLive do
     piece = GameRules.at(socket.assigns.game.board, r, c)
     piece_color = GameRules.color(piece)
 
-    legal_moves =
-      if piece_color in [:white, :black] do
-        GameRules.legal_moves_for(
-          socket.assigns.game.board,
-          r,
-          c,
-          piece_color,
-          socket.assigns.game.castling_rights
-        )
-      else
-        []
-      end
+    legal_moves = legal_moves_for(socket.assigns.game, piece_color, square)
 
     selected =
       if selectable_square?(
@@ -245,23 +234,38 @@ defmodule ManaChessOnlineWeb.GameLive do
       if connected?(socket),
         do: Phoenix.PubSub.subscribe(ManaChessOnline.PubSub, GameLobby.topic(view.game_id))
 
-      {:noreply, socket |> assign_view(view) |> assign(:tutorial?, false)}
+      {:noreply, assign_view(socket, view)}
     else
       {:noreply, put_flash(socket, :error, "Servidor ocupado. Intenta de nuevo en un momento.")}
     end
   end
 
   def handle_event("start_tutorial", _params, socket) do
-    view = GameLobby.start_practice(socket.assigns.player_id, :apprentice)
+    view = GameLobby.start_tutorial(socket.assigns.player_id)
 
     if practice_view?(view) do
       if connected?(socket),
         do: Phoenix.PubSub.subscribe(ManaChessOnline.PubSub, GameLobby.topic(view.game_id))
 
-      {:noreply, socket |> assign_view(view) |> assign(:tutorial?, true)}
+      {:noreply, assign_view(socket, view)}
     else
       {:noreply, put_flash(socket, :error, "Servidor ocupado. Intenta de nuevo en un momento.")}
     end
+  end
+
+  def handle_event("finish_tutorial", _params, socket) do
+    view = GameLobby.start_practice(socket.assigns.player_id, :apprentice)
+
+    if practice_view?(view) do
+      {:noreply, assign_view(socket, view)}
+    else
+      {:noreply, put_flash(socket, :error, "Servidor ocupado. Intenta de nuevo en un momento.")}
+    end
+  end
+
+  def handle_event("continue_tutorial", _params, socket) do
+    view = GameLobby.continue_tutorial(socket.assigns.player_id)
+    {:noreply, assign_view(socket, view)}
   end
 
   def handle_event("toggle_practice_bot", _params, socket) do
@@ -496,7 +500,9 @@ defmodule ManaChessOnlineWeb.GameLive do
       {r, c} in valid_moves && "mc-valid",
       selected?(blocked_square, {r, c}) && "mc-blocked",
       in_check_square?(game, r, c) && "mc-check",
-      cooldown_active?(game, {r, c}) && "mc-cooldown"
+      cooldown_active?(game, {r, c}) && "mc-cooldown",
+      GameTutorial.square_role(game, {r, c}) == :source && "mc-tutorial-source",
+      GameTutorial.square_role(game, {r, c}) == :target && "mc-tutorial-target"
     ]
   end
 
@@ -864,38 +870,11 @@ defmodule ManaChessOnlineWeb.GameLive do
   defp first_move_message(_game), do: nil
 
   defp legal_moves_for(game, piece_color, {r, c}) when piece_color in [:white, :black] do
-    GameRules.legal_moves_for(game.board, r, c, piece_color, game.castling_rights)
+    legal_moves = GameRules.legal_moves_for(game.board, r, c, piece_color, game.castling_rights)
+    GameTutorial.legal_moves(game, {r, c}, legal_moves)
   end
 
   defp legal_moves_for(_game, _piece_color, _square), do: []
-
-  defp tutorial_steps(game) do
-    moved? = tutorial_white_moved?(game)
-    bot_on? = game.bot_enabled?
-
-    [
-      %{state: tutorial_step_state(moved?, true), text: "Mueve una pieza blanca para abrir."},
-      %{
-        state: tutorial_step_state(moved?, moved?),
-        text: "Mira elixir y cooldown: son el ritmo del modo."
-      },
-      %{state: tutorial_step_state(bot_on?, moved?), text: "Prende BOT para que Negras conteste."}
-    ]
-  end
-
-  defp tutorial_complete?(game), do: Enum.all?(tutorial_steps(game), &(&1.state == :done))
-
-  defp tutorial_step_state(true, _available?), do: :done
-  defp tutorial_step_state(false, true), do: :active
-  defp tutorial_step_state(false, false), do: :pending
-
-  defp tutorial_step_class(%{state: :done}), do: "mc-tutorial-done"
-  defp tutorial_step_class(%{state: :active}), do: "mc-tutorial-active"
-  defp tutorial_step_class(_step), do: "mc-tutorial-pending"
-
-  defp tutorial_white_moved?(game) do
-    game.first_move_pending != :white or Enum.any?(game.log, &String.starts_with?(&1, "Blancas "))
-  end
 
   defp alert_message(%{log: [latest | _rest]}) do
     cond do
@@ -934,6 +913,7 @@ defmodule ManaChessOnlineWeb.GameLive do
     |> Kernel.<>(" pidio reiniciar")
   end
 
+  defp reset_label(%{tutorial?: true}, _player_id), do: "Reiniciar leccion"
   defp reset_label(%{practice?: true}, _player_id), do: "Reiniciar practica"
 
   defp reset_label(%{reset_requests: requests}, player_id) do
@@ -970,6 +950,20 @@ defmodule ManaChessOnlineWeb.GameLive do
   defp select_alert(_game, _player_color, _piece, _piece_color, {_r, _c}, _legal_moves, _square),
     do: nil
 
+  defp select_alert(
+         %{tutorial?: true} = game,
+         _player_color,
+         ".",
+         _piece_color,
+         nil,
+         _legal_moves,
+         square
+       ) do
+    if GameTutorial.target_square(game) == square,
+      do: "Primero selecciona la pieza marcada.",
+      else: nil
+  end
+
   defp select_alert(_game, _player_color, ".", _piece_color, nil, _legal_moves, _square), do: nil
 
   defp select_alert(
@@ -986,6 +980,9 @@ defmodule ManaChessOnlineWeb.GameLive do
   defp select_alert(game, player_color, piece, piece_color, nil, legal_moves, square)
        when not is_nil(piece_color) do
     cond do
+      GameTutorial.tutorial?(game) and GameTutorial.source_square(game) != square ->
+        "Sigue la leccion: selecciona la pieza marcada."
+
       not can_move_now?(game, piece_color) -> "Blancas abren: mueve una pieza blanca primero."
       bot_controls_color?(game, piece_color) -> "El BOT controla #{color_label(piece_color)}."
       not controls_color?(player_color, piece_color) -> spectator_or_control_alert(player_color)
@@ -1184,7 +1181,7 @@ defmodule ManaChessOnlineWeb.GameLive do
             </div>
           </div>
 
-          <div :if={@game.practice?} class="mc-practice-banner">
+          <div :if={@game.practice? && !@game.tutorial?} class="mc-practice-banner">
             <strong>Modo practica</strong> <span>{practice_banner_text(@game)}</span>
             <div class="mc-bot-control">
               <span>BOT</span>
@@ -1226,26 +1223,7 @@ defmodule ManaChessOnlineWeb.GameLive do
             </div>
           </div>
 
-          <div :if={@tutorial? && @game.practice?} class="mc-tutorial mc-tutorial-pop">
-            <div>
-              <strong>
-                {if tutorial_complete?(@game),
-                  do: "Listo: ya sabes el modo",
-                  else: "Mana Chess en 1 minuto"}
-              </strong>
-              <span>
-                {if tutorial_complete?(@game),
-                  do: "Sigue en practica o reta a alguien online.",
-                  else: "No es clase de ajedrez: solo aprende elixir, cooldown y bot."}
-              </span>
-            </div>
-
-            <ol>
-              <li :for={step <- tutorial_steps(@game)} class={tutorial_step_class(step)}>
-                <span></span> {step.text}
-              </li>
-            </ol>
-          </div>
+          <.tutorial_panel :if={@game.tutorial?} game={@game} />
 
           <div :if={observing?(@game, @player_id)} class="mc-spectator-banner">
             <strong>Observando partida</strong>
@@ -1258,6 +1236,7 @@ defmodule ManaChessOnlineWeb.GameLive do
           </div>
           <% phase = match_phase(@game, @player_id) %>
           <.match_status
+            :if={!@game.tutorial?}
             phase={phase}
             phase_class={match_phase_class(phase)}
             role={player_role(@game, @color)}
@@ -1589,6 +1568,14 @@ defmodule ManaChessOnlineWeb.GameLive do
                       data-legal-moves={legal_moves_data(@game, @color, piece, r, c)}
                     >
                       <span class={piece_class(piece)}>{@symbols[piece]}</span>
+                      <span
+                        :if={GameTutorial.source_square(@game) == {r, c}}
+                        class="mc-tutorial-cost-badge"
+                        title={"Coste: #{short_number(piece_cost_for_ui(@game, piece))} mana"}
+                        aria-label={"Coste: #{short_number(piece_cost_for_ui(@game, piece))} mana"}
+                      >
+                        {short_number(piece_cost_for_ui(@game, piece))}
+                      </span>
                       <span
                         :if={cooldown_for(@game, {r, c})}
                         class="mc-cooldown-ring"

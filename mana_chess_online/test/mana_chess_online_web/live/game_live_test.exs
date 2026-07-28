@@ -50,7 +50,11 @@ defmodule ManaChessOnlineWeb.GameLiveTest do
   test "lobby separates play and cosmetics into a single tabbed catalog", %{conn: conn} do
     {:ok, view, html} = live(conn, ~p"/")
 
-    assert has_element?(view, ~s(.mc-lobby-tabs button[phx-value-tab="play"][aria-pressed="true"]))
+    assert has_element?(
+             view,
+             ~s(.mc-lobby-tabs button[phx-value-tab="play"][aria-pressed="true"])
+           )
+
     assert has_element?(view, ~s|[data-lobby-tab-panel="play"]:not([hidden])|)
     assert has_element?(view, ~s([data-lobby-tab-panel="cosmetics"][hidden]))
     assert length(:binary.matches(html, "data-cosmetic-browser")) == 1
@@ -58,7 +62,11 @@ defmodule ManaChessOnlineWeb.GameLiveTest do
 
     render_click(view, "show_lobby_tab", %{"tab" => "cosmetics"})
 
-    assert has_element?(view, ~s(.mc-lobby-tabs button[phx-value-tab="cosmetics"][aria-pressed="true"]))
+    assert has_element?(
+             view,
+             ~s(.mc-lobby-tabs button[phx-value-tab="cosmetics"][aria-pressed="true"])
+           )
+
     assert has_element?(view, ~s([data-lobby-tab-panel="play"][hidden]))
     assert has_element?(view, ~s|[data-lobby-tab-panel="cosmetics"]:not([hidden])|)
     assert has_element?(view, "[data-cosmetic-preview-stage]")
@@ -150,7 +158,7 @@ defmodule ManaChessOnlineWeb.GameLiveTest do
     }
   end
 
-  test "practice exposes real bot difficulties and tutorial starts on apprentice", %{conn: conn} do
+  test "practice exposes bot difficulties and tutorial starts as a guided lesson", %{conn: conn} do
     player_id = "live-bot-difficulty"
     on_exit(fn -> GameLobby.leave(player_id) end)
 
@@ -175,10 +183,12 @@ defmodule ManaChessOnlineWeb.GameLiveTest do
     render_click(view, "leave")
     render_click(view, "start_tutorial")
 
-    assert has_element?(
-             view,
-             ~s(select[data-bot-difficulty] option[value="apprentice"][selected])
-           )
+    assert has_element?(view, ~s([data-tutorial-lesson][data-tutorial-stage="move"]))
+    assert render(view) =~ "Regeneracion"
+    assert render(view) =~ "40%"
+    assert render(view) =~ "Coste por movimiento"
+    refute has_element?(view, "select[data-bot-difficulty]")
+    refute has_element?(view, ~s([phx-click="toggle_practice_bot"]))
   end
 
   test "leaderboard renders public aliases and the current rank without private ids", %{

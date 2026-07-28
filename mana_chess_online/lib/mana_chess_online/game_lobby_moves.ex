@@ -7,6 +7,7 @@ defmodule ManaChessOnline.GameLobbyMoves do
     GameEngine,
     GameLobbyServers,
     GamePlayers,
+    GameTutorial,
     RateLimiter
   }
 
@@ -74,6 +75,9 @@ defmodule ManaChessOnline.GameLobbyMoves do
 
       cooldown_active?(game, from, now) ->
         reject_move(state, game_id, "Movimiento rechazado: pieza en cooldown.")
+
+      not GameTutorial.allowed_move?(game, from, to) ->
+        reject_move(state, game_id, "Movimiento rechazado: sigue el objetivo del tutorial.")
 
       not GameControl.legal_destination?(game, from, to, color) ->
         reject_move(
