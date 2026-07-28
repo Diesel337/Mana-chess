@@ -362,41 +362,59 @@
 }
 
 html body .mc-game .mc-tutorial-board .mc-tutorial-classic-piece {
+  --mc-flat-piece-fill-inset: -6% 0;
+  --mc-flat-piece-outline-inset: -9% -3%;
   position: relative;
-  width: auto !important;
+  width: 82% !important;
   height: auto !important;
   border: 0 !important;
   border-radius: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
-  font-family: "Segoe UI Symbol", "Noto Sans Symbols 2", "Noto Sans Symbols", sans-serif;
-  font-size: 3rem !important;
-  font-weight: 400;
+  color: transparent !important;
+  font-size: 0 !important;
   line-height: 1;
-  isolation: auto !important;
-  filter: none !important;
+  isolation: isolate !important;
+  filter: drop-shadow(0 5px 3px rgba(0, 0, 0, .48)) !important;
+  text-shadow: none !important;
+  -webkit-mask: none !important;
+  mask: none !important;
 }
 
 html body .mc-game .mc-tutorial-board .mc-tutorial-classic-piece::before,
 html body .mc-game .mc-tutorial-board .mc-tutorial-classic-piece::after {
-  display: none !important;
-  content: none !important;
+  display: block !important;
+  content: "" !important;
+  position: absolute;
+  pointer-events: none;
+  opacity: 1 !important;
+  transform: none !important;
+  -webkit-mask: var(--mc-flat-piece-mask) center / contain no-repeat !important;
+  mask: var(--mc-flat-piece-mask) center / contain no-repeat !important;
+}
+
+html body .mc-game .mc-tutorial-board .mc-tutorial-classic-piece::after {
+  inset: var(--mc-flat-piece-outline-inset) !important;
+  z-index: 1;
+  background: var(--mc-flat-piece-outline) !important;
+  filter: none !important;
+}
+
+html body .mc-game .mc-tutorial-board .mc-tutorial-classic-piece::before {
+  inset: var(--mc-flat-piece-fill-inset) !important;
+  z-index: 2;
+  background: var(--mc-flat-piece-fill) !important;
+  filter: none !important;
 }
 
 html body .mc-game .mc-tutorial-board .mc-tutorial-classic-piece.mc-white {
-  color: #fff5d7 !important;
-  -webkit-text-stroke: .55px #26332c;
-  text-shadow:
-    0 2px 2px rgba(0, 0, 0, .68),
-    0 0 7px rgba(255, 245, 215, .3) !important;
+  --mc-flat-piece-fill: color-mix(in srgb, #f7ebce 72%, #e3b95f);
+  --mc-flat-piece-outline: #27332c;
 }
 
 html body .mc-game .mc-tutorial-board .mc-tutorial-classic-piece.mc-black {
-  color: #17231f !important;
-  -webkit-text-stroke: .55px #e6bd68;
-  text-shadow:
-    0 2px 3px rgba(0, 0, 0, .78),
-    0 0 5px rgba(230, 189, 104, .32) !important;
+  --mc-flat-piece-fill: color-mix(in srgb, #171a17 68%, #315b65);
+  --mc-flat-piece-outline: #e8d49c;
 }
 
 .mc-square.mc-tutorial-source {
@@ -484,8 +502,11 @@ html body .mc-game .mc-tutorial-board .mc-tutorial-classic-piece.mc-black {
     padding: 7px 6px;
   }
 
-  html body .mc-game .mc-tutorial-board .mc-tutorial-classic-piece {
-    font-size: 2.25rem !important;
+  .mc-tutorial-cost-badge {
+    min-width: 16px;
+    height: 16px;
+    padding: 0 2px;
+    font-size: .52rem;
   }
 }
 
@@ -500,8 +521,12 @@ html body .mc-game .mc-tutorial-board .mc-tutorial-classic-piece.mc-black {
     font-size: .58rem;
   }
 
-  html body .mc-game .mc-tutorial-board .mc-tutorial-classic-piece {
-    font-size: 1.85rem !important;
+  .mc-tutorial-cost-badge {
+    top: 1px;
+    right: 1px;
+    min-width: 14px;
+    height: 14px;
+    font-size: .48rem;
   }
 
   .mc-tutorial-lesson-head {
