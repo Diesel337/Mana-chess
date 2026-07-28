@@ -30,6 +30,52 @@
   animation: mc-effect-capture-burst .95s ease-out both;
 }
 
+.mc-game-effect-mana-gain {
+  position: absolute;
+  top: 48%;
+  left: 50%;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 16px auto;
+  gap: 5px;
+  align-items: center;
+  visibility: hidden;
+  opacity: 0;
+  color: #b8fbff;
+  filter: drop-shadow(0 2px 1px rgba(4, 12, 10, .95)) drop-shadow(0 0 7px rgba(93, 227, 235, .78));
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  transform: translate(-50%, -25%) scale(.78);
+}
+
+.mc-game-effect-mana-drop {
+  display: block;
+  width: 13px;
+  aspect-ratio: 1;
+  border: 2px solid #eaffff;
+  border-radius: 68% 32% 64% 36%;
+  background: #59dce8;
+  box-shadow: inset 2px 2px 0 rgba(255, 255, 255, .35);
+  transform: rotate(45deg);
+}
+
+.mc-game-effect-mana-gain strong {
+  color: #d4fbff;
+  font-size: clamp(.78rem, 2.2vmin, 1.08rem);
+  font-weight: 900;
+  line-height: 1;
+  text-shadow: 0 1px 0 #07120e;
+}
+
+.mc-game-effect-capture-impact.mc-effect-active.mc-effect-has-mana {
+  animation-name: mc-effect-capture-burst-with-mana;
+}
+
+.mc-game-effect-capture-impact.mc-effect-active.mc-effect-has-mana .mc-game-effect-mana-gain {
+  visibility: visible;
+  animation: mc-effect-mana-rise .95s ease-out both;
+}
+
 .mc-game-effect-check-impact.mc-effect-active {
   visibility: visible;
   border: 3px solid #fff1b5;
@@ -174,6 +220,20 @@
   100% { opacity: 0; transform: scale(1.5); }
 }
 
+@keyframes mc-effect-capture-burst-with-mana {
+  0% { opacity: 0; transform: scale(.3); }
+  22% { opacity: 1; transform: scale(.78); }
+  72% { opacity: 1; transform: scale(1.2); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes mc-effect-mana-rise {
+  0% { opacity: 0; transform: translate(-50%, -10%) scale(.72); }
+  24% { opacity: 1; transform: translate(-50%, -65%) scale(1); }
+  72% { opacity: 1; transform: translate(-50%, -115%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -165%) scale(.94); }
+}
+
 @keyframes mc-effect-capture-piece {
   0% { filter: brightness(1.75) drop-shadow(0 0 12px #ffd36b); transform: scale(1.14); }
   100% { filter: none; transform: scale(1); }
@@ -200,6 +260,16 @@
 }
 
 @media (max-width: 520px) {
+  .mc-game-effect-mana-gain {
+    grid-template-columns: 13px auto;
+    gap: 4px;
+  }
+
+  .mc-game-effect-mana-drop {
+    width: 11px;
+    border-width: 1.5px;
+  }
+
   .mc-game-effect-result {
     top: 70px;
     min-height: 104px;
@@ -230,5 +300,11 @@
     visibility: visible;
     opacity: 1;
     transform: none;
+  }
+
+  .mc-game-effect-capture-impact.mc-effect-active.mc-effect-has-mana .mc-game-effect-mana-gain {
+    visibility: visible;
+    opacity: 1;
+    transform: translate(-50%, -115%);
   }
 }

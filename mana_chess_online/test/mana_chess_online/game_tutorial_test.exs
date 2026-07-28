@@ -49,7 +49,8 @@ defmodule ManaChessOnline.GameTutorialTest do
 
     assert GameTutorial.stage(game) == :complete
     assert GameRules.at(game.board, 4, 4) == "P"
-    assert game.elixir.white == 4.4
-    assert hd(game.log) == "Blancas movio peon d3 -> e4 y capturo peon."
+    assert game.elixir.white == 5.2
+    assert game.last_capture_refund == 1.2
+    assert hd(game.log) == "Blancas movio peon d3 -> e4 y capturo caballo."
   end
 end

@@ -44,7 +44,8 @@ defmodule ManaChessOnline.GameStateTest do
     refute tutorial.bot_enabled?
     assert tutorial.bot_difficulty == :apprentice
     assert GameRules.at(tutorial.board, 6, 3) == "P"
-    assert GameRules.at(tutorial.board, 4, 4) == "p"
+    assert GameRules.at(tutorial.board, 4, 4) == "n"
+    assert ManaChessOnline.GameTutorial.capture_piece_type() == :knight
 
     assert private.private?
     assert private.practice? == false
@@ -62,10 +63,12 @@ defmodule ManaChessOnline.GameStateTest do
       |> Map.put(:status, {:starting, 15_000})
       |> Map.put(:log, Enum.map(1..12, &"log #{&1}"))
       |> Map.put(:cooldowns, %{{6, 4} => 12_500})
+      |> Map.put(:last_capture_refund, 1.2)
 
     public = GameState.public_game(game, 10_000, 1.0)
 
     assert public.countdown_seconds == 5
+    assert public.last_capture_refund == 1.2
     assert public.log == Enum.map(1..12, &"log #{&1}")
     assert [%{at: {6, 4}, seconds: 3, remaining_ms: 2_500, total_ms: 1_250}] = public.cooldowns
   end

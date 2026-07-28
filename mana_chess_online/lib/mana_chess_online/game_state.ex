@@ -15,6 +15,7 @@ defmodule ManaChessOnline.GameState do
       matchmaking?: false,
       settings: settings,
       elixir: full_elixir(settings),
+      last_capture_refund: nil,
       castling_rights: %{
         {:white, :king} => true,
         {:white, :queen} => true,
@@ -107,6 +108,7 @@ defmodule ManaChessOnline.GameState do
       private?: Map.get(game, :private?, false),
       matchmaking?: Map.get(game, :matchmaking?, false),
       elixir: game.elixir,
+      last_capture_refund: Map.get(game, :last_capture_refund),
       settings: game.settings,
       bot_enabled?: game.bot_enabled?,
       bot_color: Map.get(game, :bot_color),

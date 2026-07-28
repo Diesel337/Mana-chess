@@ -6,6 +6,8 @@ defmodule ManaChessOnline.GameTutorial do
   @opening_from {6, 3}
   @opening_to {5, 3}
   @capture_to {4, 4}
+  @capture_piece "n"
+  @capture_piece_type :knight
 
   def board do
     [
@@ -13,12 +15,14 @@ defmodule ManaChessOnline.GameTutorial do
       [".", ".", ".", ".", ".", ".", ".", "."],
       [".", ".", ".", ".", ".", ".", ".", "."],
       [".", ".", ".", ".", ".", ".", ".", "."],
-      [".", ".", ".", ".", "p", ".", ".", "."],
+      [".", ".", ".", ".", @capture_piece, ".", ".", "."],
       [".", ".", ".", ".", ".", ".", ".", "."],
       [".", ".", ".", "P", ".", ".", ".", "."],
       [".", ".", ".", ".", "K", ".", ".", "."]
     ]
   end
+
+  def capture_piece_type, do: @capture_piece_type
 
   def castling_rights do
     %{

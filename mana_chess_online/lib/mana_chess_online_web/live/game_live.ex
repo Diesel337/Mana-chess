@@ -538,6 +538,9 @@ defmodule ManaChessOnlineWeb.GameLive do
     "mc-piece mc-#{GameRules.color(piece)} mc-piece-#{piece_type(piece)}"
   end
 
+  defp piece_color_value("."), do: nil
+  defp piece_color_value(piece), do: piece |> GameRules.color() |> Atom.to_string()
+
   defp color_label(:white), do: "Blancas"
   defp color_label(:black), do: "Negras"
   defp color_label(:practice), do: "Practica"
@@ -1159,6 +1162,15 @@ defmodule ManaChessOnlineWeb.GameLive do
               data-game-effect-capture
               aria-hidden="true"
             >
+              <div
+                class="mc-game-effect-mana-gain"
+                data-game-effect-mana-gain
+                role="status"
+                aria-hidden="true"
+              >
+                <i class="mc-game-effect-mana-drop" aria-hidden="true"></i>
+                <strong data-game-effect-mana-value>+0</strong>
+              </div>
             </div>
             <div
               class="mc-game-effect-impact mc-game-effect-check-impact"
@@ -1605,7 +1617,7 @@ defmodule ManaChessOnlineWeb.GameLive do
                         <span class={[
                           piece_class(piece),
                           @game.tutorial? && piece != "." && "mc-tutorial-classic-piece"
-                        ]}>
+                        ]} data-piece-color={piece_color_value(piece)}>
                           {@symbols[piece]}
                         </span>
                         <span

@@ -19,6 +19,42 @@ defmodule ManaChessOnlineWeb.GameEffectEventsTest do
            ]
   end
 
+  test "includes the mana actually recovered from the captured piece" do
+    previous =
+      game_with_elixir(5.0)
+      |> put_piece({4, 2}, "P")
+      |> put_piece({3, 3}, "r")
+
+    current =
+      previous
+      |> put_piece({4, 2}, ".")
+      |> put_piece({3, 3}, "P")
+      |> put_in([:elixir, :white], 5.6)
+      |> Map.put(:last_capture_refund, 1.6)
+
+    assert GameEffectEvents.derive(previous, current, nil) == [
+             %{kind: "capture", row: 3, col: 3, mana: 1.6}
+           ]
+  end
+
+  test "reports only the refund that fits below maximum mana" do
+    previous =
+      game_with_elixir(10.0)
+      |> put_piece({4, 2}, "P")
+      |> put_piece({3, 3}, "r")
+
+    current =
+      previous
+      |> put_piece({4, 2}, ".")
+      |> put_piece({3, 3}, "P")
+      |> put_in([:elixir, :white], 10.0)
+      |> Map.put(:last_capture_refund, 1.0)
+
+    assert GameEffectEvents.derive(previous, current, nil) == [
+             %{kind: "capture", row: 3, col: 3, mana: 1.0}
+           ]
+  end
+
   test "announces only a newly checked king" do
     previous = game()
 
@@ -65,6 +101,16 @@ defmodule ManaChessOnlineWeb.GameEffectEventsTest do
       status: :active,
       checked_colors: []
     }
+  end
+
+  defp game_with_elixir(white_elixir) do
+    game()
+    |> Map.put(:settings, %{
+      max_elixir: 10.0,
+      capture_refund_percent: 40,
+      costs: %{pawn: 1.0, knight: 3.0, bishop: 3.0, rook: 4.0, queen: 6.0, king: 3.0}
+    })
+    |> Map.put(:elixir, %{white: white_elixir, black: 5.0})
   end
 
   defp empty_board, do: List.duplicate(List.duplicate(".", 8), 8)

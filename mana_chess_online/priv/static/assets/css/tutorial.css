@@ -407,14 +407,14 @@ html body .mc-game .mc-tutorial-board .mc-tutorial-classic-piece::before {
   filter: none !important;
 }
 
-html body .mc-game .mc-tutorial-board .mc-tutorial-classic-piece.mc-white {
-  --mc-flat-piece-fill: color-mix(in srgb, #f7ebce 72%, #e3b95f);
-  --mc-flat-piece-outline: #27332c;
+html body .mc-game .mc-tutorial-board .mc-tutorial-classic-piece[data-piece-color="white"] {
+  --mc-flat-piece-fill: #f1dcb2 !important;
+  --mc-flat-piece-outline: #27332c !important;
 }
 
-html body .mc-game .mc-tutorial-board .mc-tutorial-classic-piece.mc-black {
-  --mc-flat-piece-fill: color-mix(in srgb, #171a17 68%, #315b65);
-  --mc-flat-piece-outline: #e8d49c;
+html body .mc-game .mc-tutorial-board .mc-tutorial-classic-piece[data-piece-color="black"] {
+  --mc-flat-piece-fill: #17221d !important;
+  --mc-flat-piece-outline: #e8d49c !important;
 }
 
 .mc-square.mc-tutorial-source {

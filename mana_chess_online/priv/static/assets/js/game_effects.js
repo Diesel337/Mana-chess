@@ -20,6 +20,12 @@
     label: String(detail.label || "Nueva recompensa"),
   })
 
+  const formatManaGain = value => {
+    const amount = Number(value)
+    if (!Number.isFinite(amount) || amount <= 0) return null
+    return amount.toFixed(2).replace(/\.?0+$/, "")
+  }
+
   const schedule = (hook, callback, delay) => {
     const timer = window.setTimeout(() => {
       hook.effectTimers.delete(timer)
@@ -60,7 +66,38 @@
   const playCapture = (hook, effect) => {
     const square = targetSquare(hook, effect)
     const impact = hook.el.querySelector("[data-game-effect-capture]")
-    if (anchorImpact(impact, square)) restartClass(hook, impact, "mc-effect-active", captureDuration)
+    const manaGain = impact?.querySelector("[data-game-effect-mana-gain]")
+    const manaValue = manaGain?.querySelector("[data-game-effect-mana-value]")
+    const amount = formatManaGain(effect.mana)
+
+    impact?.classList.remove("mc-effect-has-mana")
+    manaGain?.setAttribute("aria-hidden", "true")
+
+    if (amount && manaGain && manaValue) {
+      manaValue.textContent = `+${amount}`
+      manaGain.setAttribute("aria-label", `Recuperaste ${amount} de mana`)
+      manaGain.setAttribute("aria-hidden", "false")
+      impact.classList.add("mc-effect-has-mana")
+    }
+
+    if (anchorImpact(impact, square)) {
+      if (hook.captureTimer) {
+        window.clearTimeout(hook.captureTimer)
+        hook.effectTimers.delete(hook.captureTimer)
+      }
+
+      impact.classList.remove("mc-effect-active")
+      void impact.offsetWidth
+      impact.classList.add("mc-effect-active")
+      impact.setAttribute("aria-hidden", "false")
+      hook.captureTimer = schedule(hook, () => {
+        impact.classList.remove("mc-effect-active", "mc-effect-has-mana")
+        impact.setAttribute("aria-hidden", "true")
+        manaGain?.setAttribute("aria-hidden", "true")
+        hook.captureTimer = null
+      }, captureDuration)
+    }
+
     restartClass(hook, square, "mc-effect-capture", captureDuration)
   }
 
@@ -133,10 +170,16 @@
     window.addEventListener("mana-chess:cosmetic-unlocked", event => enqueueUnlock(event.detail))
   }
 
-  window.ManaChessGameEffects = Object.freeze({enqueueUnlock, normalizeUnlock, resultKicker})
+  window.ManaChessGameEffects = Object.freeze({
+    enqueueUnlock,
+    formatManaGain,
+    normalizeUnlock,
+    resultKicker,
+  })
   window.ManaChessGameEffectsHook = {
     mounted() {
       this.effectTimers = new Set()
+      this.captureTimer = null
       this.resultTimer = null
       this.unlockActive = false
       this.activeUnlockId = null

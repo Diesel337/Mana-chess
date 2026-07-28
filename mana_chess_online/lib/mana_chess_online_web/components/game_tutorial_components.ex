@@ -11,7 +11,9 @@ defmodule ManaChessOnlineWeb.GameTutorialComponents do
     stage = GameTutorial.stage(assigns.game)
     settings = assigns.game.settings
     pawn_cost = piece_cost(settings, :pawn, 1.0)
-    refund = pawn_cost * setting(settings, :capture_refund_percent, 40) / 100
+    captured_piece_type = GameTutorial.capture_piece_type()
+    captured_piece_cost = piece_cost(settings, captured_piece_type, 3.0)
+    refund = captured_piece_cost * setting(settings, :capture_refund_percent, 40) / 100
     cooldown_remaining_ms = GameTutorial.cooldown_remaining_ms(assigns.game)
 
     assigns =
@@ -21,7 +23,14 @@ defmodule ManaChessOnlineWeb.GameTutorialComponents do
       |> assign(:title, title(stage))
       |> assign(
         :instruction,
-        instruction(stage, settings, pawn_cost, refund, cooldown_remaining_ms)
+        instruction(
+          stage,
+          settings,
+          pawn_cost,
+          captured_piece_cost,
+          refund,
+          cooldown_remaining_ms
+        )
       )
       |> assign(:cooldown_remaining_ms, cooldown_remaining_ms)
       |> assign(:metrics, metrics(settings))
@@ -112,11 +121,18 @@ defmodule ManaChessOnlineWeb.GameTutorialComponents do
   defp title(:capture), do: "3. Recupera al capturar"
   defp title(:complete), do: "Leccion completada"
 
-  defp instruction(:move, _settings, pawn_cost, _refund, _remaining_ms) do
+  defp instruction(:move, _settings, pawn_cost, _captured_cost, _refund, _remaining_ms) do
     "Busca la columna d y la fila 2: selecciona el peon marcado en d2. Muevelo una casilla a d3. La jugada cuesta #{number(pawn_cost)} de mana."
   end
 
-  defp instruction(:cooldown, settings, _pawn_cost, _refund, remaining_ms) do
+  defp instruction(
+         :cooldown,
+         settings,
+         _pawn_cost,
+         _captured_cost,
+         _refund,
+         remaining_ms
+       ) do
     regen = number(setting(settings, :regen_per_second, 1.0))
 
     if remaining_ms > 0 do
@@ -126,17 +142,17 @@ defmodule ManaChessOnlineWeb.GameTutorialComponents do
     end
   end
 
-  defp instruction(:capture, settings, pawn_cost, refund, _remaining_ms) do
+  defp instruction(:capture, settings, pawn_cost, captured_cost, refund, _remaining_ms) do
     percent = number(setting(settings, :capture_refund_percent, 40))
-    net = max(pawn_cost - refund, 0)
+    balance = refund - pawn_cost
 
-    "Desde d3, mueve el peon en diagonal a e4 para capturar: pagas #{number(pawn_cost)}, recuperas #{number(refund)} (#{percent}%) y el gasto neto es #{number(net)}."
+    "Desde d3, mueve el peon en diagonal a e4 para capturar el caballo. Un peon puede capturar cualquier pieza enemiga en diagonal. El caballo vale #{number(captured_cost)}: pagas #{number(pawn_cost)} y recuperas hasta #{number(refund)} (#{percent}%), limitado por el maximo de tu barra; si cabe completo, #{balance_copy(balance)}."
   end
 
-  defp instruction(:complete, settings, pawn_cost, refund, _remaining_ms) do
+  defp instruction(:complete, settings, pawn_cost, _captured_cost, refund, _remaining_ms) do
     regen = number(setting(settings, :regen_per_second, 1.0))
 
-    "Ya gastaste #{number(pawn_cost)}, esperaste el cooldown y recuperaste #{number(refund)} al capturar. Tu mana sigue regenerando +#{regen}/s."
+    "Ya gastaste #{number(pawn_cost)}, esperaste el cooldown y capturaste un caballo que devuelve hasta #{number(refund)}. La gota mostro cuanto mana cupo realmente en tu barra. Tu mana sigue regenerando +#{regen}/s."
   end
 
   defp progress(:move), do: 0
@@ -158,7 +174,13 @@ defmodule ManaChessOnlineWeb.GameTutorialComponents do
     [
       tutorial_step(1, "Gasta mana", "Columna d: de la fila 2 a la 3.", current, stage),
       tutorial_step(2, "Espera y regenera", "Observa barra y cooldown.", current, stage),
-      tutorial_step(3, "Captura y recupera", "Desde d3, captura en e4.", current, stage)
+      tutorial_step(
+        3,
+        "Captura y recupera",
+        "Desde d3, captura el caballo en e4.",
+        current,
+        stage
+      )
     ]
   end
 
@@ -219,6 +241,11 @@ defmodule ManaChessOnlineWeb.GameTutorialComponents do
   end
 
   defp setting(settings, key, fallback), do: Map.get(settings, key, fallback)
+
+  defp balance_copy(balance) when balance >= 0,
+    do: "tu saldo neto sube +#{number(balance)}"
+
+  defp balance_copy(balance), do: "el gasto neto es #{number(abs(balance))}"
 
   defp number(value) when is_integer(value), do: Integer.to_string(value)
 

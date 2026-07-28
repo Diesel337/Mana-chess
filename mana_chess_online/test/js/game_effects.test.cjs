@@ -50,7 +50,9 @@ const mountedHook = () => {
   const resultTitle = {textContent: ""}
   const resultDetail = {textContent: ""}
   const unlockTitle = {textContent: ""}
-  const captureImpact = element()
+  const manaValue = {textContent: ""}
+  const manaGain = element({"[data-game-effect-mana-value]": manaValue})
+  const captureImpact = element({"[data-game-effect-mana-gain]": manaGain})
   const checkImpact = element()
   const result = element({
     "[data-game-effect-kicker]": resultKicker,
@@ -84,6 +86,8 @@ const mountedHook = () => {
     checkImpact,
     event: payload => eventHandler(payload),
     hook,
+    manaGain,
+    manaValue,
     result,
     resultDetail,
     resultKicker,
@@ -97,6 +101,10 @@ const mountedHook = () => {
 test("normalizes presentation labels without trusting missing data", () => {
   assert.equal(controller.resultKicker("win"), "Victoria")
   assert.equal(controller.resultKicker("loss"), "Partida terminada")
+  assert.equal(controller.formatManaGain(1.6), "1.6")
+  assert.equal(controller.formatManaGain("2.00"), "2")
+  assert.equal(controller.formatManaGain(0), null)
+  assert.equal(controller.formatManaGain("invalid"), null)
   assert.deepEqual({...controller.normalizeUnlock({id: "arcane", label: "Conjunto Arcano"})}, {
     id: "arcane",
     label: "Conjunto Arcano",
@@ -119,10 +127,14 @@ test("queues an unlock until its LiveView hook is mounted", () => {
 test("plays capture, check and result payloads on stable targets", () => {
   const view = mountedHook()
 
-  view.event({kind: "capture", row: 3, col: 4})
+  view.event({kind: "capture", row: 3, col: 4, mana: 1.6})
   assert.equal(view.square.classList.contains("mc-effect-capture"), true)
   assert.equal(view.captureImpact.classList.contains("mc-effect-active"), true)
+  assert.equal(view.captureImpact.classList.contains("mc-effect-has-mana"), true)
   assert.equal(view.captureImpact.style.left, "120px")
+  assert.equal(view.manaValue.textContent, "+1.6")
+  assert.equal(view.manaGain.attributes["aria-hidden"], "false")
+  assert.equal(view.manaGain.attributes["aria-label"], "Recuperaste 1.6 de mana")
 
   view.event({kind: "check", row: 0, col: 4})
   assert.equal(view.checkImpact.classList.contains("mc-effect-active"), true)

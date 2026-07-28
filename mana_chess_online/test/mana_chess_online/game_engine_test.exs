@@ -28,6 +28,7 @@ defmodule ManaChessOnline.GameEngineTest do
     assert game.queue == []
     assert game.first_move_pending == nil
     assert game.elixir.white == 4.0
+    assert game.last_capture_refund == 0.0
     assert game.cooldowns == %{{4, 4} => 11_000}
     assert hd(game.log) == "Blancas movio peon e2 -> e4."
   end
@@ -54,7 +55,33 @@ defmodule ManaChessOnline.GameEngineTest do
 
     assert GameRules.at(game.board, 4, 3) == "."
     assert GameRules.at(game.board, 3, 4) == "P"
+    assert game.elixir.white == 4.4
+    assert game.last_capture_refund == 0.4
     assert hd(game.log) == "Blancas movio peon d4 -> e5 y capturo peon."
+  end
+
+  test "records only the capture refund that fits in the mana bar" do
+    board = [
+      [".", ".", ".", ".", "k", ".", ".", "."],
+      [".", ".", ".", ".", ".", ".", ".", "."],
+      [".", ".", ".", ".", ".", ".", ".", "."],
+      [".", ".", ".", ".", "q", ".", ".", "."],
+      [".", ".", ".", "P", ".", ".", ".", "."],
+      [".", ".", ".", ".", ".", ".", ".", "."],
+      [".", ".", ".", ".", ".", ".", ".", "."],
+      [".", ".", ".", ".", "K", ".", ".", "."]
+    ]
+
+    game =
+      GameState.practice_game("practice_1", "player-1", settings(), 1_000, 1_200)
+      |> Map.put(:bot_enabled?, false)
+      |> Map.put(:board, board)
+      |> Map.put(:elixir, %{white: 10.0, black: 5.0})
+      |> Map.put(:queue, [%{player_id: "player-1", color: :white, from: {4, 3}, to: {3, 4}}])
+      |> GameEngine.process_next_action(10_000, 1.0)
+
+    assert game.elixir.white == 10.0
+    assert game.last_capture_refund == 1.0
   end
 
   test "discards queued moves when elixir is not enough" do

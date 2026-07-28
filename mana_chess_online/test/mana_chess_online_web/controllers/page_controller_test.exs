@@ -23,10 +23,10 @@ defmodule ManaChessOnlineWeb.PageControllerTest do
     assert response =~ "Mana Chess"
     assert response =~ "app.css?v=cosmetic-mastery-20260717"
     assert response =~ "premium_cosmetics.css?v=premium-cosmetics-game-elixir-20260727"
-    assert response =~ "game_effects.css?v=game-effects-20260718c"
+    assert response =~ "game_effects.css?v=game-effects-mana-20260728"
     assert response =~ "cosmetic_browser.css?v=cosmetic-layout-20260724"
     assert response =~ "flat_pieces.css?v=flat-pieces-20260722e"
-    assert response =~ "game_effects.js?v=game-effects-20260718c"
+    assert response =~ "game_effects.js?v=game-effects-mana-20260728"
     assert response =~ "cosmetic-catalog-celestial-20260718"
     assert response =~ "cosmetic-progression-20260717"
     assert response =~ "cosmetics-composition-20260724"
@@ -35,7 +35,7 @@ defmodule ManaChessOnlineWeb.PageControllerTest do
     assert response =~ "cosmetic-fallback-mastery-20260717"
     assert response =~ "cosmetic-session-mastery-20260717"
     assert response =~ "bot-difficulty-20260727b"
-    assert response =~ "tutorial.css?v=guided-tutorial-20260728g"
+    assert response =~ "tutorial.css?v=guided-tutorial-20260728h"
     assert response =~ "p0_lobby.css?v=lobby-p0-20260717"
     assert response =~ "competitive.css?v=competitive-leaderboard-20260717"
     assert response =~ "realtime-client-20260717b"
@@ -131,6 +131,10 @@ defmodule ManaChessOnlineWeb.PageControllerTest do
     assert stylesheet =~ ".mc-tutorial-classic-piece"
     assert stylesheet =~ "var(--mc-flat-piece-mask)"
     assert stylesheet =~ "--mc-flat-piece-fill"
+    assert stylesheet =~ ~s([data-piece-color="white"])
+    assert stylesheet =~ ~s([data-piece-color="black"])
+    assert stylesheet =~ "#f1dcb2 !important"
+    assert stylesheet =~ "#17221d !important"
     refute stylesheet =~ "Segoe UI Symbol"
   end
 
@@ -140,7 +144,11 @@ defmodule ManaChessOnlineWeb.PageControllerTest do
 
     assert javascript =~ "ManaChessGameEffectsHook"
     assert javascript =~ "mana-chess:cosmetic-unlocked"
+    assert javascript =~ "formatManaGain"
+    assert javascript =~ "data-game-effect-mana-gain"
     assert stylesheet =~ "mc-effect-capture"
+    assert stylesheet =~ "mc-game-effect-mana-drop"
+    assert stylesheet =~ "mc-effect-mana-rise"
     assert stylesheet =~ "prefers-reduced-motion"
   end
 

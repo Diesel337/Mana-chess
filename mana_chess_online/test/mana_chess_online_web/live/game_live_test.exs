@@ -126,6 +126,8 @@ defmodule ManaChessOnlineWeb.GameLiveTest do
     assert has_element?(view, "#mc-game-effects-#{game_id} [data-game-effect-result]")
     assert has_element?(view, "#mc-game-effects-#{game_id} [data-game-effect-unlock]")
     assert has_element?(view, "#mc-game-effects-#{game_id} [data-game-effect-capture]")
+    assert has_element?(view, "#mc-game-effects-#{game_id} [data-game-effect-mana-gain]")
+    assert has_element?(view, "#mc-game-effects-#{game_id} [data-game-effect-mana-value]", "+0")
     assert has_element?(view, "#mc-game-effects-#{game_id} [data-game-effect-check]")
   end
 
@@ -198,6 +200,27 @@ defmodule ManaChessOnlineWeb.GameLiveTest do
     assert has_element?(view, ".mc-board-coordinate-ranks-right span", "2")
     assert has_element?(view, ".mc-tutorial-board .mc-tutorial-classic-piece.mc-piece-pawn")
     assert has_element?(view, ".mc-tutorial-board .mc-tutorial-classic-piece.mc-piece-king")
+
+    assert has_element?(
+             view,
+             ~s(.mc-tutorial-board [data-r="4"][data-c="4"] .mc-piece-knight[data-piece-color="black"])
+           )
+
+    assert has_element?(
+             view,
+             ~s(.mc-tutorial-board [data-r="0"][data-c="4"] .mc-piece-king[data-piece-color="black"])
+           )
+
+    assert has_element?(
+             view,
+             ~s(.mc-tutorial-board [data-r="7"][data-c="4"] .mc-piece-king[data-piece-color="white"])
+           )
+
+    assert has_element?(
+             view,
+             ~s(.mc-tutorial-board [data-r="6"][data-c="3"] .mc-piece-pawn[data-piece-color="white"])
+           )
+
     refute has_element?(view, "select[data-bot-difficulty]")
     refute has_element?(view, ~s([phx-click="toggle_practice_bot"]))
   end

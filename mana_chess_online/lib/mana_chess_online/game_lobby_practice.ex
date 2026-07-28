@@ -69,7 +69,7 @@ defmodule ManaChessOnline.GameLobbyPractice do
           update_game_state(game, fn game ->
             game
             |> GameTutorial.acknowledge_cooldown()
-            |> update_in([:log], &["Cooldown observado. Ahora captura el peon de e4." | &1])
+            |> update_in([:log], &["Cooldown observado. Ahora captura el caballo de e4." | &1])
           end)
 
         put_in(state.games[game_id], game)

@@ -59,6 +59,9 @@ defmodule ManaChessOnline.GameEngine do
 
         next_status = status || game.status
 
+        {elixir, recovered_mana} =
+          spend_and_refund_elixir(game, action.color, cost, captured)
+
         %{
           game
           | board: board,
@@ -67,11 +70,12 @@ defmodule ManaChessOnline.GameEngine do
             promotion_pending: promotion_pending,
             queue: rest,
             first_move_pending: clear_first_move(game.first_move_pending, action.color),
-            elixir: spend_and_refund_elixir(game, action.color, cost, captured),
+            elixir: elixir,
             status: next_status,
             finished_at: if(terminal_status?(next_status), do: now_ms, else: game.finished_at),
             log: [move_message(action, piece, captured) | game.log]
         }
+        |> Map.put(:last_capture_refund, recovered_mana)
         |> GameTutorial.after_move(action)
     end
   end
@@ -190,14 +194,22 @@ defmodule ManaChessOnline.GameEngine do
   defp spend_and_refund_elixir(game, color, cost, captured) do
     max_elixir = game.settings.max_elixir
     refund = capture_refund(game.settings, captured)
+    before_amount = Map.fetch!(game.elixir, color)
 
-    Map.update!(game.elixir, color, fn amount ->
-      amount
+    after_amount =
+      before_amount
       |> Kernel.-(cost)
       |> Kernel.+(refund)
       |> min(max_elixir)
       |> Float.round(2)
-    end)
+
+    recovered_mana =
+      after_amount
+      |> Kernel.-(before_amount - cost)
+      |> max(0)
+      |> Float.round(2)
+
+    {Map.put(game.elixir, color, after_amount), recovered_mana}
   end
 
   defp capture_refund(_settings, "."), do: 0.0
