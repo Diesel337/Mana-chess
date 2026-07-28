@@ -22,9 +22,9 @@ defmodule ManaChessOnlineWeb.PageControllerTest do
     response = html_response(conn, 200)
     assert response =~ "Mana Chess"
     assert response =~ "app.css?v=cosmetic-mastery-20260717"
-    assert response =~ "premium_cosmetics.css?v=premium-cosmetics-game-elixir-20260727"
+    assert response =~ "premium_cosmetics.css?v=premium-cosmetics-shared-colors-20260728"
     assert response =~ "game_effects.css?v=game-effects-mana-20260728"
-    assert response =~ "cosmetic_browser.css?v=cosmetic-layout-20260724"
+    assert response =~ "cosmetic_browser.css?v=cosmetic-shared-colors-20260728"
     assert response =~ "flat_pieces.css?v=flat-pieces-20260722e"
     assert response =~ "game_effects.js?v=game-effects-mana-20260728"
     assert response =~ "cosmetic-catalog-celestial-20260718"
@@ -107,6 +107,8 @@ defmodule ManaChessOnlineWeb.PageControllerTest do
 
     assert stylesheet =~ ".mc-game:has(.mc-play-area) .mc-play-area > .mc-skin-strip"
     assert stylesheet =~ "display: none;"
+    assert stylesheet =~ "--mc-premium-piece-white-fill"
+    assert stylesheet =~ "--mc-premium-piece-black-fill"
 
     for family <- ~w(arcane crystal elemental celestial) do
       assert catalog =~ family
@@ -164,6 +166,8 @@ defmodule ManaChessOnlineWeb.PageControllerTest do
     assert stylesheet =~ "mc-lobby-tabs"
     assert stylesheet =~ "mc-cosmetic-preview-stage"
     assert stylesheet =~ "mc-cosmetic-gallery-board"
+    assert stylesheet =~ "background: var(--mc-premium-piece-white-fill)"
+    assert stylesheet =~ "background: var(--mc-premium-piece-black-fill)"
     assert stylesheet =~ ~s([data-board-skin-choice="custom"])
     assert stylesheet =~ "grid-column: 1 / -1"
     assert flat_pieces =~ "--mc-flat-piece-mask"

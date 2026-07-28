@@ -290,9 +290,9 @@
 ) .mc-cosmetic-preview-piece {
   border: 0;
   border-radius: 0;
+  box-shadow: none;
   color: transparent;
   font-size: 0;
-  filter: drop-shadow(0 7px 8px rgba(0, 0, 0, .42));
   -webkit-mask-position: center;
   -webkit-mask-repeat: no-repeat;
   -webkit-mask-size: contain;
@@ -302,51 +302,69 @@
 }
 
 .mc-cosmetic-preview-stage[data-piece-skin="arcane"] .mc-piece-king {
-  background: linear-gradient(145deg, #fff4bc, #9a7dff 62%, #35205f);
   -webkit-mask-image: url("/images/cosmetics/arcane/king.svg");
   mask-image: url("/images/cosmetics/arcane/king.svg");
 }
 
 .mc-cosmetic-preview-stage[data-piece-skin="arcane"] .mc-piece-queen {
-  background: linear-gradient(145deg, #d7fff1, #6fe0bd 46%, #160d2b 100%);
   -webkit-mask-image: url("/images/cosmetics/arcane/queen.svg");
   mask-image: url("/images/cosmetics/arcane/queen.svg");
 }
 
 .mc-cosmetic-preview-stage[data-piece-skin="crystal"] .mc-piece-king {
-  background: linear-gradient(145deg, #fff, #96e7ff 46%, #5b8be6 78%, #332a78);
   -webkit-mask-image: url("/images/cosmetics/crystal/king.svg");
   mask-image: url("/images/cosmetics/crystal/king.svg");
 }
 
 .mc-cosmetic-preview-stage[data-piece-skin="crystal"] .mc-piece-queen {
-  background: linear-gradient(145deg, #dff8ff, #689ed6 52%, #13243f);
   -webkit-mask-image: url("/images/cosmetics/crystal/queen.svg");
   mask-image: url("/images/cosmetics/crystal/queen.svg");
 }
 
 .mc-cosmetic-preview-stage[data-piece-skin="elemental"] .mc-piece-king {
-  background: linear-gradient(145deg, #fffde2, #ffdca0 39%, #ff6e58 72%, #982957);
   -webkit-mask-image: url("/images/cosmetics/elemental/king.svg");
   mask-image: url("/images/cosmetics/elemental/king.svg");
 }
 
 .mc-cosmetic-preview-stage[data-piece-skin="elemental"] .mc-piece-queen {
-  background: linear-gradient(145deg, #dffff4, #52d9c1 46%, #103c42);
   -webkit-mask-image: url("/images/cosmetics/elemental/queen.svg");
   mask-image: url("/images/cosmetics/elemental/queen.svg");
 }
 
 .mc-cosmetic-preview-stage[data-piece-skin="celestial"] .mc-piece-king {
-  background: linear-gradient(145deg, #fff8d8, #f4d98a 42%, #a884ff 76%, #242047);
   -webkit-mask-image: url("/images/cosmetics/celestial/king.svg");
   mask-image: url("/images/cosmetics/celestial/king.svg");
 }
 
 .mc-cosmetic-preview-stage[data-piece-skin="celestial"] .mc-piece-queen {
-  background: linear-gradient(145deg, #e9ffff, #76d7e4 44%, #47478d 78%, #11172f);
   -webkit-mask-image: url("/images/cosmetics/celestial/queen.svg");
   mask-image: url("/images/cosmetics/celestial/queen.svg");
+}
+
+.mc-cosmetic-preview-stage:is(
+  [data-piece-skin="arcane"],
+  [data-piece-skin="crystal"],
+  [data-piece-skin="elemental"],
+  [data-piece-skin="celestial"]
+) .mc-cosmetic-preview-piece-white {
+  background: var(--mc-premium-piece-white-fill);
+  filter:
+    drop-shadow(0 0 1px var(--mc-premium-piece-white-outline))
+    drop-shadow(0 7px 4px rgba(0, 0, 0, .58))
+    drop-shadow(0 0 8px var(--mc-premium-piece-white-glow));
+}
+
+.mc-cosmetic-preview-stage:is(
+  [data-piece-skin="arcane"],
+  [data-piece-skin="crystal"],
+  [data-piece-skin="elemental"],
+  [data-piece-skin="celestial"]
+) .mc-cosmetic-preview-piece-black {
+  background: var(--mc-premium-piece-black-fill);
+  filter:
+    drop-shadow(0 0 1px var(--mc-premium-piece-black-outline))
+    drop-shadow(0 7px 4px rgba(0, 0, 0, .58))
+    drop-shadow(0 0 8px var(--mc-premium-piece-black-glow));
 }
 
 html.mc-cosmetic-gallery-open,
@@ -623,7 +641,11 @@ html.mc-cosmetic-gallery-open body {
   [data-piece-skin="elemental"],
   [data-piece-skin="celestial"]
 ) .mc-cosmetic-gallery-piece-white {
-  background: linear-gradient(145deg, #fffdf0, var(--mc-preview-piece-white) 48%, var(--mc-preview-piece-frame));
+  background: var(--mc-premium-piece-white-fill);
+  filter:
+    drop-shadow(0 0 1px var(--mc-premium-piece-white-outline))
+    drop-shadow(0 4px 3px rgba(0, 0, 0, .58))
+    drop-shadow(0 0 8px var(--mc-premium-piece-white-glow));
 }
 
 .mc-cosmetic-gallery-stage:is(
@@ -632,7 +654,11 @@ html.mc-cosmetic-gallery-open body {
   [data-piece-skin="elemental"],
   [data-piece-skin="celestial"]
 ) .mc-cosmetic-gallery-piece-black {
-  background: linear-gradient(145deg, var(--mc-preview-piece-black-text), var(--mc-preview-piece-black) 58%, #030504);
+  background: var(--mc-premium-piece-black-fill);
+  filter:
+    drop-shadow(0 0 1px var(--mc-premium-piece-black-outline))
+    drop-shadow(0 4px 3px rgba(0, 0, 0, .58))
+    drop-shadow(0 0 8px var(--mc-premium-piece-black-glow));
 }
 
 .mc-cosmetic-gallery-stage[data-piece-skin="arcane"] [data-piece-type="pawn"] { --mc-gallery-piece-mask: url("/images/cosmetics/arcane/pawn.svg"); }

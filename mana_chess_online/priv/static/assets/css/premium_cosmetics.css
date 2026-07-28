@@ -1,5 +1,50 @@
 /* Release cosmetic families: Arcane, Crystal, Elemental, and Celestial. */
 
+/* Shared by cards, cosmetic previews, the full gallery, and live pieces. */
+[data-piece-skin="arcane"],
+.mc-piece-skin-preview-arcane,
+.mc-pack-preview-arcane {
+  --mc-premium-piece-white-fill: linear-gradient(145deg, #fffce8 2%, #f3da8c 36%, #65ccb0 67%, #6041bd 100%);
+  --mc-premium-piece-white-glow: rgba(111, 242, 197, .5);
+  --mc-premium-piece-white-outline: #173c38;
+  --mc-premium-piece-black-fill: linear-gradient(145deg, #e0d5ff 1%, #8e72ed 35%, #3e277d 63%, #100722 100%);
+  --mc-premium-piece-black-glow: rgba(154, 125, 255, .55);
+  --mc-premium-piece-black-outline: #d9fff2;
+}
+
+[data-piece-skin="crystal"],
+.mc-piece-skin-preview-crystal,
+.mc-pack-preview-crystal {
+  --mc-premium-piece-white-fill: linear-gradient(145deg, #ffffff 1%, #9be9ff 34%, #5d91e8 66%, #342a7a 100%);
+  --mc-premium-piece-white-glow: rgba(126, 218, 255, .56);
+  --mc-premium-piece-white-outline: #244a78;
+  --mc-premium-piece-black-fill: linear-gradient(145deg, #c9f4ff 1%, #6e9ee7 34%, #304d96 64%, #0d1730 100%);
+  --mc-premium-piece-black-glow: rgba(122, 163, 255, .54);
+  --mc-premium-piece-black-outline: #e8fbff;
+}
+
+[data-piece-skin="elemental"],
+.mc-piece-skin-preview-elemental,
+.mc-pack-preview-elemental {
+  --mc-premium-piece-white-fill: linear-gradient(145deg, #fffde2 1%, #ffe0a6 34%, #ff7059 65%, #982957 100%);
+  --mc-premium-piece-white-glow: rgba(255, 132, 63, .6);
+  --mc-premium-piece-white-outline: #521936;
+  --mc-premium-piece-black-fill: linear-gradient(145deg, #c1fff0 1%, #50d7c0 35%, #168a83 63%, #092d39 100%);
+  --mc-premium-piece-black-glow: rgba(66, 222, 196, .56);
+  --mc-premium-piece-black-outline: #d8fff3;
+}
+
+[data-piece-skin="celestial"],
+.mc-piece-skin-preview-celestial,
+.mc-pack-preview-celestial {
+  --mc-premium-piece-white-fill: linear-gradient(145deg, #fffdf1 1%, #f5dfa0 34%, #78d4df 66%, #5b4a9c 100%);
+  --mc-premium-piece-white-glow: rgba(244, 217, 138, .58);
+  --mc-premium-piece-white-outline: #292041;
+  --mc-premium-piece-black-fill: linear-gradient(145deg, #d8f7f7 1%, #65c3dc 34%, #363978 65%, #080c1d 100%);
+  --mc-premium-piece-black-glow: rgba(93, 191, 220, .58);
+  --mc-premium-piece-black-outline: #fff2bd;
+}
+
 .mc-skin-preview-arcane,
 .mc-skin-preview-crystal,
 .mc-skin-preview-elemental,
@@ -221,8 +266,8 @@
   --pack-white-text: #10233f;
   --pack-black-text: #b8efff;
   --pack-crest-mask: url("/images/cosmetics/crystal/king.svg");
-  --pack-crest-fill: linear-gradient(145deg, #fff 2%, #96e7ff 38%, #5b8be6 70%, #332a78 100%);
-  --pack-crest-outline: #17355f;
+  --pack-crest-fill: var(--mc-premium-piece-white-fill);
+  --pack-crest-outline: var(--mc-premium-piece-white-outline);
 }
 
 .mc-pack-preview-elemental {
@@ -234,8 +279,8 @@
   --pack-white-text: #3d1707;
   --pack-black-text: #8ff3dc;
   --pack-crest-mask: url("/images/cosmetics/elemental/king.svg");
-  --pack-crest-fill: linear-gradient(145deg, #fffde2 2%, #ffdca0 39%, #ff6e58 70%, #982957 100%);
-  --pack-crest-outline: #521936;
+  --pack-crest-fill: var(--mc-premium-piece-white-fill);
+  --pack-crest-outline: var(--mc-premium-piece-white-outline);
 }
 
 .mc-pack-preview-celestial {
@@ -247,8 +292,8 @@
   --pack-white-text: #292041;
   --pack-black-text: #8ce5ed;
   --pack-crest-mask: url("/images/cosmetics/celestial/king.svg");
-  --pack-crest-fill: linear-gradient(145deg, #fff8d8 2%, #f4d98a 38%, #76d7e4 69%, #352b73 100%);
-  --pack-crest-outline: #11172f;
+  --pack-crest-fill: var(--mc-premium-piece-white-fill);
+  --pack-crest-outline: var(--mc-premium-piece-white-outline);
 }
 
 .mc-shell:has(.mc-menu) .mc-pack-preview {
@@ -264,8 +309,8 @@
   --pack-white-text: #10251f;
   --pack-black-text: #d5c6ff;
   --pack-crest-mask: url("/images/cosmetics/arcane/king.svg");
-  --pack-crest-fill: linear-gradient(145deg, #fffce8 3%, #f2d989 42%, #66cdb1 70%, #6447c5 100%);
-  --pack-crest-outline: #173c38;
+  --pack-crest-fill: var(--mc-premium-piece-white-fill);
+  --pack-crest-outline: var(--mc-premium-piece-white-outline);
 }
 
 :is(.mc-pack-preview-arcane, .mc-pack-preview-crystal, .mc-pack-preview-elemental, .mc-pack-preview-celestial)::after {
@@ -344,52 +389,24 @@
   bottom: 3%;
 }
 
-:is(.mc-piece-skin-preview-arcane, .mc-pack-preview-arcane) .mc-piece-sample-white,
-.mc-pack-preview-arcane .mc-pack-piece-white {
-  --mc-preview-piece-fill: linear-gradient(145deg, #fffce8 3%, #f2d989 42%, #66cdb1 70%, #6447c5 100%);
-  --mc-preview-piece-outline: #173c38;
+:is(
+  .mc-piece-skin-preview-arcane,
+  .mc-piece-skin-preview-crystal,
+  .mc-piece-skin-preview-elemental,
+  .mc-piece-skin-preview-celestial
+) .mc-piece-sample-white {
+  --mc-preview-piece-fill: var(--mc-premium-piece-white-fill);
+  --mc-preview-piece-outline: var(--mc-premium-piece-white-outline);
 }
 
-:is(.mc-piece-skin-preview-arcane, .mc-pack-preview-arcane) .mc-piece-sample-black,
-.mc-pack-preview-arcane .mc-pack-piece-black {
-  --mc-preview-piece-fill: linear-gradient(145deg, #d9cbff 4%, #7358dc 42%, #120926 100%);
-  --mc-preview-piece-outline: #d9fff2;
-}
-
-:is(.mc-piece-skin-preview-crystal, .mc-pack-preview-crystal) .mc-piece-sample-white,
-.mc-pack-preview-crystal .mc-pack-piece-white {
-  --mc-preview-piece-fill: linear-gradient(145deg, #ffffff 2%, #96e7ff 38%, #5b8be6 70%, #332a78 100%);
-  --mc-preview-piece-outline: #17355f;
-}
-
-:is(.mc-piece-skin-preview-crystal, .mc-pack-preview-crystal) .mc-piece-sample-black,
-.mc-pack-preview-crystal .mc-pack-piece-black {
-  --mc-preview-piece-fill: linear-gradient(145deg, #c8f3ff 2%, #5879ca 43%, #101a35 100%);
-  --mc-preview-piece-outline: #ecfcff;
-}
-
-:is(.mc-piece-skin-preview-elemental, .mc-pack-preview-elemental) .mc-piece-sample-white,
-.mc-pack-preview-elemental .mc-pack-piece-white {
-  --mc-preview-piece-fill: linear-gradient(145deg, #fffde2 2%, #ffdca0 39%, #ff6e58 70%, #982957 100%);
-  --mc-preview-piece-outline: #521936;
-}
-
-:is(.mc-piece-skin-preview-elemental, .mc-pack-preview-elemental) .mc-piece-sample-black,
-.mc-pack-preview-elemental .mc-pack-piece-black {
-  --mc-preview-piece-fill: linear-gradient(145deg, #a4ffe9 2%, #39bda9 45%, #0b3039 100%);
-  --mc-preview-piece-outline: #e6fff7;
-}
-
-:is(.mc-piece-skin-preview-celestial, .mc-pack-preview-celestial) .mc-piece-sample-white,
-.mc-pack-preview-celestial .mc-pack-piece-white {
-  --mc-preview-piece-fill: linear-gradient(145deg, #fffdf1 2%, #f4d98a 38%, #76d7e4 69%, #5b4a9c 100%);
-  --mc-preview-piece-outline: #292041;
-}
-
-:is(.mc-piece-skin-preview-celestial, .mc-pack-preview-celestial) .mc-piece-sample-black,
-.mc-pack-preview-celestial .mc-pack-piece-black {
-  --mc-preview-piece-fill: linear-gradient(145deg, #d8f7f7 2%, #5dbfdc 40%, #353878 68%, #090d1f 100%);
-  --mc-preview-piece-outline: #fff2bd;
+:is(
+  .mc-piece-skin-preview-arcane,
+  .mc-piece-skin-preview-crystal,
+  .mc-piece-skin-preview-elemental,
+  .mc-piece-skin-preview-celestial
+) .mc-piece-sample-black {
+  --mc-preview-piece-fill: var(--mc-premium-piece-black-fill);
+  --mc-preview-piece-outline: var(--mc-premium-piece-black-outline);
 }
 
 :is(.mc-piece-skin-preview-arcane, .mc-pack-preview-arcane) .mc-piece-king {
@@ -483,52 +500,26 @@ html:is([data-piece-skin="arcane"], [data-piece-skin="crystal"], [data-piece-ski
   mask: var(--mc-piece-mask) center / contain no-repeat;
 }
 
-html[data-piece-skin="arcane"] .mc-white {
-  --mc-premium-piece-fill: linear-gradient(145deg, #fffce8 2%, #f3da8c 36%, #65ccb0 67%, #6041bd 100%);
-  --mc-premium-piece-glow: rgba(111, 242, 197, .5);
-  --mc-premium-piece-outline: #173c38;
+html:is(
+  [data-piece-skin="arcane"],
+  [data-piece-skin="crystal"],
+  [data-piece-skin="elemental"],
+  [data-piece-skin="celestial"]
+) .mc-white {
+  --mc-premium-piece-fill: var(--mc-premium-piece-white-fill);
+  --mc-premium-piece-glow: var(--mc-premium-piece-white-glow);
+  --mc-premium-piece-outline: var(--mc-premium-piece-white-outline);
 }
 
-html[data-piece-skin="arcane"] .mc-black {
-  --mc-premium-piece-fill: linear-gradient(145deg, #e0d5ff 1%, #8e72ed 35%, #3e277d 63%, #100722 100%);
-  --mc-premium-piece-glow: rgba(154, 125, 255, .55);
-  --mc-premium-piece-outline: #d9fff2;
-}
-
-html[data-piece-skin="crystal"] .mc-white {
-  --mc-premium-piece-fill: linear-gradient(145deg, #ffffff 1%, #9be9ff 34%, #5d91e8 66%, #342a7a 100%);
-  --mc-premium-piece-glow: rgba(126, 218, 255, .56);
-  --mc-premium-piece-outline: #244a78;
-}
-
-html[data-piece-skin="crystal"] .mc-black {
-  --mc-premium-piece-fill: linear-gradient(145deg, #c9f4ff 1%, #6e9ee7 34%, #304d96 64%, #0d1730 100%);
-  --mc-premium-piece-glow: rgba(122, 163, 255, .54);
-  --mc-premium-piece-outline: #e8fbff;
-}
-
-html[data-piece-skin="elemental"] .mc-white {
-  --mc-premium-piece-fill: linear-gradient(145deg, #fffde2 1%, #ffe0a6 34%, #ff7059 65%, #982957 100%);
-  --mc-premium-piece-glow: rgba(255, 132, 63, .6);
-  --mc-premium-piece-outline: #521936;
-}
-
-html[data-piece-skin="elemental"] .mc-black {
-  --mc-premium-piece-fill: linear-gradient(145deg, #c1fff0 1%, #50d7c0 35%, #168a83 63%, #092d39 100%);
-  --mc-premium-piece-glow: rgba(66, 222, 196, .56);
-  --mc-premium-piece-outline: #d8fff3;
-}
-
-html[data-piece-skin="celestial"] .mc-white {
-  --mc-premium-piece-fill: linear-gradient(145deg, #fffdf1 1%, #f5dfa0 34%, #78d4df 66%, #5b4a9c 100%);
-  --mc-premium-piece-glow: rgba(244, 217, 138, .58);
-  --mc-premium-piece-outline: #292041;
-}
-
-html[data-piece-skin="celestial"] .mc-black {
-  --mc-premium-piece-fill: linear-gradient(145deg, #d8f7f7 1%, #65c3dc 34%, #363978 65%, #080c1d 100%);
-  --mc-premium-piece-glow: rgba(93, 191, 220, .58);
-  --mc-premium-piece-outline: #fff2bd;
+html:is(
+  [data-piece-skin="arcane"],
+  [data-piece-skin="crystal"],
+  [data-piece-skin="elemental"],
+  [data-piece-skin="celestial"]
+) .mc-black {
+  --mc-premium-piece-fill: var(--mc-premium-piece-black-fill);
+  --mc-premium-piece-glow: var(--mc-premium-piece-black-glow);
+  --mc-premium-piece-outline: var(--mc-premium-piece-black-outline);
 }
 
 .mc-board-stack:is([data-board-skin="arcane"], [data-board-skin="crystal"], [data-board-skin="elemental"], [data-board-skin="celestial"]) .mc-board {
