@@ -113,7 +113,7 @@ defmodule ManaChessOnlineWeb.GameTutorialComponents do
   defp title(:complete), do: "Leccion completada"
 
   defp instruction(:move, _settings, pawn_cost, _refund, _remaining_ms) do
-    "Selecciona el peon marcado en d2 y muevelo a d3. La jugada cuesta #{number(pawn_cost)} de mana."
+    "Busca la columna d y la fila 2: selecciona el peon marcado en d2. Muevelo una casilla a d3. La jugada cuesta #{number(pawn_cost)} de mana."
   end
 
   defp instruction(:cooldown, settings, _pawn_cost, _refund, remaining_ms) do
@@ -130,7 +130,7 @@ defmodule ManaChessOnlineWeb.GameTutorialComponents do
     percent = number(setting(settings, :capture_refund_percent, 40))
     net = max(pawn_cost - refund, 0)
 
-    "Captura el peon de e4: pagas #{number(pawn_cost)}, recuperas #{number(refund)} (#{percent}%) y el gasto neto es #{number(net)}."
+    "Desde d3, mueve el peon en diagonal a e4 para capturar: pagas #{number(pawn_cost)}, recuperas #{number(refund)} (#{percent}%) y el gasto neto es #{number(net)}."
   end
 
   defp instruction(:complete, settings, pawn_cost, refund, _remaining_ms) do
@@ -156,9 +156,9 @@ defmodule ManaChessOnlineWeb.GameTutorialComponents do
     current = progress(stage) + if(stage == :complete, do: 0, else: 1)
 
     [
-      tutorial_step(1, "Gasta mana", "Mueve d2 a d3.", current, stage),
+      tutorial_step(1, "Gasta mana", "Columna d: de la fila 2 a la 3.", current, stage),
       tutorial_step(2, "Espera y regenera", "Observa barra y cooldown.", current, stage),
-      tutorial_step(3, "Captura y recupera", "Toma el peon de e4.", current, stage)
+      tutorial_step(3, "Captura y recupera", "Desde d3, captura en e4.", current, stage)
     ]
   end
 

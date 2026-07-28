@@ -26,6 +26,8 @@ defmodule ManaChessOnlineWeb.GameLive do
     "P" => "♙",
     "." => ""
   }
+  @board_files ~w(a b c d e f g h)
+  @board_ranks ~w(8 7 6 5 4 3 2 1)
 
   @impl true
   def mount(params, session, socket) do
@@ -483,6 +485,11 @@ defmodule ManaChessOnlineWeb.GameLive do
 
   defp cols_for(:black, row), do: row |> Enum.with_index() |> Enum.reverse()
   defp cols_for(_color, row), do: Enum.with_index(row)
+
+  defp board_file_labels(:black), do: Enum.reverse(@board_files)
+  defp board_file_labels(_color), do: @board_files
+  defp board_rank_labels(:black), do: Enum.reverse(@board_ranks)
+  defp board_rank_labels(_color), do: @board_ranks
 
   defp selected?({r, c}, {r, c}), do: true
   defp selected?(_, _), do: false
@@ -1555,53 +1562,102 @@ defmodule ManaChessOnlineWeb.GameLive do
                 </div>
               </div>
 
-              <div id={"mc-board-#{@game.id}"} class="mc-board" phx-hook="BoardDrag">
-                <%= for {row, r} <- rows_for(assigns) do %>
-                  <%= for {piece, c} <- cols_for(@color, row) do %>
-                    <button
-                      class={square_class(@game, r, c, @selected, @valid_moves, @blocked_square)}
-                      phx-click="move"
-                      phx-value-r={r}
-                      phx-value-c={c}
-                      data-r={r}
-                      data-c={c}
-                      data-legal-moves={legal_moves_data(@game, @color, piece, r, c)}
-                    >
-                      <span class={piece_class(piece)}>{@symbols[piece]}</span>
-                      <span
-                        :if={GameTutorial.source_square(@game) == {r, c}}
-                        class="mc-tutorial-cost-badge"
-                        title={"Coste: #{short_number(piece_cost_for_ui(@game, piece))} mana"}
-                        aria-label={"Coste: #{short_number(piece_cost_for_ui(@game, piece))} mana"}
+              <div class={["mc-board-coordinate-frame", @game.tutorial? && "is-tutorial"]}>
+                <div
+                  :if={@game.tutorial?}
+                  class="mc-board-coordinate-files mc-board-coordinate-files-top"
+                  aria-hidden="true"
+                >
+                  <span :for={file <- board_file_labels(@color)}>{file}</span>
+                </div>
+                <div
+                  :if={@game.tutorial?}
+                  class="mc-board-coordinate-ranks mc-board-coordinate-ranks-left"
+                  aria-hidden="true"
+                >
+                  <span :for={rank <- board_rank_labels(@color)}>{rank}</span>
+                </div>
+
+                <div
+                  id={"mc-board-#{@game.id}"}
+                  class={["mc-board", @game.tutorial? && "mc-tutorial-board"]}
+                  phx-hook="BoardDrag"
+                  aria-label={@game.tutorial? && "Tablero del tutorial con coordenadas visibles"}
+                >
+                  <%= for {row, r} <- rows_for(assigns) do %>
+                    <%= for {piece, c} <- cols_for(@color, row) do %>
+                      <button
+                        class={square_class(
+                          @game,
+                          r,
+                          c,
+                          @selected,
+                          @valid_moves,
+                          @blocked_square
+                        )}
+                        phx-click="move"
+                        phx-value-r={r}
+                        phx-value-c={c}
+                        data-r={r}
+                        data-c={c}
+                        data-legal-moves={legal_moves_data(@game, @color, piece, r, c)}
                       >
-                        {short_number(piece_cost_for_ui(@game, piece))}
-                      </span>
-                      <span
-                        :if={cooldown_for(@game, {r, c})}
-                        class="mc-cooldown-ring"
-                        style={cooldown_style(@game, {r, c})}
-                        aria-hidden="true"
-                      >
-                        <svg viewBox="0 0 26 26" aria-hidden="true">
-                          <circle
-                            class="mc-cooldown-ring-track"
-                            cx="13"
-                            cy="13"
-                            r="10"
-                            pathLength="100"
-                          />
-                          <circle
-                            class="mc-cooldown-ring-fill"
-                            cx="13"
-                            cy="13"
-                            r="10"
-                            pathLength="100"
-                          />
-                        </svg>
-                      </span>
-                    </button>
+                        <span class={[
+                          piece_class(piece),
+                          @game.tutorial? && piece != "." && "mc-tutorial-classic-piece"
+                        ]}>
+                          {@symbols[piece]}
+                        </span>
+                        <span
+                          :if={GameTutorial.source_square(@game) == {r, c}}
+                          class="mc-tutorial-cost-badge"
+                          title={"Coste: #{short_number(piece_cost_for_ui(@game, piece))} mana"}
+                          aria-label={"Coste: #{short_number(piece_cost_for_ui(@game, piece))} mana"}
+                        >
+                          {short_number(piece_cost_for_ui(@game, piece))}
+                        </span>
+                        <span
+                          :if={cooldown_for(@game, {r, c})}
+                          class="mc-cooldown-ring"
+                          style={cooldown_style(@game, {r, c})}
+                          aria-hidden="true"
+                        >
+                          <svg viewBox="0 0 26 26" aria-hidden="true">
+                            <circle
+                              class="mc-cooldown-ring-track"
+                              cx="13"
+                              cy="13"
+                              r="10"
+                              pathLength="100"
+                            />
+                            <circle
+                              class="mc-cooldown-ring-fill"
+                              cx="13"
+                              cy="13"
+                              r="10"
+                              pathLength="100"
+                            />
+                          </svg>
+                        </span>
+                      </button>
+                    <% end %>
                   <% end %>
-                <% end %>
+                </div>
+
+                <div
+                  :if={@game.tutorial?}
+                  class="mc-board-coordinate-ranks mc-board-coordinate-ranks-right"
+                  aria-hidden="true"
+                >
+                  <span :for={rank <- board_rank_labels(@color)}>{rank}</span>
+                </div>
+                <div
+                  :if={@game.tutorial?}
+                  class="mc-board-coordinate-files mc-board-coordinate-files-bottom"
+                  aria-hidden="true"
+                >
+                  <span :for={file <- board_file_labels(@color)}>{file}</span>
+                </div>
               </div>
 
               <div class="mc-elixir-bottom">

@@ -35,7 +35,7 @@ defmodule ManaChessOnlineWeb.PageControllerTest do
     assert response =~ "cosmetic-fallback-mastery-20260717"
     assert response =~ "cosmetic-session-mastery-20260717"
     assert response =~ "bot-difficulty-20260727b"
-    assert response =~ "tutorial.css?v=guided-tutorial-20260728c"
+    assert response =~ "tutorial.css?v=guided-tutorial-20260728e"
     assert response =~ "p0_lobby.css?v=lobby-p0-20260717"
     assert response =~ "competitive.css?v=competitive-leaderboard-20260717"
     assert response =~ "realtime-client-20260717b"
@@ -127,6 +127,8 @@ defmodule ManaChessOnlineWeb.PageControllerTest do
 
     assert stylesheet =~ ".mc-tutorial-lesson"
     assert stylesheet =~ ".mc-tutorial-cost-badge"
+    assert stylesheet =~ ".mc-board-coordinate-frame.is-tutorial"
+    assert stylesheet =~ ".mc-tutorial-classic-piece"
   end
 
   test "game presentation assets are served", %{conn: conn} do
