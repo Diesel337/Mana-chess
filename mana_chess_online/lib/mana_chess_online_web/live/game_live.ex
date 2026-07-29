@@ -1653,6 +1653,17 @@ defmodule ManaChessOnlineWeb.GameLive do
                           {short_number(piece_cost_for_ui(@game, piece))}
                         </span>
                         <span
+                          :if={
+                            GameTutorial.target_square(@game) == {r, c} &&
+                              GameTutorial.capture_reward(@game)
+                          }
+                          class="mc-tutorial-reward-badge"
+                          title={"Recuperas hasta #{short_number(GameTutorial.capture_reward(@game))} mana"}
+                          aria-label={"Recuperas hasta #{short_number(GameTutorial.capture_reward(@game))} mana"}
+                        >
+                          +{short_number(GameTutorial.capture_reward(@game))}
+                        </span>
+                        <span
                           :if={cooldown_for(@game, {r, c})}
                           class="mc-cooldown-ring"
                           style={cooldown_style(@game, {r, c})}
@@ -1679,6 +1690,8 @@ defmodule ManaChessOnlineWeb.GameLive do
                     <% end %>
                   <% end %>
                 </div>
+
+                <.tutorial_board_prompt :if={@game.tutorial?} game={@game} />
 
                 <div
                   :if={@game.tutorial?}
@@ -1817,7 +1830,7 @@ defmodule ManaChessOnlineWeb.GameLive do
                   phx-click="start_tutorial"
                   data-sound-action="mode"
                 >
-                  <strong>Tutorial rapido</strong> <span>Aprende el modo en menos de un minuto.</span>
+                  <strong>Entrenamiento</strong> <span>Practica costes, cooldowns y capturas.</span>
                 </button>
               </div>
             </section>

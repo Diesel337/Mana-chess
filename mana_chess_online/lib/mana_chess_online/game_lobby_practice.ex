@@ -6,7 +6,6 @@ defmodule ManaChessOnline.GameLobbyPractice do
     GameBot,
     GameChat,
     GameControl,
-    GameEngine,
     GameLobbyRooms,
     GameLobbyServers,
     GamePlayers,
@@ -60,20 +59,9 @@ defmodule ManaChessOnline.GameLobbyPractice do
 
   def continue_tutorial(state, player_id, now) do
     with %{game_id: game_id, color: :practice} <- GamePlayers.assignment(state, player_id),
-         %{practice?: true, tutorial?: true, tutorial_step: :cooldown} = game <-
-           game_snapshot(game_id, state) do
-      if GameEngine.cooldown_active?(game, GameTutorial.source_square(game), now) do
-        state
-      else
-        game =
-          update_game_state(game, fn game ->
-            game
-            |> GameTutorial.acknowledge_cooldown()
-            |> update_in([:log], &["Cooldown observado. Ahora captura el caballo de e4." | &1])
-          end)
-
-        put_in(state.games[game_id], game)
-      end
+         %{practice?: true, tutorial?: true} = game <- game_snapshot(game_id, state) do
+      game = update_game_state(game, &GameTutorial.continue(&1, now))
+      put_in(state.games[game_id], game)
     else
       _ -> state
     end

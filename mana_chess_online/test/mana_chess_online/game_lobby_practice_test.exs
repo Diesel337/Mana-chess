@@ -73,7 +73,18 @@ defmodule ManaChessOnline.GameLobbyPracticeTest do
     assert waiting.games[game_id].tutorial_step == :cooldown
 
     continued = GameLobbyPractice.continue_tutorial(waiting, player_id, 3_001)
-    assert continued.games[game_id].tutorial_step == :capture
+    assert continued.games[game_id].tutorial_step == :capture_knight
+
+    tutorial =
+      GameLobbyServers.update_state(continued.games[game_id], fn game ->
+        %{game | tutorial_step: :capture_knight_result, last_capture_refund: 1.2}
+      end)
+
+    continued = %{continued | games: Map.put(continued.games, game_id, tutorial)}
+    sprint = GameLobbyPractice.continue_tutorial(continued, player_id, 3_100)
+
+    assert sprint.games[game_id].tutorial_step == :sprint_pawn
+    assert sprint.games[game_id].elixir.white == 7.0
   end
 
   test "toggles practice sides and preserves chat" do

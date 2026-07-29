@@ -230,8 +230,10 @@ defmodule ManaChessOnlineWeb.GameLiveTest do
     assert has_element?(view, ~s([data-tutorial-lesson][data-tutorial-stage="move"]))
     assert render(view) =~ "Regeneracion"
     assert render(view) =~ "40%"
-    assert render(view) =~ "Coste por movimiento"
-    assert render(view) =~ "Busca la columna d y la fila 2"
+    assert render(view) =~ "Coste real por movimiento"
+    assert render(view) =~ "Mueve el peon marcado"
+    assert render(view) =~ "Prueba 1 de 5"
+    assert render(view) =~ "Captura dama"
     assert has_element?(view, ".mc-board-coordinate-frame.is-tutorial")
     assert has_element?(view, ".mc-board-coordinate-files-top span", "d")
     assert has_element?(view, ".mc-board-coordinate-files-bottom span", "d")
@@ -259,6 +261,18 @@ defmodule ManaChessOnlineWeb.GameLiveTest do
              view,
              ~s(.mc-tutorial-board [data-r="6"][data-c="3"] .mc-piece-pawn[data-piece-color="white"])
            )
+
+    view
+    |> element(~s(.mc-tutorial-board [data-r="6"][data-c="3"]))
+    |> render_click()
+
+    view
+    |> element(~s(.mc-tutorial-board [data-r="5"][data-c="3"]))
+    |> render_click()
+
+    assert has_element?(view, ~s([data-tutorial-lesson][data-tutorial-stage="cooldown"]))
+    assert has_element?(view, "[data-tutorial-board-prompt]")
+    assert has_element?(view, "[data-tutorial-continue-panel]")
 
     refute has_element?(view, "select[data-bot-difficulty]")
     refute has_element?(view, ~s([phx-click="toggle_practice_bot"]))
